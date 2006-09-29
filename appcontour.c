@@ -308,16 +308,36 @@ remove_connected_component (int ccid, struct sketch *sketch)
 
   if (tag_connected_components (sketch) < 0) return (-1);
 
+  if (debug) printf ("removing component %d\n", ccid);
+  if (debug) list_strati (sketch);
   /* primo passo, rendo "trasparente" la superficie */
   make_transparent (ccid, sketch);
   remove_transparent_arcs (sketch);
   join_consecutive_arcs (sketch);
-  if (debug) printsketch (sketch);
+  if (debug) list_strati (sketch);
   adjust_isexternalinfo (sketch);
-  if (debug) printsketch (sketch);
+  if (debug) list_strati (sketch);
   postprocesssketch (sketch);
+  if (debug) list_strati (sketch);
   if (debug) printsketch (sketch);
   return (1);
+}
+
+int
+list_strati (struct sketch *sketch)
+{
+  struct region *r;
+  int i;
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    printf ("region %d: ", r->tag);
+    for (i = 0; i < r->f; i++)
+    {
+      printf ("%d ", r->strati[i]);
+    }
+    printf ("\n");
+  }
 }
 
 int
@@ -335,6 +355,7 @@ make_transparent (int ccid, struct sketch *sketch)
     rs = arc->regionleft->border->region;
     assert (rs->f > arc->regionright->border->region->f);
     d = arc->depths[0];
+    if (debug && rs->strati[d] == ccid) printf ("arco %d trasparente\n", arc->tag);
     if (rs->strati[d] == ccid) arc->transparent = 1;
     /* calcolo il numero di strati trasparenti davanti all'arco */
     dmin = BIG_INT;

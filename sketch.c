@@ -460,7 +460,14 @@ postprocesssketch (struct sketch *sketch)
   struct arc *arc;
   int tag, goon, fleft, fright;
 
-  free_connected_components (sketch);
+  /*
+   * sfortunatamente free_connected_components distrugge l'informazione
+   * sulle componenti connesse precedentemente eliminate durante un
+   * extractcc, quindi non e' il caso di liberare gli strati.
+   * d'altronde le sistemazioni di postprocess non dovrebbero influire
+   * negativamente sulla struttura topologica del manifold 3D
+   */
+  //free_connected_components (sketch);
   if (debug) printf ("1: porta la regione esterna in prima posizione\n");
 
   if (sketch->regions->border->sponda)
