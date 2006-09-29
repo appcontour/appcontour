@@ -1003,9 +1003,9 @@ regionunion (struct region *r1, struct region *r2, struct sketch *sketch)
 {
   struct borderlist *bl;
 
-  if (debug) printf ("entering region union\n");
+  if (debug > 2) printf ("entering region union\n");
   assert (r1 != r2);
-  if (debug)
+  if (debug > 2)
   {
     printf ("regione r1: \n");
     for (bl = r1->border; bl; bl = bl->next)
@@ -1034,7 +1034,7 @@ regionunion (struct region *r1, struct region *r2, struct sketch *sketch)
     }
   }
   removeregion (r2, sketch);
-  if (debug)
+  if (debug > 2)
   {
     printf ("regione r1finale: \n");
     for (bl = r1->border; bl; bl = bl->next)
@@ -1044,7 +1044,7 @@ regionunion (struct region *r1, struct region *r2, struct sketch *sketch)
     }
     printf (";\n");
   }
-  if (debug) printf ("exiting region union\n");
+  // if (debug) printf ("exiting region union\n");
   return (r1);
 }
 
@@ -1217,7 +1217,7 @@ removeborder (struct border *b)
 {
   struct border *bp;
 
-  if (debug) printf ("removeborder...\n");
+  // if (debug) printf ("removeborder...\n");
   assert (b->next != b);
 
   ensurecanremoveborder (b);

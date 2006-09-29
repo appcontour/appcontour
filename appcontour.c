@@ -279,15 +279,10 @@ checkdnodecons (struct border *b, int dd[4])
  * NOTA: le componenti connesse sono numerate a partire da 0.
  */
 
-struct arcs_to_join {
-  struct border *sponda;
-  struct arcs_to_join *next;
-  };
-
 /* prototipi locali */
-struct arcs_to_join * remove_transparent_arcs (struct sketch *sketch);
+void remove_transparent_arcs (struct sketch *sketch);
 int make_transparent (int ccid, struct sketch *sketch);
-int join_consecutive_arcs (struct arcs_to_join *atj, struct sketch *sketch);
+int join_consecutive_arcs (struct sketch *sketch);
 
 int
 extract_connected_component (int ccid, struct sketch *sketch)
@@ -310,14 +305,13 @@ extract_connected_component (int ccid, struct sketch *sketch)
 int
 remove_connected_component (int ccid, struct sketch *sketch)
 {
-  struct arcs_to_join *arcs_to_join;
 
   if (tag_connected_components (sketch) < 0) return (-1);
 
   /* primo passo, rendo "trasparente" la superficie */
   make_transparent (ccid, sketch);
-  arcs_to_join = remove_transparent_arcs (sketch);
-  join_consecutive_arcs (arcs_to_join, sketch);
+  remove_transparent_arcs (sketch);
+  join_consecutive_arcs (sketch);
   if (debug) printsketch (sketch);
   adjust_isexternalinfo (sketch);
   if (debug) printsketch (sketch);
@@ -369,10 +363,9 @@ make_transparent (int ccid, struct sketch *sketch)
   return (1);
 }
 
-struct arcs_to_join *
+void
 remove_transparent_arcs (struct sketch *sketch)
 {
-  struct arcs_to_join *atj = 0, *atjtemp;
   struct arc *arc;
   struct border *bl, *br, *blp, *brp;
   struct borderlist *bll, *blr;
@@ -410,104 +403,68 @@ remove_transparent_arcs (struct sketch *sketch)
       assert (bl->info == 0 && br->info == 0);
       blp = removeborder (bl);
       brp = removeborder (br);
-      if (blp->info->transparent == 0)
-      {
-        atjtemp = (struct arcs_to_join *) malloc (sizeof (struct arcs_to_join));
-        if (debug) printf ("adding atj: %x\n", (int)blp->info);
-        atjtemp->next = atj;
-        atj = atjtemp;
-        atj->sponda = blp;
-      }
-      if (brp->info->transparent == 0)
-      {
-        atjtemp = (struct arcs_to_join *) malloc (sizeof (struct arcs_to_join));
-        if (debug) printf ("adding atj: %x\n", (int)brp->info);
-        atjtemp->next = atj;
-        atj = atjtemp;
-        atj->sponda = brp;
-      }
+      //if (blp->info->transparent == 0)
+      //{
+      //  atjtemp = (struct arcs_to_join *) malloc (sizeof (struct arcs_to_join));
+      //  if (debug) printf ("adding atj: %x\n", (int)blp->info);
+      //  atjtemp->next = atj;
+      //  atj = atjtemp;
+      //  atj->sponda = blp;
+      //}
+      //if (brp->info->transparent == 0)
+      //{
+      //  atjtemp = (struct arcs_to_join *) malloc (sizeof (struct arcs_to_join));
+      //  if (debug) printf ("adding atj: %x\n", (int)brp->info);
+      //  atjtemp->next = atj;
+      //  atj = atjtemp;
+      //  atj->sponda = brp;
+      //}
       topo_change (blp, brp);
     }
     arc->regionleft = arc->regionright = 0;
     removearc (arc, sketch);
   }
-  return (atj);
+  return;
 }
 
 int
-join_consecutive_arcs (struct arcs_to_join *atj, struct sketch *sketch)
+join_consecutive_arcs (struct sketch *sketch)
 {
-  struct arc *arc1, *arc2, *arc;
-  struct arcs_to_join *atjwork, *atjprev, *atjtemp;
-  int found;
-  struct border *b1, *b2, *btemp;
+  int goon;
+  struct arc *arc, *arc1, *arc2;
+  struct border *b1, *b2;
 
-  if (debug) printf ("join_consecutive_arcs...\n");
-  if (debug)
+  goon = 1;
+  while (goon)
   {
-    printsketch (sketch);
-    for (atjwork = atj; atjwork; atjwork = atjwork->next)
+    goon = 0;          /* set goon to 1 if whole procedure to be repeated */
+    for (arc1 = sketch->arcs; arc1; arc1 = arc1->next)
     {
-      printf ("atj: %d\n", atjwork->sponda->info->tag);
-    }
-  }
-
-  for (atjwork = atj; atjwork; atjwork = atjwork->next)
-  {
-    /* gli elementi della lista devono comparire in coppia per 
-     * sponde opposte
-     */
-    if (debug) printf ("next atjwork...\n");
-
-    found = 0;
-    for (atjprev = atjwork; atjprev->next; atjprev = atjprev->next)
-    {
-      atjtemp = atjprev->next;
-      if (atjtemp->sponda->info == atjwork->sponda->info)
+      /* this arc has to be merged with the following if
+       * the next node has exactly two concurring arcs
+       * this can be checked as follows:
+       */
+      b1 = arc1->regionleft;
+      b2 = gettransborder (b1->next);
+      if (b2->next->info == arc1) /* it is interesting to observe that this is
+                                   * a necessary and sufficient condition
+                                   */
       {
-        assert (atjtemp->sponda != atjwork->sponda);
-        atjprev->next = atjtemp->next;
-        free (atjtemp);
-        found = 1;
-        break;
+        goon = 1;
+        assert (b1->orientation == 1);
+        assert (b2->orientation == -1);
+        arc2 = b2->info;
+        assert (arc2->regionleft->info == arc2);
+        arc = mergearcs (arc1, arc2, sketch);
+        if (arc != arc1) {goon = 1; arc1 = arc;}
+        if (b1->next != b1) removeborder (b1->next);
+        if (b2->next != b2) removeborder (b2->next);
+        arc->regionleft = b1;
+        arc->regionright = b2;
+        b1->info = arc;
+        b2->info = arc;
       }
     }
-    assert (found == 1);
-    b1 = atjwork->sponda;
-    b2 = gettransborder (b1->next);
-    assert (b1->orientation * b2->orientation == -1);
-    if (b1->orientation == -1)
-    {
-      btemp = b1;
-      b1 = b2;
-      b2 = btemp;
-    }
-    for (atjtemp = atjwork->next; atjtemp; atjtemp = atjtemp->next)
-    {
-      if (atjtemp->sponda == b1->next) atjtemp->sponda = b1;
-      if (atjtemp->sponda == b2->next) atjtemp->sponda = b2;
-    }
-    arc1 = b1->info;
-    arc2 = b2->info;
-    if (debug) printf ("chiamo mergearcs...\n");
-    assert (arc2->regionleft->info == arc2);
-    arc = mergearcs (arc1, arc2, sketch);
-    if (b1->next != b1) removeborder (b1->next);
-    if (b2->next != b2) removeborder (b2->next);
-    arc->regionleft = b1;
-    arc->regionright = b2;
-    b1->info = arc;
-    b2->info = arc;
-    if (debug) printsketch (sketch);
-  }
-
-  /* libero le strutture rimanenti */
-  atjwork = atj;
-  while (atjwork)
-  {
-    atjtemp = atjwork->next;
-    free (atjwork);
-    atjwork = atjtemp;
   }
   return (1);
 }
