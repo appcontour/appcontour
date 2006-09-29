@@ -1,0 +1,9 @@
+#
+# surface with two holes
+#
+morse {
+         ^l,0       ;
+   /  ^r,0   ^r,0\  ;
+   \  U      U   /  ;
+         U          ;
+}

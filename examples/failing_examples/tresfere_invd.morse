@@ -1,0 +1,22 @@
+#
+# una sfera grossa dietro altre due che
+# si occludono parzialmente (eclisse parziale)
+#
+# i valori di d della sfera parzialmente
+# occlusa sono 0 e 2, ma scambiati rispetto
+# ai valori corretti
+morse {
+            A[l,0]        ;
+
+I           A[l,0]      I ;
+
+I I         A[l,0]    I I ;
+
+I I      I    X[u,0]    I ;
+
+I I         X    I[u,2] I ;
+
+I     V         V       I ;
+
+            V             ;
+}

@@ -1,0 +1,11 @@
+#
+# descrizione di uno sketch a forma di otto
+# (questo non e' compatibile con le restrizioni
+# del lavoro, ma per la costruzione dello sketch
+# e' OK)
+#
+morse {
+    A[d,0];  # l: left (orientazione verso sinistrar) d = 0
+    X[d,1];
+    V;
+}

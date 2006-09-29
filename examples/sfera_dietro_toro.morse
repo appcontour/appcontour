@@ -1,0 +1,19 @@
+#
+# questo esempio serve per testare l'applicazione
+# della rule N1 in un caso particolare
+#
+morse {
+          A[l,0]          ;
+
+ I   A    A[l,2] A[r,0] I ;
+
+ I  I  X     X      I   I ;
+
+ I  I I   V[r,0] I  I   I ;
+
+ I   I    V[r,0] I    I   ;
+
+   I       V      I       ;
+
+           V              ;
+}

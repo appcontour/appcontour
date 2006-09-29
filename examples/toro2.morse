@@ -1,0 +1,15 @@
+#
+# questo e' il contorno apparente di un toro
+# visto quasi di piatto [con 4 cuspidi]
+#
+morse {
+               ^ l,0                ;
+     /                      \       ;
+   /   ^       ^ r,0   ^      \     ;
+  /  /   \   /   \   /  |      \    ;
+ |  (d,0++ X       X    |u,2--  )   ;
+  \  \   /   \   /   \  |      /    ;
+   \   U       U l,0   U      /     ;
+      \                   /         ;
+               U                    ;
+}

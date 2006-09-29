@@ -1,0 +1,19 @@
+#
+# example for testing rule cn3.  It represents
+# a low hill on a large sphere + a smaller
+# sphere in front that covers the right-most
+# part of the hill (and one of the two cusps)
+#
+morse {
+               ^l,0          ;
+          /    ^l,0  \       ;
+         /  /      \   \     ;
+        /  (   ^l,3- \  \    ;
+       /    X[]d,0\   \  \   ;
+      (   (d,0+)   )   )  )  ;
+       \    X     /   /  /   ;
+        \  (   U     /  /    ;
+         \  \       /  /     ;
+          \     U     /      ;
+                 U           ;
+}

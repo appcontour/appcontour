@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+
+list=`ls tests/test.??`
+
+tmpfile=test$$.tmp
+
+for file in $list
+do
+  test=`echo $file | cut -f2 -d\.`
+  echo "Running test $test..."
+  source $file 2>/dev/null >$tmpfile
+  exitcode=$?
+
+  if [ -f ${file}.out ]
+  then
+    diff $tmpfile ${file}.out
+  else
+    echo "...new test, copying out file"
+    cp $tmpfile ${file}.out
+  fi
+  rm $tmpfile
+  echo "$exitcode" >$tmpfile
+  if [ -f ${file}.ec ]
+  then
+    diff $tmpfile ${file}.ec
+  else
+    echo "...new test, copying ec file"
+    cp $tmpfile ${file}.ec
+  fi
+  rm $tmpfile
+done

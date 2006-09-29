@@ -1,0 +1,8 @@
+#
+# descrizione sfera cava
+morse {
+    A[l,0];  # l: left [orientazione verso sinistra], d = 0
+  I A[r,0] I;
+  I V      I;
+    V;
+}

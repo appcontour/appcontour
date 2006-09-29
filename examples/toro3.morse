@@ -1,0 +1,19 @@
+#
+# questo e' il contorno apparente di un toro
+# con una parte piu' sottile verso il punto 
+# di vista.
+#
+# il contorno apparente comprende un loop senza
+# nodi con 4 cuspidi
+#
+# si noti che trattandosi di un loop senza nodi
+# devo assegnare una profondita' finale in piu'
+# (coincidente con quella iniziale) per segnalare
+# il numero giusto di cuspidi
+#
+morse {
+        ^ l,0             ;
+    /   ^ l,0+-+- \       ;
+    \   U         /       ;
+        U                 ;
+}

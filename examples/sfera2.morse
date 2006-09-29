@@ -1,0 +1,12 @@
+#
+# sfera semplice
+#
+# orientazioni possibili: l, r, u, d
+#
+morse{
+  A;  # orientazione left, d=0
+ I I[u,0];
+ I A I;
+ I I V;
+  V;
+}

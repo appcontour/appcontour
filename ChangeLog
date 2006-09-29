@@ -1,0 +1,22 @@
+2006-09-21: errore nel controllo dei valori di d in un
+	nodo.  I 4 valori sono controllati correttamente,
+	ma l'arco in cui d salta di due ha una direzione
+	di crescita di d che non veniva controllato.
+
+	Completata la rule n1 e aggiunte le regole n2, n3, n4,
+	che possono essere chiamate anche come (ad es)
+        n1:3 per indicare l'applicazione della regola 1 solo
+	al terzo match.
+
+	Nuova funzione testallrules
+
+	Nuova funzione countcc (vedi NEWS), lettura formato 'sketch'
+
+	Nuova rule N5
+	Nuove rule C1 e C2
+
+2006-09-26: possibilita' di specificazione nomefile come secondo argomento.
+	Nuove rule A1 e A2 (rimuovi regione ad anello).
+	Nuove rule N6, CN1, CN2L, CN2R, CN2LB, CN2RB, CN3
+
+	Nuova funzione "knot2morse"; con alcuni esempi in 'examples'

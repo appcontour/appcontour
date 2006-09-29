@@ -1,0 +1,685 @@
+#include <assert.h>
+#include "contour.h"
+
+extern int debug;
+
+/* prototipi */
+int checkdnodecons (struct border *b, int dd[4]);
+int getdatnode (struct border *b);
+/* fine prototipi */
+
+/*
+ * compute the euler characteristic
+ */
+
+int
+euler_characteristic (struct sketch *sketch)
+{
+  struct arc *arc;
+  struct region *r;
+  struct borderlist *bl;
+  int cusps = 0;
+  int arcweight = 0;
+  int layers = 0;
+  int halfarcweight, factor;
+
+  for (arc = sketch->arcs; arc; arc = arc->next)
+  {
+    cusps += arc->cusps;
+    if (arc->endpoints == 0) continue;   /* questi non contano */
+    arcweight += arcmult (arc);
+  }
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    factor = 2;
+    for (bl = r->border; bl; bl = bl->next) factor--;
+                                         /* peso di uno strato: 1-buchi */
+    layers += factor * r->f;
+  }
+
+  halfarcweight = arcweight/2;
+  assert (arcweight == 2*halfarcweight);
+  return (layers - cusps - halfarcweight);
+}
+
+int
+appcontourcheck (struct sketch *sketch, int verbose)
+{
+  int fail, globfail, i, diff=0;
+  struct region *region;
+  struct arc *arc;
+  int d, dmin, dmax, fmin;
+  struct border *failb;
+  struct borderlist *hole;
+  int dd[4], res;
+
+  if (verbose) printf ("Checking consistency as apparent contour...\n");
+
+  globfail = 0;
+  if (verbose) printf ("1. Checking arc orientation across nodes... ");
+  fflush (stdout);
+  fail = 0;
+  for (region = sketch->regions; region; region = region->next)
+  {
+    for (hole = region->border; hole; hole = hole->next)
+    {
+      if (hole->sponda && checkorientationborder (hole->sponda) == 0)
+      {fail = 1; break;}
+    }
+    if (fail) break;
+  }
+  if (fail)
+  {
+    globfail = 1;
+    if (verbose) printf ("FAILED while checking region %d\n", region->tag);
+  } else if (verbose) printf ("OK\n");
+
+  if (verbose) printf ("2. Checking positivity of f...              ");
+  fflush (stdout);
+  fail = 0;
+  for (region = sketch->regions; region; region = region->next)
+  {
+    if (region->f < 0 || region->f == F_UNDEF) {fail = 1; break;}
+  }
+  if (fail)
+  {
+    globfail = 1;
+    if (verbose) printf ("FAILED for region %d (f = %d)\n", region->tag, region->f);
+  } else if (verbose) printf ("OK\n");
+
+  if (verbose) printf ("3. d versus f consistency...                ");
+  fflush (stdout);
+
+  fail = 0;
+  for (arc = sketch->arcs; arc; arc = arc->next)
+  {
+    assert (arc->depths);
+    dmin = dmax = arc->depths[0];
+    for (i = 1; i < arc->dvalues; i++)
+    {
+      d = arc->depths[i];
+      if (d < dmin) dmin = d;
+      if (d > dmax) dmax = d;
+    }
+    fmin = arc->regionleft->border->region->f;
+    if (arc->regionright->border->region->f < fmin)
+      fmin = arc->regionright->border->region->f;
+    if (0 <= dmin && dmax <= fmin) continue;
+    fail = 1;
+    break;
+  }
+  if (fail)
+  {
+    globfail = 1;
+    if (verbose) printf ("FAILED for arc %d (dmin = %d, dmax = %d, fmin = %d)\n",
+      arc->tag, dmin, dmax, fmin);
+  } else if (verbose) printf ("OK\n");
+
+  if (verbose) printf ("4. variation of d across cusps...           ");
+  fflush (stdout);
+
+  fail = 0;
+  for (arc = sketch->arcs; arc; arc = arc->next)
+  {
+    if (arc->cusps < 0) {fail = 1; break;}
+    if (arc->cusps == 0) continue;
+    for (i = 0; i < arc->cusps; i++)
+    {
+      diff = arc->depths[i] - arc->depths[i+1];
+      if (diff == 1 || diff == -1) continue;
+      fail = 1;
+      break;
+    }
+    if (fail) break;
+  }
+  if (fail)
+  {
+    globfail = 1;
+    if (verbose) printf ("FAILED for arc %d (diff = %d)\n", arc->tag, diff);
+  } else if (verbose) printf ("OK\n");
+
+  if (verbose) printf ("5. values of d on nodes...                  ");
+  fflush (stdout);
+
+  fail = 0;
+  for (arc = sketch->arcs; arc; arc = arc->next)
+  {
+    if (arc->endpoints == 0) continue;
+    failb = arc->regionleft;
+    if ((res = checkdnodecons (arc->regionleft, dd)) == 1)
+    {
+      if (arc->endpoints == 1) continue;
+      failb = arc->regionright;
+      if ((res = checkdnodecons (arc->regionright, dd)) == 1) continue;
+    }
+    fail = 1;
+    break;
+  }
+  if (fail)
+  {
+    globfail = 1;
+    if (verbose)
+    {
+      printf ("FAILED ");
+      if (res == 2)
+      {
+        printf ("due to wrong arc orientation\n");
+      } else {
+        printf ("due to wrong d values\n");
+      }
+      printf ("          ");
+      printf ("a%d (d=%d), ", failb->info->tag, dd[0]);
+      failb = failb->next;
+      arc = failb->info;
+      if (arc->regionleft == failb) failb = arc->regionright;
+        else failb = arc->regionleft;
+      printf ("a%d (d=%d), ", failb->info->tag, dd[1]);
+      failb = failb->next;
+      arc = failb->info;
+      if (arc->regionleft == failb) failb = arc->regionright;
+        else failb = arc->regionleft;
+      printf ("a%d (d=%d), ", failb->info->tag, dd[2]);
+      failb = failb->next;
+      arc = failb->info;
+      if (arc->regionleft == failb) failb = arc->regionright;
+        else failb = arc->regionleft;
+      printf ("a%d (d=%d)\n", failb->info->tag, dd[3]);
+    }
+  } else if (verbose) printf ("OK\n");
+
+
+  if (globfail && verbose) printf ("This sketch is NOT an apparent contour\n");
+  return (globfail == 0);
+}
+
+int
+checkorientationborder (struct border *b)
+{
+  struct border *bp, *bpn, *bptrans, *bpopp;
+  struct arc *arc;
+
+  bp = b;
+  do {
+    bpn = bp->next;
+    arc = bpn->info;
+    if (arc->endpoints == 0) continue;
+    if (arc->regionleft == bpn) bptrans = arc->regionright;
+      else bptrans = arc->regionleft;
+    bpopp = bptrans->next;
+    if (bp->orientation != bpopp->orientation) return (0);
+    bp = bp->next;
+  } while (bp != b);
+
+  return (1);
+}
+
+int
+getdatnode (struct border *b)
+{
+  struct arc *arc;
+
+  arc = b->info;
+  if (b->orientation > 0)
+    /* l'arco e' orientato allo stesso modo, buona l'ultima d */
+    return (arc->depths[arc->dvalues - 1]);
+
+  /* orientamento opposto, buona la prima d */
+  return (arc->depths[0]);
+}
+
+/*
+ * controllo di consistenza dei valori di d in un
+ * nodo come contorno apparente
+ */
+
+int
+checkdnodecons (struct border *b, int dd[4])
+{
+  struct arc *arc;
+  int i, diff, imin;
+  int ori[5];
+
+  dd[0] = getdatnode (b);
+  ori[0] = b->orientation;
+
+  for (i = 1; i < 4; i++)
+  {
+    b = b->next;
+    arc = b->info;
+    b = gettransborder (b);
+
+    dd[i] = getdatnode (b);
+    ori[i] = b->orientation;
+  }
+  ori[4] = ori[0];   /* cosi' evito di dover calcolare un mod 4 */
+
+  imin = -1;         /* l'indice in cui si trova il valore minimo che sale */
+  /* ora ho i 4 valori di 'd' e le orientazioni */
+  if (dd[0] == dd[2])
+  {
+    if (dd[1] < dd[0] || dd[3] < dd[0]) return (0);
+    diff = dd[1] - dd[3];
+    imin = (diff > 0)?3:1;
+    if (diff != 2 && diff != -2) return (0);
+  } else {
+    if (dd[1] != dd[3]) return (0);
+    if (dd[0] < dd[1] || dd[2] < dd[1]) return (0);
+    diff = dd[0] - dd[2];
+    imin = (diff > 0)?2:0;
+    if (diff != 2 && diff != -2) return (0);
+  }
+  /* ultimo controllo: l'orientazione in imin+1 deve essere 1 */
+  if (ori[imin+1] != 1) return (2);
+  return (1);
+}
+
+/*
+ * rimozione di una componente connessa.
+ * NOTA: le componenti connesse sono numerate a partire da 0.
+ */
+
+struct arcs_to_join {
+  struct border *sponda;
+  struct arcs_to_join *next;
+  };
+
+/* prototipi locali */
+struct arcs_to_join * remove_transparent_arcs (struct sketch *sketch);
+int make_transparent (int ccid, struct sketch *sketch);
+int join_consecutive_arcs (struct arcs_to_join *atj, struct sketch *sketch);
+
+int
+extract_connected_component (int ccid, struct sketch *sketch)
+{
+  int ccnum, i;
+
+  ccnum = count_connected_components (sketch);
+  if (ccid < 0 || ccid >= ccnum) return (1);
+
+  for (i = 0; i < ccnum; i++)
+  {
+    if (i != ccid)
+    {
+      if (remove_connected_component (i, sketch) == 0) return (0);
+    }
+  }
+  return (1);
+}
+
+int
+remove_connected_component (int ccid, struct sketch *sketch)
+{
+  struct arcs_to_join *arcs_to_join;
+
+  if (tag_connected_components (sketch) < 0) return (-1);
+
+  /* primo passo, rendo "trasparente" la superficie */
+  make_transparent (ccid, sketch);
+  arcs_to_join = remove_transparent_arcs (sketch);
+  join_consecutive_arcs (arcs_to_join, sketch);
+  if (debug) printsketch (sketch);
+  adjust_isexternalinfo (sketch);
+  if (debug) printsketch (sketch);
+  postprocesssketch (sketch);
+  if (debug) printsketch (sketch);
+  return (1);
+}
+
+int
+make_transparent (int ccid, struct sketch *sketch)
+{
+  struct arc *arc;
+  struct region *rs, *r;
+  int d, i, j, dmin, nstrati;
+
+  /* etichetto gli archi coinvolti come trasparenti
+   * e aggiorno il valore di d per gli altri
+   */
+  for (arc = sketch->arcs; arc; arc = arc->next)
+  {
+    rs = arc->regionleft->border->region;
+    assert (rs->f > arc->regionright->border->region->f);
+    d = arc->depths[0];
+    if (rs->strati[d] == ccid) arc->transparent = 1;
+    /* calcolo il numero di strati trasparenti davanti all'arco */
+    dmin = BIG_INT;
+    for (i = 0; i < arc->dvalues; i++)
+    {
+      if (arc->depths[i] < dmin) dmin = arc->depths[i];
+    }
+    nstrati = 0;
+    for (i = 0; i < dmin; i++)
+    {
+      if (rs->strati[i] == ccid) nstrati++;
+    }
+    for (i = 0; i < arc->depthsdim; i++) arc->depths[i] -= nstrati;
+  }
+
+  /* aggiorno la f e gli strati delle regioni */
+  for (r = sketch->regions; r; r = r->next)
+  {
+    for (i = j = 0; i < r->f; i++)
+    {
+      if (r->strati[i] != ccid) r->strati[j++] = r->strati[i];
+    }
+    if (debug && i != j) printf ("n. strati cambia da %d a %d\n", i, j);
+    r->f = j;
+  }
+  return (1);
+}
+
+struct arcs_to_join *
+remove_transparent_arcs (struct sketch *sketch)
+{
+  struct arcs_to_join *atj = 0, *atjtemp;
+  struct arc *arc;
+  struct border *bl, *br, *blp, *brp;
+  struct borderlist *bll, *blr;
+  struct region *rl, *rr;
+
+  for (arc = sketch->arcs; arc; arc = arc->next)
+  {
+    if (arc->transparent == 0) continue;
+    bl = arc->regionleft;
+    bll = bl->border;
+    rl = bll->region;
+    br = arc->regionright;
+    blr = br->border;
+    rr = blr->region;
+    bl->info = br->info = 0;  /* rimuovi il riferimento all'arco */
+    assert (rl->f == rr->f);
+    if (rl != rr) rl = rr = regionunion (rl, rr, sketch);
+    switch (arc->endpoints)
+    {
+      case 0:
+      /* e' un S1 isolato */
+      bll = extractborderlist (bll);
+      freeborderlist (bll);
+      blr = extractborderlist (blr);
+      freeborderlist (blr);
+      break;
+
+      case 1:
+      printf ("NON IMPLEMENTATO\n");
+      exit (100);
+
+      case 2:
+      assert (bl->next != bl);
+      assert (br->next != br);
+      assert (bl->info == 0 && br->info == 0);
+      blp = removeborder (bl);
+      brp = removeborder (br);
+      if (blp->info->transparent == 0)
+      {
+        atjtemp = (struct arcs_to_join *) malloc (sizeof (struct arcs_to_join));
+        if (debug) printf ("adding atj: %x\n", (int)blp->info);
+        atjtemp->next = atj;
+        atj = atjtemp;
+        atj->sponda = blp;
+      }
+      if (brp->info->transparent == 0)
+      {
+        atjtemp = (struct arcs_to_join *) malloc (sizeof (struct arcs_to_join));
+        if (debug) printf ("adding atj: %x\n", (int)brp->info);
+        atjtemp->next = atj;
+        atj = atjtemp;
+        atj->sponda = brp;
+      }
+      topo_change (blp, brp);
+    }
+    arc->regionleft = arc->regionright = 0;
+    removearc (arc, sketch);
+  }
+  return (atj);
+}
+
+int
+join_consecutive_arcs (struct arcs_to_join *atj, struct sketch *sketch)
+{
+  struct arc *arc1, *arc2, *arc;
+  struct arcs_to_join *atjwork, *atjprev, *atjtemp;
+  int found;
+  struct border *b1, *b2, *btemp;
+
+  if (debug) printf ("join_consecutive_arcs...\n");
+  if (debug)
+  {
+    printsketch (sketch);
+    for (atjwork = atj; atjwork; atjwork = atjwork->next)
+    {
+      printf ("atj: %d\n", atjwork->sponda->info->tag);
+    }
+  }
+
+  for (atjwork = atj; atjwork; atjwork = atjwork->next)
+  {
+    /* gli elementi della lista devono comparire in coppia per 
+     * sponde opposte
+     */
+    if (debug) printf ("next atjwork...\n");
+
+    found = 0;
+    for (atjprev = atjwork; atjprev->next; atjprev = atjprev->next)
+    {
+      atjtemp = atjprev->next;
+      if (atjtemp->sponda->info == atjwork->sponda->info)
+      {
+        assert (atjtemp->sponda != atjwork->sponda);
+        atjprev->next = atjtemp->next;
+        free (atjtemp);
+        found = 1;
+        break;
+      }
+    }
+    assert (found == 1);
+    b1 = atjwork->sponda;
+    b2 = gettransborder (b1->next);
+    assert (b1->orientation * b2->orientation == -1);
+    if (b1->orientation == -1)
+    {
+      btemp = b1;
+      b1 = b2;
+      b2 = btemp;
+    }
+    for (atjtemp = atjwork->next; atjtemp; atjtemp = atjtemp->next)
+    {
+      if (atjtemp->sponda == b1->next) atjtemp->sponda = b1;
+      if (atjtemp->sponda == b2->next) atjtemp->sponda = b2;
+    }
+    arc1 = b1->info;
+    arc2 = b2->info;
+    if (debug) printf ("chiamo mergearcs...\n");
+    assert (arc2->regionleft->info == arc2);
+    arc = mergearcs (arc1, arc2, sketch);
+    if (b1->next != b1) removeborder (b1->next);
+    if (b2->next != b2) removeborder (b2->next);
+    arc->regionleft = b1;
+    arc->regionright = b2;
+    b1->info = arc;
+    b2->info = arc;
+    if (debug) printsketch (sketch);
+  }
+
+  /* libero le strutture rimanenti */
+  atjwork = atj;
+  while (atjwork)
+  {
+    atjtemp = atjwork->next;
+    free (atjwork);
+    atjwork = atjtemp;
+  }
+  return (1);
+}
+
+/*
+ * funzione per il calcolo del numero di componenti connesse
+ * ed inizializzazione del manyfold topologico
+ */
+
+/* prototipi */
+void countcc_flood (int ccid, struct sketch *sketch);
+int countcc_flood_step (struct region *r, int i);
+
+int
+count_connected_components (struct sketch *sketch)
+{
+  struct region *r;
+  int i, ccidmax = -1, ccidmin = BIG_INT;
+
+  if (tag_connected_components (sketch) < 0) return (-1);
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    for (i = 0; i < r->f; i++)
+    {
+      if (r->strati[i] > ccidmax) ccidmax = r->strati[i];
+      if (r->strati[i] < ccidmin) ccidmin = r->strati[i];
+    }
+  }
+  // free_connected_components (sketch);
+  return (ccidmax - ccidmin + 1);
+}
+
+int
+tag_connected_components (struct sketch *sketch)
+{
+  struct region *r;
+  int i, ccid = 0, found;
+
+  if (debug) printf ("count_cc, fase 1: inizializzo i vettori\n");
+
+  if (sketch->cc_tagged) return (0);
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    if (r->f > 0)
+    {
+      r->strati = (int *) malloc (r->f * sizeof(int));
+      for (i = 0; i < r->f; i++) r->strati[i] = -1;
+    }
+  }
+
+  while (1)
+  {
+    found = 0;
+    for (r = sketch->regions; r; r = r->next)
+    {
+      for (i = 0; i < r->f; i++)
+      {
+        if (r->strati[i] == -1)
+        {
+          if (debug) printf ("inizializzo, ccid %d, r %d, i %d\n",
+                       ccid, r->tag, i);
+          r->strati[i] = ccid;
+          found = 1;
+          break;
+        }
+      }
+      if (found) break;
+    }
+    if (found == 0) break;
+
+    /* ho inizializzato una nuova componente connessa */
+    countcc_flood (ccid++, sketch);
+  }
+  sketch->cc_tagged = 1;
+  return (1);
+}
+
+int
+free_connected_components (struct sketch *sketch)
+{
+  struct region *r;
+
+  if (debug) printf ("libero lo spazio allocato\n");
+  if (sketch->cc_tagged == 0) return (0);
+  for (r = sketch->regions; r; r = r->next)
+  {
+    if (r->f > 0)
+    {
+      free (r->strati);
+      r->strati = 0;
+    }
+  }
+  sketch->cc_tagged = 0;
+  return (1);
+}
+
+void
+countcc_flood (int ccid, struct sketch *sketch)
+{
+  int i, goon = 1;
+  struct region *r;
+
+  while (goon)
+  {
+    goon = 0;
+    for (r = sketch->regions; r; r = r->next)
+    {
+      for (i = 0; i < r->f; i++)
+      {
+        if (r->strati[i] != ccid) continue;
+        goon |= countcc_flood_step (r, i);
+      }
+    }
+  }
+}
+
+int
+countcc_flood_step (struct region *r, int i)
+{
+  int j, d, ii, goon = 0;
+  struct borderlist *bl;
+  struct border *bp, *btrans;
+  struct region *rtrans, *rr;
+  struct arc *arc;
+
+  for (bl = r->border; bl; bl = bl->next)
+  {
+    bp = bl->sponda;
+    do {
+      arc = bp->info;
+      btrans = gettransborder (bp);
+      rtrans = btrans->border->region;
+      if (debug) printf ("arc %d, dvalues %d\n", arc->tag, arc->dvalues);
+      for (j = 0; j < arc->dvalues; j++)
+      {
+        d = arc->depths[j];
+        if (debug) printf ("trying: arc %d, j %d\n", arc->tag, d);
+        if (r->f > rtrans->f)
+        {
+          if (i == d || i == d + 1)
+          {    /* rimango nella stessa regione, altro strato */
+            ii = d + 1;
+            if (i == d + 1) ii = d;
+            rr = r;
+          } else {
+            ii = i;
+            if (i > d + 1) ii = i - 2;
+            rr = rtrans;
+          }
+        } else {
+          /* verso regione con piu' strati... */
+          rr = rtrans;
+          ii = i;
+          if (i >= d) ii = i + 2;
+        }
+        if (debug) printf ("(r,i) = (%d,%d)/(%d,%d)\n",r->tag,i,rr->tag,ii);
+        if (rr->strati[ii] != r->strati[i])
+        {
+          if (debug)
+          {
+            printf ("nuovo strato per componente %d, regione %d\n",
+                      r->strati[i], r->tag);
+          }
+          goon = 1;
+          assert (rr->strati[ii] = -1);
+          rr->strati[ii] = r->strati[i];
+        }
+      }
+      bp = bp->next;
+    } while (bp != bl->sponda);
+  }
+  return (goon);
+}

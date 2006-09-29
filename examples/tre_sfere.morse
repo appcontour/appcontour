@@ -1,0 +1,22 @@
+#
+# due sfere che si coprono parzialmente con dietro
+# una sfera oblunga in senso verticale che copre
+# tutta la regione di sovrapposizione delle altre due
+#
+# serve per testare un caso di applicazione della rule n1
+#
+morse {
+             ^l,0         ;
+        /         \       ;
+      / ^l,0   ^l,0 \     ;
+     / /  \   /  \   |    ;
+    ( /    \ /    \ /     ;
+     X d,0  X d,2  X u,2  ;
+    ( )d,2 ( )u,0 ( )u,0  ;
+     X      X      X      ;
+    ( \    / \    / \     ;
+     \ \  /   \  /   |    ;
+      \ U r,0  U r,0/     ;
+       \           /      ;
+             U r,0        ;
+}

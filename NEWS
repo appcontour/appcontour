@@ -1,0 +1,39 @@
+2006-09-21: completata la rule N1
+	$ contour applyrule n1 <esempio.morse
+
+	Ora e' possibile leggere descrizioni in formato "sketch",
+	ad esempio:
+
+	$ contour applyrule n1 <examples/tre_sfere.morse >risultato.sketch
+	$ cat risultato.sketch examples/tre_sfere.morse | contour compare
+
+	(confronta il risultato dell'applicazione della regola n1 con lo 
+	schema iniziale)
+
+	$ contour applyrule n1 <examples/tre_sfere.morse | contour countcc
+
+2006-09-21: nuova funzione "countcc" per contare le componenti connesse 
+	della superficie di cui si ha il contorno apparente
+
+2006-09-22: nuova funzione "extractcc" che permette di estrarre una 
+	particolare componente connessa da uno sketch.  Ad esempio:
+
+	$ contour extractcc 2 <examples/sfera_dietro_toro.morse
+
+	Implementate le rule n2, n3, n4 e n5.
+
+	Nuova funzione "testallrules"
+
+2006-09-26: Nuove rule C1, C2, A1, A2, CN1, CN2L, CN2R, CN2LB, CN2RB, CN3;
+	migliorata la canonificazione.
+        in "utils" c'e' il programma "knot2morse.c" che permette di
+        trasformare la descrizione di un nodo (vedi esempi .knot) in
+        una superficie 3D a forma di tubicino.
+
+2006-09-28: Nuova funzione "knot2morse", per costruire una descrizione
+	tramite tubicino di un nodo descritto in stile "morse"
+	(X maiuscolo e x minuscolo indicano i due diversi modi con
+	cui un tratto scavalca l'altro).
+
+	Nuova funzione "characteristic" per il calcolo della caratteristica
+	di Eulero della superficie 3D (nel caso sia connessa).

@@ -1,0 +1,5 @@
+sketch {
+Arc 1: (0);
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 2): (+a1);
+}

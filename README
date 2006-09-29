@@ -1,0 +1,246 @@
+
+   INTRODUCTION
+
+'contour' is a program that deals with the so-called apparent
+contours, which are basically the outlines of regular generic
+3D compact surfaces as viewed from an external point of view.
+The scene is composed by one or more smooth compact oriented 
+surfaces without boundary that do not intersect each other.
+The surfaces are translucid, so that also surfaces lying behind
+are still visible.
+
+From the scene we extract only the projection of the points
+on the surfaces at points where the normal to the surface is
+orthogonal to the projection direction (i.e., the projection
+direction is tangent to the surface).
+
+As a result we obtain a system of regular curves that connect
+nodes where exactly four curves concur.
+We must also allow for cusps to be present.
+
+Our program is controlled by command line and uses descriptions
+given in plain text files.  It is capable of:
+
+- reading a "morse" description (see below).
+
+- reading a "sketch" description, which is of purely topological
+type and very similar to how the sketch is kept in the progam memory
+
+- using unix pipes it is possible to feed the output of the program
+(sketch description) into the program itself, thus allowing to
+concatenate a sequence of "moves".
+
+- checking the applicability of all the implemented "moves" to a 
+given sketch.  These moves are topological modifications to a
+sketch that correspond to isotopic modifications on the 3D surface,
+i.e. deformations that do not change the topology of the scene.
+This is achieved with the command:
+
+$ contour testallrules example.morse
+
+where "example.morse" is a file describing the sketch.  If "example.morse"
+is omitted, the program will read the description from standard input.
+
+- applying one of the implemented "moves" as follows:
+
+$ contour applyrule rulename example.morse
+
+where "rulename" is one of the rules (as output by "testallrules").
+In some cases a rule can be applied in different parts of the sketch,
+it will be applied at the first position found, as an alternative
+the syntax "rule:n" will apply the rule at the n-th position in the
+sketch (this is also shown by "testallrules").
+
+- canonifying a "region" description.  This is motivated by the
+interest in understanding whether two sketches are actually the
+same sketch.  Appropriate "canonification" will ensure that two
+"region" descriptions of the same sketch will produce the same
+"canonic" representation.  Unfortunately this is not achieved
+completely...
+
+- comparing to sketches.  This is done in a more-or-less lessicographic
+way.  This is only meaningful after canonification (which is authomatically
+performed).  The command
+
+$ cat example1 example2 | contour compare
+
+will produce one of the following answers:
+- s1 > s2
+- s1 < s2
+- s1 = s2
+
+The answer "s1 = s2" is NOT proved to be true, although we do not
+know an example of the contrary at the moment.
+
+- counting connected components.  The program is capable of counting
+the number of connected components of the 3D scene (the number of
+surfaces):
+
+$ contour countcc example
+
+- extracting one of the connected components:
+
+$ contour extractcc n example
+
+- computing the Euler characteristic:
+
+$ contour characteristic example
+
+
+   TOOLS
+
+the script "trasforma" makes use of the program contour in an
+extensive way.  The command
+
+$ ./trasforma example
+
+will apply all possible sequences of "moves" to example and
+places all the results in a directory named "example.transformations"
+they are named following the scheme: nnnnn_example.r1.r2...rn
+where 'nnnnn' is a number corresponding to the ordering between the
+resulting sketches and 'r1', 'r2', ..., 'rn' are the rules that
+produces this result if applied in sequence to the example.
+For example, the results: 00003_ex.N6.CN2R.N6 and 00008_ex.N6.N6
+are the result of application of rules
+N6, then CN2R, then N6 (respectively N6, then N6) starting from "ex.morse".
+The two results compare (as of "contour compare") in the same way
+as the two numbers (3 and 8 in our case) compare.
+It may be useful to run "$ md5sum *" in the results directory to quickly
+show which results are FOR SURE identical.
+
+
+   INSTALLATION
+
+Per compilare il programma basta fare
+
+$ ./configure
+$ make
+
+(opzionalmente "make install" fatto da root installa in /usr/local/bin).
+
+
+   DESCRIZIONE "MORSE".
+
+Il programma si usa come nel seguente esempio, che
+corrisponde al simbolo di infinito:
+
+===================
+./contour
+morse {
+  ^   ^;
+ (  X  );
+  U   U;
+}
+===================
+
+la lettera '^' denota un massimo relativo di un arco
+dello sketch,
+le lettere '(' e ')' indicano un tratto circa verticale
+la lettera 'X' indica un "crossing" di 4 archi, due
+diretti verso l'alto e due verso il basso,
+la lettera 'U' indica un minimo relativo di un arco.
+I caratteri '(', ')', '|', '/', '\' sono per il programma
+del tutto equivalenti, e possono essere usati in modo opportuno
+per migliorare l'impatto visivo dell'esempio.
+
+Puo' essere conveniente mettere in un file (es "pippo.morse") 
+la descrizione di uno 'sketch' ed utilizzare poi il comando 
+"./contour <pippo.morse".  A questo riguardo preciso che
+sono gia presenti un certo numero di descrizioni in files
+con estensione ".morse".
+
+Vedremo come aggiungere le informazioni necessarie
+per avere l'orientazione degli archi, i valori delle
+profondita' e la posizione delle cuspidi.
+
+Il risultato del comando precedente e':
+
+===================
+sketch {
+Arc 1:  [nessuna informazione]
+Arc 2:  [nessuna informazione]
+Region 0 (f = 0): () (+a1 -a2);
+Region 1 (f = 2): (+a2);
+Region 2 (f =-2): (-a1);
+}
+Checking consistency as apparent contour...
+1. Checking positivity of f...     FAILED for region 2 (f = -2)
+2. d versus f consistency...       contour: appcontour.c:41: appcontourcheck: Assertion `arc->depths' failed.
+Abort
+===================
+
+la prima parte "sketch { ... }" contiene una rappresentazione
+dello sketch come e' stata costruita dal programma, usando la
+notazione per regioni.
+Vengono prima elencati gli archi, in questo caso 2, di cui non
+sono disponibili informazioni relative alle cuspidi e alle
+profondita', poi le varie regioni, con in testa sempre la regione
+esterna (illimitata).
+Non essendo indicate orientazioni degli archi, il programma comunque
+ne sceglie una a caso, utilizzata per il calcolo della f e per la
+rappresentazione delle regioni.
+
+Per ogni regione vengono elencate le componenti connesse del bordo,
+per primo il bordo esterno, seguito da eventuali 'buchi'.  La 
+regione esterna ha per convenzione un bordo esterno vuoto, indicato
+da '()'.
+
+I vari bordi sono percorsi in senso antiorario (stando dentro la
+regione) e gli archi sono elencati con il segno '+' se la loro
+orientazione e' consistente con quella con cui viene percorso
+il bordo della regione.
+
+Le ultime quattro righe producono un errore, dovuto all'assenza di
+informazioni relative alla profondita' degli archi.
+
+'contour' permette di leggere una descrizione anche utilizzando
+la descrizione per regioni, come fornita dal programma stesso.
+
+
+COME DARE INFORMAZIONI.
+
+E' possibile seguire una delle lettere '^', '|', 'U', 'X' con
+una sequenza del tipo '(o, d1 d2 ...)' dove 'o' indica
+l'orientazione, e puo' assumere i valori:
+
+l (left)
+r (right)
+u (up)
+d (down)
+
+per '^' e per 'U' valgono solo le scelte 'l' e 'r', mentre per 
+'|' solo 'u' e 'd'; per 'X' sono ammesse tutte le direzioni.
+Nel caso della 'X' si possono dare due descrizioni '(...)(...)' che
+corrispondono ai due archi discendenti.
+
+La sequenza 'd1 d2 ...' consiste di interi indicanti le profondita'
+dei vari sottoarchi separati da cuspidi.  Quindi il numero di
+valori indica quante cuspidi sono contenute nell'arco.
+Nel caso in cui gli incrementi/decrementi da un valore al successivo 
+siano sempre di una unita' e' possibile abbreviare l'elenco fornendo
+il solo valore iniziale seguito da una sequenza di caratteri '+' o '-'
+indicanti se il valore e' incrementato o decrementato per ottenere
+il valore successivo.
+
+Si rimanda agli esempi per maggiori informazioni.
+
+NOTA: un arco puo' non avere estremi (ad esempio il contorno
+apparente di una sfera); in tal caso, in presenza di una o
+piu' cuspidi e' necessario ripetere in coda il valore iniziale
+delle profondita' (per motivi tecnici).
+
+
+   "MOSSE" IMPLEMENTATE.
+
+In riferimento al paper, sono implementate le mosse
+N1, N2, N3, N4, N5, C1, C2, CN1, CN2L, CN2R, CN3; di queste
+la CN2R e' la simmetrica di CN2L.
+
+Inoltre sono anche presenti le mosse ulteriori:
+
+A1, A2: Annichilazione di un anello con orientazione positiva,
+A1 se viene rappresentato un "fungo" visto dall'alto, A2 se
+si tratta di una caverna vista dall'alto
+
+N6: corrispondente a CN1^(-1) * N4
+

@@ -1,0 +1,1 @@
+./contour applyrule n3 < examples/collina.morse | ./contour applyrule c1
