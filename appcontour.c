@@ -49,10 +49,10 @@ appcontourcheck (struct sketch *sketch, int verbose)
   int fail, globfail, i, diff=0;
   struct region *region;
   struct arc *arc;
-  int d, dmin, dmax, fmin;
-  struct border *failb;
+  int d, dmin = 0, dmax = 0, fmin = 0;
+  struct border *failb = 0;
   struct borderlist *hole;
-  int dd[4], res;
+  int dd[4], res = 0;
 
   if (verbose) printf ("Checking consistency as apparent contour...\n");
 
