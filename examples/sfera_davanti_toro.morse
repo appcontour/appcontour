@@ -3,17 +3,17 @@
 # della rule N1 in un caso particolare
 #
 morse {
-          A[l,0]          ;
-
- I   A    A[l,0] A[r,0] I ;
-
- I  I  X     X      I   I ;
-
- I  I I   V[r,2] I  I   I ;
-
- I   I    V[r,0] I    I   ;
-
-   I       V      I       ;
-
-           V              ;
+          ^l,0            ;
+    /             \       ;
+  /  ^    ^l,0   ^r,0  \  ;
+ |  / \ /   \  /   \    | ;
+ |  |  X     X      |   | ;
+ |  | ( \   / \     |   | ;
+ |  |  \  U r,2)   /    | ;
+  \ \   \     /   /    /  ;
+   \  \   U r,0 /     /   ;
+    \   \     /     /     ;
+     \     U      /       ;
+        \      /          ;
+           U              ;
 }

@@ -389,7 +389,7 @@ void
 remove_transparent_arcs (struct sketch *sketch)
 {
   struct arc *arc;
-  struct border *bl, *br, *blp, *brp;
+  struct border *bl, *br, *blp, *brp, *bltemp;
   struct borderlist *bll, *blr;
   struct region *rl, *rr;
 
@@ -416,36 +416,40 @@ remove_transparent_arcs (struct sketch *sketch)
       break;
 
       case 1:
-      printf ("NON IMPLEMENTATO\n");
-      exit (100);
+      if (bl->next != bl)
+      {
+        bltemp = bl;
+        bl = br;
+        br = bltemp;
+        bll = bl->border;
+      }
+      assert (bl->next == bl);
+      assert (br->next != br);
+      assert (bl->info == 0 && br->info == 0);
+      bll = extractborderlist (bll);
+      freeborderlist (bll);
+      brp = removeborder (br);
+      break;
 
       case 2:
       assert (bl->next != bl);
       assert (br->next != br);
       assert (bl->info == 0 && br->info == 0);
       blp = removeborder (bl);
-      brp = removeborder (br);
-      //if (blp->info->transparent == 0)
-      //{
-      //  atjtemp = (struct arcs_to_join *) malloc (sizeof (struct arcs_to_join));
-      //  if (debug) printf ("adding atj: %x\n", (int)blp->info);
-      //  atjtemp->next = atj;
-      //  atj = atjtemp;
-      //  atj->sponda = blp;
-      //}
-      //if (brp->info->transparent == 0)
-      //{
-      //  atjtemp = (struct arcs_to_join *) malloc (sizeof (struct arcs_to_join));
-      //  if (debug) printf ("adding atj: %x\n", (int)brp->info);
-      //  atjtemp->next = atj;
-      //  atj = atjtemp;
-      //  atj->sponda = brp;
-      //}
-      topo_change (blp, brp);
+      if (br->next == br)
+      {   /* caso particolare di rimozione di un baffo */
+        blr = extractborderlist (blr);
+        freeborderlist (blr);
+      } else {
+        brp = removeborder (br);
+        if (blp != brp && blp != br) topo_change (blp, brp);
+      }
+      break;
     }
     arc->regionleft = arc->regionright = 0;
     removearc (arc, sketch);
   }
+  if (debug) printsketch (sketch);
   return;
 }
 
