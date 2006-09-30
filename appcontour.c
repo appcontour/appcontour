@@ -283,6 +283,7 @@ checkdnodecons (struct border *b, int dd[4])
 void remove_transparent_arcs (struct sketch *sketch);
 int make_transparent (int ccid, struct sketch *sketch);
 int join_consecutive_arcs (struct sketch *sketch);
+int list_strati (struct sketch *sketch);    /* for debugging purposes */
 
 int
 extract_connected_component (int ccid, struct sketch *sketch)
@@ -313,10 +314,9 @@ remove_connected_component (int ccid, struct sketch *sketch)
   /* primo passo, rendo "trasparente" la superficie */
   make_transparent (ccid, sketch);
   remove_transparent_arcs (sketch);
+  if (debug) printsketch (sketch);
   join_consecutive_arcs (sketch);
-  if (debug) list_strati (sketch);
   adjust_isexternalinfo (sketch);
-  if (debug) list_strati (sketch);
   postprocesssketch (sketch);
   if (debug) list_strati (sketch);
   if (debug) printsketch (sketch);
@@ -338,6 +338,7 @@ list_strati (struct sketch *sketch)
     }
     printf ("\n");
   }
+  return (1);
 }
 
 int
@@ -465,25 +466,28 @@ join_consecutive_arcs (struct sketch *sketch)
        * the next node has exactly two concurring arcs
        * this can be checked as follows:
        */
+      if (arc1->endpoints == 0) continue;
       b1 = arc1->regionleft;
       b2 = gettransborder (b1->next);
       if (b2->next->info == arc1) /* it is interesting to observe that this is
                                    * a necessary and sufficient condition
                                    */
       {
-        goon = 1;
         assert (b1->orientation == 1);
         assert (b2->orientation == -1);
         arc2 = b2->info;
         assert (arc2->regionleft->info == arc2);
+        if (debug) printf ("calling mergearcs: %d, %d\n", arc1->tag, arc2->tag);
         arc = mergearcs (arc1, arc2, sketch);
-        if (arc != arc1) {goon = 1; arc1 = arc;}
         if (b1->next != b1) removeborder (b1->next);
         if (b2->next != b2) removeborder (b2->next);
         arc->regionleft = b1;
         arc->regionright = b2;
         b1->info = arc;
         b2->info = arc;
+        if (debug) printsketch (sketch);
+        goon = 1;
+        if (arc != arc1) {goon = 1; arc1 = arc;}
       }
     }
   }
@@ -620,11 +624,9 @@ countcc_flood_step (struct region *r, int i)
       arc = bp->info;
       btrans = gettransborder (bp);
       rtrans = btrans->border->region;
-      if (debug) printf ("arc %d, dvalues %d\n", arc->tag, arc->dvalues);
       for (j = 0; j < arc->dvalues; j++)
       {
         d = arc->depths[j];
-        if (debug) printf ("trying: arc %d, j %d\n", arc->tag, d);
         if (r->f > rtrans->f)
         {
           if (i == d || i == d + 1)
@@ -643,14 +645,8 @@ countcc_flood_step (struct region *r, int i)
           ii = i;
           if (i >= d) ii = i + 2;
         }
-        if (debug) printf ("(r,i) = (%d,%d)/(%d,%d)\n",r->tag,i,rr->tag,ii);
         if (rr->strati[ii] != r->strati[i])
         {
-          if (debug)
-          {
-            printf ("nuovo strato per componente %d, regione %d\n",
-                      r->strati[i], r->tag);
-          }
           goon = 1;
           assert (rr->strati[ii] = -1);
           rr->strati[ii] = r->strati[i];

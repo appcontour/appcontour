@@ -2,9 +2,9 @@
 # una sfera che fa capolino da dietro un'altra sfera
 #
 morse {
-       A[l,0]           ;  # sfera che fa capolino
-  I    A[l,0]  I        ;
-   X         X[u,2][u,0];
-  I    V       I        ;
-       V                ;
+      ^l,0      ;  # sfera che fa capolino
+  (   ^l,0)     ;
+   X     X u,2  ;
+  (   U   )u,0  ;
+      U         ;
 }
