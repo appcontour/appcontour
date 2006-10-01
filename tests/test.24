@@ -1,0 +1,2 @@
+./contour applyrule cr3l examples/test_rule_cr3.sketch
+./contour applyrule cr3r examples/test_rule_cr3.sketch

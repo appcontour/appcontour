@@ -50,6 +50,10 @@ struct arc {
 
 #define F_UNDEF (-9999)
 
+#define TC_UNKNOWN 0
+#define TC_EROSION 1
+#define TC_DILATION 2
+
 /* definizioni per la lettura di una descrizione 'morse' */
 
 #define ORIENT_LD (-1)
@@ -130,7 +134,9 @@ int rule_cn2lb (struct sketch *s, int count);
 int rule_cn2rb (struct sketch *s, int count);
 int rule_cn2lr (struct sketch *s, int count, int isleft, int isback);
 int rule_cn3 (struct sketch *s, int count);
-int rule_cr3 (struct sketch *s, int count);
+int rule_cr3l (struct sketch *s, int count);
+int rule_cr3r (struct sketch *s, int count);
+int rule_cr3lr (struct sketch *s, int count, int ori);
 struct border *get_ith_cusp (struct region *r, int i, int *cp);
 struct border *rimuovi_losanga (struct region *r, struct sketch *sketch);
 void taglia_nodo (struct border *b1n, struct sketch *sketch,
@@ -203,6 +209,8 @@ int findinborder (struct border *, struct border *);
 struct arc *mergearcs (struct arc *arc1, struct arc *arc2, struct sketch *sketch);
 struct arc *mergearcsc (struct arc *arc1, struct arc *arc2, int dincr,
                         struct sketch *sketch);
+int topo_change_g (struct border *b1, struct border *b2, 
+                   int type, struct sketch *sketch);
 int topo_change (struct border *b1, struct border *b2);
 void topo_change_l (struct border *b1, struct border *b2);
 struct region *regionunion (struct region *r1, struct region *r2, 

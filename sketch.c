@@ -921,6 +921,68 @@ mergearcsc (struct arc *arc1, struct arc *arc2, int dincr,
 }
 
 /*
+ * operazione taglia/incolla riferita a bordi di regione
+ * opera a livello piu' alto di topo_change, ma ha bisogno
+ * di sapere se si tratta di erosione o di dilatazione
+ */
+
+int
+topo_change_g (struct border *b1, struct border *b2, int type, 
+               struct sketch *sketch)
+{
+  struct region *r1, *r2, *newr;
+  struct borderlist *bl1, *bl2, *newbl;
+  int res = 0;
+
+  bl1 = b1->border;
+  bl2 = b2->border;
+  r1 = bl1->region;
+  r2 = bl2->region;
+
+  if (type == TC_UNKNOWN)   /* cerco di capire in che caso sono */
+  {
+    if (r1 != r2) type = TC_DILATION;
+  }
+  assert (type == TC_EROSION || type == TC_DILATION);
+
+  if ((type == TC_EROSION && bl1 != bl2) ||
+      (type == TC_DILATION && bl1 == bl2))      /* 1 regione -> 1 regione */
+  {
+    return (topo_change (b1, b2));
+  }
+
+  if (type == TC_EROSION)                       /* 1 regione -> 2 regioni */
+  {
+    assert (bl1 == bl2);
+    /* DOVE METTO I BUCHI? non c'e' modo di decidere in base alle sole informazioni
+     * topologiche in modo sensato
+     * qualunque scelta porta ad una configurazione sensata, quindi qui opero una
+     * scelta arbitraria, consistente nel lascare tutti i buchi nella regione
+     * originale, mentre b2 sta sulla nuova regione, che non ha buchi
+     */
+    if (bl1->region->border->next)   /* ci sono buchi, avviso l'utente! */
+    {
+      fprintf (stderr, "Warning: Heisenberg rules!\n");
+      fprintf (stderr, "  splitting a region with holes requires a degree of ");
+      fprintf (stderr, "arbitrarieness,\n  I will put all holes in one of the regions.");
+    }
+    res = topo_change (b1, b2);
+    /* e' stata creato un nuovo bordo per b2, che devo recuperare */
+    newbl = b2->border;
+    assert (b1->border == bl1 && newbl != bl1);
+    newbl = extractborderlist (newbl);
+    newr = newregion (sketch);
+    newr->border = newbl;
+    newbl->region = newr;
+  } else {           /* type = TC_DILATION:   2 regioni -> 1 regione */
+    assert (bl1 != bl2);
+    assert (r1 == regionunion (r1, r2, sketch));
+    res = topo_change (b1, b2);
+  }
+  return (res);
+}
+
+/*
  * operazione taglia/incolla sui bordi delle regioni
  * si vuole cambiare la topologia in modo che il 
  * successivo di b1 diventi il successivo di b2
@@ -1107,8 +1169,12 @@ checkconsistency (struct sketch *sketch)
 
   for (r = sketch->regions; r; r = r->next)
   {
+    assert (r);
     for (bl = r->border; bl; bl = bl->next)
     {
+      assert (bl);
+      if (bl->region != r)
+        printf ("bl->region: %d, r: %d\n", bl->region->tag, r->tag);
       assert (bl->region == r);
       if (bl->sponda)
       {
@@ -1116,7 +1182,11 @@ checkconsistency (struct sketch *sketch)
         do {
           assert (bp->border == bl);
           arc = bp->info;
-          if (arc->tag != INFINITY_ARC && arc->regionleft && arc->regionright)
+          if (arc == 0)
+          {
+            printf ("Warning: missing pointer from sponda to arc\n");
+          }
+          if (arc && arc->tag != INFINITY_ARC && arc->regionleft && arc->regionright)
           {
             assert (arc->regionleft == bp || arc->regionright == bp);
             assert (arc->regionleft != arc->regionright);

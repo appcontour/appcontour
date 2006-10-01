@@ -48,7 +48,8 @@ apply_rule (char *rule, struct sketch *sketch)
   else if (strcasecmp (rule, "cn2lb") == 0) res = rule_cn2lb (sketch, rcount);
   else if (strcasecmp (rule, "cn2rb") == 0) res = rule_cn2rb (sketch, rcount);
   else if (strcasecmp (rule, "cn3") == 0) res = rule_cn3 (sketch, rcount);
-  //else if (strcasecmp (rule, "cr3") == 0) res = rule_cr3 (sketch, rcount);
+  else if (strcasecmp (rule, "cr3l") == 0) res = rule_cr3l (sketch, rcount);
+  else if (strcasecmp (rule, "cr3r") == 0) res = rule_cr3r (sketch, rcount);
   else printf ("Invalid rule %s\n", rule);
 
   if (debug) printf ("res = %d\n", res);
@@ -97,7 +98,8 @@ testallrules (struct sketch *sketch)
   exitcode = testsinglerule ("CN2LB", rule_cn2lb, exitcode, sketch);
   exitcode = testsinglerule ("CN2RB", rule_cn2rb, exitcode, sketch);
   exitcode = testsinglerule ("CN3", rule_cn3, exitcode, sketch);
-  exitcode = testsinglerule ("CR3", rule_cr3, exitcode, sketch);
+  exitcode = testsinglerule ("CR3L", rule_cr3l, exitcode, sketch);
+  exitcode = testsinglerule ("CR3R", rule_cr3r, exitcode, sketch);
   printf ("\n");
   return (exitcode);
 }
@@ -600,7 +602,21 @@ rule_cn3 (struct sketch *sketch, int rcount)
 }
 
 int
-rule_cr3 (struct sketch *sketch, int rcount)
+rule_cr3l (struct sketch *sketch, int rcount)
+{
+  return (rule_cr3lr (sketch, rcount, 1));
+}
+
+int
+rule_cr3r (struct sketch *sketch, int rcount)
+{
+  return (rule_cr3lr (sketch, rcount, -1));
+}
+
+/* ori = 1 -> cr3 del paper, altrimenti e' quella simmetrica */
+
+int
+rule_cr3lr (struct sketch *sketch, int rcount, int ori)
 {
   int onlytest = 0, d, j;
   struct region *r;
@@ -629,9 +645,9 @@ rule_cr3 (struct sketch *sketch, int rcount)
         arc1 = b1->info;
         arc1n = b1n->info;
         d = arc1->depths[arc1->dvalues - 1];
-        if (arc1n->depths[0] != d + 2) continue;
-        if (get_d_increase_across_node (arc1, 1) != 0) continue;
-        if (get_d_increase_across_node (arc1n, -1) != -2) continue;
+        if (arc1n->depths[0] != d + ori*2) continue;
+        if (get_d_increase_across_node (arc1, 1) != ori - 1) continue;
+        if (get_d_increase_across_node (arc1n, -1) != - ori - 1) continue;
 
         /* we found a good candidate for the consecutive arcs */
 
@@ -644,7 +660,7 @@ rule_cr3 (struct sketch *sketch, int rcount)
             arc2 = b2->info;
             for (j = 0; j < arc2->dvalues; j++)
             {
-              if (arc2->depths[j] != d + 1) continue;
+              if (arc2->depths[j] != d + ori) continue;
 
               /* ho trovato una posizione di applicabilita' */
               if (rcount-- <= 1)
@@ -765,7 +781,7 @@ taglia_nodo (struct border *b1n, struct sketch *sketch,
   struct border *b1p, *b2p, *b3p, *b4p, *b2n;
   struct region *r2, *r4;
   struct arc *arc12, *arc23, *arc34, *arc41, *arcleft, *arcright;
-  int changes, r2ext, r4ext;
+  int changes;
 
   if (debug) printf ("entering taglia_nodo\n");
   if (debug) printsketch (sketch);
@@ -781,47 +797,21 @@ taglia_nodo (struct border *b1n, struct sketch *sketch,
   r2 = b2p->border->region;
   r4 = b4p->border->region;
 
-  if (r2 == r4)
-  {
-    if (debug) printf ("r2 e r4 sono la stessa regione\n");
-    /* le regioni 2 e 4 sono la stessa regione.
-     * ci sono tre casi, ma li tratto tutti allo stesso modo
-     * aggiustando alla fine con una chiamata a adjust_isexternalinfo
-     * ad esempio se (r2->border != b2p->border)
-     * significa che sono su un'isola, che si spezza in due
-     */
-    assert (b2p->border == b4p->border);
-    assert (b2p != b4p);
-    if (topo_change (b2p, b4p) == 0) assert (0);
-    changes = adjust_isexternalinfo (sketch);
-    assert (changes <= 1);
-    if (debug) printf ("changes = %d\n", changes);
-    /* purtroppo non e' facile sapere quale delle due componenti
-     * connesse sara' un buco, tiro a indovinare e poi utilizzo
-     * la funzione adjust_isexternalinfo per sistemare
-     */
-  } else {
-    /* la 2 e 4 sono regioni diverse, che ora
-     * diventano la stessa!
-     */
-    r2ext = r4ext = 0;
-    if (r2->border == b2p->border) r2ext = 1;
-    if (r4->border == b4p->border) r4ext = 1;
-    assert (r2ext || r4ext);     /* almeno per una sono sul bordo esterno */
-    /* devo rimappare la regione r4 nella r2 */
-    if (regionunion (r2, r4, sketch) != r2)
-    {
-      printf ("errore fatale in regionunion\n");
-      assert (0);
-    }
-    assert (b2p->border != b4p->border);
-    if (debug) printf ("redefining border\n");
-    if (topo_change (b2p, b4p) == 0) assert (0);
-    if (debug) printf ("adjusting...\n");
+  /* Se le regioni 2 e 4 sono la stessa regione
+   * ci sono tre casi, ma li tratto tutti allo stesso modo
+   * aggiustando alla fine con una chiamata a adjust_isexternalinfo
+   * ad esempio se (r2->border != b2p->border)
+   * significa che sono su un'isola, che si spezza in due
+   */
+  topo_change_g (b2p, b4p, TC_DILATION, sketch);
+  changes = adjust_isexternalinfo (sketch);
+  assert (changes <= 1);
+  if (debug) printf ("changes = %d\n", changes);
+  /* purtroppo non e' facile sapere quale delle due componenti
+   * connesse sara' un buco, tiro a indovinare e poi utilizzo
+   * la funzione adjust_isexternalinfo per sistemare
+   */
 
-    changes = adjust_isexternalinfo (sketch);
-    assert (changes <= 1);
-  }
   if (debug) checkconsistency (sketch);
 
   /*
@@ -1006,8 +996,7 @@ join_cusps (struct border *cusp1, int cusp1pos,
             struct border *cusp2, int cusp2pos, 
             struct sketch *sketch)
 {
-  struct borderlist *bl1, *bl2, *newbl;
-  struct region *newr;
+  struct borderlist *bl1, *bl2;
   struct border *btemp;
 
   spezza_bordo (cusp1, cusp1pos, sketch);
@@ -1046,14 +1035,11 @@ join_cusps (struct border *cusp1, int cusp1pos,
   if (bl1 == bl2)         /* la regione si spezza in due */
   {
     if (debug) printf ("la regione si spezza in due\n");
-    newr = newregion (sketch);
-    newbl = newborderlist (newr);
-    topo_change_l (cusp1, cusp2);
+
+    topo_change_g (cusp1, cusp2, TC_EROSION, sketch);
+
     if (cusp1->next == cusp1) cusp1->info->endpoints = 1;
     if (cusp2->next == cusp2) cusp2->info->endpoints = 1;
-    redefineborder (cusp2, newbl);
-    bl1->sponda = cusp1;
-    newbl->sponda = cusp2;
     if (debug)
     {
       printf ("arco di cusp2: %d\n", cusp2->info->tag);
@@ -1377,8 +1363,8 @@ applyrulecr3 (struct border *b1, struct border *b2, int dindex,
 {
   struct border *b1nt, *b1ntnt, *b2t, *b1t, *b1tp, *b1n;
   struct arc *arc1, *arc1n, *arc2, *arc3, *arc3n;
-  int isclosed1, isclosed2, size1, size2, i, j;
-  int *newdepths1, *newdepths2;
+  int isclosed1, isclosed2, size1, size2, size12, i, j, count;
+  int *newdepths1, *newdepths2, *newdepths12;
 
   /* devo stare attento a non perdere i dati di b2 e dindex */
 
@@ -1395,99 +1381,173 @@ applyrulecr3 (struct border *b1, struct border *b2, int dindex,
   arc2 = b2->info;
   arc3 = b1tp->info;
   arc3n = b1nt->next->info;
-if (debug) printf ("arc1 %d, arc1n %d, arc2 %d, arc3 %d, arc3n %d\n",
+  if (debug) printf ("arc1 %d, arc1n %d, arc2 %d, arc3 %d, arc3n %d\n",
               arc1->tag, arc1n->tag, arc2->tag, arc3->tag, arc3n->tag);
   arc3 = mergearcs (arc3, arc3n, sketch);
   arc3->regionleft = b1tp;
   arc3->regionright = b1ntnt;
   b1tp->info = b1ntnt->info = arc3;
 
-  if (arc2->endpoints == 0) assert (0);
-
-  isclosed1 = isclosed2 = 0;
-  if (arc1 != arc2)
+  if (arc2->endpoints == 0)
   {
-    printf ("arc1(%d) != arc2(%d)\n", arc1->tag, arc2->tag);
-    size1 = arc2->depthsdim - dindex + arc1->depthsdim;
-    newdepths1 = (int *) malloc (size1 * sizeof (int));
-    for (i = 0, j = 0; i < arc1->depthsdim; i++) 
-      newdepths1[j++] = arc1->depths[i];
-    assert (arc2->depths[dindex] - newdepths1[j-1] == 1);
+    size12 = arc1->depthsdim + arc2->depthsdim + 1;
+    if (arc1 != arc1n) size12 += arc1n->depthsdim - 1;
+    newdepths12 = (int *) malloc (size12 * sizeof (int));
+    for (i = 0, j = 0; i < arc1->depthsdim; i++)
+      newdepths12[j++] = arc1->depths[i];
     for (i = dindex; i < arc2->depthsdim; i++)
-      newdepths1[j++] = arc2->depths[i];
-  } else {
-    printf ("arc1 == arc2, dindex = %d, arc1->depthsdim = %d\n",
-                           dindex, arc1->depthsdim);
-    isclosed1 = 1;
-    size1 = arc1->depthsdim - dindex + 1;
-    newdepths1 = (int *) malloc (size1 * sizeof (int));
-    for (i = dindex, j = 0; i < arc1->depthsdim; i++)
-      newdepths1[j++] = arc1->depths[i];
-    newdepths1[j] = arc1->depths[dindex];
-  }
-  if (arc1n != arc2)
+      newdepths12[j++] = arc2->depths[i];
+    for (i = 1; i <= dindex; i++)
+      newdepths12[j++] = arc2->depths[i];
+    newdepths12[j++] = arc1n->depths[0];
+    if (arc1 != arc1n)
+      for (i = 1; i < arc1n->depthsdim; i++)
+        newdepths12[j++] = arc1n->depths[i];
+    free (arc1->depths);
+    arc1->depths = 0;
+    if (arc1n->depths) free (arc1n->depths);
+    arc1n->depths = 0;
+    if (arc2->depths) free (arc2->depths);
+    arc2->depths = 0;
+    arc1->depths = newdepths12;
+    arc1->depthsdim = arc1->dvalues = arc1->cusps = size12;
+    arc1->cusps--;
+    arc1->endpoints = 1;
+    if (b1->next->next != b1) arc1->endpoints = 2;
+    if (arc1 == arc1n) {arc1->dvalues--; arc1->endpoints = 0;}
+    if (arc1n->depths == 0)
+    {
+      arc1n->regionleft = arc1n->regionright = 0;
+      removearc (arc1n, sketch);
+    }
+    arc1n = 0;
+  } else if (arc1 == arc1n)
   {
-    printf ("arc1n != arc2\n");
-    size2 = 1 + dindex + arc1n->depthsdim;
-    newdepths2 = (int *) malloc (size2 * sizeof (int));
+    size12 = arc1->depthsdim + arc2->depthsdim + 1;
+    newdepths12 = (int *) malloc (size12 * sizeof (int));
     for (i = 0, j = 0; i <= dindex; i++)
-      newdepths2[j++] = arc2->depths[i];
-    for (i = 0; i < arc1n->depthsdim; i++)
-      newdepths2[j++] = arc1n->depths[i];
-    assert (newdepths2[dindex] + 1 == newdepths2[dindex + 1]);
+      newdepths12[j++] = arc2->depths[i];
+    for (i = 0; i < arc1->depthsdim; i++)
+      newdepths12[j++] = arc1->depths[i];
+    for (i = dindex; i < arc2->depthsdim; i++)
+      newdepths12[j++] = arc2->depths[i];
+    free (arc1->depths);
+    arc1->depths = 0;
+    if (arc1n->depths) free (arc1n->depths);
+    arc1n->depths = 0;
+    if (arc2->depths) free (arc2->depths);
+    arc2->depths = 0;
+    arc1->depths = newdepths12;
+    arc1->depthsdim = arc1->dvalues = arc1->cusps = size12;
+    arc1->cusps--;
+    arc1->endpoints = 2;
+    if (b2t->next == b2t) arc1->endpoints = 1;
+    arc1n = 0;
   } else {
-    printf ("arc1n == arc2, dindex = %d, arc2->depthsdim = %d\n",
-                            dindex, arc2->depthsdim);
-    isclosed2 = 1;
-    size2 = dindex + 2;
-    newdepths2 = (int *) malloc (size2 * sizeof (int));
-    for (i = 0, j = 0; i <= dindex; i++)
-      newdepths2[j++] = arc1n->depths[i];
-    newdepths2[j] = arc1n->depths[0];
+    assert (arc1 != arc1n);
+    isclosed1 = isclosed2 = 0;
+    if (arc1 != arc2)
+    {
+      size1 = arc2->depthsdim - dindex + arc1->depthsdim;
+      newdepths1 = (int *) malloc (size1 * sizeof (int));
+      for (i = 0, j = 0; i < arc1->depthsdim; i++) 
+        newdepths1[j++] = arc1->depths[i];
+      assert (abs(arc2->depths[dindex] - newdepths1[j-1]) == 1);
+      for (i = dindex; i < arc2->depthsdim; i++)
+        newdepths1[j++] = arc2->depths[i];
+    } else {
+      isclosed1 = 1;
+      size1 = arc1->depthsdim - dindex + 1;
+      newdepths1 = (int *) malloc (size1 * sizeof (int));
+      for (i = dindex, j = 0; i < arc1->depthsdim; i++)
+        newdepths1[j++] = arc1->depths[i];
+      newdepths1[j] = arc1->depths[dindex];
+    }
+    if (arc1n != arc2)
+    {
+      size2 = 1 + dindex + arc1n->depthsdim;
+      newdepths2 = (int *) malloc (size2 * sizeof (int));
+      for (i = 0, j = 0; i <= dindex; i++)
+        newdepths2[j++] = arc2->depths[i];
+      for (i = 0; i < arc1n->depthsdim; i++)
+        newdepths2[j++] = arc1n->depths[i];
+      assert (abs(newdepths2[dindex + 1] - newdepths2[dindex]) == 1);
+    } else {
+      isclosed2 = 1;
+      size2 = dindex + 2;
+      newdepths2 = (int *) malloc (size2 * sizeof (int));
+      for (i = 0, j = 0; i <= dindex; i++)
+        newdepths2[j++] = arc1n->depths[i];
+      newdepths2[j] = arc1n->depths[0];
+    }
+    free (arc1->depths);
+    arc1->depths = 0;
+    if (arc1n->depths) free (arc1n->depths);
+    arc1n->depths = 0;
+    if (arc2->depths) free (arc2->depths);
+    arc2->depths = 0;
+    arc1->depths = newdepths1;
+    arc1->depthsdim = arc1->dvalues = arc1->cusps = size1;
+    arc1->cusps--;
+    arc1->endpoints = 1;
+    if (b1->next != b1) arc1->endpoints = 2;
+    if (isclosed1) {arc1->dvalues--; arc1->endpoints = 0;}
+    if (arc1n->depths != 0) arc1n = newarc (sketch);
+    arc1n->depths = newdepths2;
+    arc1n->depthsdim = arc1n->dvalues = arc1n->cusps = size2;
+    arc1n->cusps--;
+    arc1n->endpoints = 1;
+    if (b1n->next != b2) arc1n->endpoints = 2;
+    if (isclosed2) {arc1n->dvalues--; arc1n->endpoints = 0;}
   }
-  free (arc1->depths);
-  arc1->depths = 0;
-  if (arc1n->depths) free (arc1n->depths);
-  arc1n->depths = 0;
-  if (arc2->depths) free (arc2->depths);
-  arc2->depths = 0;
-  arc1->depths = newdepths1;
-  arc1->depthsdim = arc1->dvalues = arc1->cusps = size1;
-  arc1->cusps--;
-  arc1->endpoints = 1;
-  if (b1->next != b1) arc1->endpoints = 2;
-  if (isclosed1) {arc1->dvalues--; arc1->endpoints = 0;}
+  if (b1 == b2)
+  {
+    b1 = newborder (b2->border);
+    b1->orientation = b2->orientation;
+    b1->next = b2->next;
+    b2->next = b1;
+  }
   arc1->regionleft = b1;
   arc1->regionright = b2t;
   b1->info = b2t->info = arc1;
-  if (arc1n->depths != 0) arc1n = newarc (sketch);
-  arc1n->depths = newdepths2;
-  arc1n->depthsdim = arc1n->dvalues = arc1n->cusps = size2;
-  arc1n->cusps--;
-  arc1n->endpoints = 1;
-  if (b1n->next != b2) arc1n->endpoints = 2;
-  if (isclosed2) {arc1n->dvalues--; arc1n->endpoints = 0;}
-  arc1n->regionleft = b2;
-  arc1n->regionright = b1nt;
-  b2->info = b1nt->info = arc1n;
-
+  if (b1nt == b2t)
+  {
+    b1nt = newborder (b2t->border);
+    b1nt->orientation = b2t->orientation;
+    b1nt->next = b2t->next;
+    b2t->next = b1nt;
+  }
+  if (arc1n)
+  {
+    arc1n->regionleft = b2;
+    arc1n->regionright = b1nt;
+    b2->info = b1nt->info = arc1n;
+  }
   if (arc2->depths == 0)
   {
     arc2->regionleft = arc2->regionright = 0;
     removearc (arc2, sketch);
   }
-if (debug) printf ("AAA\n");
-  topo_change (b1, b2);
-if (debug) printf ("AAA\n");
-if (debug) printsketch (sketch);
-  topo_change (b1tp, b1nt);
-if (debug) printf ("AAA\n");
-  topo_change (b1nt, b2t);
-if (debug) printf ("AAA\n");
+  if (b1t != b2t) b1t->info = 0; /* perche' ora e' b2t che punta all'arco */
+  assert (b1 != b2);
+  topo_change_g (b1, b2, TC_EROSION, sketch);
+  assert (b1tp != b1nt);
+  topo_change_g (b1tp, b1nt, TC_DILATION, sketch);
+  assert (b1nt != b2t);
+  topo_change_g (b1nt, b2t, TC_DILATION, sketch);
 
   /* rimozioni */
-  removeborder (b2->next);
-  removeborder (b2t->next);
-  removeborder (b1tp->next);
-  removeborder (b1ntnt->next);
+  if (b2 != b2->next) {b2->next->info = 0; removeborder (b2->next);}
+  if (b2t != b2t->next) removeborder (b2t->next);
+  if (b1tp != b1tp->next) {b1tp->next->info = 0; removeborder (b1tp->next);}
+  if (b1ntnt != b1ntnt->next) removeborder (b1ntnt->next);
+  if (arc1n == 0)
+  {
+    b2->info = 0; removeborder (b2);
+    b1nt->info = 0; removeborder (b1nt);
+  }
+  if (debug) checkconsistency (sketch);
+  if (debug) printsketch (sketch);
+  count = adjust_isexternalinfo (sketch);
+  if (debug) printf ("isexternalinfo, count = %d\n", count);
 }
