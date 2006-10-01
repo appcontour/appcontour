@@ -129,19 +129,34 @@ then
   pre=""
 fi
 
+basta=""
+if contour print $esempio 2>/dev/null | grep -q "\[no info"
+then
+  basta="1"
+  echo "Mancano informazioni sugli archi per $esempio:"
+  contour print $esempio
+fi
+
+if ! contour isappcon $esempio 2>/dev/null >/dev/null 
+then
+  basta="1"
+  contour isappcon $esempio
+fi
+
 if [ -e deposito ]
 then
+  basta="1"
   echo "devi prima cancellare la cartella deposito"
-  if [ -n "$removemorse" ]
-  then
-    rm $esempio
-  fi
-  exit 1
 fi
 
 if [ -e $fatti ]
 then
   echo "devi prima cancellare la cartella $fatti"
+  basta="1"
+fi
+
+if [ -n "$basta" ]
+then
   if [ -n "$removemorse" ]
   then
     rm $esempio

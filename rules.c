@@ -48,6 +48,7 @@ apply_rule (char *rule, struct sketch *sketch)
   else if (strcasecmp (rule, "cn2lb") == 0) res = rule_cn2lb (sketch, rcount);
   else if (strcasecmp (rule, "cn2rb") == 0) res = rule_cn2rb (sketch, rcount);
   else if (strcasecmp (rule, "cn3") == 0) res = rule_cn3 (sketch, rcount);
+  //else if (strcasecmp (rule, "cr3") == 0) res = rule_cr3 (sketch, rcount);
   else printf ("Invalid rule %s\n", rule);
 
   if (debug) printf ("res = %d\n", res);
@@ -96,6 +97,7 @@ testallrules (struct sketch *sketch)
   exitcode = testsinglerule ("CN2LB", rule_cn2lb, exitcode, sketch);
   exitcode = testsinglerule ("CN2RB", rule_cn2rb, exitcode, sketch);
   exitcode = testsinglerule ("CN3", rule_cn3, exitcode, sketch);
+  exitcode = testsinglerule ("CR3", rule_cr3, exitcode, sketch);
   printf ("\n");
   return (exitcode);
 }
@@ -199,7 +201,7 @@ rule_n14 (struct sketch *sketch, int rule, int rcount)
       fprintf (stderr, "Trovata regione candidata: %d\n", r->tag);
       outnw = rimuovi_losanga (r, sketch);
       if (debug) printsketch (sketch);
-      taglia_nodo (outnw, sketch);
+      taglia_nodo (outnw, sketch, 0, 0);
       postprocesssketch (sketch);
       //canonify (sketch);
       return (1);
@@ -332,7 +334,7 @@ rule_c2 (struct sketch *sketch, int rcount)
           if (debug) printsketch (sketch);
           join_cusps (cusp1, cusp1pos, cusp2, cusp2pos, sketch);
           if (debug) checkconsistency (sketch);
-          taglia_nodo (cusp1->next, sketch);
+          taglia_nodo (cusp1->next, sketch, 0, 0);
           return (1);
         }
       }
@@ -597,6 +599,73 @@ rule_cn3 (struct sketch *sketch, int rcount)
   return (0);
 }
 
+int
+rule_cr3 (struct sketch *sketch, int rcount)
+{
+  int onlytest = 0, d, j;
+  struct region *r;
+  struct borderlist *bl1, *bl2;
+  struct border *b1, *b2, *b1n;
+  struct arc *arc1, *arc1n, *arc2;
+
+  if (rcount < 0) {onlytest = 1; rcount *= -1;}
+
+  /* cerca una regione candidata, che deve avere
+   * due archi consecutivi orientati positivamente con
+   * d, d+2 e un terzo arco (positivo) con d+1
+   */
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    if (debug) printf ("region: %d\n", r->tag);
+    for (bl1 = r->border; bl1; bl1 = bl1->next)
+    {
+      b1 = bl1->sponda;
+      if (b1 == 0) continue;
+      do {
+        if (b1->orientation < 0) continue;
+        if ((b1n = b1->next) == b1) continue;
+        if (b1n->orientation < 0) continue;
+        arc1 = b1->info;
+        arc1n = b1n->info;
+        d = arc1->depths[arc1->dvalues - 1];
+        if (arc1n->depths[0] != d + 2) continue;
+        if (get_d_increase_across_node (arc1, 1) != 0) continue;
+        if (get_d_increase_across_node (arc1n, -1) != -2) continue;
+
+        /* we found a good candidate for the consecutive arcs */
+
+        for (bl2 = r->border; bl2; bl2 = bl2->next)
+        {
+          b2 = bl2->sponda;
+          if (b2 == 0) continue;
+          do {
+	    if (b2->orientation < 0) continue;
+            arc2 = b2->info;
+            for (j = 0; j < arc2->dvalues; j++)
+            {
+              if (arc2->depths[j] != d + 1) continue;
+
+              /* ho trovato una posizione di applicabilita' */
+              if (rcount-- <= 1)
+              {
+                if (onlytest) return (1);
+                fprintf (stderr, "Trovata regione: %d, arc1/n/2 = ", r->tag);
+                fprintf (stderr, "%d %d %d, j = %d\n", 
+                  arc1->tag, arc1n->tag, arc2->tag, j);
+                applyrulecr3 (b1, b2, j, sketch);
+                if (debug) checkconsistency (sketch);
+                return (1);
+              }
+            }
+          } while (b2 = b2->next, b2 != bl2->sponda);
+        }
+      } while (b1 = b1->next, b1 != bl1->sponda);
+    }
+  }
+  return (0);
+}
+
 /*
  * auxiliary functions used by rules
  */
@@ -678,19 +747,20 @@ rimuovi_losanga (struct region *r, struct sketch *sketch)
 /*
  * trasformazione topologica del tipo
  * 
- *      \   /    \     /
- *    b1n\ /      \   /
- *        X  ===>  \ /
- *       / \       / \
- *      /   \     /   \
- *     /     \   /     \
+ *      \   /        \     /
+ *    b1n\ /          \   /
+ *        X  ===>      \ /
+ *       / \      bleft/ \bright
+ *      /   \         /   \
+ *     /     \       /     \
  *
  * assumiamo una orientazione consistente
  * degli archi coinvolti
  */
 
 void
-taglia_nodo (struct border *b1n, struct sketch *sketch)
+taglia_nodo (struct border *b1n, struct sketch *sketch,
+             struct border **bleftpt, struct border **brightpt)
 {
   struct border *b1p, *b2p, *b3p, *b4p, *b2n;
   struct region *r2, *r4;
@@ -781,12 +851,12 @@ taglia_nodo (struct border *b1n, struct sketch *sketch)
   if (b1p->next != b1p)
   {
     if (b1p->next == b3p) b3p = b1p;
-    removeborder (b1p->next);
+    b1p = removeborder (b1p->next);
   }
   if (b2p->next != b2p)
   {
     if (b2p->next == b4p) b4p = b2p;
-    removeborder (b2p->next);
+    b2p = removeborder (b2p->next);
   }
   if (b1p->orientation < 0)      /* anticipo causa assert in mergearcs */
       arcleft->regionright = b1p;
@@ -815,8 +885,8 @@ taglia_nodo (struct border *b1n, struct sketch *sketch)
 
   b3p->info = b4p->info = arcright;
 
-  if (b3p->next != b3p) removeborder (b3p->next);
-  if (b4p->next != b4p) removeborder (b4p->next);
+  if (b3p->next != b3p) b3p = removeborder (b3p->next);
+  if (b4p->next != b4p) b4p = removeborder (b4p->next);
   if (b3p->orientation > 0)
   {
     arcright->regionleft = b3p;
@@ -828,6 +898,8 @@ taglia_nodo (struct border *b1n, struct sketch *sketch)
   assert (arcright->regionleft == b3p || arcright->regionleft == b4p);
   assert (arcright->regionright == b3p || arcright->regionright == b4p);
 
+  if (bleftpt) *bleftpt = b1p;
+  if (brightpt) *brightpt = b3p;
   if (debug) checkconsistency (sketch);
   if (debug) printsketch (sketch);
   if (debug) printf ("esco da taglia_nodo\n");
@@ -1230,7 +1302,7 @@ applyrulecn2 (struct border *b1n, struct arc *arc,
   index = 0;
   if (ori < 0) index = arc->dvalues - 1;
   arc->depths[index] += 2*orib;
-  taglia_nodo (b1n, sketch);
+  taglia_nodo (b1n, sketch, 0, 0);
 }
 
 /*
@@ -1290,5 +1362,132 @@ remove_cusp (struct region *r, struct sketch *sketch)
   if (debug) checkconsistency (sketch);
 
   outnw = rimuovi_losanga (r, sketch);
-  taglia_nodo (outnw, sketch);
+  taglia_nodo (outnw, sketch, 0, 0);
+}
+
+/*
+ * applicazione mossa CR3 = C2^{-1} + CN2R
+ * rimozione di un nodo a favore di due cuspidi;
+ * la struttura e' piuttosto complicata...
+ */
+
+void
+applyrulecr3 (struct border *b1, struct border *b2, int dindex,
+              struct sketch *sketch)
+{
+  struct border *b1nt, *b1ntnt, *b2t, *b1t, *b1tp, *b1n;
+  struct arc *arc1, *arc1n, *arc2, *arc3, *arc3n;
+  int isclosed1, isclosed2, size1, size2, i, j;
+  int *newdepths1, *newdepths2;
+
+  /* devo stare attento a non perdere i dati di b2 e dindex */
+
+  if (debug) printsketch (sketch);
+  b1n = b1->next;
+  b1nt = gettransborder (b1n);
+  b1ntnt = gettransborder (b1nt->next);
+  b2t = gettransborder (b2);
+  b1t = gettransborder (b1);
+  b1tp = prevborder (b1t);
+
+  arc1 = b1->info;
+  arc1n = b1->next->info;
+  arc2 = b2->info;
+  arc3 = b1tp->info;
+  arc3n = b1nt->next->info;
+if (debug) printf ("arc1 %d, arc1n %d, arc2 %d, arc3 %d, arc3n %d\n",
+              arc1->tag, arc1n->tag, arc2->tag, arc3->tag, arc3n->tag);
+  arc3 = mergearcs (arc3, arc3n, sketch);
+  arc3->regionleft = b1tp;
+  arc3->regionright = b1ntnt;
+  b1tp->info = b1ntnt->info = arc3;
+
+  if (arc2->endpoints == 0) assert (0);
+
+  isclosed1 = isclosed2 = 0;
+  if (arc1 != arc2)
+  {
+    printf ("arc1(%d) != arc2(%d)\n", arc1->tag, arc2->tag);
+    size1 = arc2->depthsdim - dindex + arc1->depthsdim;
+    newdepths1 = (int *) malloc (size1 * sizeof (int));
+    for (i = 0, j = 0; i < arc1->depthsdim; i++) 
+      newdepths1[j++] = arc1->depths[i];
+    assert (arc2->depths[dindex] - newdepths1[j-1] == 1);
+    for (i = dindex; i < arc2->depthsdim; i++)
+      newdepths1[j++] = arc2->depths[i];
+  } else {
+    printf ("arc1 == arc2, dindex = %d, arc1->depthsdim = %d\n",
+                           dindex, arc1->depthsdim);
+    isclosed1 = 1;
+    size1 = arc1->depthsdim - dindex + 1;
+    newdepths1 = (int *) malloc (size1 * sizeof (int));
+    for (i = dindex, j = 0; i < arc1->depthsdim; i++)
+      newdepths1[j++] = arc1->depths[i];
+    newdepths1[j] = arc1->depths[dindex];
+  }
+  if (arc1n != arc2)
+  {
+    printf ("arc1n != arc2\n");
+    size2 = 1 + dindex + arc1n->depthsdim;
+    newdepths2 = (int *) malloc (size2 * sizeof (int));
+    for (i = 0, j = 0; i <= dindex; i++)
+      newdepths2[j++] = arc2->depths[i];
+    for (i = 0; i < arc1n->depthsdim; i++)
+      newdepths2[j++] = arc1n->depths[i];
+    assert (newdepths2[dindex] + 1 == newdepths2[dindex + 1]);
+  } else {
+    printf ("arc1n == arc2, dindex = %d, arc2->depthsdim = %d\n",
+                            dindex, arc2->depthsdim);
+    isclosed2 = 1;
+    size2 = dindex + 2;
+    newdepths2 = (int *) malloc (size2 * sizeof (int));
+    for (i = 0, j = 0; i <= dindex; i++)
+      newdepths2[j++] = arc1n->depths[i];
+    newdepths2[j] = arc1n->depths[0];
+  }
+  free (arc1->depths);
+  arc1->depths = 0;
+  if (arc1n->depths) free (arc1n->depths);
+  arc1n->depths = 0;
+  if (arc2->depths) free (arc2->depths);
+  arc2->depths = 0;
+  arc1->depths = newdepths1;
+  arc1->depthsdim = arc1->dvalues = arc1->cusps = size1;
+  arc1->cusps--;
+  arc1->endpoints = 1;
+  if (b1->next != b1) arc1->endpoints = 2;
+  if (isclosed1) {arc1->dvalues--; arc1->endpoints = 0;}
+  arc1->regionleft = b1;
+  arc1->regionright = b2t;
+  b1->info = b2t->info = arc1;
+  if (arc1n->depths != 0) arc1n = newarc (sketch);
+  arc1n->depths = newdepths2;
+  arc1n->depthsdim = arc1n->dvalues = arc1n->cusps = size2;
+  arc1n->cusps--;
+  arc1n->endpoints = 1;
+  if (b1n->next != b2) arc1n->endpoints = 2;
+  if (isclosed2) {arc1n->dvalues--; arc1n->endpoints = 0;}
+  arc1n->regionleft = b2;
+  arc1n->regionright = b1nt;
+  b2->info = b1nt->info = arc1n;
+
+  if (arc2->depths == 0)
+  {
+    arc2->regionleft = arc2->regionright = 0;
+    removearc (arc2, sketch);
+  }
+if (debug) printf ("AAA\n");
+  topo_change (b1, b2);
+if (debug) printf ("AAA\n");
+if (debug) printsketch (sketch);
+  topo_change (b1tp, b1nt);
+if (debug) printf ("AAA\n");
+  topo_change (b1nt, b2t);
+if (debug) printf ("AAA\n");
+
+  /* rimozioni */
+  removeborder (b2->next);
+  removeborder (b2t->next);
+  removeborder (b1tp->next);
+  removeborder (b1ntnt->next);
 }

@@ -1,4 +1,4 @@
 bin_PROGRAMS = contour
 contour_SOURCES = contour.c readsketch.c readmorse.c rules.c sketch.c parser.c appcontour.c printmorse.c knot2morse.c contour.h
-EXTRA_DIST = examples tests test BUGS utils TODO
+EXTRA_DIST = examples/*.morse examples/*.knot examples/failing_examples/*.morse tests/test.* test BUGS utils/trasforma utils/controllaordinamento utils/analizza TODO
 AM_CFLAGS = -Wall

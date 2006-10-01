@@ -130,9 +130,11 @@ int rule_cn2lb (struct sketch *s, int count);
 int rule_cn2rb (struct sketch *s, int count);
 int rule_cn2lr (struct sketch *s, int count, int isleft, int isback);
 int rule_cn3 (struct sketch *s, int count);
+int rule_cr3 (struct sketch *s, int count);
 struct border *get_ith_cusp (struct region *r, int i, int *cp);
 struct border *rimuovi_losanga (struct region *r, struct sketch *sketch);
-void taglia_nodo (struct border *b1n, struct sketch *sketch);
+void taglia_nodo (struct border *b1n, struct sketch *sketch,
+                  struct border **bleft, struct border **bright);
 void triple_switch (struct border *b1);
 void remove_s1 (struct border *b, struct sketch *sketch);
 void spezza_bordo (struct border *cusp, int cpos, struct sketch *sketch);
@@ -144,6 +146,8 @@ void remove_ear (struct region *r, struct sketch *sketch);
 void applyrulecn2 (struct border *b1n, struct arc *arc,
                    int ori, int orib, struct sketch *sketch);
 void remove_cusp (struct region *r, struct sketch *sketch);
+void applyrulecr3 (struct border *b1, struct border *b2, int dindex,
+                                              struct sketch *sketch);
 
 int sketchcmp (struct sketch *s1, struct sketch *s2);
 int regioncmp (struct region *r1, struct region *r2);

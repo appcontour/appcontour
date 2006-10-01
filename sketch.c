@@ -722,7 +722,7 @@ printsketch (struct sketch *sketch)
         printf ("%d", a->depths[i]);
       }
       printf ("%c;\n", chright);
-    } else printf (" [nessuna informazione]\n");
+    } else printf (" [no information]\n");
   }
   for (r = sketch->regions; r; r = r->next)
   {

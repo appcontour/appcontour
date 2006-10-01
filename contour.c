@@ -159,7 +159,8 @@ main (int argc, char *argv[])
     case ACTION_ISAPPCON:
     sketch = readcontour (infile);
     canonify (sketch);
-    appcontourcheck (sketch, 1);
+    res = appcontourcheck (sketch, 1);
+    if (res == 0) exit (15);
     break;
 
     case ACTION_CANONIFY:
