@@ -1,1 +1,0 @@
-./contour applyrule n6 examples/toro_otto.morse |./contour applyrule cn2r

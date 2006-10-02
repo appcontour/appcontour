@@ -1,1 +1,0 @@
-./contour applyrule n3 <examples/duecolline.morse | ./contour applyrule n3 | ./contour applyrule c2:3

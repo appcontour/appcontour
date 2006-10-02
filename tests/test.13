@@ -1,1 +1,0 @@
-./contour applyrule n4 <examples/due_anelli.morse | ./contour applyrule n2 | ./contour applyrule n3 | ./contour applyrule n1
