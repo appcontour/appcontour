@@ -20,27 +20,31 @@ struct morse {
   struct morse *next;
   };
 
+void morse_islands (struct borderlist *bl, int crbefore, int crafter);
+void printcrossings (int num);
+void printmax (void);
+void printmin (void);
+void newmorseline (void);
+void minsertbefore (struct morse *block, struct morse *m);
 int advance_morseline (struct morse *mline);
 struct morse *handle_mblock (struct morse *block);
 
 extern int debug;
-static struct morse minf;
 
 void
 printmorse (struct sketch *sketch)
 {
-  struct morse *block, *prevblock;
   struct borderlist *bl;
-  struct border *b;
+  // struct border *b;
   struct region *r0;
-  int res;
+  // int res;
 
   fprintf (stderr, "NOT YET IMPLEMENTED\n");
   if (! debug) return;
 
-  prevblock = &minf;
-  minf.type = MTYPE_MINF;
-  minf.prev = minf.next = 0;
+  //prevblock = &minf;
+  //minf.type = MTYPE_MINF;
+  //minf.prev = minf.next = 0;
   printf ("morse {\n");
 
   /* inizializzazione linea di morse */
@@ -48,24 +52,71 @@ printmorse (struct sketch *sketch)
   r0 = sketch->regions;
   bl = r0->border;
   assert (bl->sponda == 0);
-  for (bl = bl->next; bl; bl = bl->next)
-  {
-    block = (struct morse *) malloc (sizeof (struct morse));
-    block->type = MTYPE_TOP;
-    b = bl->sponda;
-    block->left = b;
-    block->right = gettransborder (b);
-    prevblock->next = block;
-    block->prev = prevblock;
-    prevblock = block;
-  }
+  morse_islands (bl->next, 0, 0);
 
-  while (minf.next)
-  {
-    res = advance_morseline (&minf);
-  }
-  printf ("LAVORI IN CORSO!\n");
   printf ("}\n");
+
+
+//  for (bl = bl->next; bl; bl = bl->next)
+//  {
+//    block = (struct morse *) malloc (sizeof (struct morse));
+//    block->type = MTYPE_TOP;
+//    b = bl->sponda;
+//    block->left = b;
+//    block->right = gettransborder (b);
+//    prevblock->next = block;
+//    block->prev = prevblock;
+//    prevblock = block;
+//  }
+//
+//  while (minf.next)
+//  {
+//    res = advance_morseline (&minf);
+//  }
+//  printf ("LAVORI IN CORSO!\n");
+//  printf ("}\n");
+}
+
+void
+morse_islands (struct borderlist *bl, int crossingsbefore, int crossingsafter)
+{
+  struct morse *block;
+  struct morse minf;
+  struct border *bp, *bptrans;
+
+  minf.type = MTYPE_MINF;
+  minf.next = minf.prev = &minf;
+  for (; bl; bl = bl->next)
+  {
+    /* get morse structure of the island */
+    printcrossings (crossingsbefore);
+    bp = bl->sponda;
+    if (bp->info->endpoints == 0)
+    {     /* s1 is a special case */
+      printmax ();
+      printcrossings (crossingsafter);
+      newmorseline ();
+      bptrans = gettransborder (bp);
+      morse_islands (bptrans->border->next, crossingsbefore + 1, crossingsafter + 1);
+      printcrossings (crossingsbefore);
+      printmin ();
+    } else {
+      do {
+        /* inserisci due blocchi di morse per ogni arco */
+        block = (struct morse *) malloc (sizeof (struct morse));
+        block->left = bp;
+        block->right = gettransborder (bp);
+        minsertbefore (block, &minf);
+        block = (struct morse *) malloc (sizeof (struct morse));
+        block->left = gettransborder (bp);
+        block->right = bp;
+        minsertbefore (block, &minf);
+        printmax ();
+      } while (bp = bp->next, bp != bl->sponda);
+    }
+    printcrossings (crossingsafter);
+    newmorseline ();
+  }
 }
 
 /*
@@ -161,4 +212,42 @@ handle_mblock (struct morse *block)
       exit (1);
   }
   return (next);
+}
+
+void
+minsertbefore (struct morse *block, struct morse *pos)
+{
+  block->prev = pos->prev;
+  block->next = pos;
+  block->prev->next = block;
+  pos->prev = block;
+}
+
+void
+printcrossings (int num)
+{
+  int i;
+
+  for (i = 0; i < num; i++)
+  {
+    printf (" | ");
+  }
+}
+
+void
+printmax (void)
+{
+  printf (" ^ ");
+}
+
+void
+printmin (void)
+{
+  printf (" U ");
+}
+
+void
+newmorseline (void)
+{
+  printf (" ;\n");
 }
