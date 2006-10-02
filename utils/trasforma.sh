@@ -167,7 +167,8 @@ fi
 mkdir deposito
 mkdir $fatti
 
-cp $esempio deposito/$nomeesempio
+#cp $esempio deposito/$nomeesempio
+contour print $esempio >deposito/$nomeesempio
 
 #
 # ci deve essere un deposito da cui pescare gli sketch da
