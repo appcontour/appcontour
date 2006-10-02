@@ -137,6 +137,14 @@ int rule_cn3 (struct sketch *s, int count);
 int rule_cr3l (struct sketch *s, int count);
 int rule_cr3r (struct sketch *s, int count);
 int rule_cr3lr (struct sketch *s, int count, int ori);
+int rule_cr1 (struct sketch *s, int count);
+int rule_cr1b (struct sketch *s, int count);
+int rule_cr11b (struct sketch *s, int count, int isback);
+int rule_cr4l (struct sketch *s, int count);
+int rule_cr4r (struct sketch *s, int count);
+int rule_cr4lb (struct sketch *s, int count);
+int rule_cr4rb (struct sketch *s, int count);
+int rule_cr4lr (struct sketch *s, int count, int isleft, int isback);
 struct border *get_ith_cusp (struct region *r, int i, int *cp);
 struct border *rimuovi_losanga (struct region *r, struct sketch *sketch);
 void taglia_nodo (struct border *b1n, struct sketch *sketch,

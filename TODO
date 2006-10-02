@@ -1,6 +1,8 @@
 
-- Imprementare una nuova regola (A3?) per risolvere l'"occhio".
-
 - stampa di uno sketch in sintassi morse
 
-- completare l'implementazione della regola composta cr3
+- implementare la regola CR4 (il test funziona gia)
+
+- controllare tutti gli usi di "depthsdim", che dovrebbe
+indicare il dimensionamento del vettore, che potrebbe
+essere utilizzato solo in parte.

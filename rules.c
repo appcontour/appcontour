@@ -50,6 +50,12 @@ apply_rule (char *rule, struct sketch *sketch)
   else if (strcasecmp (rule, "cn3") == 0) res = rule_cn3 (sketch, rcount);
   else if (strcasecmp (rule, "cr3l") == 0) res = rule_cr3l (sketch, rcount);
   else if (strcasecmp (rule, "cr3r") == 0) res = rule_cr3r (sketch, rcount);
+  else if (strcasecmp (rule, "cr1") == 0) res = rule_cr1 (sketch, rcount);
+  else if (strcasecmp (rule, "cr1b") == 0) res = rule_cr1b (sketch, rcount);
+  else if (strcasecmp (rule, "cr4l") == 0) res = rule_cr4l (sketch, rcount);
+  else if (strcasecmp (rule, "cr4r") == 0) res = rule_cr4r (sketch, rcount);
+  else if (strcasecmp (rule, "cr4lb") == 0) res = rule_cr4lb (sketch, rcount);
+  else if (strcasecmp (rule, "cr4rb") == 0) res = rule_cr4rb (sketch, rcount);
   else printf ("Invalid rule %s\n", rule);
 
   if (debug) printf ("res = %d\n", res);
@@ -100,6 +106,12 @@ testallrules (struct sketch *sketch)
   exitcode = testsinglerule ("CN3", rule_cn3, exitcode, sketch);
   exitcode = testsinglerule ("CR3L", rule_cr3l, exitcode, sketch);
   exitcode = testsinglerule ("CR3R", rule_cr3r, exitcode, sketch);
+  exitcode = testsinglerule ("CR1", rule_cr1, exitcode, sketch);
+  exitcode = testsinglerule ("CR1B", rule_cr1b, exitcode, sketch);
+  exitcode = testsinglerule ("CR4L", rule_cr4l, exitcode, sketch);
+  exitcode = testsinglerule ("CR4R", rule_cr4r, exitcode, sketch);
+  exitcode = testsinglerule ("CR4LB", rule_cr4lb, exitcode, sketch);
+  exitcode = testsinglerule ("CR4RB", rule_cr4rb, exitcode, sketch);
   printf ("\n");
   return (exitcode);
 }
@@ -596,6 +608,177 @@ rule_cn3 (struct sketch *sketch, int rcount)
       // chiama la funzione che esegue la "rule"
       remove_cusp (r, sketch);
       return (1);
+    }
+  }
+  return (0);
+}
+
+int
+rule_cr1 (struct sketch *sketch, int rcount)
+{
+  return (rule_cr11b (sketch, rcount, 0));
+}
+
+int
+rule_cr1b (struct sketch *sketch, int rcount)
+{
+  return (rule_cr11b (sketch, rcount, 1));
+}
+
+int
+rule_cr11b (struct sketch *sketch, int rcount, int isback)
+{
+  struct region *r;
+  struct borderlist *bl, *blp;
+  struct border *bpstart, *bppstart, *bp, *bpp;
+  int i, j, catafound, onlytest = 0, orib, db;
+  struct arc *arc, *arct;
+  int ip2, numchecks;
+
+  if (rcount < 0) {onlytest = 1; rcount *= -1;}
+
+  /* per applicare la regola cr1 ci vuole una sequenza di tre valori
+   * di "d" (due cuspidi) del tipo d-+  (es 1 0 1) oppure d+- nel caso
+   * di "back", con orientazione negativa; in entrambi i casi serve un 
+   * arco positivo con valore "d-1" (distinto dall'eventuale valore uguale tra
+   * le due cuspidi)
+   */
+
+  orib = 1;
+  if (isback) orib = -1;
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    for (bl = r->border; bl; bl = bl->next)
+    {
+      bpstart = bl->sponda;
+      if (bpstart == 0) continue;
+      bp = bpstart;
+      do {
+        if (bp->orientation > 0) continue;
+        arc = bp->info;
+        if (arc->cusps < 2) continue;
+        numchecks = arc->cusps - 1;
+        if (arc->endpoints == 0) numchecks = arc->cusps;
+        for (i = 0; i < numchecks; i++)
+        {
+          db = arc->depths[i];
+          if (arc->depths[i+1] != db - orib) continue;
+          ip2 = i+2;
+          if (ip2 > arc->cusps) ip2 = 1;
+          if (arc->depths[ip2] != db) continue;
+          /* trovata sequenza di cuspidi, devo vedere se c'e' un arco
+           * catalizzante (con d = db - 1)
+           */
+          catafound = 0;
+          for (blp = r->border; blp; blp = blp->next)
+          {
+            bppstart = blp->sponda;
+            if (bppstart == 0) continue;
+            bpp = bppstart;
+            do {
+              if (bpp->orientation < 0) continue;
+              arct = bpp->info;
+              for (j = 0; j < arct->dvalues; j++)
+              {
+                if (arct->depths[j] != db - 1) continue;
+                if (bpp == bp && j == i + 1) continue;
+                catafound = 1;
+                break;
+              }
+              if (catafound) break;
+            } while (bpp = bpp->next, bpp != bppstart);
+            if (catafound) break;
+          }
+          if (! catafound) continue;
+          if (rcount-- <= 1)
+          {
+            if (onlytest) return (1);
+            fprintf (stderr, "Trovata regione: %d, arc %d, cataarc %d\n",
+                             r->tag, arc->tag, arct->tag);
+            /* applica la regola, che in questo caso e' molto semplice */
+            arc->depths[i+1] += 2*orib;
+            if (arc->endpoints == 0 && i+1 == arc->cusps) arc->depths[0] += 2*orib;
+            return (1);
+          }
+        }
+      } while (bp = bp->next, bp != bpstart);
+    }
+  }
+  return (0);
+}
+
+int
+rule_cr4l (struct sketch *sketch, int rcount)
+{
+  return (rule_cr4lr (sketch, rcount, 1, 0));
+}
+
+int
+rule_cr4r (struct sketch *sketch, int rcount)
+{
+  return (rule_cr4lr (sketch, rcount, 0, 0));
+}
+
+int
+rule_cr4lb (struct sketch *sketch, int rcount)
+{
+  return (rule_cr4lr (sketch, rcount, 1, 1));
+}
+
+int
+rule_cr4rb (struct sketch *sketch, int rcount)
+{
+  return (rule_cr4lr (sketch, rcount, 0, 1));
+}
+
+int
+rule_cr4lr (struct sketch *sketch, int rcount, int isleft, int isback)
+{
+  int ori, orib, onlytest = 0;
+  struct region *r;
+  struct borderlist *bl;
+  struct border *bp, *bpstart;
+  struct arc *arc;
+  int i, db;
+
+  if (rcount < 0) {onlytest = 1; rcount *= -1;}
+  ori = orib = 1;
+  if (! isleft) ori = -1;     /* ori > 0 if 'isleft' */
+  if (isback) orib = -1;
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    for (bl = r->border; bl; bl = bl->next)
+    {
+      bpstart = bl->sponda;
+      if (bpstart == 0) continue;
+      bp = bpstart;
+      do {
+        if (bp->orientation > 0) continue;
+        arc = bp->info;
+        if (arc->cusps < 3) continue;
+        for (i = 0; i < arc->cusps - 2; i++)
+        {
+          db = arc->depths[i];
+          if (arc->depths[i+1] != db + orib) continue;
+          if (arc->depths[i+2] != db + orib - ori) continue;
+          if (arc->depths[i+3] != db - ori) continue;
+          /* trovata sequenza di cuspidi, devo vedere se c'e' un arco
+           * catalizzante (con d = db - 1)
+           */
+          if (rcount-- <= 1)
+          {
+            if (onlytest) return (1);
+            fprintf (stderr, "Trovata regione: %d, arc %d, i %d\n",
+                             r->tag, arc->tag, i);
+            // chiama la funzione che applica la regola
+            // XXXXXXXX applyrulecn2 (bpn, arcout, ori, orib, sketch);
+            printf ("NOT IMPLEMENTED\n");
+            return (1);
+          }
+        }
+      } while (bp = bp->next, bp != bpstart);
     }
   }
   return (0);
