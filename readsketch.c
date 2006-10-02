@@ -87,6 +87,7 @@ readsketch_arc (int arcid, struct sketch *sketch, FILE *file)
   if (debug) printf ("letti %d valori di d\n", depthsdim);
   arc->depths = (int *) malloc (depthsdim * sizeof (int));
   arc->depthsdim = depthsdim;
+  arc->cusps = depthsdim - 1;
   for (i = 0; i < depthsdim; i++) arc->depths[i] = buf[i];
 
   if (tok != TOK_RPAREN && tok != TOK_RBRACKET)

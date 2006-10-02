@@ -140,8 +140,8 @@ arccmp (struct arc *a1, struct arc *a2)
 
   /* terzo criterio, confronto lessicografico delle profondita' */
 
-  assert (a1->depthsdim == a2->depthsdim);
-  for (i = 0; i < a1->depthsdim; i++)
+  assert (a1->dvalues == a2->dvalues);
+  for (i = 0; i < a1->dvalues; i++)
   {
     if (a1->depths[i] > a2->depths[i]) return (1);
     if (a1->depths[i] < a2->depths[i]) return (-1);
@@ -230,7 +230,7 @@ canonifyarc (struct arc *arc)
       }
     }
   }
-  for (i = 0; i < arc->depthsdim; i++) arc->depths[i] = buf[iopt + i];
+  for (i = 0; i <= arc->dvalues; i++) arc->depths[i] = buf[iopt + i];
   /* ricorda che il primo e ultimo valore DEVONO essere duplicati
    * per archi senza estremi
    */
@@ -515,13 +515,15 @@ postprocesssketch (struct sketch *sketch)
     arc->endpoints = 0;
     if (arc->regionleft->next != arc->regionleft) arc->endpoints++;
     if (arc->regionright->next != arc->regionright) arc->endpoints++;
+    if (arc->cusps != arc->depthsdim - 1)
+      fprintf (stderr, "depthsdim not equal cusps + 1, this is not a problem\n");
     if (arc->endpoints == 0 && arc->depths)
     { /* in questo caso il numero di cuspidi e' uguale al numero
        * di valori di d, a meno che non siano zero.  
        * L'utente deve pero' assegnare un valore
        * ulteriore di d, uguale al primo...
        */
-      arc->cusps = arc->dvalues = arc->depthsdim - 1;
+      arc->dvalues = arc->cusps;
       if (arc->cusps == 0) arc->dvalues = 1;
       if (arc->depths[arc->cusps] != arc->depths[0])
       {
@@ -530,8 +532,8 @@ postprocesssketch (struct sketch *sketch)
       }
       arc->depths[arc->cusps] = arc->depths[0];
     } else {
-      arc->cusps = arc->depthsdim - 1;
-      arc->dvalues = arc->depthsdim;
+      // arc->cusps = arc->depthsdim - 1;
+      arc->dvalues = arc->cusps + 1;
     }
   }
 
@@ -715,7 +717,7 @@ printsketch (struct sketch *sketch)
       assert (a->depthsdim >= 0);
       printf ("%c", chleft);
       notfirst = 0;
-      for (i = 0; i < a->depthsdim; i++)
+      for (i = 0; i <= a->cusps; i++)
       {
         if (notfirst) printf (" ");
         notfirst = 1;
@@ -877,14 +879,14 @@ mergearcsc (struct arc *arc1, struct arc *arc2, int dincr,
     arc1->endpoints = 0;
     if (dincr != 0)          /* devo aggiungere un po' di cuspidi */
     {
-      newdepths = (int *) malloc ((arc1->depthsdim + dincr)*sizeof(int));
-      for (i = 0; i < arc1->depthsdim; i++) newdepths[i] = arc1->depths[i];
-      for (i = 0; i < dincr; i++) newdepths[arc1->depthsdim + i] = 
-                         newdepths[arc1->depthsdim + i - 1] + sign;
+      newdepths = (int *) malloc ((arc1->cusps + 1 + dincr)*sizeof(int));
+      for (i = 0; i <= arc1->cusps; i++) newdepths[i] = arc1->depths[i];
+      for (i = 0; i < dincr; i++) newdepths[arc1->cusps + 1 + i] = 
+                         newdepths[arc1->cusps + i] + sign;
       free (arc1->depths);
       arc1->depths = newdepths;
-      arc1->depthsdim += dincr;
       arc1->cusps += dincr;
+      arc1->depthsdim = arc1->cusps + 1;
       arc1->dvalues += dincr;
     }
     arc1->dvalues--;
@@ -896,7 +898,7 @@ mergearcsc (struct arc *arc1, struct arc *arc2, int dincr,
   /* mi assicuro che le sponde non siano ancora eliminate! */
   assert (arc1->endpoints > 0 && arc2->endpoints > 0);
   assert (arc1->depths[arc1->dvalues-1] + sign*dincr == arc2->depths[0]);
-  newdim = arc1->depthsdim + arc2->depthsdim + dincr - 1;
+  newdim = arc1->cusps + arc2->cusps + 1 + dincr;
   newdepths = (int *) malloc (newdim * sizeof (int));
   for (i = 0; i < arc1->dvalues; i++) newdepths[i] = arc1->depths[i];
   for (i = 0; i < dincr; i++) 
@@ -905,7 +907,7 @@ mergearcsc (struct arc *arc1, struct arc *arc2, int dincr,
     newdepths[i + arc1->dvalues + dincr - 1] = arc2->depths[i];
   arc1->cusps += arc2->cusps + dincr;
   arc1->dvalues += arc2->dvalues + dincr - 1;
-  arc1->depthsdim += arc2->depthsdim + dincr - 1;
+  arc1->depthsdim = newdim;
   free (arc1->depths);
   arc1->depths = newdepths;
   arc2->regionleft = arc2->regionright = 0;

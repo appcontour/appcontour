@@ -1,1 +1,2 @@
-./contour extractcc 1 <examples/sfera_dietro_toro.morse
+./contour testallrules <examples/due_anelli.morse
+./contour testallrules <examples/tre_sfere.morse

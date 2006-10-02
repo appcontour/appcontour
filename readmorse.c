@@ -189,12 +189,12 @@ readrow (FILE *file, struct sketch *sketch,
             fprintf (stderr, "fatal: incompatible orientation\n");
             exit (11);  /* comunque c'e' poi un brutto errore di memoria */
           }
-          if (arcleft->depthsdim != arcright->depthsdim)
+          if (arcleft->cusps != arcright->cusps)
           {
             fprintf (stderr, "fatal: incompatible dup definition\n");
             exit (11);
           }
-          for (i = 0; i < arcleft->depthsdim; i++)
+          for (i = 0; i < arcleft->cusps + 1; i++)
           {
             if (arcleft->depths[i] != arcright->depths[i])
             {
@@ -489,7 +489,7 @@ getarcinfo (int key, FILE *file,
    * indicare una profondita' in piu' (uguale al valore
    * iniziale) per segnalare il numero giusto di cuspidi
    */
-  // arc->cusps = depthind - 1; (sistemato al postprocess)
+  arc->cusps = depthind - 1;  /* questo e' il valore che fa testo */
   arc->depthsdim = depthind;
   for (i = 0; i < depthind; i++)
   {

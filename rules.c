@@ -736,11 +736,11 @@ int
 rule_cr4lr (struct sketch *sketch, int rcount, int isleft, int isback)
 {
   int ori, orib, onlytest = 0;
-  struct region *r;
-  struct borderlist *bl;
-  struct border *bp, *bpstart;
-  struct arc *arc;
-  int i, db;
+  struct region *r, *newr;
+  struct borderlist *bl, *newbl;
+  struct border *bp, *bpstart, *newb;
+  struct arc *arc, *arcs1;
+  int i, j, db, testnum, ip2, ip3;
 
   if (rcount < 0) {onlytest = 1; rcount *= -1;}
   ori = orib = 1;
@@ -758,12 +758,18 @@ rule_cr4lr (struct sketch *sketch, int rcount, int isleft, int isback)
         if (bp->orientation > 0) continue;
         arc = bp->info;
         if (arc->cusps < 3) continue;
-        for (i = 0; i < arc->cusps - 2; i++)
+        testnum = arc->cusps - 2;
+        if (arc->endpoints == 0) testnum = arc->cusps;
+        for (i = 0; i < testnum; i++)
         {
           db = arc->depths[i];
           if (arc->depths[i+1] != db + orib) continue;
-          if (arc->depths[i+2] != db + orib - ori) continue;
-          if (arc->depths[i+3] != db - ori) continue;
+          ip2 = i + 2;
+          if (ip2 > arc->cusps) ip2 -= arc->cusps;
+          if (arc->depths[ip2] != db + orib - ori) continue;
+          ip3 = i + 3;
+          if (ip3 > arc->cusps) ip3 -= arc->cusps;
+          if (arc->depths[ip3] != db - ori) continue;
           /* trovata sequenza di cuspidi, devo vedere se c'e' un arco
            * catalizzante (con d = db - 1)
            */
@@ -772,9 +778,46 @@ rule_cr4lr (struct sketch *sketch, int rcount, int isleft, int isback)
             if (onlytest) return (1);
             fprintf (stderr, "Trovata regione: %d, arc %d, i %d\n",
                              r->tag, arc->tag, i);
-            // chiama la funzione che applica la regola
-            // XXXXXXXX applyrulecn2 (bpn, arcout, ori, orib, sketch);
-            printf ("NOT IMPLEMENTED\n");
+            /* devo creare un buco a forma di s1 nella regione e
+             * accorciare il vettore dei valori di d
+             */
+            arcs1 = newarc (sketch);
+            arcs1->depths = (int *) malloc (sizeof (int));
+            arcs1->depthsdim = 1;
+            arcs1->cusps = 0;
+            arcs1->dvalues = 1;
+            arcs1->endpoints = 0;
+            arcs1->depths[0] = db + (orib - ori)/2 - 1;
+            newr = newregion (sketch);
+            newbl = newborderlist (newr);
+            newb = newborder (newbl);
+            newbl->sponda = newb;
+            newb->orientation = -1;
+            newb->info = arcs1;
+            arcs1->regionright = newb;
+
+            newbl = newborderlist (r);
+            newb = newborder (newbl);
+            newbl->sponda = newb;
+            newb->orientation = 1;
+            newb->info = arcs1;
+            arcs1->regionleft = newb;
+
+            /* ora mi occupo delle cuspidi */
+            /* devo eliminare i valori di d in posizione i+1 e i+2 */
+
+            assert (i <= arc->cusps - 1);
+            if (i < arc->cusps - 2)
+            {
+              for (j = i + 1; j <= arc->cusps; j++)
+                arc->depths[j] = arc->depths[j+2];
+            } else {
+              assert (arc->endpoints == 0);
+              arc->depths[0] = arc->depths[arc->cusps - 2];
+              if (i == arc->cusps - 1) arc->depths[1] = arc->depths[arc->cusps - 1];
+            }
+            arc->cusps -= 2;
+            arc->dvalues -= 2;
             return (1);
           }
         }
@@ -1101,7 +1144,7 @@ triple_switch (struct border *b1)
   for (i = 1; i <= 3; i++)
   {
     a[i] = b[i]->info;
-    assert (a[i]->depthsdim == 1);
+    assert (a[i]->cusps == 0);
     a[i]->depths[0] += get_d_increase_across_node (a[i], 1) +
                        get_d_increase_across_node (a[i], -1);
     bt[i] = gettransborder (b[i]);
@@ -1268,8 +1311,9 @@ spezza_bordo (struct border *cusp, int cusppos, struct sketch *sketch)
     /* in questo caso non si creano altri archi e bordi
      * anche il numero di valori di d rimane uguale, ma non
      * serve ripetere il primo valore
+     * TODO: Mmm, probabilmente non conviene riallocare,
+     * ma si puo' continuare ad usare lo spazio vecchio
      */
-    assert (arc->depthsdim == arc->cusps + 1);
     arc->cusps--;
     arc->depthsdim--;
     newdepths = (int *) malloc (arc->depthsdim * sizeof (int));
@@ -1301,27 +1345,27 @@ spezza_bordo (struct border *cusp, int cusppos, struct sketch *sketch)
     cuspnew->info = arc;
     arc->regionright = cuspnew;
     cuspnew->orientation = cusp->orientation;
-    arcnew->depthsdim = arc->depthsdim - cusppos - 1;
+    arcnew->depthsdim = arc->cusps - cusppos;
     arcnew->cusps = arc->cusps - cusppos - 1;
     arcnew->dvalues = arcnew->depthsdim;
     newdepths = (int *) malloc (arcnew->depthsdim * sizeof (int));
     arcnew->depths = newdepths;
     /* devo definire endpoints, che ora e' 2 */
     arc->endpoints = arcnew->endpoints = 2;
-    for (i = 0; i < arcnew->depthsdim; i++)
+    for (i = 0; i <= arcnew->cusps; i++)
     {
       newdepths[i] = arc->depths[i + cusppos + 1];
     }
-    arc->depthsdim = cusppos + 1;
     arc->cusps = cusppos;
-    arc->dvalues = arc->depthsdim;
-    newdepths = (int *) malloc (arc->depthsdim * sizeof (int));
-    for (i = 0; i < arc->depthsdim; i++)
+    arc->dvalues = cusppos + 1;
+    newdepths = (int *) malloc ((cusppos + 1) * sizeof (int));
+    for (i = 0; i < arc->cusps + 1; i++)
     {
       newdepths[i] = arc->depths[i];
     }
     free (arc->depths);
     arc->depths = newdepths;
+    arc->depthsdim = cusppos + 1;
   }
   if (debug) checkconsistency (sketch);
 }
@@ -1502,28 +1546,28 @@ remove_cusp (struct region *r, struct sketch *sketch)
   assert (bsegtn->orientation == bcusp->orientation);
   arc = bsegtn->info;
   /* ora devo spostare le informazioni sulla cuspide sull'arco arc */
-  newdepths = (int *) malloc ((arc->depthsdim + 1)*sizeof (int));
+  newdepths = (int *) malloc ((arc->cusps + 2)*sizeof (int));
   if (bsegtn->orientation > 0)
   {
     newdepths[0] = arc->depths[0] - arccusp->depths[1]
                                   + arccusp->depths[0];
-    for (i = 0; i < arc->depthsdim; i++)
+    for (i = 0; i <= arc->cusps; i++)
       newdepths[i+1] = arc->depths[i];
   } else {
-    for (i = 0; i < arc->depthsdim; i++)
+    for (i = 0; i <= arc->cusps; i++)
       newdepths[i] = arc->depths[i];
 
-    newdepths[arc->depthsdim] = newdepths[arc->depthsdim - 1]
+    newdepths[arc->cusps + 1] = newdepths[arc->cusps]
        - arccusp->depths[0] + arccusp->depths[1];
   }
-  arc->depthsdim++;
   arc->cusps++;
   arc->dvalues++;
   free (arc->depths);
   arc->depths = newdepths;
+  arc->depthsdim = arc->cusps + 1;
   /* devo togliere la cuspide da arccusp, non sto a liberare/allocare */
   arccusp->cusps = 0;
-  arccusp->depthsdim = 1;
+  // arccusp->depthsdim = 1;
   arccusp->dvalues = 1;
   if (bsegtn->orientation < 0)
     arccusp->depths[0] = arccusp->depths[1];
@@ -1573,18 +1617,18 @@ applyrulecr3 (struct border *b1, struct border *b2, int dindex,
 
   if (arc2->endpoints == 0)
   {
-    size12 = arc1->depthsdim + arc2->depthsdim + 1;
-    if (arc1 != arc1n) size12 += arc1n->depthsdim - 1;
+    size12 = arc1->cusps + arc2->cusps + 3;
+    if (arc1 != arc1n) size12 += arc1n->cusps;
     newdepths12 = (int *) malloc (size12 * sizeof (int));
-    for (i = 0, j = 0; i < arc1->depthsdim; i++)
+    for (i = 0, j = 0; i <= arc1->cusps; i++)
       newdepths12[j++] = arc1->depths[i];
-    for (i = dindex; i < arc2->depthsdim; i++)
+    for (i = dindex; i <= arc2->cusps; i++)
       newdepths12[j++] = arc2->depths[i];
     for (i = 1; i <= dindex; i++)
       newdepths12[j++] = arc2->depths[i];
     newdepths12[j++] = arc1n->depths[0];
     if (arc1 != arc1n)
-      for (i = 1; i < arc1n->depthsdim; i++)
+      for (i = 1; i <= arc1n->cusps; i++)
         newdepths12[j++] = arc1n->depths[i];
     free (arc1->depths);
     arc1->depths = 0;
@@ -1606,13 +1650,13 @@ applyrulecr3 (struct border *b1, struct border *b2, int dindex,
     arc1n = 0;
   } else if (arc1 == arc1n)
   {
-    size12 = arc1->depthsdim + arc2->depthsdim + 1;
+    size12 = arc1->cusps + arc2->cusps + 3;
     newdepths12 = (int *) malloc (size12 * sizeof (int));
     for (i = 0, j = 0; i <= dindex; i++)
       newdepths12[j++] = arc2->depths[i];
-    for (i = 0; i < arc1->depthsdim; i++)
+    for (i = 0; i <= arc1->cusps; i++)
       newdepths12[j++] = arc1->depths[i];
-    for (i = dindex; i < arc2->depthsdim; i++)
+    for (i = dindex; i <= arc2->cusps; i++)
       newdepths12[j++] = arc2->depths[i];
     free (arc1->depths);
     arc1->depths = 0;
@@ -1631,28 +1675,28 @@ applyrulecr3 (struct border *b1, struct border *b2, int dindex,
     isclosed1 = isclosed2 = 0;
     if (arc1 != arc2)
     {
-      size1 = arc2->depthsdim - dindex + arc1->depthsdim;
+      size1 = arc2->cusps - dindex + arc1->cusps + 2;
       newdepths1 = (int *) malloc (size1 * sizeof (int));
-      for (i = 0, j = 0; i < arc1->depthsdim; i++) 
+      for (i = 0, j = 0; i <= arc1->cusps; i++) 
         newdepths1[j++] = arc1->depths[i];
       assert (abs(arc2->depths[dindex] - newdepths1[j-1]) == 1);
-      for (i = dindex; i < arc2->depthsdim; i++)
+      for (i = dindex; i <= arc2->cusps; i++)
         newdepths1[j++] = arc2->depths[i];
     } else {
       isclosed1 = 1;
-      size1 = arc1->depthsdim - dindex + 1;
+      size1 = arc1->cusps - dindex + 2;
       newdepths1 = (int *) malloc (size1 * sizeof (int));
-      for (i = dindex, j = 0; i < arc1->depthsdim; i++)
+      for (i = dindex, j = 0; i <= arc1->cusps; i++)
         newdepths1[j++] = arc1->depths[i];
       newdepths1[j] = arc1->depths[dindex];
     }
     if (arc1n != arc2)
     {
-      size2 = 1 + dindex + arc1n->depthsdim;
+      size2 = dindex + arc1n->cusps + 2;
       newdepths2 = (int *) malloc (size2 * sizeof (int));
       for (i = 0, j = 0; i <= dindex; i++)
         newdepths2[j++] = arc2->depths[i];
-      for (i = 0; i < arc1n->depthsdim; i++)
+      for (i = 0; i <= arc1n->cusps; i++)
         newdepths2[j++] = arc1n->depths[i];
       assert (abs(newdepths2[dindex + 1] - newdepths2[dindex]) == 1);
     } else {

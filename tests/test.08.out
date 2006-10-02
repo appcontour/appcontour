@@ -1,1 +1,39 @@
-Connected components: 2
+sketch {
+Arc 1: (0);
+Arc 2: (0);
+Arc 3: (0 1 0);
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 4): (+a2);
+Region 2 (f = 4): (+a3);
+Region 3 (f = 2): (+a1) (-a2) (-a3);
+}
+sketch {
+Arc 1: (0);
+Arc 2: [0);
+Arc 3: [1];
+Arc 4: [2];
+Arc 5: [4];
+Arc 6: [0 1];
+Arc 7: [1 2];
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 0): (-a2);
+Region 2 (f = 4): (-a3 +a4);
+Region 3 (f = 6): (+a3 +a5);
+Region 4 (f = 4): (-a5 +a7 +a6);
+Region 5 (f = 2): (+a1) (+a2 -a7 -a4 -a6);
+}
+sketch {
+Arc 1: (0);
+Arc 2: [0);
+Arc 3: [1];
+Arc 4: [2];
+Arc 5: [4];
+Arc 6: [1 0];
+Arc 7: [2 1];
+Region 0 (f = 0): () (-a2);
+Region 1 (f = 0): (-a1);
+Region 2 (f = 4): (-a3 +a4);
+Region 3 (f = 6): (+a3 +a5);
+Region 4 (f = 4): (-a5 +a6 +a7);
+Region 5 (f = 2): (+a2 -a6 -a4 -a7) (+a1);
+}

@@ -1,1 +1,5 @@
-./contour countcc <examples/tre_sfere.morse
+./contour applyrule n2 <examples/sfera_dietro_toro.morse
+./contour applyrule n3 <examples/sfera_davanti_toro.morse
+./contour applyrule n4 <examples/due_anelli.morse | ./contour applyrule n2 | ./contour applyrule n3 | ./contour applyrule n1
+./contour applyrule n4 <examples/toro2.morse
+./contour applyrule N5 <examples/tre_sfere.morse | ./contour applyrule N5:6 | ./contour applyrule N1 | ./contour applyrule N1 | ./contour applyrule N1

@@ -1,1 +1,5 @@
-./contour applyrule n1 <examples/tre_sfere.morse | ./contour applyrule n1 | ./contour applyrule n1
+./contour countcc <examples/tre_sfere.morse
+./contour extractcc 1 <examples/sfera_dietro_toro.morse
+./contour extractcc 2 <examples/sfera_dietro_toro.morse
+./contour countcc <examples/sfera_dietro_toro.morse
+./contour countcc <examples/sfera_davanti_toro.morse

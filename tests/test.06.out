@@ -1,5 +1,4 @@
-sketch {
-Arc 1: (0);
-Region 0 (f = 0): () (-a1);
-Region 1 (f = 2): (+a1);
-}
+Rules that apply:
+N4 N4:2 N4:3
+Rules that apply:
+N1 N3 N3:2 N5 N5:2

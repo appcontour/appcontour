@@ -369,7 +369,7 @@ make_transparent (int ccid, struct sketch *sketch)
     {
       if (rs->strati[i] == ccid) nstrati++;
     }
-    for (i = 0; i < arc->depthsdim; i++) arc->depths[i] -= nstrati;
+    for (i = 0; i < arc->cusps + 1; i++) arc->depths[i] -= nstrati;
   }
 
   /* aggiorno la f e gli strati delle regioni */
