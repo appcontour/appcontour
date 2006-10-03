@@ -2,11 +2,60 @@
 #include "contour.h"
 
 extern int debug;
+extern int quiet;
 
 /* prototipi */
 int checkdnodecons (struct border *b, int dd[4]);
 int getdatnode (struct border *b);
 /* fine prototipi */
+
+/*
+ * show various information about the apparent contour
+ */
+
+void
+showinfo (struct sketch *sketch)
+{
+  int numarcs, numsmallarcs, nums1s, numcusps, numregions, numcrossings;
+  int numarcsend1, numholes;
+  struct arc *arc;
+  struct region *r;
+  struct borderlist *bl;
+
+  numarcs = numsmallarcs = numcusps = nums1s = numarcsend1 = 0;
+  for (arc = sketch->arcs; arc; arc = arc->next)
+  {
+    numarcs++;
+    if (arc->endpoints == 0) nums1s++;
+    if (arc->endpoints == 1) numarcsend1++;
+    numcusps += arc->cusps;
+    numsmallarcs += arc->cusps + 1;
+    if (arc->endpoints == 0 && arc->cusps > 0) numsmallarcs--;
+  }
+
+  numcrossings = (numarcs - nums1s)/2;
+
+  numregions = numholes = 0;
+  for (r = sketch->regions; r; r = r->next)
+  {
+    numregions++;
+    for (bl = r->border->next; bl; bl = bl->next) numholes++;
+  }
+
+  if (! quiet) printf ("Properties of the 2D apparent contour:\n");
+  printf ("Arcs:             %d\n", numsmallarcs);
+  printf ("Extended arcs:    %d\n", numarcs);
+  printf ("Loops:            %d\n", nums1s);
+  printf ("Nodes:            %d\n", numcusps + numcrossings);
+  printf ("Cusps:            %d\n", numcusps);
+  printf ("Crossings:        %d\n", numcrossings);
+  printf ("Regions:          %d\n", numregions);
+  printf ("Connected comp.   %d\n", numholes);
+
+  if (! quiet) printf ("Properties of the 3D surface:\n");
+  printf ("Connected comp.   %d\n", count_connected_components (sketch));
+  printf ("Total Euler ch.   %d\n", euler_characteristic (sketch));
+}
 
 /*
  * compute the euler characteristic

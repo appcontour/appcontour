@@ -37,3 +37,7 @@
 
 	Nuova funzione "characteristic" per il calcolo della caratteristica
 	di Eulero della superficie 3D (nel caso sia connessa).
+
+2006-10-03: Completato il set delle rules come nel paper.
+	Funziona l'output di una descrizione Morse.
+	comando "contour info" per ottenere un po' di statistica sul contorno.

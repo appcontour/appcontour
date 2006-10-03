@@ -16,6 +16,7 @@
 #define ACTION_PRINTMORSE 10
 #define ACTION_CHARACTERISTIC 11
 #define ACTION_REMOVECC 12
+#define ACTION_INFO 13
 
 int debug = 0;
 int quiet = 0;
@@ -49,7 +50,7 @@ main (int argc, char *argv[])
     {
       printf ("usage: %s [print|printmorse|isappcon|compare|canonify|applyrule|\n",
                                           argv[0]);
-      printf ("       testallrules|countcc|extractcc|characteristic|knot2morse]\n");
+      printf ("       testallrules|info|extractcc|characteristic|knot2morse]\n");
       exit (0);
     }
     if (infile)
@@ -96,6 +97,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
     if (strcmp(argv[i],"printmorse") == 0) action = ACTION_PRINTMORSE;
     if (strcmp(argv[i],"characteristic") == 0) action = ACTION_CHARACTERISTIC;
+    if (strcmp(argv[i],"info") == 0) action = ACTION_INFO;
     if (action == ACTION_NONE)
     {
       fprintf (stderr, "invalid arg[%d] = %s\n", i, argv[i]);
@@ -202,6 +204,11 @@ main (int argc, char *argv[])
     sketch = readcontour (infile);
     if (quiet) printf ("%d\n", euler_characteristic (sketch));
       else printf ("Euler characteristic: %d\n", euler_characteristic (sketch));
+    break;
+
+    case ACTION_INFO:
+    sketch = readcontour (infile);
+    showinfo (sketch);
     break;
 
     default:

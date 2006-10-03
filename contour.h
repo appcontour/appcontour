@@ -171,6 +171,7 @@ int arccmp (struct arc *a1, struct arc *a2);
 
 /* prototipi appcontour */
 
+void showinfo (struct sketch *sketch);
 int euler_characteristic (struct sketch *sketch);
 int appcontourcheck (struct sketch *s, int verbose);
 int checkorientationborder (struct border *b);
