@@ -13,6 +13,13 @@ list=`ls [0-9]*`
 
 for s1 in $list
 do
+  echo -n "checking morse and region equivalency: "
+  if ( cat $s1 ; contour printmorse $s1 2>/dev/null ) | contour compare 2>/dev/null >/dev/null
+  then
+    echo OK
+  else
+    echo FAIL
+  fi
   echo "comparing $s1 with all others"
   for s2 in $list
   do
