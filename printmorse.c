@@ -15,7 +15,7 @@ struct morse {
   struct morse *inf;
 };
 
-/* prototipi */
+/* local prototypes */
 
 void morse_islands (struct borderlist *bl);
 void enter_arc_event (struct border *b, struct morse *before);
@@ -23,14 +23,15 @@ struct morse *newmblock (struct morse *before);
 void do_morse (struct morse *minf);
 void advance_morse_line (struct morse *minf);
 void enter_region (struct morse *left, int type);
-void nested_morse (struct morse *mb1, struct morse *mb2, int arcosotto);
+void nested_morse (struct morse *mb1, struct morse *mb2, int arcbelow);
 int isonleft (struct morse *mb1, struct morse *mb2);
 void morse_close (struct morse *left, struct morse *right);
 struct morse *segui_bordo (struct border *bin, struct morse *mbin, int type);
 int countleft (struct morse *m);
 int countright (struct morse *m);
-void outrowp (int type, struct morse *left);
-void outrow (int type);
+void outrowp (int type, struct morse *left, struct border *bll, struct border *brl);
+void outrow (int type, struct border *bll, struct border *brl);
+void outinfodepths (struct arc *arc);
 
 #define TYPE_TOP 1
 #define TYPE_CROSS 2
@@ -56,7 +57,7 @@ morse_islands (struct borderlist *bl)
   {
     minf.next = minf.prev = &minf;
     enter_arc_event (bl->sponda, &minf);  
-    /* posso decidere di inserire tutto il bordo... */
+    /* volendo posso decidere di inserire tutto il bordo... */
     do_morse (&minf);
   }
 }
@@ -77,7 +78,7 @@ enter_arc_event (struct border *b, struct morse *before)
   right = newmblock (left);
   right->left = bin;
   right->right = b;
-  outrowp (TYPE_TOP, left);
+  outrowp (TYPE_TOP, left, b, 0);
 
   enter_region (left, TYPE_TOP);
   return;
@@ -112,7 +113,7 @@ void
 advance_morse_line (struct morse *minf)
 {
   struct morse *left, *right;
-  struct border *bgen;
+  struct border *bgen, *bll, *brl;
 
   assert (minf->next->inf);
 
@@ -129,14 +130,14 @@ advance_morse_line (struct morse *minf)
     bgen = right->right;
     bgen = bgen->next;    /* e' il nuovo brr */
     right->right = bgen;
-    bgen = gettransborder (bgen);  /* e' il nuovo brl */
-    right->left = bgen;
-    bgen = bgen->next;             /* e' il nuovo blr */
+    brl = gettransborder (bgen);  /* e' il nuovo brl */
+    right->left = brl;
+    bgen = brl->next;             /* e' il nuovo blr */
     left->right = bgen;
-    bgen = gettransborder (bgen);  /* e' il nuovo bll */
-    assert (bgen->next == left->left);
-    left->left = bgen;
-    outrowp (TYPE_CROSS, left);
+    bll = gettransborder (bgen);  /* e' il nuovo bll */
+    assert (bll->next == left->left);
+    left->left = bll;
+    outrowp (TYPE_CROSS, left, bll, brl);
     if (debug) printf ("Attraverso un nodo, questo e' un 'X'\n");
     if (debug) printf ("  nuovi archi: %d %d\n", left->left->info->tag,
                 right->right->info->tag);
@@ -154,7 +155,7 @@ enter_region (struct morse *left, int type)
   struct morse *right, *destblock;
   struct border *binl, *binr;
   struct arc *arc;
-  int arcosotto, arcosotto1, arcosotto2;
+  int arcbelow, arcbelow1, arcbelow2;
 
   //printf ("in enter_region\n");
   assert (left->inf);
@@ -165,20 +166,20 @@ enter_region (struct morse *left, int type)
   binl = left->right;
   binr = right->left;
 
-  arcosotto = 0;
+  arcbelow = 0;
   if (binl == binr) /* stesso arco */
   {
     arc = binl->info;
     if (arc->endpoints == 0)   /* e' un S1 */
     {
       assert (type == TYPE_TOP);
-      arcosotto = 1;
+      arcbelow = 1;
     } else {
-      if (type == TYPE_CROSS) arcosotto = 1;
+      if (type == TYPE_CROSS) arcbelow = 1;
     }
   }
 
-  if (arcosotto)
+  if (arcbelow)
   {
     /* in base alle regole di consistenza questo
      * e' possibile solo se la regione prima e dopo
@@ -186,7 +187,7 @@ enter_region (struct morse *left, int type)
      * la descrizione di morse. Questa e' per forza
      * una regione nuova
      */
-    //printf ("  e.r. arcosotto\n");
+    //printf ("  e.r. arcbelow\n");
     crbefore++;
     crafter++;
     assert (binl->border == binl->border->region->border);
@@ -219,37 +220,36 @@ enter_region (struct morse *left, int type)
     /* forse non va trattata in modo speciale */
   //}
 
-  arcosotto1 = 0;
-  arcosotto2 = 0;
+  arcbelow1 = arcbelow2 = 0;
   if (destblock->left == left->right);
   if (type == TYPE_TOP)
   {
     assert (destblock->left != left->right);
     assert (destblock->prev->right != left->next->left);
   } else {
-    if (destblock->left == left->right) arcosotto1 = 1;
-    if (destblock->prev->right == left->next->left) arcosotto2 = 1;
+    if (destblock->left == left->right) arcbelow1 = 1;
+    if (destblock->prev->right == left->next->left) arcbelow2 = 1;
   }
   if (isonleft (destblock, left))
   {
-    nested_morse (destblock, left, arcosotto1);
-    if (arcosotto2) morse_close (destblock->prev, left->next);
+    nested_morse (destblock, left, arcbelow1);
+    if (arcbelow2) morse_close (destblock->prev, left->next);
   } else {
-    nested_morse (left->next, destblock->prev, arcosotto2);
-    if (arcosotto1) morse_close (left, destblock);
+    nested_morse (left->next, destblock->prev, arcbelow2);
+    if (arcbelow1) morse_close (left, destblock);
   }
   return;
 }
 
 void
-nested_morse (struct morse *mb1, struct morse *mb2, int arcosotto)
+nested_morse (struct morse *mb1, struct morse *mb2, int arcbelow)
 {
   struct morse minf, *block;
   int cl, cr;
 
   if (debug) printf ("entering nested morse\n");
 
-  if (arcosotto)
+  if (arcbelow)
   {
     if (mb1->next != mb2) nested_morse (mb1->next, mb2->next, 0);
     crbefore++;
@@ -333,7 +333,7 @@ void
 morse_close (struct morse *left, struct morse *right)
 {
   if (debug) printf ("closing a morse description (with an U).\n");
-  outrow (TYPE_BOT);
+  outrow (TYPE_BOT, 0, 0);
   left->prev->next = right->next;
   right->next->prev = left->prev;
   free (left);
@@ -361,7 +361,7 @@ countright (struct morse *m)
 }
 
 void
-outrowp (int type, struct morse *left)
+outrowp (int type, struct morse *left, struct border *bll, struct border *brl)
 {
   int cl, cr;
 
@@ -370,13 +370,13 @@ outrowp (int type, struct morse *left)
 
   crbefore += cl;
   crafter += cr;
-  outrow (type);
+  outrow (type, bll, brl);
   crafter -= cr;
   crbefore -= cl;
 }
 
 void
-outrow (int type)
+outrow (int type, struct border *bll, struct border *brl)
 {
   int i;
 
@@ -385,15 +385,35 @@ outrow (int type)
   switch (type)
   {
     case TYPE_TOP:
-      printf (" ^ ");
+      assert (brl == 0);
+      printf (" ^");
+      if (bll)
+      {
+        printf ("%c,", (bll->orientation > 0)?'r':'l');
+        outinfodepths (bll->info);
+        printf (" ");
+      }
       break;
 
     case TYPE_BOT:
+      assert (bll == 0 && brl == 0);
       printf (" U ");
       break;
 
     case TYPE_CROSS:
       printf (" X ");
+      if (bll)
+      {
+        printf ("%c,", (bll->orientation > 0)?'u':'d');
+        outinfodepths (bll->info);
+      }
+      if (brl)
+      {
+        if (bll) printf (" "); else printf ("[]");
+        printf ("%c,", (brl->orientation > 0)?'u':'d');
+        outinfodepths (brl->info);
+      }
+      if (brl || bll) printf (" ");
       break;
 
     default:
@@ -402,4 +422,21 @@ outrow (int type)
   }
   for (i = 0; i < crafter; i++) printf (" | ");
   printf (";\n");
+}
+
+void
+outinfodepths (struct arc *arc)
+{
+  int d, i;
+
+  d = arc->depths[0];
+  printf ("%d", d);
+  for (i = 1; i <= arc->cusps; i++)
+  {
+    if (abs (arc->depths[i] - d) != 1) fprintf (stderr, 
+           "erroneous d values across cusp\n");
+    if (arc->depths[i] > d) printf ("+");
+    if (arc->depths[i] < d) printf ("-");
+    d = arc->depths[i];
+  }
 }

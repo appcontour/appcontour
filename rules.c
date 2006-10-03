@@ -632,7 +632,7 @@ rule_cr11b (struct sketch *sketch, int rcount, int isback)
   struct borderlist *bl, *blp;
   struct border *bpstart, *bppstart, *bp, *bpp;
   int i, j, catafound, onlytest = 0, orib, db;
-  struct arc *arc, *arct;
+  struct arc *arc, *arct = 0;
   int ip2, numchecks;
 
   if (rcount < 0) {onlytest = 1; rcount *= -1;}

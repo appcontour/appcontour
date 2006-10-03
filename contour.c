@@ -47,7 +47,7 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--help") == 0)
     {
-      printf ("usage: %s [print|isappcon|compare|canonify|applyrule|\n",
+      printf ("usage: %s [print|printmorse|isappcon|compare|canonify|applyrule|\n",
                                           argv[0]);
       printf ("       testallrules|countcc|extractcc|characteristic|knot2morse]\n");
       exit (0);
