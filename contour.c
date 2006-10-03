@@ -194,7 +194,7 @@ main (int argc, char *argv[])
 
     case ACTION_PRINTMORSE:
     sketch = readcontour (infile);
-    //canonify (sketch);
+    canonify (sketch);
     printmorse (sketch);
     break;
 
