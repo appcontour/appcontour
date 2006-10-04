@@ -1,4 +1,4 @@
-./contour applyrule n3 < examples/collina.morse | ./contour applyrule c1
-./contour applyrule n3 <examples/duecolline.morse | ./contour applyrule n3 | ./contour applyrule c2:3
+./contour applyrule n3 < examples/hill.morse | ./contour applyrule c1
+./contour applyrule n3 <examples/two_hills.morse | ./contour applyrule n3 | ./contour applyrule c2:3
 ./contour applyrule cn1 <examples/toro2.morse | ./contour applyrule cn1
 ./contour applyrule n6 examples/toro_otto.morse |./contour applyrule cn2r
