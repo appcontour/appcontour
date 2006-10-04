@@ -40,10 +40,18 @@ void outinfodepths (struct arc *arc);
 void
 printmorse (struct sketch *sketch)
 {
+  struct arc *arc;
+
   if (debug) printf ("Entering in printmorse\n");
   printf ("morse {\n");
   morse_islands (sketch->regions->border->next);
   printf ("}\n");
+  /* now reset all arc tags */
+  for (arc = sketch->arcs; arc; arc = arc->next)
+  {
+    if (arc->tag < 0) arc->tag *= -1;
+      else fprintf (stderr, "Error: forgotten arc %d\n", arc->tag);
+  }
   if (debug) printf ("  printmorse finished\n");
 }
 
@@ -382,6 +390,7 @@ outrow (int type, struct border *bll, struct border *brl)
 
   if (debug) printf ("ROW: ");
   for (i = 0; i < crbefore; i++) printf (" | ");
+  if (bll && bll->info->tag < 0) bll = 0;
   switch (type)
   {
     case TYPE_TOP:
@@ -407,6 +416,7 @@ outrow (int type, struct border *bll, struct border *brl)
         printf ("%c,", (bll->orientation > 0)?'u':'d');
         outinfodepths (bll->info);
       }
+      if (brl && brl->info->tag < 0) brl = 0;
       if (brl)
       {
         if (bll) printf (" "); else printf ("[]");
@@ -429,6 +439,8 @@ outinfodepths (struct arc *arc)
 {
   int d, i;
 
+  assert (arc->tag >= 0);  /* we already wrote the information */
+  arc->tag *= -1;
   d = arc->depths[0];
   printf ("%d", d);
   for (i = 1; i <= arc->cusps; i++)

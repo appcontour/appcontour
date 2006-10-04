@@ -1,5 +1,5 @@
-./contour countcc <examples/tre_sfere.morse
-./contour extractcc 1 <examples/sfera_dietro_toro.morse
-./contour extractcc 2 <examples/sfera_dietro_toro.morse
-./contour countcc <examples/sfera_dietro_toro.morse
-./contour countcc <examples/sfera_davanti_toro.morse
+./contour countcc <examples/three_spheres.morse
+./contour extractcc 1 <examples/sphere_behind_torus.morse
+./contour extractcc 2 <examples/sphere_behind_torus.morse
+./contour countcc <examples/sphere_behind_torus.morse
+./contour countcc <examples/sphere_infrontof_torus.morse

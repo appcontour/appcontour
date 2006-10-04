@@ -1,2 +1,2 @@
 ./contour testallrules <examples/due_anelli.morse
-./contour testallrules <examples/tre_sfere.morse
+./contour testallrules <examples/three_spheres.morse

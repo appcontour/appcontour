@@ -1,1 +1,1 @@
-./contour applyrule n1 <examples/tre_sfere.morse | ./contour applyrule n1
+./contour applyrule n1 <examples/three_spheres.morse | ./contour applyrule n1 | ./contour applyrule n1 | ./contour applyrule n1
