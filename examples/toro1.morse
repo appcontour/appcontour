@@ -1,8 +1,9 @@
 #
-# descrizione sfera cava
+# This is a torus seen from above
+#
 morse {
-    A[l,0];  # l: left [orientazione verso sinistra], d = 0
-  I A[r,0] I;
-  I V      I;
-    V;
+    ^l,0  ;  # l: left [orientazione verso sinistra], d = 0
+  | ^r,0   |;
+  | U      |;
+    U;
 }

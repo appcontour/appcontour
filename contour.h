@@ -247,6 +247,7 @@ void freeborderlist (struct borderlist *);
 void freearc (struct arc *);
 
 int gettoken (FILE *file);
+int gettokens (FILE *file);
 void ungettoken (int);
 int gettokennumber (void);
 void skipblanks (FILE *file);

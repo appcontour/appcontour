@@ -50,7 +50,7 @@ readmorse (FILE *file)
     freesketch (sketch);
     return (0);
   }
-  while ((tok = gettoken (file)) != TOK_RBRACE)
+  while ((tok = gettokens (file)) != TOK_RBRACE)
   {
     ungettoken (tok);
     if ((actregionsnum = readrow (file, sketch, actregions, 
@@ -91,7 +91,7 @@ readrow (FILE *file, struct sketch *sketch,
 
   if (debug) printf ("Nuova riga, regioni attive: %d\n", actregionsnum);
   if (debug) checkconsistency (sketch);
-  while ((tok = gettoken(file)) != TOK_SEMICOLON)
+  while ((tok = gettokens(file)) != TOK_SEMICOLON)
   {
     switch (tok)
     {
@@ -393,7 +393,7 @@ getarcinfo (int key, FILE *file,
   int depthind = 0, require_rbr = 1;
   struct arc *arc;
 
-  tok = gettoken (file);
+  tok = gettokens (file);
   if (tok == ISNUMBER || tok == KEY_LEFT || 
       tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
   {
@@ -406,18 +406,18 @@ getarcinfo (int key, FILE *file,
     ungettoken (tok);
     return (ORIENT_EMPTY);
   }
-  tok = gettoken (file);
+  tok = gettokens (file);
   if (tok == TOK_RBRACKET) return (ORIENT_EMPTY);
   if (tok == KEY_LEFT || tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
   {
     orientation = tok;
-    tok = gettoken (file);
+    tok = gettokens (file);
   }
   if (tok == TOK_COMMA || tok == ISNUMBER)
   {
     if (tok == ISNUMBER) ungettoken (tok);
     prevd = 0;
-    while ((tok = gettoken (file)) == ISNUMBER || 
+    while ((tok = gettokens (file)) == ISNUMBER || 
             tok == TOK_PLUS || tok == TOK_MINUS)
     {
       switch (tok)

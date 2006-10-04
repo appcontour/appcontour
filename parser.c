@@ -4,6 +4,7 @@
 #include "contour.h"
 
 extern int debug;
+static int onecharword = 0;
 
 char
 mygetchar (FILE *file)
@@ -20,6 +21,7 @@ getword (FILE *file, char *word, int wordmaxlen)
 
   while (isalnum(ch = fgetc (file)))
   {
+    if (onecharword && ! isdigit(ch)) break;
     if (charcount++ >= wordmaxlen)
     {
       fprintf (stderr, "Error: word too long (%c)\n", ch);
@@ -68,6 +70,18 @@ ungettoken (int tok)
 }
 
 static char tokenword[80];
+
+int
+gettokens (FILE *file)
+{
+  int flagsaved, tok;
+
+  flagsaved = onecharword;
+  onecharword = 1;
+  tok = gettoken (file);
+  onecharword = flagsaved;
+  return (tok);
+}
 
 int
 gettoken (FILE *file)

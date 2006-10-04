@@ -4,6 +4,6 @@
 # orientazioni possibili: l, r, u, d
 #
 morse {
-  ^[l,0];  # orientazione left, d=0
+  ^l0 ;  # orientazione left, d=0
   U;
 }
