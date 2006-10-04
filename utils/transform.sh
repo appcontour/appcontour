@@ -118,7 +118,7 @@ fi
 mosse=$[ mosse + 1 ]
 nomeesempio=`basename $esempio ".morse"`
 
-fatti=$nomeesempio.trasformazioni
+fatti=$nomeesempio.transformations
 
 myname=`basename $0`
 mydir=`dirname $0`
@@ -133,7 +133,7 @@ basta=""
 if contour print $esempio 2>/dev/null | grep -q "\[no info"
 then
   basta="1"
-  echo "Mancano informazioni sugli archi per $esempio:"
+  echo "Some informations on arcs are missing for $esempio:"
   contour print $esempio
 fi
 
@@ -146,12 +146,12 @@ fi
 if [ -e deposito ]
 then
   basta="1"
-  echo "devi prima cancellare la cartella deposito"
+  echo "you must first remove directory 'deposito'"
 fi
 
 if [ -e $fatti ]
 then
-  echo "devi prima cancellare la cartella $fatti"
+  echo "you must firse remove directory $fatti"
   basta="1"
 fi
 
@@ -195,7 +195,7 @@ do
       for r in $rules
       do
         rmod=`echo $r | tr ":" "-"`
-        echo "Trasformo $file con regola $r"
+        echo "Transforming $file with rule $r"
         contour applyrule $r <$file 2>/dev/null >$file.$rmod
         incasella $file.$rmod $nomeesempio .albero
       done
