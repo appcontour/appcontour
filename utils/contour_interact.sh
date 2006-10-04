@@ -2,12 +2,29 @@
 #
 example=$1
 
-echo "THIS DOES NOT WORK YET"
-exit
-
 function displayinfo ()
 {
-  $commandchain | contour info
+  eval $commandchain | contour info 2>/dev/null
+}
+
+function printexample ()
+{
+  eval $commandchain | contour print 2>/dev/null
+}
+
+function back ()
+{
+  prevrules="$rules"
+  prevrule=""
+  rules=""
+  for r in $prevrules
+  do
+    if [ -n "$prevrule" ]
+    then
+      rules="$rules $prevrule"
+    fi
+    prevrule="$r"
+  done
 }
 
 function buildcommandchain ()
@@ -15,7 +32,7 @@ function buildcommandchain ()
   commandchain="$catcommand"
   for rule in $rules
   do
-    commandchain="$commandchain | contour applyrule $rule"
+    commandchain="$commandchain | contour applyrule $rule 2>/dev/null"
   done
 }
 
@@ -47,7 +64,7 @@ while true
 do
   echo "applied rules: $rules"
   buildcommandchain
-  applicable=`$commandchain | contour testallrules | tail -1`
+  applicable=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
   echo "Applicable rules: $applicable"
   applicable=" $applicable "
   echo -n "command: "
@@ -68,6 +85,9 @@ do
     print)
       printexample
       ;;
+    back)
+      back
+      ;;
     exit|quit)
       exit
       ;;
@@ -81,8 +101,8 @@ do
       echo "OK, applying rule $command"
       rules="$rules $command"
       buildcommandchain
-      echo "new command chain: $commandchain"
-      eval $commandchain
+#      echo "new command chain: $commandchain"
+#      eval $commandchain
     else
       echo "Invalid command $command, type help for help"
     fi
