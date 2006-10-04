@@ -48,10 +48,18 @@ then
   exit 1
 fi
 
-catcommand="cat $example"
-
-examplename=`basename $example ".morse"`
+examplefname=`basename $example`
+examplename=${examplefname%.morse}
 examplename=${examplename%.sketch}
+examplename=${examplename%.knot}
+
+if [ "$examplefname" == "$examplename".knot ]
+then
+  echo "This is a knot format, converting to morse..."
+  catcommand="contour knot2morse $example"
+else
+  catcommand="cat $example"
+fi
 
 echo "examplename: $examplename"
 
@@ -67,7 +75,7 @@ do
   applicable=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
   echo "Applicable rules: $applicable"
   applicable=" $applicable "
-  echo -n "command: "
+  echo -n "Contour> "
   read command arg
   if [ "$?" != "0" ]
   then
