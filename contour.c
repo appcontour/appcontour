@@ -2,6 +2,7 @@
 #include <string.h>
 #include "config.h"
 #include "contour.h"
+#include "parser.h"
 
 #define ACTION_NONE 0
 #define ACTION_PRINTSKETCH 1

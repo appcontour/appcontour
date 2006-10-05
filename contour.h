@@ -62,53 +62,6 @@ struct arc {
 
 #define INFINITY_ARC (-9999)
 
-/* tokens */
-
-#define TOK_LBRACE 1
-#define TOK_RBRACE 2
-#define KEY_A  3
-#define KEY_V  4
-#define KEY_I  5
-#define KEY_X  6
-#define TOK_SEMICOLON 7
-#define TOK_LPAREN 8
-#define TOK_RPAREN 9
-#define KEY_LEFT 10
-#define KEY_RIGHT 11
-#define KEY_UP 12
-#define KEY_DOWN 13
-#define ISNUMBER 14
-#define TOK_COMMA 15
-#define TOK_MORSE 16
-#define TOK_SKETCH 17
-#define TOK_ARC 18
-#define TOK_REGION 19
-#define TOK_COLON 20
-#define TOK_LBRACKET 21
-#define TOK_RBRACKET 22
-#define TOK_EQUAL 23
-#define TOK_PLUS 24
-#define TOK_MINUS 25
-#define KEY_F 26
-#define KEY_NE  27
-#define KEY_NW  28
-#define KEY_SE  29
-#define KEY_SW  30
-#define KEY_HAT  31
-#define KEY_U  32
-#define KEY_O  33
-#define KEY_SLASH 34
-#define KEY_BSLASH 35
-#define KEY_PIPE 36
-#define KEY_UNDERSCORE 37
-#define KEY_BACKQUOTE 38
-#define TOK_KNOT 39
-
-#define TOK_ERROR  9999
-#define TOK_EOF    9990
-#define TOK_CHAR   9991
-#define TOK_ID     9992
-
 #define BIG_INT   10000
 
 /* prototipi */
@@ -120,14 +73,14 @@ int testsinglerule (char *rname, int (*rulefunc)(struct sketch *s, int rc),
 int apply_rule (char *rule, struct sketch *s);
 int rule_n14 (struct sketch *s, int rule, int count);
 int rule_n5 (struct sketch *s, int count);
-int rule_n6 (struct sketch *s, int count);
+int rule_cr2 (struct sketch *s, int count);
 int rule_c1 (struct sketch *s, int count);
 int rule_c2 (struct sketch *s, int count);
 int rule_a1 (struct sketch *s, int count);
 int rule_a2 (struct sketch *s, int count);
 int rule_a12 (struct sketch *s, int count, int ddiff);
 int rule_cn1 (struct sketch *s, int count);
-int rule_cn1_n6 (struct sketch *s, int count, int isn6);
+int rule_cn1_cr2 (struct sketch *s, int count, int iscr2);
 int rule_cn2l (struct sketch *s, int count);
 int rule_cn2r (struct sketch *s, int count);
 int rule_cn2lb (struct sketch *s, int count);
@@ -245,13 +198,6 @@ void freeborder (struct border *);
 void freeborderdl (struct border *);
 void freeborderlist (struct borderlist *);
 void freearc (struct arc *);
-
-int gettoken (FILE *file);
-int gettokens (FILE *file);
-void ungettoken (int);
-int gettokennumber (void);
-void skipblanks (FILE *file);
-char mygetchar (FILE *file);
 
 int readsketch_arc (int arcid, struct sketch *sketch, FILE *file);
 int readsketch_region (int regionid, struct sketch *sketch, FILE *file);

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <assert.h>
 #include "contour.h"
+#include "parser.h"
 
 #define LINESIZE 200
 #define MULTLINES 5

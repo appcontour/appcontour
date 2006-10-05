@@ -2,6 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "contour.h"
+#include "parser.h"
 
 extern int debug;
 

@@ -7,7 +7,8 @@
  */
 
 #include <stdio.h>
-#include "contour.h"
+#include <stdlib.h>
+#include "parser.h"
 #include "GL/freeglut.h"
 
 #define BUFSIZE 1000

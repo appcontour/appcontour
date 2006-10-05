@@ -20,3 +20,8 @@
 	Nuove rule N6, CN1, CN2L, CN2R, CN2LB, CN2RB, CN3
 
 	Nuova funzione "knot2morse"; con alcuni esempi in 'examples'
+
+2006-10-03: finalmente e' possibile costruire una descrizione di morse
+	a partire da una region description
+
+2006-10-05: la regora N6 e' ora diventata CR2 (come nel paper)

@@ -37,7 +37,7 @@ apply_rule (char *rule, struct sketch *sketch)
   else if (strcasecmp (rule, "n3") == 0) res = rule_n14 (sketch, 3, rcount);
   else if (strcasecmp (rule, "n4") == 0) res = rule_n14 (sketch, 4, rcount);
   else if (strcasecmp (rule, "n5") == 0) res = rule_n5 (sketch, rcount);
-  else if (strcasecmp (rule, "n6") == 0) res = rule_n6 (sketch, rcount);
+  else if (strcasecmp (rule, "cr2") == 0) res = rule_cr2 (sketch, rcount);
   else if (strcasecmp (rule, "c1") == 0) res = rule_c1 (sketch, rcount);
   else if (strcasecmp (rule, "c2") == 0) res = rule_c2 (sketch, rcount);
   else if (strcasecmp (rule, "a1") == 0) res = rule_a1 (sketch, rcount);
@@ -93,7 +93,7 @@ testallrules (struct sketch *sketch)
     }
   }
   exitcode = testsinglerule ("N5", rule_n5, exitcode, sketch);
-  exitcode = testsinglerule ("N6", rule_n6, exitcode, sketch);
+  exitcode = testsinglerule ("CR2", rule_cr2, exitcode, sketch);
   exitcode = testsinglerule ("C1", rule_c1, exitcode, sketch);
   exitcode = testsinglerule ("C2", rule_c2, exitcode, sketch);
   exitcode = testsinglerule ("A1", rule_a1, exitcode, sketch);
@@ -269,9 +269,9 @@ rule_n5 (struct sketch *sketch, int rcount)
 }
 
 int
-rule_n6 (struct sketch *sketch, int rcount)
+rule_cr2 (struct sketch *sketch, int rcount)
 {
-  return (rule_cn1_n6 (sketch, rcount, 1));
+  return (rule_cn1_cr2 (sketch, rcount, 1));
 }
 
 int
@@ -413,11 +413,11 @@ rule_a12 (struct sketch *sketch, int rcount, int ddiff)
 int
 rule_cn1 (struct sketch *sketch, int rcount)
 {
-  return (rule_cn1_n6 (sketch, rcount, 0));
+  return (rule_cn1_cr2 (sketch, rcount, 0));
 }
 
 int
-rule_cn1_n6 (struct sketch *sketch, int rcount, int isn6)
+rule_cn1_cr2 (struct sketch *sketch, int rcount, int iscr2)
 {
   struct region *r;
   struct borderlist *extbl;
@@ -431,11 +431,11 @@ rule_cn1_n6 (struct sketch *sketch, int rcount, int isn6)
    * circondata da una curva unica con orientazione
    * positiva, un endpoint e due cuspidi
    * con valori opportuni di "d"
-   * per la regola n6 non ci devono essere cuspidi!
+   * per la regola cr2 non ci devono essere cuspidi!
    */
 
   ori = 1;
-  if (isn6) ori = -1;
+  if (iscr2) ori = -1;
   for (r = sketch->regions; r; r = r->next)
   {
     extbl = r->border;
@@ -446,7 +446,7 @@ rule_cn1_n6 (struct sketch *sketch, int rcount, int isn6)
     if (extb->next != extb) continue;
     arc = extb->info;
     if (arc->endpoints != 1) continue;
-    if (isn6)
+    if (iscr2)
     {
       if (arc->cusps != 0) continue;
       diff = 0;
@@ -1432,7 +1432,7 @@ remove_annulus (struct region *r, struct sketch *sketch)
 
 /*
  * rimuovo una regione a "coda di rondine"
- * oppure senza cuspidi (regola n6)
+ * oppure senza cuspidi (regola cr2)
  */
 
 void

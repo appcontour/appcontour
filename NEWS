@@ -41,3 +41,5 @@
 2006-10-03: Completato il set delle rules come nel paper.
 	Funziona l'output di una descrizione Morse.
 	comando "contour info" per ottenere un po' di statistica sul contorno.
+
+2006-10-05: Nota, la regola N6 e' stata rinominata in CR2 (come nel paper)

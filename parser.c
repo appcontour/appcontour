@@ -1,7 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
-#include "contour.h"
+#include "parser.h"
 
 extern int debug;
 static int onecharword = 0;

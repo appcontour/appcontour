@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 #include "contour.h"
+#include "parser.h"
 
 extern int debug;
 
