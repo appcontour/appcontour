@@ -1,3 +1,11 @@
+/*
+ * compile with "cc -o glutcontour glutcontour.c parser.o -lglut"
+ *
+ * requires freeglut-devel package (on Fedora core)
+ *
+ * usage:  "./glutcontour <example.morse"
+ */
+
 #include <stdio.h>
 #include "contour.h"
 #include "GL/freeglut.h"
