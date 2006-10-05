@@ -8,15 +8,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "parser.h"
 #include "GL/freeglut.h"
 
 #define BUFSIZE 1000
 
-#define TYPE_TRAN 1
-#define TYPE_TOP 2
-#define TYPE_BOT 3
-#define TYPE_CROSS 4
+#define ME_TRAN 1
+#define ME_TOP 2
+#define ME_BOT 3
+#define ME_CROSS 4
+#define ME_NEWROW 5
+#define ME_LASTROW 6
 
 #define V_REGULAR 1
 #define V_CUSP 2
@@ -31,16 +34,6 @@ struct morseevent {
   int cusps;
   int cusps2;
   struct morseevent *next;
-};
-
-struct morsedesc {
-  int numrows;
-  int rowlimit;
-  int maxrowlen;
-  int *rowsize;
-  int **row;
-  int **ori;
-  int **cusps;
 };
 
 struct polyline {
@@ -60,18 +53,22 @@ struct vertex {
 struct line {
   int tag;
   int orientation;
+  int cusps;
   struct vertex *a;
   struct vertex *b;
   struct line *next;
 };
 
-int loadmorse (FILE *file, struct morsedesc *mdesc);
-struct polyline *buildpolyline (struct morsedesc *mdesc);
+void getmorseevent (struct morseevent *mev);
+void getarcinfo (struct morseevent *morseevent);
+void getoricusps (int *oript, int *cuspspt);
+struct polyline *buildpolyline (void);
 struct vertex *newvertex (struct polyline *contour, 
           double x, double y, int type);
 struct line *newline (struct polyline *contour, 
                       struct vertex *a, 
                       struct vertex *b);
+int inherit_orientation (struct line *line);
 
 static struct polyline *contour;
 
@@ -99,52 +96,157 @@ display (void)
 int
 main (int argc, char *argv[])
 {
-  struct morsedesc mdesc;
   struct line *line;
   struct vertex *a, *b;
-  int rowsize[BUFSIZE];
-  int *row[BUFSIZE];
-  int *ori[BUFSIZE];
-  int *cusps[BUFSIZE];
-  int numrows, i, j;
+  int numrows, i, j, tok;
 
-  mdesc.rowsize = rowsize;
-  mdesc.row = row;
-  mdesc.ori = ori;
-  mdesc.cusps = cusps;
-  mdesc.rowlimit = BUFSIZE;
+  tok = gettoken (stdin);
+  if (tok != TOK_MORSE) return (0);
+  tok = gettoken (stdin);
+  if (tok != TOK_LBRACE) return (0);
 
-  numrows = loadmorse (stdin, &mdesc);
-  if (numrows == 0) exit (1);
+  contour = buildpolyline ();
 
-  mdesc.maxrowlen = 0;
-  for (i = 0; i < numrows; i++)
-    if (rowsize[i] > mdesc.maxrowlen) mdesc.maxrowlen = rowsize[i];
+  tok = gettoken (stdin);
+  if (tok != TOK_RBRACE) exit (1);
 
-  //printf ("rows: %d\n", numrows);
-  //for (j = 0; j < numrows; j++)
-  //{
-  //  for (i = 0; i < rowsize[j]; i++)
-  //  {
-  //    printf ("%d", row[j][i]);
-  //  }
-  //  printf ("\n");
-  //}
-
-  contour = buildpolyline (&mdesc);
-
-  //for (line = contour->line; line; line = line->next)
-  //{
-  //  a = line->a;
-  //  b = line->b;
-  //  printf ("line from (%lf, %lf) to (%lf, %lf)\n",
-  //          a->x, a->y, b->x, b->y);
-  //}
   glutInit(&argc, argv);
   glutCreateWindow("single triangle");
   glutDisplayFunc(display);
-  //glutReshapeFunc(reshape);
   glutMainLoop();
+}
+
+void
+getmorseevent (struct morseevent *morseevent)
+{
+  int tok;
+
+  morseevent->ori = morseevent->ori2 = 0;
+  morseevent->cusps = morseevent->cusps2 = 0;
+
+  /* ho gia letto la graffa aperta */
+  tok = gettokens (stdin);
+
+  switch (tok)
+  {
+    case TOK_SEMICOLON:
+      tok = gettokens (stdin);
+      if (tok == TOK_RBRACE)
+      {
+        morseevent->type = ME_LASTROW;
+      } else {
+        morseevent->type = ME_NEWROW;
+      }
+      ungettoken (tok);
+      break;
+
+    case KEY_HAT:
+    case KEY_A:
+      morseevent->type = ME_TOP;
+      getarcinfo (morseevent);
+      break;
+
+    case KEY_U:
+    case KEY_UNDERSCORE:
+      morseevent->type = ME_BOT;
+      getarcinfo (morseevent);
+      break;
+
+    case KEY_SLASH:
+    case KEY_BSLASH:
+    case KEY_BACKQUOTE:
+    case TOK_LPAREN:
+    case TOK_RPAREN:
+    case KEY_PIPE:
+    case KEY_I:
+      morseevent->type = ME_TRAN;
+      getarcinfo (morseevent);
+      break;
+
+    case KEY_X:
+      morseevent->type = ME_CROSS;
+      getarcinfo (morseevent);
+      break;
+  }
+  return;
+}
+
+void
+getarcinfo (struct morseevent *morseevent)
+{
+  char ch, ch2;
+  char cusps, cusps2;
+  int tok, bracket = 0;
+
+  getoricusps (&morseevent->ori, &morseevent->cusps);
+  if (morseevent->type == ME_CROSS)
+    getoricusps (&morseevent->ori2, &morseevent->cusps2);
+}
+
+void
+getoricusps (int *oript, int *cuspspt)
+{
+  int tok, i, prevd;
+  int require_rbr = 1;
+  int depthind = 0;
+
+  *oript = *cuspspt = 0;
+  tok = gettokens (stdin);
+  if (tok == ISNUMBER || tok == KEY_LEFT ||
+      tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
+  {
+    ungettoken (tok);
+    tok = TOK_LBRACKET;
+    require_rbr = 0;
+  }
+  if (tok != TOK_LBRACKET)
+  {
+    ungettoken (tok);
+    return;
+  }
+  tok = gettokens (stdin);
+  if (tok == TOK_RBRACKET) return;
+  if (tok == KEY_LEFT || tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
+  {
+    if (tok == KEY_LEFT || tok == KEY_DOWN) *oript = 1;
+    if (tok == KEY_RIGHT || tok == KEY_UP) *oript = -1;
+    tok = gettokens (stdin);
+  }
+  if (tok == TOK_COMMA || tok == ISNUMBER)
+  {
+    if (tok == ISNUMBER) ungettoken (tok);
+    prevd = 0;
+    while ((tok = gettokens (stdin)) == ISNUMBER ||
+            tok == TOK_PLUS || tok == TOK_MINUS)
+    {
+      switch (tok)
+      {
+        case ISNUMBER:
+        prevd = gettokennumber ();
+        depthind++;
+        break;
+        case TOK_PLUS:
+        ++prevd;
+        depthind++;
+        break;
+        case TOK_MINUS:
+        --prevd;
+        depthind++;
+        break;
+      }
+    }
+  }
+  if (depthind > 0) *cuspspt = depthind - 1;
+  if (require_rbr == 0)
+  {
+    ungettoken (tok);
+    tok = TOK_RBRACKET;
+  }
+  if (tok != TOK_RBRACKET)
+  {
+    fprintf (stderr, "Error: right paren expected: %d\n", tok);
+    return;
+  }
 }
 
 struct line *
@@ -180,207 +282,243 @@ newvertex (struct polyline *contour, double x, double y, int type)
 }
 
 struct polyline *
-buildpolyline (struct morsedesc *mdesc)
+buildpolyline (void)
 {
   double dx, dy, x, y, maxx, maxy;
+  struct morseevent morseevent;
   struct vertex *danglingnodes[BUFSIZE];
   struct vertex *prevdanglingnodes[BUFSIZE];
   struct vertex *v1, *v2, *v3, *v4, *v5, *v;
   struct line *line;
   struct polyline *contour;
   int numdnodes = 0;
-  int i, j, k, prevdangnodes, dangind, prevdangind;
-  int numrows = 0, numcols = 0;
+  int goon, i, j, k, prevdangnodes, dangind, prevdangind;
+  int numrows = 0, numcols = 0, maxrowlen = 0, oriented;
 
   contour = (struct polyline *) malloc (sizeof (struct polyline));
   contour->vertex = 0;
   contour->line = 0;
 
-  //dx = 2.0/(mdesc->maxrowlen + 2);
-  //dy = 2.0/(mdesc->numrows + 2);
   dx = dy = 1.0;    /* aggiusto alla fine */
-  maxx = maxy = 0.0;
-  prevdangnodes = dangind = 0;
-  y = 0.0;
-  for (i = 0; i < mdesc->numrows; i++)
+  i = 0;            /* conta gli eventi su ciascuna riga */
+  numrows = 0;            /* conta il numero di righe */
+  prevdangnodes = prevdangind = dangind = 0;
+  y = x = 0.0;
+  goon = 1;
+  while (goon)
   {
-    y += dy;
-    x = 0.0;
-    numrows++;
-    prevdangind = dangind = 0;
-    for (j = 0; j < mdesc->rowsize[i]; j++)
+    i++;
+    x += dx;
+    getmorseevent (&morseevent);
+    switch (morseevent.type)
     {
-      x += dx;
-      if (j + 1 > numcols) numcols = j + 1;
-      switch (mdesc->row[i][j])
-      {
-        case TYPE_TOP:
-          v1 = newvertex (contour, x - TOP_LENGTH*dx, y + TOP_LENGTH*dy,
-                V_REGULAR);
-          v2 = newvertex (contour, x + TOP_LENGTH*dx, y + TOP_LENGTH*dy,
-                V_REGULAR);
-          line = newline (contour, v1, v2);
-          v1->line[0] = line;
-          v2->line[0] = line;
-          danglingnodes[dangind++] = v1;
-          danglingnodes[dangind++] = v2;
-          break;
+      case ME_LASTROW:
+        goon = 0;
+        i--;
+        if (i > maxrowlen) maxrowlen = i;
+        if (prevdangnodes != prevdangind)
+        {
+          fprintf (stderr, "dangling nodes: prev = %d, current = %d\n",
+                  prevdangnodes, dangind);
+        }
 
-        case TYPE_BOT:
-          v1 = newvertex (contour, x - TOP_LENGTH*dx, y - TOP_LENGTH*dy,
-                V_REGULAR);
-          v2 = newvertex (contour, x + TOP_LENGTH*dx, y - TOP_LENGTH*dy,
-                V_REGULAR);
-          line = newline (contour, v1, v2);
-          v1->line[0] = line;
-          v2->line[0] = line;
-          newline (contour, prevdanglingnodes[prevdangind++], v1);
-          newline (contour, prevdanglingnodes[prevdangind++], v2);
-          break;
+        if (dangind != 0) fprintf (stderr, "Dangling nodes remain...\n");
+        break;
 
-        case TYPE_CROSS:
-          v1 = newvertex (contour, x, y, V_CROSS);
-          v2 = newvertex (contour, x - TOP_LENGTH*dx, y - TOP_LENGTH*dy,
-                V_REGULAR);
-          v3 = newvertex (contour, x + TOP_LENGTH*dx, y - TOP_LENGTH*dy,
-                V_REGULAR);
-          v4 = newvertex (contour, x - TOP_LENGTH*dx, y + TOP_LENGTH*dy,
-                V_REGULAR);
-          v5 = newvertex (contour, x + TOP_LENGTH*dx, y + TOP_LENGTH*dy,
-                V_REGULAR);
-          line = newline (contour, v1, v2);
-          v1->line[0] = line;
-          v2->line[0] = line;
-          line = newline (contour, v1, v3);
-          v1->line[1] = line;
-          v2->line[0] = line;
-          line = newline (contour, v1, v4);
-          v1->line[2] = line;
-          v2->line[0] = line;
-          line = newline (contour, v1, v5);
-          v1->line[3] = line;
-          v2->line[0] = line;
-          newline (contour, prevdanglingnodes[prevdangind++], v2);
-          newline (contour, prevdanglingnodes[prevdangind++], v3);
-          danglingnodes[dangind++] = v4;
-          danglingnodes[dangind++] = v5;
-          break;
+      case ME_NEWROW:
+        y += dy;
+        x = 0.0;
+        numrows++; i--;
+        if (i > maxrowlen) maxrowlen = i;
+        i = 0;
+        if (prevdangnodes != prevdangind)
+        {
+          fprintf (stderr, "dangling nodes: prev = %d, current = %d\n",
+                  prevdangnodes, dangind);
+        }
+        for (k = 0; k < dangind; k++)
+        {
+          prevdanglingnodes[k] = danglingnodes[k];
+        }
+        prevdangnodes = dangind;
+        prevdangind = dangind = 0;
+        break;
 
-        case TYPE_TRAN:
-	  v1 = newvertex (contour, x, y - TOP_LENGTH*dy, V_REGULAR);
-	  v2 = newvertex (contour, x, y + TOP_LENGTH*dy, V_REGULAR);
-          line = newline (contour, v1, v2);
-          v1->line[0] = line;
-          v2->line[0] = line;
-          line = newline (contour, prevdanglingnodes[prevdangind++], v1);
-          danglingnodes[dangind++] = v2;
-          break;
+      case ME_TOP:
+        v1 = newvertex (contour, x - TOP_LENGTH*dx, y + TOP_LENGTH*dy,
+                V_REGULAR);
+        v2 = newvertex (contour, x + TOP_LENGTH*dx, y + TOP_LENGTH*dy,
+                V_REGULAR);
+        line = newline (contour, v2, v1);
+        line->orientation = morseevent.ori;
+        line->cusps = morseevent.cusps;
+        v1->line[0] = line;
+        v2->line[0] = line;
+        danglingnodes[dangind++] = v1;
+        danglingnodes[dangind++] = v2;
+        break;
 
-        default:
-          printf ("caso non gestito: %d\n", mdesc->row[i][j]);
-          break;
-      }
+      case ME_BOT:
+        v1 = newvertex (contour, x - TOP_LENGTH*dx, y - TOP_LENGTH*dy,
+                V_REGULAR);
+        v2 = newvertex (contour, x + TOP_LENGTH*dx, y - TOP_LENGTH*dy,
+                V_REGULAR);
+        line = newline (contour, v2, v1);
+        line->orientation = morseevent.ori;
+        line->cusps = morseevent.cusps;
+        v1->line[0] = line;
+        v2->line[0] = line;
+        line = newline (contour, prevdanglingnodes[prevdangind], v1);
+        v1->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
+        line = newline (contour, prevdanglingnodes[prevdangind], v2);
+        v2->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
+        break;
+
+      case ME_CROSS:
+        v1 = newvertex (contour, x, y, V_CROSS);
+        v2 = newvertex (contour, x - TOP_LENGTH*dx, y - TOP_LENGTH*dy,
+                V_REGULAR);
+        v3 = newvertex (contour, x + TOP_LENGTH*dx, y - TOP_LENGTH*dy,
+                V_REGULAR);
+        v4 = newvertex (contour, x - TOP_LENGTH*dx, y + TOP_LENGTH*dy,
+                V_REGULAR);
+        v5 = newvertex (contour, x + TOP_LENGTH*dx, y + TOP_LENGTH*dy,
+                V_REGULAR);
+        line = newline (contour, v2, v1);
+        v1->line[0] = line;
+        v2->line[0] = line;
+        line = newline (contour, v3, v1);
+        v1->line[1] = line;
+        v3->line[0] = line;
+        line = newline (contour, v1, v4);
+        line->orientation = morseevent.ori;
+        line->cusps = morseevent.cusps;
+        v1->line[2] = line;
+        v4->line[0] = line;
+        line = newline (contour, v1, v5);
+        line->orientation = morseevent.ori2;
+        line->cusps = morseevent.cusps2;
+        v1->line[3] = line;
+        v5->line[0] = line;
+        line = newline (contour, prevdanglingnodes[prevdangind], v2);
+        v2->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
+        line = newline (contour, prevdanglingnodes[prevdangind], v3);
+        v3->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
+        danglingnodes[dangind++] = v4;
+        danglingnodes[dangind++] = v5;
+        break;
+
+      case ME_TRAN:
+        v1 = newvertex (contour, x, y - TOP_LENGTH*dy, V_REGULAR);
+        v2 = newvertex (contour, x, y + TOP_LENGTH*dy, V_REGULAR);
+        line = newline (contour, v1, v2);
+        line->orientation = morseevent.ori;
+        line->cusps = morseevent.cusps;
+        v1->line[0] = line;
+        v2->line[0] = line;
+        line = newline (contour, prevdanglingnodes[prevdangind], v1);
+        v1->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
+        danglingnodes[dangind++] = v2;
+        break;
+
+      default:
+        printf ("Invalid morse event\n");
     }
-    if (prevdangnodes != prevdangind)
-    {
-      printf ("dangling nodes: prev = %d, current = %d\n",
-              prevdangnodes, dangind);
-    }
-    for (k = 0; k < dangind; k++)
-    {
-      prevdanglingnodes[k] = danglingnodes[k];
-    }
-    prevdangnodes = dangind;
   }
 
-  dx = 2.0/(mdesc->maxrowlen + 2);
-  dy = 2.0/(mdesc->numrows + 2);
+  /* rinormalizzazione ascisse e ordinate per stare in [-1,1]x[-1,1] */
+  dx = 2.0/(maxrowlen + 1);
+  dy = 2.0/numrows;
 
   for (v = contour->vertex; v; v = v->next)
   {
     v->x = dx*v->x - 1.0;
     v->y = 1.0 - dy*v->y;
+    assert (v->line[0]);
+    assert (v->line[1]);
+    if (v->type == V_CROSS) assert (v->line[2] && v->line[3]);
   }
 
-  printf ("in buildpolyline\n");
+  /* orientazione degli archi */
+
+  goon = 1;
+  while (goon)
+  {
+    for (line = contour->line; line; line = line->next)
+    {
+      if (line->orientation != 0 && inherit_orientation (line)) goon = 1;
+    }
+  }
+
+  oriented = 1;
+  for (line = contour->line; line; line = line->next)
+  {
+    if (line->orientation == 0)
+    {
+      fprintf (stderr, "nonoriented arc\n");
+printf ("(%lf,%lf)-(%lf,%lf)\n", line->a->x, line->a->y, line->b->x, line->b->y);
+      oriented = 0;
+    }
+  }
+
+  if (oriented == 0) fprintf (stderr, "Cannot orient arc\n");
+
   return (contour);
 }
 
+/* inherit orientation to directly adjacent arcs */
+
 int
-loadmorse (FILE *file, struct morsedesc *mdesc)
+inherit_orientation (struct line *line)
 {
-  char buf[BUFSIZE];
-  int tok, i, j, endinput, numrows, maxrowlen;
-  int **row, **ori, **cusps, *rowsize, dim;
-  char ch;
+  struct line *oriented_line;
+  struct line *wline, *prevwline;
+  struct vertex *v, *vtemp;
+  int inheriting, goon;
 
-  rowsize = mdesc->rowsize;
-  row = mdesc->row;
-  ori = mdesc->ori;
-  cusps = mdesc->cusps;
-  dim = mdesc->rowlimit;
-
-  tok = gettoken (file);
-  if (tok != TOK_MORSE) return (0);
-  tok = gettoken (file);
-  if (tok != TOK_LBRACE) return (0);
-
-  endinput = 0;
-  i = j = 0;
-  while ((tok = gettokens (file)) != TOK_RBRACE)
+  printf ("inherit_orientation\n");
+  if (line->orientation < 0)
   {
-    if (i >= BUFSIZE - 3) exit (1);
-    switch (tok)
-    {
-      case KEY_HAT:
-      tok = KEY_A;
-      break;
-
-      case KEY_U:
-      case KEY_UNDERSCORE:
-      tok = KEY_V;
-      break;
-
-      case KEY_SLASH:
-      case KEY_BSLASH:
-      case KEY_BACKQUOTE:
-      case TOK_LPAREN:
-      case TOK_RPAREN:
-      case KEY_PIPE:
-      tok = KEY_I;
-      break;
-    }
-
-    switch (tok)
-    {
-      case KEY_I:
-        buf[i++] = TYPE_TRAN;
-        break;
-
-      case KEY_A: 
-        buf[i++] = TYPE_TOP;
-        break;
-
-      case KEY_V:
-        buf[i++] = TYPE_BOT;
-        break;
-
-      case KEY_X:
-        buf[i++] = TYPE_CROSS;
-        break;
-
-      case TOK_SEMICOLON:
-        rowsize[j] = i;
-        row[j] = (int *) malloc (i * sizeof(int));
-        for (i = 0; i < rowsize[j]; i++) row[j][i] = buf[i];
-        j++;
-        if (j > dim - 3) return (0);
-        i = 0;
-        break;
-    }
+    vtemp = line->a;
+    line->a = line->b;
+    line->b = vtemp;
+    line->orientation *= -1;
   }
-  numrows = j;
-  mdesc->numrows = numrows;
-  return (numrows);
-}
 
+  goon = 0;
+  v = line->a;  /* going back */
+  if (v->type != V_CROSS)
+  {
+    wline = v->line[0];
+    if (wline == line) wline = v->line[1];
+    assert (wline);
+    if (wline->a == v)
+    {
+      vtemp = wline->a;
+      wline->a = wline->b;
+      wline->b = vtemp;
+      wline->orientation *= -1;
+    }
+    if (wline->orientation < 0) fprintf (stderr, "Conflicting orientations\n");
+    if (wline->orientation == 0) {goon = 1; wline->orientation = 1;}
+  }
+
+  v = line->b;  /* going forward */
+
+  if (v->type != V_CROSS)
+  {
+    wline = v->line[0];
+    if (wline == line) wline = v->line[1];
+    if (wline->b == v)
+    {
+      vtemp = wline->a;
+      wline->a = wline->b;
+      wline->b = vtemp;
+      wline->orientation *= -1;
+    }
+    if (wline->orientation < 0) fprintf (stderr, "Conflicting orientations\n");
+    if (wline->orientation == 0) {goon = 1; wline->orientation = 1;}
+  }
+
+  return (goon);
+}
