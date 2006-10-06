@@ -9,10 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 #include "parser.h"
 #include "GL/freeglut.h"
 
 #define BUFSIZE 1000
+#define REL_H 0.1
 
 #define ME_TRAN 1
 #define ME_TOP 2
@@ -39,6 +41,7 @@ struct morseevent {
 struct polyline {
   struct vertex *vertex;
   struct line *line;
+  double h;
 };
 
 struct vertex {
@@ -59,6 +62,11 @@ struct line {
   struct line *next;
 };
 
+void evolve (struct polyline *contour);
+void get_grad_in_v (struct polyline *contour, struct vertex *p, double *vxpt, double *vypt);
+double getlen (struct line *line);
+void discretizepolyline (struct polyline *contour);
+struct line *splitline (struct polyline *contour, struct line *line, double f);
 void getmorseevent (struct morseevent *mev);
 void getarcinfo (struct morseevent *morseevent);
 void getoricusps (int *oript, int *cuspspt);
@@ -71,6 +79,7 @@ struct line *newline (struct polyline *contour,
 int inherit_orientation (struct line *line);
 
 static struct polyline *contour;
+static double ftime = 1.0;
 
 void
 display (void)
@@ -96,10 +105,14 @@ display (void)
 int
 main (int argc, char *argv[])
 {
-  struct line *line;
-  struct vertex *a, *b;
-  int numrows, i, j, tok;
+  struct line *line, *l;
+  struct vertex *a, *b, *v;
+  int numrows, i, j, tok, count;
 
+  if (argc > 1)
+  {
+    ftime = atof (argv[1]);
+  }
   tok = gettoken (stdin);
   if (tok != TOK_MORSE) return (0);
   tok = gettoken (stdin);
@@ -110,10 +123,155 @@ main (int argc, char *argv[])
   tok = gettoken (stdin);
   if (tok != TOK_RBRACE) exit (1);
 
+  discretizepolyline (contour);
+
+  count = 0;
+  for (v = contour->vertex; v; v = v->next) count++;
+  printf ("ci sono %d vertici\n", count);
+  count = 0;
+  for (l = contour->line; l; l = l->next)
+  {
+    count++;
+//    printf ("lung %lf\n", getlen (l));
+  }
+  printf ("ci sono %d archi\n", count);
+
+  evolve (contour);
+
   glutInit(&argc, argv);
   glutCreateWindow("single triangle");
   glutDisplayFunc(display);
   glutMainLoop();
+}
+
+void
+evolve (struct polyline *contour)
+{
+  double tau, gx, gy, time;
+  struct vertex *v;
+
+  tau = contour->h * contour->h;
+  printf ("tau = %lf\n", tau);
+
+  time = 0.0;
+
+  while (time < ftime)
+  {
+    time += tau;
+    for (v = contour->vertex; v; v = v->next)
+    {
+      get_grad_in_v (contour, v, &gx, &gy);
+      v->x -= tau*gx;
+      v->y -= tau*gy;
+    }
+  }
+}
+
+/* qui ci sono i contributi delle tre energie */
+
+void
+get_grad_in_v (struct polyline *contour, struct vertex *p, double *vxpt, double *vypt)
+{
+  struct line *line;
+  int i, nl;
+  double dx, dy, len, xel, yel;
+
+  *vxpt = *vypt = 0;
+  nl = 2;
+  if (p->type == V_CROSS) nl = 4;
+
+  for (i = 0; i < nl; i++)
+  {
+    line = p->line[i];
+    dx = line->a->x - line->b->x;
+    dy = line->a->y - line->b->y;
+    len = sqrt (dx*dx + dy*dy);
+    xel = dx/len;
+    yel = dy/len;
+    if (line->b == p) {xel *= -1; yel *= -1;}
+    *vxpt += xel;
+    *vypt += yel;
+  }
+
+  return;
+}
+
+double
+getlen (struct line *line)
+{
+  double dx, dy;
+
+  dx = line->a->x - line->b->x;
+  dy = line->a->y - line->b->y;
+
+  return (sqrt (dx*dx + dy*dy));
+}
+
+void
+discretizepolyline (struct polyline *contour)
+{
+  double newh;
+  struct vertex *a, *b, *prev, *p;
+  struct line *line, *nline;
+  double diffx, diffy, len, dt;
+  int i, numsub;
+
+  newh = REL_H * contour->h;
+  contour->h = newh;
+  for (line = contour->line; line; line = line->next)
+  {
+    a = line->a;
+    b = line->b;
+    diffx = a->x - b->x;
+    diffy = a->y - b->y;
+    len = sqrt (diffx*diffx + diffy*diffy);
+
+    numsub = len/newh + 1;
+    dt = len/numsub;
+    for (i = 1; i < numsub; i++)
+    {
+      nline = splitline (contour, line, dt/len);
+      len -= dt;
+      line = nline;
+    }
+  }
+}
+
+struct line *
+splitline (struct polyline *contour, struct line *line, double f)
+{
+  struct vertex *a, *b, *p;
+  struct line *nline;
+  double x, y;
+  int nl, i;
+
+  a = line->a;
+  b = line->b;
+
+  x = (1 - f)*a->x + f*b->x;
+  y = (1 - f)*a->y + f*b->y;
+
+  p = newvertex (contour, x, y, V_REGULAR);
+  nline = (struct line *) malloc (sizeof (struct line));
+  nline->orientation = line->orientation;
+  nline->cusps = line->cusps;
+  nline->next = line->next;
+  nline->a = p;
+  nline->b = b;
+  nl = 2;
+  if (b->type == V_CROSS) nl = 4;
+  for (i = 0; i < nl; i++)
+  {
+    if (b->line[i] == line) b->line[i] = nline;
+  }
+
+  line->next = nline;
+  line->b = p;
+
+  p->line[0] = line;
+  p->line[1] = nline;
+
+  return (nline);
 }
 
 void
@@ -422,13 +580,15 @@ buildpolyline (void)
         break;
 
       default:
-        printf ("Invalid morse event\n");
+        fprintf (stderr, "Invalid morse event\n");
     }
   }
 
   /* rinormalizzazione ascisse e ordinate per stare in [-1,1]x[-1,1] */
   dx = 2.0/(maxrowlen + 1);
   dy = 2.0/numrows;
+  contour->h = dx;
+  if (dy < dx) contour->h = dy;
 
   for (v = contour->vertex; v; v = v->next)
   {
@@ -444,6 +604,7 @@ buildpolyline (void)
   goon = 1;
   while (goon)
   {
+    goon = 0;
     for (line = contour->line; line; line = line->next)
     {
       if (line->orientation != 0 && inherit_orientation (line)) goon = 1;
@@ -456,7 +617,6 @@ buildpolyline (void)
     if (line->orientation == 0)
     {
       fprintf (stderr, "nonoriented arc\n");
-printf ("(%lf,%lf)-(%lf,%lf)\n", line->a->x, line->a->y, line->b->x, line->b->y);
       oriented = 0;
     }
   }
@@ -476,7 +636,6 @@ inherit_orientation (struct line *line)
   struct vertex *v, *vtemp;
   int inheriting, goon;
 
-  printf ("inherit_orientation\n");
   if (line->orientation < 0)
   {
     vtemp = line->a;
@@ -491,7 +650,7 @@ inherit_orientation (struct line *line)
   {
     wline = v->line[0];
     if (wline == line) wline = v->line[1];
-    assert (wline);
+    assert (wline && wline != line);
     if (wline->a == v)
     {
       vtemp = wline->a;
@@ -500,7 +659,12 @@ inherit_orientation (struct line *line)
       wline->orientation *= -1;
     }
     if (wline->orientation < 0) fprintf (stderr, "Conflicting orientations\n");
-    if (wline->orientation == 0) {goon = 1; wline->orientation = 1;}
+    if (wline->orientation == 0)
+    {
+      goon = 1;
+      wline->orientation = 1;
+      wline->cusps = line->cusps;
+    }
   }
 
   v = line->b;  /* going forward */
@@ -517,7 +681,12 @@ inherit_orientation (struct line *line)
       wline->orientation *= -1;
     }
     if (wline->orientation < 0) fprintf (stderr, "Conflicting orientations\n");
-    if (wline->orientation == 0) {goon = 1; wline->orientation = 1;}
+    if (wline->orientation == 0)
+    {
+      goon = 1;
+      wline->orientation = 1;
+      wline->cusps = line->cusps;
+    }
   }
 
   return (goon);
