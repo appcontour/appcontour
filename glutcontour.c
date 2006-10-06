@@ -26,6 +26,7 @@
 #define V_REGULAR 1
 #define V_CUSP 2
 #define V_CROSS 3
+#define V_FIXED 4
 
 #define TOP_LENGTH 0.25
 
@@ -63,6 +64,7 @@ struct line {
   struct line *next;
 };
 
+void test_contour (struct polyline *contour);
 void idle (void);
 void evolve (struct polyline *contour, double incrtime);
 void
@@ -72,7 +74,7 @@ double getlen (struct line *line);
 double get_curv (struct vertex *a, struct vertex *b, struct vertex *c, 
        double ang0);
 void grad_curv (struct vertex *a, struct vertex *b, 
-           double curv, double *gcxpt, double *gcypt);
+           double curv, double *gcxpt, double *gcypt, int s);
 void discretizepolyline (struct polyline *contour);
 struct line *splitline (struct polyline *contour, struct line *line, double f);
 void getmorseevent (struct morseevent *mev);
@@ -173,6 +175,8 @@ main (int argc, char *argv[])
 
   reorder_node_ptr (contour);
   discretizepolyline (contour);
+
+//test_contour (contour);
   vertexnum = settags (contour);
   gradx = (double *) malloc (vertexnum * sizeof (double));
   grady = (double *) malloc (vertexnum * sizeof (double));
@@ -202,6 +206,30 @@ main (int argc, char *argv[])
   glutAddMenuEntry ("Quit", 666);
   glutAttachMenu (GLUT_RIGHT_BUTTON);
   glutMainLoop();
+}
+
+void
+test_contour (struct polyline *contour)
+{
+  struct vertex *a, *b, *c;
+  struct line *l1, *l2;
+
+  contour->vertex = 0;
+  contour->line = 0;
+
+  a = newvertex (contour, -0.5, -0.5, V_FIXED);
+  b = newvertex (contour, 0.5, -0.5, V_REGULAR);
+  c = newvertex (contour, 0.5, 0.5, V_FIXED);
+  l1 = newline (contour, a, b);
+  l2 = newline (contour, b, c);
+  a->line[0] = 0;
+  a->line[1] = l1;
+  b->line[0] = l1;
+  b->line[1] = l2;
+  c->line[0] = l2;
+  c->line[1] = 0;
+
+  contour->h = 0.001;
 }
 
 int
@@ -239,6 +267,7 @@ evolve (struct polyline *contour, double incrtime)
 
 /* qui ci sono i contributi delle tre energie */
 
+#define K1_COEFF 1.000
 #define K2_COEFF 0.0001
 
 void
@@ -262,8 +291,8 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
     dx = a->x - b->x;
     dy = a->y - b->y;
     len = sqrt (dx*dx + dy*dy);
-    xel = dx/len;
-    yel = dy/len;
+    xel = K1_COEFF*dx/len;
+    yel = K1_COEFF*dy/len;
     gradx[a->tag] += xel;
     grady[a->tag] += yel;
     gradx[b->tag] -= xel;
@@ -276,12 +305,12 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
   {
     switch (b->type)
     {
-      case V_CUSP:
       case V_REGULAR:
+      case V_CUSP:
         a = b->line[0]->a;
         c = b->line[1]->b;
         curv = get_curv (a, b, c, 0.0);
-        grad_curv (c, b, curv, &gcx, &gcy);
+        grad_curv (c, b, curv, &gcx, &gcy, 1);
         gcx *= K2_COEFF;
         gcy *= K2_COEFF;
         gradx[c->tag] += gcx;
@@ -289,7 +318,7 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
         gradx[b->tag] -= gcx;
         grady[b->tag] -= gcy;
 
-        grad_curv (a, b, curv, &gcx, &gcy);
+        grad_curv (a, b, curv, &gcx, &gcy, -1);
         gcx *= K2_COEFF;
         gcy *= K2_COEFF;
         gradx[a->tag] += gcx;
@@ -304,7 +333,7 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
         c = b->line[3]->a;
         if (c == b) c = b->line[3]->b;
         curv = get_curv (a, b, c, 0.0);
-        grad_curv (c, b, curv, &gcx, &gcy);
+        grad_curv (c, b, curv, &gcx, &gcy, 1);
         gcx *= K2_COEFF;
         gcy *= K2_COEFF;
         gradx[c->tag] += gcx;
@@ -312,7 +341,7 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
         gradx[b->tag] -= gcx;
         grady[b->tag] -= gcy;
 
-        grad_curv (a, b, curv, &gcx, &gcy);
+        grad_curv (a, b, curv, &gcx, &gcy, -1);
         gcx *= K2_COEFF;
         gcy *= K2_COEFF;
         gradx[a->tag] += gcx;
@@ -325,7 +354,7 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
         c = b->line[2]->a;
         if (c == b) c = b->line[2]->b;
         curv = get_curv (a, b, c, 0.0);
-        grad_curv (c, b, curv, &gcx, &gcy);
+        grad_curv (c, b, curv, &gcx, &gcy, 1);
         gcx *= K2_COEFF;
         gcy *= K2_COEFF;
         gradx[c->tag] += gcx;
@@ -333,7 +362,7 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
         gradx[b->tag] -= gcx;
         grady[b->tag] -= gcy;
 
-        grad_curv (a, b, curv, &gcx, &gcy);
+        grad_curv (a, b, curv, &gcx, &gcy, -1);
         gcx *= K2_COEFF;
         gcy *= K2_COEFF;
         gradx[a->tag] += gcx;
@@ -342,6 +371,11 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
         grady[b->tag] -= gcy;
         break;
     }
+  }
+
+  for (a = contour->vertex; a; a = a->next)
+  {
+    if (a->type == V_FIXED) gradx[a->tag] = grady[a->tag] = 0.0;
   }
   return;
 }
@@ -362,25 +396,30 @@ get_curv (struct vertex *a, struct vertex *b, struct vertex *c, double ang0)
 
   l1 = sqrt (abx*abx + aby*aby);
   l2 = sqrt (bcx*bcx + bcy*bcy);
+//printf ("alfa = %lf, l1 = %lf, l2 = %lf, k = %lf\n", alfa, l1, l2,
+//             2.0*alfa/(l1+l2));
 
   return (2.0*alfa/(l1 + l2));
 }
 
 void
-grad_curv (struct vertex *a, struct vertex *b, 
-           double curv, double *gcxpt, double *gcypt)
+grad_curv (struct vertex *c, struct vertex *b, double curv, 
+           double *gcxpt, double *gcypt, int s)
 {
-  double abx, aby, l;
+  double cbx, cby, l;
 
-  abx = a->x - b->x;
-  aby = a->y - b->y;
+  cbx = c->x - b->x;
+  cby = c->y - b->y;
 
-  l = sqrt (abx*abx + aby*aby);
+  l = sqrt (cbx*cbx + cby*cby);
 
-  *gcxpt = -2*aby/l - 0.5*curv*abx;
-  *gcypt =  2*abx/l - 0.5*curv*aby;
+  *gcxpt = -2*s*cby/l - 0.5*curv*cbx;
+  *gcypt =  2*s*cbx/l - 0.5*curv*cby;
 
   *gcxpt *= curv/l;
+  *gcypt *= curv/l;
+
+//printf ("gcx = %lf, gcy = %lf\n", *gcxpt, *gcypt);
 }
 
 void
