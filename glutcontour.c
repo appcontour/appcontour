@@ -41,6 +41,7 @@ struct morseevent {
 struct polyline {
   struct vertex *vertex;
   struct line *line;
+  int numvertices;
   double h;
 };
 
@@ -62,9 +63,16 @@ struct line {
   struct line *next;
 };
 
-void evolve (struct polyline *contour);
-void get_grad_in_v (struct polyline *contour, struct vertex *p, double *vxpt, double *vypt);
+void idle (void);
+void evolve (struct polyline *contour, double incrtime);
+void
+compute_gradient (struct polyline *contour, double *gradx, double *grady);
+void reorder_node_ptr (struct polyline *contour);
 double getlen (struct line *line);
+double get_curv (struct vertex *a, struct vertex *b, struct vertex *c, 
+       double ang0);
+void grad_curv (struct vertex *a, struct vertex *b, 
+           double curv, double *gcxpt, double *gcypt);
 void discretizepolyline (struct polyline *contour);
 struct line *splitline (struct polyline *contour, struct line *line, double f);
 void getmorseevent (struct morseevent *mev);
@@ -79,7 +87,11 @@ struct line *newline (struct polyline *contour,
 int inherit_orientation (struct line *line);
 
 static struct polyline *contour;
-static double ftime = 1.0;
+static double time = 0.0;
+static double incrtime = 0.05;
+static double tau;
+static motion = 1;
+static double *gradx, *grady;
 
 void
 display (void)
@@ -102,16 +114,52 @@ display (void)
   glFlush();  /* Single buffered, so needs a flush. */
 }
 
+void
+menu (int value)
+{
+  switch (value) {
+  case 1:
+    motion = 1 - motion;
+    if (motion) {
+      glutIdleFunc (idle);
+    } else {
+      glutIdleFunc (NULL);
+    }
+    break;
+
+  case 666:
+    exit (0);
+  }
+}
+
+void
+visible (int state)
+{
+  if (state == GLUT_VISIBLE) {
+    if (motion)
+      glutIdleFunc (idle);
+  } else {
+    glutIdleFunc (NULL);
+  }
+}
+
+void
+idle (void)
+{
+  evolve (contour, incrtime);
+  glutPostRedisplay();
+}
+
 int
 main (int argc, char *argv[])
 {
   struct line *line, *l;
   struct vertex *a, *b, *v;
-  int numrows, i, j, tok, count;
+  int numrows, i, j, tok, count, vertexnum;
 
   if (argc > 1)
   {
-    ftime = atof (argv[1]);
+    incrtime = atof (argv[1]);
   }
   tok = gettoken (stdin);
   if (tok != TOK_MORSE) return (0);
@@ -123,7 +171,11 @@ main (int argc, char *argv[])
   tok = gettoken (stdin);
   if (tok != TOK_RBRACE) exit (1);
 
+  reorder_node_ptr (contour);
   discretizepolyline (contour);
+  vertexnum = settags (contour);
+  gradx = (double *) malloc (vertexnum * sizeof (double));
+  grady = (double *) malloc (vertexnum * sizeof (double));
 
   count = 0;
   for (v = contour->vertex; v; v = v->next) count++;
@@ -136,64 +188,217 @@ main (int argc, char *argv[])
   }
   printf ("ci sono %d archi\n", count);
 
-  evolve (contour);
+  tau = contour->h * contour->h;
+  printf ("tau = %lf\n", tau);
+
+  //evolve (contour, incrtime);
 
   glutInit(&argc, argv);
   glutCreateWindow("single triangle");
   glutDisplayFunc(display);
+  glutVisibilityFunc(visible);
+  glutCreateMenu (menu);
+  glutAddMenuEntry ("Toggle motion", 1);
+  glutAddMenuEntry ("Quit", 666);
+  glutAttachMenu (GLUT_RIGHT_BUTTON);
   glutMainLoop();
 }
 
-void
-evolve (struct polyline *contour)
+int
+settags (struct polyline *contour)
 {
-  double tau, gx, gy, time;
+  struct vertex *v;
+  int count = 0;
+
+  for (v = contour->vertex; v; v = v->next)
+    v->tag = count++;
+
+  contour->numvertices = count;
+  return (count);
+}
+
+void
+evolve (struct polyline *contour, double incrtime)
+{
+  double gx, gy, ftime;
   struct vertex *v;
 
-  tau = contour->h * contour->h;
-  printf ("tau = %lf\n", tau);
-
-  time = 0.0;
-
+  ftime = time + incrtime;
   while (time < ftime)
   {
     time += tau;
+    compute_gradient (contour, gradx, grady);
+
     for (v = contour->vertex; v; v = v->next)
     {
-      get_grad_in_v (contour, v, &gx, &gy);
-      v->x -= tau*gx;
-      v->y -= tau*gy;
+      v->x -= tau*gradx[v->tag];
+      v->y -= tau*grady[v->tag];
     }
   }
 }
 
 /* qui ci sono i contributi delle tre energie */
 
+#define K2_COEFF 0.0001
+
 void
-get_grad_in_v (struct polyline *contour, struct vertex *p, double *vxpt, double *vypt)
+compute_gradient (struct polyline *contour, double *gradx, double *grady)
 {
   struct line *line;
+  struct vertex *a, *b, *c;
   int i, nl;
   double dx, dy, len, xel, yel;
+  double curv, gcx, gcy;
 
-  *vxpt = *vypt = 0;
-  nl = 2;
-  if (p->type == V_CROSS) nl = 4;
+  for (i = 0; i < contour->numvertices; i++)
+    gradx[i] = grady[i] = 0.0;
 
-  for (i = 0; i < nl; i++)
+  /* primo contributo, dovuto al perimetro */
+ 
+  for (line = contour->line; line; line = line->next)
   {
-    line = p->line[i];
-    dx = line->a->x - line->b->x;
-    dy = line->a->y - line->b->y;
+    a = line->a;
+    b = line->b;
+    dx = a->x - b->x;
+    dy = a->y - b->y;
     len = sqrt (dx*dx + dy*dy);
     xel = dx/len;
     yel = dy/len;
-    if (line->b == p) {xel *= -1; yel *= -1;}
-    *vxpt += xel;
-    *vypt += yel;
+    gradx[a->tag] += xel;
+    grady[a->tag] += yel;
+    gradx[b->tag] -= xel;
+    grady[b->tag] -= yel;
   }
 
+  /* secondo contributo, dovuto alla k^2 */
+
+  for (b = contour->vertex; b; b = b->next)
+  {
+    switch (b->type)
+    {
+      case V_CUSP:
+      case V_REGULAR:
+        a = b->line[0]->a;
+        c = b->line[1]->b;
+        curv = get_curv (a, b, c, 0.0);
+        grad_curv (c, b, curv, &gcx, &gcy);
+        gcx *= K2_COEFF;
+        gcy *= K2_COEFF;
+        gradx[c->tag] += gcx;
+        grady[c->tag] += gcy;
+        gradx[b->tag] -= gcx;
+        grady[b->tag] -= gcy;
+
+        grad_curv (a, b, curv, &gcx, &gcy);
+        gcx *= K2_COEFF;
+        gcy *= K2_COEFF;
+        gradx[a->tag] += gcx;
+        grady[a->tag] += gcy;
+        gradx[b->tag] -= gcx;
+        grady[b->tag] -= gcy;
+        break;
+
+      case V_CROSS:
+        a = b->line[0]->a;
+        if (a == b) a = b->line[0]->b;
+        c = b->line[3]->a;
+        if (c == b) c = b->line[3]->b;
+        curv = get_curv (a, b, c, 0.0);
+        grad_curv (c, b, curv, &gcx, &gcy);
+        gcx *= K2_COEFF;
+        gcy *= K2_COEFF;
+        gradx[c->tag] += gcx;
+        grady[c->tag] += gcy;
+        gradx[b->tag] -= gcx;
+        grady[b->tag] -= gcy;
+
+        grad_curv (a, b, curv, &gcx, &gcy);
+        gcx *= K2_COEFF;
+        gcy *= K2_COEFF;
+        gradx[a->tag] += gcx;
+        grady[a->tag] += gcy;
+        gradx[b->tag] -= gcx;
+        grady[b->tag] -= gcy;
+
+        a = b->line[1]->a;
+        if (a == b) a = b->line[1]->b;
+        c = b->line[2]->a;
+        if (c == b) c = b->line[2]->b;
+        curv = get_curv (a, b, c, 0.0);
+        grad_curv (c, b, curv, &gcx, &gcy);
+        gcx *= K2_COEFF;
+        gcy *= K2_COEFF;
+        gradx[c->tag] += gcx;
+        grady[c->tag] += gcy;
+        gradx[b->tag] -= gcx;
+        grady[b->tag] -= gcy;
+
+        grad_curv (a, b, curv, &gcx, &gcy);
+        gcx *= K2_COEFF;
+        gcy *= K2_COEFF;
+        gradx[a->tag] += gcx;
+        grady[a->tag] += gcy;
+        gradx[b->tag] -= gcx;
+        grady[b->tag] -= gcy;
+        break;
+    }
+  }
   return;
+}
+
+double
+get_curv (struct vertex *a, struct vertex *b, struct vertex *c, double ang0)
+{
+  double alfa, abx, aby, bcx, bcy, l1, l2;
+
+  abx = b->x - a->x;
+  aby = b->y - a->y;
+  bcx = c->x - b->x;
+  bcy = c->y - b->y;
+
+  alfa = atan2 (bcy, bcx) - atan2 (aby, abx) - ang0;
+  while (alfa > M_PI) alfa -= 2*M_PI;
+  while (alfa < -M_PI) alfa += 2*M_PI;
+
+  l1 = sqrt (abx*abx + aby*aby);
+  l2 = sqrt (bcx*bcx + bcy*bcy);
+
+  return (2.0*alfa/(l1 + l2));
+}
+
+void
+grad_curv (struct vertex *a, struct vertex *b, 
+           double curv, double *gcxpt, double *gcypt)
+{
+  double abx, aby, l;
+
+  abx = a->x - b->x;
+  aby = a->y - b->y;
+
+  l = sqrt (abx*abx + aby*aby);
+
+  *gcxpt = -2*aby/l - 0.5*curv*abx;
+  *gcypt =  2*abx/l - 0.5*curv*aby;
+
+  *gcxpt *= curv/l;
+}
+
+void
+reorder_node_ptr (struct polyline *contour)
+{
+  struct vertex *v;
+  struct line *ltemp;
+
+  for (v = contour->vertex; v; v = v->next)
+  {
+    if (v->type == V_CROSS) continue;   /* non tocco l'ordine */
+    if (v->line[0]->b != v)
+    {
+      ltemp = v->line[0];
+      v->line[0] = v->line[1];
+      v->line[1] = ltemp;
+    }
+  }
 }
 
 double
