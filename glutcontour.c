@@ -14,7 +14,11 @@
 #include "GL/freeglut.h"
 
 #define BUFSIZE 1000
-#define REL_H 0.1
+#define REL_H 0.5
+#define MAX_H 0.1
+
+#define K1_COEFF 1.00
+#define K2_COEFF 0.04
 
 #define ME_TRAN 1
 #define ME_TOP 2
@@ -193,6 +197,7 @@ main (int argc, char *argv[])
   printf ("ci sono %d archi\n", count);
 
   tau = contour->h * contour->h;
+  tau = tau*tau;
   printf ("tau = %lf\n", tau);
 
   //evolve (contour, incrtime);
@@ -266,9 +271,6 @@ evolve (struct polyline *contour, double incrtime)
 }
 
 /* qui ci sono i contributi delle tre energie */
-
-#define K1_COEFF 1.000
-#define K2_COEFF 0.0001
 
 void
 compute_gradient (struct polyline *contour, double *gradx, double *grady)
@@ -461,6 +463,7 @@ discretizepolyline (struct polyline *contour)
   int i, numsub;
 
   newh = REL_H * contour->h;
+  if (newh > MAX_H) newh = MAX_H;
   contour->h = newh;
   for (line = contour->line; line; line = line->next)
   {
