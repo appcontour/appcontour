@@ -18,7 +18,8 @@
 #define MAX_H 0.1
 
 #define K1_COEFF 1.00
-#define K2_COEFF 0.04
+//#define K2_COEFF 0.04
+#define K2_COEFF 0.1
 
 #define ME_TRAN 1
 #define ME_TOP 2
@@ -72,6 +73,8 @@ void test_contour (struct polyline *contour);
 void idle (void);
 void evolve (struct polyline *contour, double incrtime);
 void compute_gradient (struct polyline *contour, double *gradx, double *grady);
+double compute_energy (struct polyline *contour);
+double normsq (double *x, int dim);
 void reorder_node_ptr (struct polyline *contour);
 double getlen (struct line *line);
 double get_alpha (struct vertex *a, struct vertex *p, struct vertex *b, 
@@ -99,6 +102,7 @@ static double incrtime = 0.05;
 static double tau;
 static motion = 1;
 static double *gradx, *grady;
+static double curenergy = 0.0;
 
 void
 display (void)
@@ -336,13 +340,14 @@ settags (struct polyline *contour)
 void
 evolve (struct polyline *contour, double incrtime)
 {
-  double gx, gy, ftime;
+  double gx, gy, ftime, newenergy, decrease, predicted_decrease;
   struct vertex *v;
 
   ftime = time + incrtime;
   while (time < ftime)
   {
     time += tau;
+    if (curenergy == 0.0) curenergy = compute_energy (contour);
     compute_gradient (contour, gradx, grady);
 
     for (v = contour->vertex; v; v = v->next)
@@ -350,10 +355,119 @@ evolve (struct polyline *contour, double incrtime)
       v->x -= tau*gradx[v->tag];
       v->y -= tau*grady[v->tag];
     }
+    newenergy = compute_energy (contour);
+    decrease = curenergy - newenergy;
+    curenergy = newenergy;
+// /* perhaps something is wrong, since this happens too often */
+//    if (decrease < 0.0) fprintf (stderr, "WARNING: energy is increasing!\n");
+    predicted_decrease = tau * (
+      normsq (gradx, contour->numvertices) +
+      normsq (grady, contour->numvertices) );
+    //printf ("predicted decrease/actual decrease = %lf/%lf = %lf\n",
+    //   predicted_decrease, decrease, predicted_decrease/decrease);
+
+// /* automatic step-size control does not work yet! */
+//    if (fabs(predicted_decrease - decrease) < 0.05*predicted_decrease)
+//    {
+//      printf ("good prediction, increasing tau\n");
+//      tau *= 1.1;
+//    }
+
+//    if (fabs(predicted_decrease - decrease) > 0.5*predicted_decrease)
+//    {
+//      printf ("bad prediction, decreasing tau\n");
+//      tau /= 1.1;
+//    }
   }
 }
 
+double
+normsq (double *x, int dim)
+{
+  double norm = 0.0;
+  int i;
+
+  for (i = 0; i < dim; i++)
+  {
+    norm += x[i]*x[i];
+  }
+  return (norm);
+}
+
 /* qui ci sono i contributi delle tre energie */
+
+double
+compute_energy (struct polyline *contour)
+{
+  struct line *line;
+  struct vertex *a, *p, *b;
+  int i, nl;
+  double dx, dy, len, xel, yel;
+  double alpha, gcx, gcy, la, lb;
+  double energy1 = 0.0;
+  double energy2 = 0.0;
+
+  /* primo contributo, dovuto al perimetro */
+ 
+  for (line = contour->line; line; line = line->next)
+  {
+    a = line->a;
+    b = line->b;
+    dx = a->x - b->x;
+    dy = a->y - b->y;
+    energy1 += sqrt (dx*dx + dy*dy);
+  }
+
+  energy1 *= K1_COEFF;
+
+  /* secondo contributo, dovuto alla k^2 */
+
+  for (p = contour->vertex; p; p = p->next)
+  {
+    switch (p->type)
+    {
+      case V_REGULAR:
+      case V_CUSP:
+        a = p->line[0]->a;
+        b = p->line[1]->b;
+        alpha = get_alpha (a, p, b, &la, &lb);
+        if (p->type == V_CUSP)
+        {
+          alpha -= 0.9*M_PI;
+        }
+        energy2 += 2*alpha*alpha/(la + lb);
+        break;
+
+      case V_CROSS:
+        a = p->line[0]->a;
+        if (a == p) a = p->line[0]->b;
+        b = p->line[3]->a;
+        if (b == p) b = p->line[3]->b;
+        alpha = get_alpha (a, p, b, &la, &lb);
+        energy2 += 2*alpha*alpha/(la + lb);
+
+        a = p->line[1]->a;
+        if (a == p) a = p->line[1]->b;
+        b = p->line[2]->a;
+        if (b == p) b = p->line[2]->b;
+        alpha = get_alpha (a, p, b, &la, &lb);
+        energy2 += 2*alpha*alpha/(la + lb);
+
+        a = p->line[0]->a;
+        if (a == p) a = p->line[0]->b;
+        b = p->line[1]->a;
+        if (b == p) b = p->line[1]->b;
+        alpha = get_alpha (a, p, b, &la, &lb) - M_PI/2;
+        energy2 += 2*alpha*alpha/(la + lb);
+        break;
+    }
+  }
+  energy2 *= K2_COEFF;
+
+  return (energy1 + energy2);
+}
+
+/* here we compute the gradient of the energy */
 
 void
 compute_gradient (struct polyline *contour, double *gradx, double *grady)
