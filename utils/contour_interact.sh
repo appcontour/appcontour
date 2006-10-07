@@ -12,6 +12,16 @@ function printexample ()
   eval $commandchain | contour print 2>/dev/null
 }
 
+function morse ()
+{
+  eval $commandchain | contour printmorse 2>/dev/null
+}
+
+function show ()
+{
+  eval $commandchain | contour printmorse 2>/dev/null | $glutcontour
+}
+
 function back ()
 {
   prevrules="$rules"
@@ -61,6 +71,21 @@ else
   catcommand="cat $example"
 fi
 
+#
+# try see if we have glutcontour...
+#
+paths="/usr/local/bin . .. ../appcontour"
+glutcontour=""
+for p in $paths
+do
+  if [ -x "$p/glutcontour" ]
+  then
+    glutcontour="$p/glutcontour"
+    echo "found glutcontour in $p"
+    break
+  fi
+done
+
 echo "examplename: $examplename"
 
 rules=""
@@ -93,6 +118,12 @@ do
     print)
       printexample
       ;;
+    morse)
+      morse
+      ;;
+    show)
+      show
+      ;;
     back)
       back
       ;;
@@ -101,7 +132,13 @@ do
       ;;
     help)
       echo "Valid commands are:"
-      echo "help, exit, print, back"
+      echo -n "help, quit, print, info, morse, back"
+      if [ -n "$glutcontour" ]
+      then
+        echo ", show"
+      else
+        echo ""
+      fi
       ;;
     *)
     if echo "$applicable" | grep -qi " $command "
