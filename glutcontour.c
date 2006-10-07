@@ -91,6 +91,8 @@ struct line *newline (struct polyline *contour,
                       struct vertex *a, 
                       struct vertex *b);
 int inherit_orientation (struct line *line);
+void insertcusps (struct polyline *contour);
+int insert_cusps_on_arc (struct line *l);
 
 static struct polyline *contour;
 static double time = 0.0;
@@ -179,6 +181,7 @@ main (int argc, char *argv[])
 
   reorder_node_ptr (contour);
   discretizepolyline (contour);
+  insertcusps (contour);
 
 //test_contour (contour);
   vertexnum = settags (contour);
@@ -235,6 +238,89 @@ test_contour (struct polyline *contour)
   c->line[1] = 0;
 
   contour->h = 0.001;
+}
+
+void
+insertcusps (struct polyline *contour)
+{
+  struct vertex *p;
+  struct line *l;
+  int i, iss1;
+
+  /* first deal with the non-s1 arcs */
+
+  for (p = contour->vertex; p; p = p->next)
+  {
+    if (p->type != V_CROSS) continue;
+    for (i = 0; i < 4; i++)
+    {
+      l = p->line[i];
+      if (l->a != p) continue;   /* we want a 'leaving' arc */
+      if (l->cusps <= 0) continue;
+      iss1 = insert_cusps_on_arc (l);
+      assert (iss1 == 0);
+    }
+  }
+
+  /* now the s1's */
+
+  for (p = contour->vertex; p; p = p->next)
+  {
+    if (p->type == V_CROSS) continue;
+    l = p->line[1];
+    if (l-> cusps <= 0) continue;
+    iss1 = insert_cusps_on_arc (l);
+    assert (iss1);
+  }
+
+  /* now check that no cusps remain to be places */
+
+  for (l = contour->line; l; l = l->next)
+  {
+    assert (l->cusps == 0);
+  }
+}
+
+int
+insert_cusps_on_arc (struct line *l)
+{
+  struct line *wl;
+  struct vertex *p;
+  int cusps, iss1, count, ccount, nnodes;
+
+  iss1 = 0;
+  count = 0;                /* count number of nodes */
+  cusps = l->cusps;
+printf ("must insert %d cusps\n", cusps);
+  wl = l;
+  do {
+    wl->cusps = 0;
+    count++;
+    if ((p = wl->b)->type == V_CROSS) break;
+  } while (wl = p->line[1], wl != l);
+
+  if (p->type != V_CROSS) iss1 = 1;
+
+  nnodes = count/(cusps + 1) + 1;
+printf ("counting %d nodes, inserting after %d\n", count, nnodes);
+
+  count = ccount = 0;
+  wl = l;
+  do {
+    count++;
+    if ((p = wl->b)->type == V_CROSS) break;
+    if (count >= nnodes)
+    {
+      count = 0;
+      ccount++;
+printf ("inserting one cusp\n");
+      assert (p->type == V_REGULAR);
+      p->type == V_CUSP;
+    }
+  } while (wl = p->line[1], wl != l);
+
+  assert (ccount == cusps);
+  return (iss1);
 }
 
 int
