@@ -47,9 +47,15 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_showcontour_OBJECTS = showcontour.$(OBJEXT) glutcontour.$(OBJEXT)
+am__showcontour_SOURCES_DIST = showcontour.c nullcontour.c \
+	glutcontour.c
+@GLUT_FALSE@am_showcontour_OBJECTS = showcontour.$(OBJEXT) \
+@GLUT_FALSE@	nullcontour.$(OBJEXT)
+@GLUT_TRUE@am_showcontour_OBJECTS = showcontour.$(OBJEXT) \
+@GLUT_TRUE@	glutcontour.$(OBJEXT)
 showcontour_OBJECTS = $(am_showcontour_OBJECTS)
-showcontour_DEPENDENCIES = ../parser.o
+@GLUT_FALSE@showcontour_DEPENDENCIES = ../parser.o
+@GLUT_TRUE@showcontour_DEPENDENCIES = ../parser.o
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -58,7 +64,7 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(showcontour_SOURCES)
-DIST_SOURCES = $(showcontour_SOURCES)
+DIST_SOURCES = $(am__showcontour_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -83,6 +89,8 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+GLUT_FALSE = @GLUT_FALSE@
+GLUT_TRUE = @GLUT_TRUE@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -133,8 +141,10 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-showcontour_SOURCES = showcontour.c glutcontour.c
-showcontour_LDADD = ../parser.o -lglut
+@GLUT_FALSE@showcontour_SOURCES = showcontour.c nullcontour.c
+@GLUT_TRUE@showcontour_SOURCES = showcontour.c glutcontour.c
+@GLUT_FALSE@showcontour_LDADD = ../parser.o -lm
+@GLUT_TRUE@showcontour_LDADD = ../parser.o -lglut
 AM_CFLAGS = -Wall
 all: all-am
 
@@ -203,6 +213,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glutcontour.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nullcontour.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/showcontour.Po@am__quote@
 
 .c.o:

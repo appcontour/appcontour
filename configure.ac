@@ -7,6 +7,15 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([contour.c])
 AC_CONFIG_HEADER([config.h])
 
+AC_ARG_ENABLE(glut,
+[  --enable-glut    Use glut graphics for show],
+[case "${enableval}" in
+  yes) glut=true ;;
+  no)  glut=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-glut) ;;
+esac],[glut=false])
+AM_CONDITIONAL(GLUT, test x$glut = xtrue)
+
 # Checks for programs.
 AC_PROG_CC
 
