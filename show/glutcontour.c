@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
-#include "parser.h"
+#include "../parser.h"
 #include "GL/freeglut.h"
 
 #define BUFSIZE 1000
@@ -76,6 +76,7 @@ void compute_gradient (struct polyline *contour, double *gradx, double *grady);
 double compute_energy (struct polyline *contour);
 double normsq (double *x, int dim);
 void reorder_node_ptr (struct polyline *contour);
+int settags (struct polyline *contour);
 double getlen (struct line *line);
 double get_alpha (struct vertex *a, struct vertex *p, struct vertex *b, 
        double *lapt, double *lbpt);
@@ -100,7 +101,7 @@ static struct polyline *contour;
 static double time = 0.0;
 static double incrtime = 0.05;
 static double tau;
-static motion = 1;
+static int motion = 1;
 static double *gradx, *grady;
 static double curenergy = 0.0;
 
@@ -164,9 +165,9 @@ idle (void)
 int
 main (int argc, char *argv[])
 {
-  struct line *line, *l;
-  struct vertex *a, *b, *v;
-  int numrows, i, j, tok, count, vertexnum;
+  struct line *l;
+  struct vertex *v;
+  int tok, count, vertexnum;
 
   if (argc > 1)
   {
@@ -217,6 +218,7 @@ main (int argc, char *argv[])
   glutAddMenuEntry ("Quit", 666);
   glutAttachMenu (GLUT_RIGHT_BUTTON);
   glutMainLoop();
+  return (0);
 }
 
 void
@@ -340,7 +342,7 @@ settags (struct polyline *contour)
 void
 evolve (struct polyline *contour, double incrtime)
 {
-  double gx, gy, ftime, newenergy, decrease, predicted_decrease;
+  double ftime, newenergy, decrease, predicted_decrease;
   struct vertex *v;
 
   ftime = time + incrtime;
@@ -401,9 +403,8 @@ compute_energy (struct polyline *contour)
 {
   struct line *line;
   struct vertex *a, *p, *b;
-  int i, nl;
-  double dx, dy, len, xel, yel;
-  double alpha, gcx, gcy, la, lb;
+  double dx, dy;
+  double alpha, la, lb;
   double energy1 = 0.0;
   double energy2 = 0.0;
 
@@ -474,7 +475,7 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
 {
   struct line *line;
   struct vertex *a, *p, *b;
-  int i, nl;
+  int i;
   double dx, dy, len, xel, yel;
   double alpha, gcx, gcy, la, lb;
 
@@ -677,7 +678,7 @@ void
 discretizepolyline (struct polyline *contour)
 {
   double newh;
-  struct vertex *a, *b, *prev, *p;
+  struct vertex *a, *b;
   struct line *line, *nline;
   double diffx, diffy, len, dt;
   int i, numsub;
@@ -799,10 +800,6 @@ getmorseevent (struct morseevent *morseevent)
 void
 getarcinfo (struct morseevent *morseevent)
 {
-  char ch, ch2;
-  char cusps, cusps2;
-  int tok, bracket = 0;
-
   getoricusps (&morseevent->ori, &morseevent->cusps);
   if (morseevent->type == ME_CROSS)
     getoricusps (&morseevent->ori2, &morseevent->cusps2);
@@ -811,7 +808,7 @@ getarcinfo (struct morseevent *morseevent)
 void
 getoricusps (int *oript, int *cuspspt)
 {
-  int tok, i, prevd;
+  int tok, prevd;
   int require_rbr = 1;
   int depthind = 0;
 
@@ -885,6 +882,7 @@ newline (struct polyline *contour, struct vertex *a, struct vertex *b)
   line->orientation = 0;
   line->next = contour->line;
   contour->line = line;
+  return (line);
 }
 
 struct vertex *
@@ -909,16 +907,15 @@ newvertex (struct polyline *contour, double x, double y, int type)
 struct polyline *
 buildpolyline (void)
 {
-  double dx, dy, x, y, maxx, maxy;
+  double dx, dy, x, y;
   struct morseevent morseevent;
   struct vertex *danglingnodes[BUFSIZE];
   struct vertex *prevdanglingnodes[BUFSIZE];
   struct vertex *v1, *v2, *v3, *v4, *v5, *v;
   struct line *line;
   struct polyline *contour;
-  int numdnodes = 0;
-  int goon, i, j, k, prevdangnodes, dangind, prevdangind;
-  int numrows = 0, numcols = 0, maxrowlen = 0, oriented;
+  int goon, i, k, prevdangnodes, dangind, prevdangind;
+  int numrows = 0, maxrowlen = 0, oriented;
 
   contour = (struct polyline *) malloc (sizeof (struct polyline));
   contour->vertex = 0;
@@ -1098,10 +1095,9 @@ buildpolyline (void)
 int
 inherit_orientation (struct line *line)
 {
-  struct line *oriented_line;
-  struct line *wline, *prevwline;
+  struct line *wline;
   struct vertex *v, *vtemp;
-  int inheriting, goon;
+  int goon;
 
   if (line->orientation < 0)
   {
