@@ -1,4 +1,4 @@
-bin_PROGRAMS = glutcontour
-glutcontour_SOURCES = glutcontour.c
-glutcontour_LDADD = ../parser.o -lglut
+bin_PROGRAMS = showcontour
+showcontour_SOURCES = showcontour.c glutcontour.c
+showcontour_LDADD = ../parser.o -lglut
 AM_CFLAGS = -Wall

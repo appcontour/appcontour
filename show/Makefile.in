@@ -34,7 +34,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = glutcontour$(EXEEXT)
+bin_PROGRAMS = showcontour$(EXEEXT)
 subdir = show
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -47,9 +47,9 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_glutcontour_OBJECTS = glutcontour.$(OBJEXT)
-glutcontour_OBJECTS = $(am_glutcontour_OBJECTS)
-glutcontour_DEPENDENCIES = ../parser.o
+am_showcontour_OBJECTS = showcontour.$(OBJEXT) glutcontour.$(OBJEXT)
+showcontour_OBJECTS = $(am_showcontour_OBJECTS)
+showcontour_DEPENDENCIES = ../parser.o
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -57,8 +57,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(glutcontour_SOURCES)
-DIST_SOURCES = $(glutcontour_SOURCES)
+SOURCES = $(showcontour_SOURCES)
+DIST_SOURCES = $(showcontour_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -133,8 +133,8 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-glutcontour_SOURCES = glutcontour.c
-glutcontour_LDADD = ../parser.o -lglut
+showcontour_SOURCES = showcontour.c glutcontour.c
+showcontour_LDADD = ../parser.o -lglut
 AM_CFLAGS = -Wall
 all: all-am
 
@@ -192,9 +192,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-glutcontour$(EXEEXT): $(glutcontour_OBJECTS) $(glutcontour_DEPENDENCIES) 
-	@rm -f glutcontour$(EXEEXT)
-	$(LINK) $(glutcontour_LDFLAGS) $(glutcontour_OBJECTS) $(glutcontour_LDADD) $(LIBS)
+showcontour$(EXEEXT): $(showcontour_OBJECTS) $(showcontour_DEPENDENCIES) 
+	@rm -f showcontour$(EXEEXT)
+	$(LINK) $(showcontour_LDFLAGS) $(showcontour_OBJECTS) $(showcontour_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -203,6 +203,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glutcontour.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/showcontour.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
