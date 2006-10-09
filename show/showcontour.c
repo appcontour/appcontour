@@ -14,6 +14,8 @@
 #include "showcontour.h"
 #include "../parser.h"
 
+//#define CHECK_GRADIENT 1
+
 #define BUFSIZE 1000
 #define REL_H 0.5
 #define MAX_H 0.1
@@ -61,6 +63,9 @@ struct line *newline (struct polyline *contour,
 int inherit_orientation (struct line *line);
 void insertcusps (struct polyline *contour);
 int insert_cusps_on_arc (struct line *l);
+#ifdef CHECK_GRADIENT
+void check_gradient (struct polyline *contour, double *gx, double *gy);
+#endif
 
 struct polyline *contour;
 double incrtime = 0.05;
@@ -257,6 +262,9 @@ evolve (struct polyline *contour, double incrtime)
     if (curenergy == 0.0) curenergy = compute_energy (contour);
     compute_gradient (contour, gradx, grady);
 
+#ifdef CHECK_GRADIENT
+    check_gradient (contour, gradx, grady);
+#endif
     for (v = contour->vertex; v; v = v->next)
     {
       v->x -= tau*gradx[v->tag];
@@ -287,6 +295,44 @@ evolve (struct polyline *contour, double incrtime)
 //    }
   }
 }
+
+#ifdef CHECK_GRADIENT
+void
+check_gradient (struct polyline *contour, double *gradx, double *grady)
+{
+  double baseenergy, normgradsq, energy;
+  double dx, saved, nder, der, normgrad, relerr;
+  struct vertex *v;
+
+  dx = 1e-7;
+
+  normgradsq = normsq (gradx, contour->numvertices) +
+               normsq (grady, contour->numvertices);
+  normgrad = sqrt (normgradsq);
+  baseenergy = compute_energy (contour);
+  for (v = contour->vertex; v; v = v->next)
+  {
+    saved = v->x;
+    v->x += dx;
+    energy = compute_energy (contour);
+    v->x = saved;
+    nder = (energy - baseenergy)/dx;
+    der = gradx[v->tag];
+    relerr = fabs ((der - nder)/normgrad);
+    if (relerr > 0.1)
+      printf ("der/nder = %lf\n", der/nder);
+    saved = v->y;
+    v->y += dx;
+    energy = compute_energy (contour);
+    v->y = saved;
+    nder = (energy - baseenergy)/dx;
+    der = grady[v->tag];
+    relerr = fabs ((der - nder)/normgrad);
+    if (relerr > 0.1)
+      printf ("nodo %d, der/nder = %lf\n", v->tag, der/nder);
+  }
+}
+#endif
 
 double
 normsq (double *x, int dim)
