@@ -66,10 +66,17 @@ idle (void)
   glutPostRedisplay();
 }
 
-int
-grmain (int *argcpt, char *argv[])
+char *
+grinit (int *argcpt, char *argv[])
 {
+  static char ident[]="glut";
   glutInit(argcpt, argv);
+  return (ident);
+}
+
+int
+grmain (void)
+{
   glutCreateWindow("single triangle");
   glutDisplayFunc(display);
   glutVisibilityFunc(visible);

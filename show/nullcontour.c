@@ -26,8 +26,15 @@ idle (void)
 {
 }
 
+char *
+grinit (int *argcpt, char *argv[])
+{
+  static char ident[]="null";
+  return (ident);
+}
+
 int
-grmain (int *argcpt, char *argv[])
+grmain (void)
 {
   return (0);
 }

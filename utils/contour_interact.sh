@@ -19,7 +19,7 @@ function morse ()
 
 function show ()
 {
-  eval $commandchain | contour printmorse 2>/dev/null | $glutcontour
+  eval $commandchain | contour printmorse 2>/dev/null | $showcontour &
 }
 
 function back ()
@@ -72,16 +72,20 @@ else
 fi
 
 #
-# try see if we have glutcontour...
+# try see if we have showcontour...
 #
-paths="/usr/local/bin . .. ../appcontour"
-glutcontour=""
+paths="/usr/local/bin . ../show ../appcontour/show"
+showcontour=""
 for p in $paths
 do
-  if [ -x "$p/glutcontour" ]
+  if [ -x "$p/showcontour" ]
   then
-    glutcontour="$p/glutcontour"
-    echo "found glutcontour in $p"
+    grident=`$p/showcontour --grident`
+    if [ "$grident" != "null" ]
+    then
+      showcontour="$p/showcontour"
+      echo "found showcontour [$grident] in $p"
+    fi
     break
   fi
 done
@@ -95,7 +99,10 @@ displayinfo
 
 while true
 do
-  echo "applied rules: $rules"
+  if [ -n "$rules" ]
+  then
+    echo "Applied rules: $rules"
+  fi
   buildcommandchain
   applicable=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
   echo "Applicable rules: $applicable"
@@ -133,7 +140,7 @@ do
     help)
       echo "Valid commands are:"
       echo -n "help, quit, print, info, morse, back"
-      if [ -n "$glutcontour" ]
+      if [ -n "$showcontour" ]
       then
         echo ", show"
       else

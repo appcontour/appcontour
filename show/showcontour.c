@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <string.h>
 #include "showcontour.h"
 #include "../parser.h"
 
@@ -73,11 +74,17 @@ main (int argc, char *argv[])
 {
   struct line *l;
   struct vertex *v;
-  int tok, count, vertexnum;
+  int tok, count, vertexnum, iarg;
+  char *grident;
 
-  if (argc > 1)
+  grident = grinit(&argc, argv);
+  for (iarg = 1; iarg < argc; iarg++)
   {
-    incrtime = atof (argv[1]);
+    if (strcmp (argv[iarg], "--grident") == 0)
+    {
+      printf ("%s\n", grident);
+      return (0);
+    }
   }
   tok = gettoken (stdin);
   if (tok != TOK_MORSE) return (0);
@@ -115,7 +122,7 @@ main (int argc, char *argv[])
 
   //evolve (contour, incrtime);
 
-  grmain(&argc, argv);
+  grmain();
   return (0);
 }
 
