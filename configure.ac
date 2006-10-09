@@ -24,13 +24,14 @@ if (test "$glut" != "yes" -a "$nograph" != "yes"); then
        --with-none    no graphic engine]);
 fi
 
-dnl AC_ARG_ENABLE(glut,
-dnl [  --enable-glut    Use glut graphics for show],
-dnl [case "${enableval}" in
-dnl   yes) glut=true ;;
-dnl   no)  glut=false ;;
-dnl   *) AC_MSG_ERROR(bad value ${enableval} for --enable-glut) ;;
-dnl esac],[glut=false])
+# Checks for programs.
+AC_PROG_CC
+
+# Checks for libraries.
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([stdlib.h])
 
 if (test "$glut" = "yes"); then
   dnl check for GLUT headers.
@@ -41,16 +42,7 @@ if (test "$glut" = "yes"); then
     [AC_MSG_ERROR([No glut library found, use --with-none.])])
 fi
 
-AM_CONDITIONAL(GLUT, test "$glut" = "yes")
-
-# Checks for programs.
-AC_PROG_CC
-
-# Checks for libraries.
-
-# Checks for header files.
-AC_HEADER_STDC
-AC_CHECK_HEADERS([stdlib.h])
+AM_CONDITIONAL(ENABLE_GLUT, test "$glut" = "yes")
 
 # Checks for typedefs, structures, and compiler characteristics.
 

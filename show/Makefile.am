@@ -1,6 +1,6 @@
 bin_PROGRAMS = showcontour
 
-if GLUT
+if ENABLE_GLUT
 showcontour_SOURCES = showcontour.c glutcontour.c
 showcontour_LDADD = ../parser.o -lglut
 else
