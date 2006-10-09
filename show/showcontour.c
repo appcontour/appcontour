@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <math.h>
 #include <string.h>
+#include <sys/time.h>
 #include "showcontour.h"
 #include "../parser.h"
 
@@ -68,7 +69,6 @@ void check_gradient (struct polyline *contour, double *gx, double *gy);
 #endif
 
 struct polyline *contour;
-double incrtime = 0.05;
 static double time = 0.0;
 static double tau;
 static double *gradx, *grady;
@@ -249,14 +249,45 @@ settags (struct polyline *contour)
   return (count);
 }
 
+static struct timeval timer;
+
+void
+settimer (double incrtime)
+{
+  int seconds, useconds;
+
+  gettimeofday(&timer, 0);
+
+  seconds = (int) incrtime;
+  useconds = (int) 1000000*(incrtime - seconds);
+
+  timer.tv_usec += useconds;
+  timer.tv_sec += seconds;
+  if (timer.tv_usec > 1000000)
+  {
+    timer.tv_usec -= 1000000;
+    timer.tv_sec++;
+  }
+}
+
+int
+checktimer (void)
+{
+  struct timeval now;
+
+  gettimeofday (&now, 0);
+  return (timercmp (&now, &timer, < ));
+}
+
 void
 evolve (struct polyline *contour, double incrtime)
 {
-  double ftime, newenergy, decrease, predicted_decrease;
+  double newenergy, decrease, predicted_decrease;
   struct vertex *v;
 
-  ftime = time + incrtime;
-  while (time < ftime)
+  settimer (incrtime);
+//  ftime = time + incrtime;
+  while (checktimer())
   {
     time += tau;
     if (curenergy == 0.0) curenergy = compute_energy (contour);
@@ -328,7 +359,7 @@ check_gradient (struct polyline *contour, double *gradx, double *grady)
     nder = (energy - baseenergy)/dx;
     der = grady[v->tag];
     relerr = fabs ((der - nder)/normgrad);
-    if (relerr > 0.1)
+    if (relerr > 0.01)
       printf ("nodo %d, der/nder = %lf\n", v->tag, der/nder);
   }
 }

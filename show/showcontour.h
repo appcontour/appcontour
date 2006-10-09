@@ -35,6 +35,7 @@ struct line {
 /* prototypes */
 
 char *grinit (int *argcpt, char *argv[]);
+void grsetresponsivity (double incrtime);
 int grmain (void);
 void evolve (struct polyline *contour, double incrtime);
 

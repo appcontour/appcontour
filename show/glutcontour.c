@@ -1,10 +1,11 @@
 #include <stdlib.h>
+#include <math.h>
 #include "GL/glut.h"
 #include "showcontour.h"
 
 extern struct polyline *contour;
-extern double incrtime;
 
+static double incrtime = 0.25;
 static int motion = 1;
 
 void idle (void);
@@ -43,6 +44,14 @@ menu (int value)
     }
     break;
 
+  case 2:
+    incrtime /= sqrt(2.0);
+    break;
+
+  case 3:
+    incrtime *= sqrt(2.0);
+    break;
+
   case 666:
     exit (0);
   }
@@ -74,14 +83,22 @@ grinit (int *argcpt, char *argv[])
   return (ident);
 }
 
+void
+grsetresponsivity (double lincrtime)
+{
+  incrtime = lincrtime;
+}
+
 int
 grmain (void)
 {
-  glutCreateWindow("single triangle");
+  glutCreateWindow("showcontour");
   glutDisplayFunc(display);
   glutVisibilityFunc(visible);
   glutCreateMenu (menu);
   glutAddMenuEntry ("Toggle motion", 1);
+  glutAddMenuEntry ("Increase responsivity", 2);
+  glutAddMenuEntry ("Decrease responsivity", 3);
   glutAddMenuEntry ("Quit", 666);
   glutAttachMenu (GLUT_RIGHT_BUTTON);
   glutMainLoop();
