@@ -7,14 +7,41 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([contour.c])
 AC_CONFIG_HEADER([config.h])
 
-AC_ARG_ENABLE(glut,
-[  --enable-glut    Use glut graphics for show],
-[case "${enableval}" in
-  yes) glut=true ;;
-  no)  glut=false ;;
-  *) AC_MSG_ERROR(bad value ${enableval} for --enable-glut) ;;
-esac],[glut=false])
-AM_CONDITIONAL(GLUT, test x$glut = xtrue)
+AC_ARG_WITH([glut],
+  AC_HELP_STRING([--with-glut], [glut engine for showcontour]),
+  glut="yes"; nograph="no",
+  glut="no")
+
+AC_ARG_WITH([none],
+  AC_HELP_STRING([--with-none], [no graphic engine for showcontour]),
+  nograph="yes"; glut="no",
+  nograph="no")
+
+if (test "$glut" != "yes" -a "$nograph" != "yes"); then
+  AC_MSG_ERROR([You must select an interface for showcontour to build.
+     Possible options are:
+       --with-glut    GLUT engine
+       --with-none    no graphic engine]);
+fi
+
+dnl AC_ARG_ENABLE(glut,
+dnl [  --enable-glut    Use glut graphics for show],
+dnl [case "${enableval}" in
+dnl   yes) glut=true ;;
+dnl   no)  glut=false ;;
+dnl   *) AC_MSG_ERROR(bad value ${enableval} for --enable-glut) ;;
+dnl esac],[glut=false])
+
+if (test "$glut" = "yes"); then
+  dnl check for GLUT headers.
+  AC_CHECK_HEADERS(GL/glut.h, ,
+    [AC_MSG_ERROR([No glut.h found, use --with-none.])])
+  dnl check for GLUT.
+  AC_CHECK_LIB(glut, glutMainLoop, ,
+    [AC_MSG_ERROR([No glut library found, use --with-none.])])
+fi
+
+AM_CONDITIONAL(GLUT, test "$glut" = "yes")
 
 # Checks for programs.
 AC_PROG_CC

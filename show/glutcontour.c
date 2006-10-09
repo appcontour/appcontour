@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "GL/freeglut.h"
+#include "GL/glut.h"
 #include "showcontour.h"
 
 extern struct polyline *contour;
