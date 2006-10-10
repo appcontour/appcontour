@@ -9,7 +9,7 @@
 #
 # controllo che questo sia vero!
 
-list=`ls [0-9]*`
+list=`ls | grep "^[0-9]"`
 
 for s1 in $list
 do
