@@ -51,6 +51,7 @@ double get_alpha (struct vertex *a, struct vertex *p, struct vertex *b,
 void grad_curv (struct vertex *b, struct vertex *p, double alpha, double lb, double la,
            double *gcxpt, double *gcypt);
 void discretizepolyline (struct polyline *contour);
+void redistributenodes (struct polyline *contour);
 struct line *splitline (struct polyline *contour, struct line *line, double f);
 void getmorseevent (struct morseevent *mev);
 void getarcinfo (struct morseevent *morseevent);
@@ -73,6 +74,8 @@ static double time = 0.0;
 static double tau;
 static double *gradx, *grady;
 static double curenergy = 0.0;
+static double k1_coeff = K1_COEFF;
+static double k2_coeff = K2_COEFF;
 
 int
 main (int argc, char *argv[])
@@ -279,19 +282,26 @@ checktimer (void)
   return (timercmp (&now, &timer, < ));
 }
 
-void
+double
 evolve (struct polyline *contour, double incrtime)
 {
   double newenergy, decrease, predicted_decrease;
   struct vertex *v;
+  int gradient_is_ok;
+  int timesteps = 0;
+  int timebsteps = 0;
+  int allowbackstep = 0;
+  int allowstepcontrol = 0;
+  int allownoderedistribution = 1;
 
   settimer (incrtime);
-//  ftime = time + incrtime;
+  gradient_is_ok = 0;
   while (checktimer())
   {
     time += tau;
+    timesteps++;
     if (curenergy == 0.0) curenergy = compute_energy (contour);
-    compute_gradient (contour, gradx, grady);
+    if (! gradient_is_ok) compute_gradient (contour, gradx, grady);
 
 #ifdef CHECK_GRADIENT
     check_gradient (contour, gradx, grady);
@@ -301,30 +311,53 @@ evolve (struct polyline *contour, double incrtime)
       v->x -= tau*gradx[v->tag];
       v->y -= tau*grady[v->tag];
     }
+    gradient_is_ok = 0;
     newenergy = compute_energy (contour);
     decrease = curenergy - newenergy;
+ /* perhaps something is wrong, since this happens too often */
+    if (allowbackstep && decrease < 0.0)
+    {
+//      fprintf (stderr, "WARNING: energy is increasing!\n");
+      /* torno indietro di uno step e diminuisco tau */
+      for (v = contour->vertex; v; v = v->next)
+      {
+        v->x += tau*gradx[v->tag];
+        v->y += tau*grady[v->tag];
+      }
+      time -= tau;
+      timesteps--;
+      timebsteps++;
+      tau /= 4;
+      gradient_is_ok = 1;
+      continue;
+    }
     curenergy = newenergy;
-// /* perhaps something is wrong, since this happens too often */
-//    if (decrease < 0.0) fprintf (stderr, "WARNING: energy is increasing!\n");
     predicted_decrease = tau * (
       normsq (gradx, contour->numvertices) +
       normsq (grady, contour->numvertices) );
     //printf ("predicted decrease/actual decrease = %lf/%lf = %lf\n",
     //   predicted_decrease, decrease, predicted_decrease/decrease);
 
-// /* automatic step-size control does not work yet! */
-//    if (fabs(predicted_decrease - decrease) < 0.05*predicted_decrease)
-//    {
-//      printf ("good prediction, increasing tau\n");
-//      tau *= 1.1;
-//    }
+    if (allowstepcontrol)
+    {
+ /* automatic step-size control does not work yet! */
+      if (fabs(predicted_decrease - decrease) < 0.05*predicted_decrease)
+      {
+//        printf ("good prediction, increasing tau\n");
+        tau *= 1.1;
+      }
 
-//    if (fabs(predicted_decrease - decrease) > 0.5*predicted_decrease)
-//    {
-//      printf ("bad prediction, decreasing tau\n");
-//      tau /= 1.1;
-//    }
+      if (fabs(predicted_decrease - decrease) > 0.2*predicted_decrease)
+      {
+//        printf ("bad prediction, decreasing tau\n");
+        tau /= 2;
+      }
+    }
   }
+//  printf ("timesteps: %d, backsteps: %d, time = %lf, energy = %lf\n", 
+//          timesteps, timebsteps, time, curenergy);
+  if (allownoderedistribution) redistributenodes (contour);
+  return (time);
 }
 
 #ifdef CHECK_GRADIENT
@@ -401,7 +434,7 @@ compute_energy (struct polyline *contour)
     energy1 += sqrt (dx*dx + dy*dy);
   }
 
-  energy1 *= K1_COEFF;
+  energy1 *= k1_coeff;
 
   /* secondo contributo, dovuto alla k^2 */
 
@@ -445,7 +478,7 @@ compute_energy (struct polyline *contour)
         break;
     }
   }
-  energy2 *= K2_COEFF;
+  energy2 *= k2_coeff;
 
   return (energy1 + energy2);
 }
@@ -473,8 +506,8 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
     dx = a->x - b->x;
     dy = a->y - b->y;
     len = sqrt (dx*dx + dy*dy);
-    xel = K1_COEFF*dx/len;
-    yel = K1_COEFF*dy/len;
+    xel = k1_coeff*dx/len;
+    yel = k1_coeff*dy/len;
     gradx[a->tag] += xel;
     grady[a->tag] += yel;
     gradx[b->tag] -= xel;
@@ -498,16 +531,16 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
           //printf ("node with cusp...\n");
         }
         grad_curv (b, p, alpha, lb, la, &gcx, &gcy);
-        gcx *= K2_COEFF;
-        gcy *= K2_COEFF;
+        gcx *= k2_coeff;
+        gcy *= k2_coeff;
         gradx[b->tag] += gcx;
         grady[b->tag] += gcy;
         gradx[p->tag] -= gcx;
         grady[p->tag] -= gcy;
 
         grad_curv (a, p, -alpha, la, lb, &gcx, &gcy);
-        gcx *= K2_COEFF;
-        gcy *= K2_COEFF;
+        gcx *= k2_coeff;
+        gcy *= k2_coeff;
         gradx[a->tag] += gcx;
         grady[a->tag] += gcy;
         gradx[p->tag] -= gcx;
@@ -521,16 +554,16 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
         if (b == p) b = p->line[3]->b;
         alpha = get_alpha (a, p, b, &la, &lb);
         grad_curv (b, p, alpha, lb, la, &gcx, &gcy);
-        gcx *= K2_COEFF;
-        gcy *= K2_COEFF;
+        gcx *= k2_coeff;
+        gcy *= k2_coeff;
         gradx[b->tag] += gcx;
         grady[b->tag] += gcy;
         gradx[p->tag] -= gcx;
         grady[p->tag] -= gcy;
 
         grad_curv (a, p, -alpha, la, lb, &gcx, &gcy);
-        gcx *= K2_COEFF;
-        gcy *= K2_COEFF;
+        gcx *= k2_coeff;
+        gcy *= k2_coeff;
         gradx[a->tag] += gcx;
         grady[a->tag] += gcy;
         gradx[p->tag] -= gcx;
@@ -542,16 +575,16 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
         if (b == p) b = p->line[2]->b;
         alpha = get_alpha (a, p, b, &la, &lb);
         grad_curv (b, p, alpha, lb, la, &gcx, &gcy);
-        gcx *= K2_COEFF;
-        gcy *= K2_COEFF;
+        gcx *= k2_coeff;
+        gcy *= k2_coeff;
         gradx[b->tag] += gcx;
         grady[b->tag] += gcy;
         gradx[p->tag] -= gcx;
         grady[p->tag] -= gcy;
 
         grad_curv (a, p, -alpha, la, lb, &gcx, &gcy);
-        gcx *= K2_COEFF;
-        gcy *= K2_COEFF;
+        gcx *= k2_coeff;
+        gcy *= k2_coeff;
         gradx[a->tag] += gcx;
         grady[a->tag] += gcy;
         gradx[p->tag] -= gcx;
@@ -563,16 +596,16 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
         if (b == p) b = p->line[1]->b;
         alpha = get_alpha (a, p, b, &la, &lb) - M_PI/2;
         grad_curv (b, p, alpha, lb, la, &gcx, &gcy);
-        gcx *= K2_COEFF;
-        gcy *= K2_COEFF;
+        gcx *= k2_coeff;
+        gcy *= k2_coeff;
         gradx[b->tag] += gcx;
         grady[b->tag] += gcy;
         gradx[p->tag] -= gcx;
         grady[p->tag] -= gcy;
 
         grad_curv (a, p, -alpha, la, lb, &gcx, &gcy);
-        gcx *= K2_COEFF;
-        gcy *= K2_COEFF;
+        gcx *= k2_coeff;
+        gcy *= k2_coeff;
         gradx[a->tag] += gcx;
         grady[a->tag] += gcy;
         gradx[p->tag] -= gcx;
@@ -685,6 +718,45 @@ discretizepolyline (struct polyline *contour)
       line = nline;
     }
   }
+}
+
+void
+redistributenodes (struct polyline *contour)
+{
+  struct line *line, *nline;
+  struct vertex *a, *b;
+  double diffx, diffy, len, h, dt;
+  int numsub, i, vertexnum;
+  int addednodes = 0;
+
+  /* contour->h is the target step size */
+
+  h = contour->h;
+  for (line = contour->line; line; line = line->next)
+  {
+    a = line->a;
+    b = line->b;
+    diffx = a->x - b->x;
+    diffy = a->y - b->y;
+    len = sqrt (diffx*diffx + diffy*diffy);
+
+    numsub = len/h;
+    dt = len/numsub;
+    for (i = 1; i < numsub; i++)
+    {
+      addednodes++;
+      nline = splitline (contour, line, dt/len);
+      len -= dt;
+      line = nline;
+    }
+  }
+  vertexnum = settags (contour);
+  free (gradx);
+  free (grady);
+  gradx = (double *) malloc (vertexnum * sizeof (double));
+  grady = (double *) malloc (vertexnum * sizeof (double));
+  curenergy = 0.0;
+//  if (addednodes) printf ("added %d nodes\n", addednodes);
 }
 
 struct line *
