@@ -18,6 +18,7 @@ struct morse {
 /* local prototypes */
 
 void morse_islands (struct borderlist *bl);
+void nested_morse_islands (struct morse *left, struct borderlist *bl);
 void enter_arc_event (struct border *b, struct morse *before);
 struct morse *newmblock (struct morse *before);
 void do_morse (struct morse *minf);
@@ -165,7 +166,7 @@ enter_region (struct morse *left, int type)
   struct arc *arc;
   int arcbelow, arcbelow1, arcbelow2;
 
-  //printf ("in enter_region\n");
+  if (debug) printf ("in enter_region: ");
   assert (left->inf);
   right = left->next;
   assert (right->inf);
@@ -173,6 +174,7 @@ enter_region (struct morse *left, int type)
   /* devo controllare se ho un "arco-sotto" */
   binl = left->right;
   binr = right->left;
+  if (debug) printf ("%d\n", binl->border->region->tag);
 
   arcbelow = 0;
   if (binl == binr) /* stesso arco */
@@ -195,15 +197,15 @@ enter_region (struct morse *left, int type)
      * la descrizione di morse. Questa e' per forza
      * una regione nuova
      */
-    //printf ("  e.r. arcbelow\n");
-    crbefore++;
-    crafter++;
+    if (debug) printf ("  e.r. arcbelow\n");
+    //crbefore++;
+    //crafter++;
     assert (binl->border == binl->border->region->border);
-    morse_islands (binl->border->next);
+    nested_morse_islands (left, binl->border->next);
     assert (left->prev == left->inf);
     assert (right->next == right->inf);
-    crbefore--;
-    crafter--;
+    //crbefore--;
+    //crafter--;
     morse_close (left, right);
     return;
   }
@@ -213,13 +215,13 @@ enter_region (struct morse *left, int type)
   destblock = segui_bordo (binl, left, type);
   if (destblock == right)
   {             /* e' una regione nuova */
-    //printf ("  e.r. regione nuova\n");
+    if (debug) printf ("  e.r. regione nuova\n");
     assert (binl->border == binl->border->region->border);
-    morse_islands (binl->border->next);
+    nested_morse_islands (left, binl->border->next);
     return;
   }
 
-  //printf ("  e.r. regione vecchia\n");
+  if (debug) printf ("  e.r. regione vecchia\n");
   assert (destblock != left);
   /* non e' una regione nuova... */
   //if (destblock == minf->next)
@@ -247,6 +249,24 @@ enter_region (struct morse *left, int type)
     if (arcbelow1) morse_close (left, destblock);
   }
   return;
+}
+
+void
+nested_morse_islands (struct morse *left, struct borderlist *bl)
+{
+  int cl, cr;
+
+  cl = countleft (left) + 1;
+  cr = countright (left->next) + 1;
+  if (debug) printf ("in nested_morse_islands, cl = %d, cr = %d\n", cl, cr);
+  crbefore += cl;
+  crafter += cr;
+
+  morse_islands (bl);
+
+  crbefore -= cl;
+  crafter -= cr;
+  if (debug) printf ("exiting from nested_morse_islands\n");
 }
 
 void
