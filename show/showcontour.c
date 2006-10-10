@@ -25,6 +25,9 @@
 #define K2_COEFF 0.1
 #define K3_COEFF 0.7
 
+#define NODE_SEP 0.4
+#define ORTO_HEAVINESS 2.0
+
 #define ME_TRAN 1
 #define ME_TOP 2
 #define ME_BOT 3
@@ -483,13 +486,17 @@ compute_energy (struct polyline *contour)
         b = p->line[1]->a;
         if (b == p) b = p->line[1]->b;
         alpha = get_alpha (a, p, b, &la, &lb) - M_PI/2;
-        energy2 += 2*alpha*alpha/(la + lb);
+        energy2 += 2*ORTO_HEAVINESS*alpha*alpha/(la + lb);
         break;
     }
   }
   energy2 *= k2_coeff;
 
   /* terzo contributo: repulsione tra nodi/cuspidi */
+  /*
+   * la funzione energia utilizzata e'
+   *  f(d) = (NODE_SEP - d)^2/d   se d < NODE_SEP
+   */
 
   for (i = 0; i < specnodesnum; i++)
   {
@@ -500,7 +507,10 @@ compute_energy (struct polyline *contour)
       dx = v1->x - v2->x;
       dy = v1->y - v2->y;
       dist = sqrt (dx*dx + dy*dy);
-      energy3 += k3_coeff/dist;
+      if (dist < NODE_SEP)
+      {
+        energy3 += k3_coeff*(NODE_SEP - dist)*(NODE_SEP - dist)/dist;
+      }
     }
   }
   return (energy1 + energy2 + energy3);
@@ -514,7 +524,7 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
   struct line *line;
   struct vertex *a, *p, *b, *v1, *v2;
   int i, j, tag1, tag2;
-  double dx, dy, len, xel, yel, dist;
+  double dx, dy, len, xel, yel, distsq, dist, force, fct;
   double alpha, gcx, gcy, la, lb;
 
   for (i = 0; i < contour->numvertices; i++)
@@ -619,16 +629,16 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
         if (b == p) b = p->line[1]->b;
         alpha = get_alpha (a, p, b, &la, &lb) - M_PI/2;
         grad_curv (b, p, alpha, lb, la, &gcx, &gcy);
-        gcx *= k2_coeff;
-        gcy *= k2_coeff;
+        gcx *= ORTO_HEAVINESS*k2_coeff;
+        gcy *= ORTO_HEAVINESS*k2_coeff;
         gradx[b->tag] += gcx;
         grady[b->tag] += gcy;
         gradx[p->tag] -= gcx;
         grady[p->tag] -= gcy;
 
         grad_curv (a, p, -alpha, la, lb, &gcx, &gcy);
-        gcx *= k2_coeff;
-        gcy *= k2_coeff;
+        gcx *= ORTO_HEAVINESS*k2_coeff;
+        gcy *= ORTO_HEAVINESS*k2_coeff;
         gradx[a->tag] += gcx;
         grady[a->tag] += gcy;
         gradx[p->tag] -= gcx;
@@ -649,11 +659,22 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
       tag2 = v2->tag;
       dx = v1->x - v2->x;
       dy = v1->y - v2->y;
-      dist = sqrt (dx*dx + dy*dy);
-      gradx[tag1] -= k3_coeff*dx/dist;
-      gradx[tag2] += k3_coeff*dx/dist;
-      grady[tag1] -= k3_coeff*dy/dist;
-      grady[tag2] += k3_coeff*dy/dist;
+      distsq = dx*dx + dy*dy;
+      dist = sqrt (distsq);
+      if (dist < NODE_SEP)
+      {
+        fct = (NODE_SEP - dist)/dist;
+        force = - k3_coeff*fct*(2 + fct)/dist;
+        gradx[tag1] += dx*force;
+        gradx[tag2] -= dx*force;
+        grady[tag1] += dy*force;
+        grady[tag2] -= dy*force;
+      }
+//      dist3 = distsq*sqrt (dx*dx + dy*dy);
+//      gradx[tag1] -= k3_coeff*dx/dist3;
+//      gradx[tag2] += k3_coeff*dx/dist3;
+//      grady[tag1] -= k3_coeff*dy/dist3;
+//      grady[tag2] += k3_coeff*dy/dist3;
     }
   }
 
@@ -825,15 +846,16 @@ redistributenodes (struct polyline *contour)
       diffx = v->x - next->x;
       diffy = v->y - next->y;
       alen = sqrt (diffx*diffx + diffy*diffy);
-      if (alen + len < 2*h)   /* can derefine */
-      /* aline will be removed! */
-      removednodes++;
-      assert (next->line[backidx] == aline);
-      if (forward) line->b = next;
-        else line->a = next;
-      next->line[backidx] = line;
-      removenode (contour, v);
-      removeline (contour, aline);
+      if (alen + len < 1.0*h)   /* can derefine */
+      { /* aline will be removed! */
+        removednodes++;
+        assert (next->line[backidx] == aline);
+        if (forward) line->b = next;
+          else line->a = next;
+        next->line[backidx] = line;
+        removenode (contour, v);
+        removeline (contour, aline);
+      }
     } else {
       /* possibly refine */
       numsub = len/h;
