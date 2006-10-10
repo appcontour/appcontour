@@ -21,9 +21,9 @@
 #define REL_H 0.5
 #define MAX_H 0.1
 
-#define K1_COEFF 1.00
-//#define K2_COEFF 0.04
+#define K1_COEFF 1.0
 #define K2_COEFF 0.1
+#define K3_COEFF 0.7
 
 #define ME_TRAN 1
 #define ME_TOP 2
@@ -51,6 +51,7 @@ double get_alpha (struct vertex *a, struct vertex *p, struct vertex *b,
 void grad_curv (struct vertex *b, struct vertex *p, double alpha, double lb, double la,
            double *gcxpt, double *gcypt);
 void discretizepolyline (struct polyline *contour);
+void specnodesinit (struct polyline *contour);
 void redistributenodes (struct polyline *contour);
 struct line *splitline (struct polyline *contour, struct line *line, double f);
 void getmorseevent (struct morseevent *mev);
@@ -75,9 +76,12 @@ struct polyline *contour;
 static double time = 0.0;
 static double tau;
 static double *gradx, *grady;
+static struct vertex **specnodes;
+static int specnodesnum;
 static double curenergy = 0.0;
 static double k1_coeff = K1_COEFF;
 static double k2_coeff = K2_COEFF;
+static double k3_coeff = K3_COEFF;
 
 int
 main (int argc, char *argv[])
@@ -109,6 +113,7 @@ main (int argc, char *argv[])
   reorder_node_ptr (contour);
   discretizepolyline (contour);
   insertcusps (contour);
+  specnodesinit (contour);
 
 //test_contour (contour);
   vertexnum = settags (contour);
@@ -419,11 +424,13 @@ double
 compute_energy (struct polyline *contour)
 {
   struct line *line;
-  struct vertex *a, *p, *b;
-  double dx, dy;
+  struct vertex *a, *p, *b, *v1, *v2;
+  double dx, dy, dist;
   double alpha, la, lb;
   double energy1 = 0.0;
   double energy2 = 0.0;
+  double energy3 = 0.0;
+  int i, j;
 
   /* primo contributo, dovuto al perimetro */
  
@@ -482,7 +489,21 @@ compute_energy (struct polyline *contour)
   }
   energy2 *= k2_coeff;
 
-  return (energy1 + energy2);
+  /* terzo contributo: repulsione tra nodi/cuspidi */
+
+  for (i = 0; i < specnodesnum; i++)
+  {
+    v1 = specnodes[i];
+    for (j = i+1; j < specnodesnum; j++)
+    {
+      v2 = specnodes[j];
+      dx = v1->x - v2->x;
+      dy = v1->y - v2->y;
+      dist = sqrt (dx*dx + dy*dy);
+      energy3 += k3_coeff/dist;
+    }
+  }
+  return (energy1 + energy2 + energy3);
 }
 
 /* here we compute the gradient of the energy */
@@ -491,9 +512,9 @@ void
 compute_gradient (struct polyline *contour, double *gradx, double *grady)
 {
   struct line *line;
-  struct vertex *a, *p, *b;
-  int i;
-  double dx, dy, len, xel, yel;
+  struct vertex *a, *p, *b, *v1, *v2;
+  int i, j, tag1, tag2;
+  double dx, dy, len, xel, yel, dist;
   double alpha, gcx, gcy, la, lb;
 
   for (i = 0; i < contour->numvertices; i++)
@@ -616,6 +637,26 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
     }
   }
 
+  /* terzo contributo, distanza tra i nodi non regolari */
+
+  for (i = 0; i < specnodesnum; i++)
+  {
+    v1 = specnodes[i];
+    tag1 = v1->tag;
+    for (j = i+1; j < specnodesnum; j++)
+    {
+      v2 = specnodes[j];
+      tag2 = v2->tag;
+      dx = v1->x - v2->x;
+      dy = v1->y - v2->y;
+      dist = sqrt (dx*dx + dy*dy);
+      gradx[tag1] -= k3_coeff*dx/dist;
+      gradx[tag2] += k3_coeff*dx/dist;
+      grady[tag1] -= k3_coeff*dy/dist;
+      grady[tag2] += k3_coeff*dy/dist;
+    }
+  }
+
   for (a = contour->vertex; a; a = a->next)
   {
     if (a->type == V_FIXED) gradx[a->tag] = grady[a->tag] = 0.0;
@@ -719,6 +760,28 @@ discretizepolyline (struct polyline *contour)
       len -= dt;
       line = nline;
     }
+  }
+}
+
+void
+specnodesinit (struct polyline *contour)
+{
+  struct vertex *v;
+  int i;
+
+  specnodesnum = 0;
+
+  for (v = contour->vertex; v; v = v->next)
+  {
+    if (v->type != V_REGULAR) specnodesnum++;
+  }
+  specnodes = (struct vertex **) malloc (specnodesnum*sizeof (struct vertex *));
+  for (i = 0, v = contour->vertex; v; v = v->next)
+  {
+    if (v->type != V_REGULAR)
+    {
+      specnodes[i++] = v;
+    } 
   }
 }
 
