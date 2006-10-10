@@ -65,6 +65,8 @@ struct line *newline (struct polyline *contour,
 int inherit_orientation (struct line *line);
 void insertcusps (struct polyline *contour);
 int insert_cusps_on_arc (struct line *l);
+void removenode (struct polyline *contour, struct vertex *v);
+void removeline (struct polyline *contour, struct line *l);
 #ifdef CHECK_GRADIENT
 void check_gradient (struct polyline *contour, double *gx, double *gy);
 #endif
@@ -723,11 +725,11 @@ discretizepolyline (struct polyline *contour)
 void
 redistributenodes (struct polyline *contour)
 {
-  struct line *line, *nline;
-  struct vertex *a, *b;
-  double diffx, diffy, len, h, dt;
-  int numsub, i, vertexnum;
-  int addednodes = 0;
+  struct line *line, *nline, *aline;
+  struct vertex *a, *b, *v, *next;
+  double diffx, diffy, len, alen, h, dt;
+  int numsub, i, vertexnum, forward, backidx;
+  int addednodes = 0, removednodes = 0;
 
   /* contour->h is the target step size */
 
@@ -740,14 +742,46 @@ redistributenodes (struct polyline *contour)
     diffy = a->y - b->y;
     len = sqrt (diffx*diffx + diffy*diffy);
 
-    numsub = len/h;
-    dt = len/numsub;
-    for (i = 1; i < numsub; i++)
-    {
-      addednodes++;
-      nline = splitline (contour, line, dt/len);
-      len -= dt;
-      line = nline;
+    if (len < h/2)
+    {   /* can I derefine? */
+      v = line->b;
+      forward = 1;
+      if (v->type != V_REGULAR) {v = line->a; forward = 0;}
+      if (v->type != V_REGULAR) continue;
+      aline = v->line[forward];
+      assert (aline != line);
+      next = aline->a;
+      if (forward) next = aline->b;
+      assert (next != v);
+      backidx = 1 - forward;
+      if (next->type == V_CROSS)
+      {
+        for (backidx = 0; backidx < 4; backidx++)
+          if (next->line[backidx] == aline) break;
+      }
+      diffx = v->x - next->x;
+      diffy = v->y - next->y;
+      alen = sqrt (diffx*diffx + diffy*diffy);
+      if (alen + len < 2*h)   /* can derefine */
+      /* aline will be removed! */
+      removednodes++;
+      assert (next->line[backidx] == aline);
+      if (forward) line->b = next;
+        else line->a = next;
+      next->line[backidx] = line;
+      removenode (contour, v);
+      removeline (contour, aline);
+    } else {
+      /* possibly refine */
+      numsub = len/h;
+      dt = len/numsub;
+      for (i = 1; i < numsub; i++)
+      {
+        addednodes++;
+        nline = splitline (contour, line, dt/len);
+        len -= dt;
+        line = nline;
+      }
     }
   }
   vertexnum = settags (contour);
@@ -757,6 +791,7 @@ redistributenodes (struct polyline *contour)
   grady = (double *) malloc (vertexnum * sizeof (double));
   curenergy = 0.0;
 //  if (addednodes) printf ("added %d nodes\n", addednodes);
+//  if (removednodes) printf ("removed %d nodes\n", removednodes);
 }
 
 struct line *
@@ -956,6 +991,54 @@ newvertex (struct polyline *contour, double x, double y, int type)
   for (i = 0; i < numarcs; i++) v->line[i] = 0;
   contour->vertex = v;
   return (v);
+}
+
+void
+removeline (struct polyline *contour, struct line *line)
+{
+  struct line *l;
+
+  if (contour->line == line)
+  {
+    contour->line = line->next;
+    free (line);
+    return;
+  } else {
+    for (l = contour->line; l; l = l->next)
+    {
+      if (l->next == line)
+      {
+        l->next = line->next;
+        free (line);
+        return;
+      }
+    }
+  }
+  assert (0);
+}
+
+void
+removenode (struct polyline *contour, struct vertex *node)
+{
+  struct vertex *n;
+
+  if (contour->vertex == node)
+  {
+    contour->vertex = node->next;
+    free (node);
+    return;
+  } else {
+    for (n = contour->vertex; n; n = n->next)
+    {
+      if (n->next == node)
+      {
+        n->next = node->next;
+        free (node);
+        return;
+      }
+    }
+  }
+  assert (0);
 }
 
 struct polyline *
