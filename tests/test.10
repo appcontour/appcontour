@@ -1,0 +1,6 @@
+list="genus_2.morse hill.morse hollowsphere.morse partial_eclipse.morse sphere_2.morse sphere_behind_torus.morse sphere_infrontof_torus.morse sphere.morse test_rule_cn3.morse three_spheres.morse torus1.morse torus2.morse torus3.morse torus_eight.morse two_beans.morse two_hills.morse twohollowsphere.morse two_rings.morse"
+for ex in $list
+do
+./contour printmorse examples/$ex
+done
+./contour applyrule n3 examples/two_hills.morse | ./contour printmorse
