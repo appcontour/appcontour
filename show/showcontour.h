@@ -11,6 +11,10 @@ struct polyline {
   struct vertex *vertex;
   struct line *line;
   int numvertices;
+  double *gradx;
+  double *grady;
+  struct vertex **specnodes;
+  int specnodesnum;
   double h;
 };
 

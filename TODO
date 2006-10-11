@@ -1,8 +1,5 @@
+showcontour:
+	implementazione energia repulsiva, ora c'e' una implementazione
+	brutale che pero' non funziona
 
-- stampa di uno sketch in sintassi morse
-
-- implementare la regola CR4 (il test funziona gia)
-
-- controllare tutti gli usi di "depthsdim", che dovrebbe
-indicare il dimensionamento del vettore, che potrebbe
-essere utilizzato solo in parte.
+	integrale di modulo di k... potrebbe aiutare ad eliminare i flessi.

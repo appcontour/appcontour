@@ -24,6 +24,9 @@
 #define K1_COEFF 1.0
 #define K2_COEFF 0.1
 #define K3_COEFF 0.7
+#define K4_COEFF 0.02
+
+#define ALLOW_REPULSION 0
 
 #define NODE_SEP 0.4
 #define ORTO_HEAVINESS 2.0
@@ -43,8 +46,12 @@
 #define TOP_LENGTH 0.25
 
 void test_contour (struct polyline *contour);
-void compute_gradient (struct polyline *contour, double *gradx, double *grady);
+void compute_gradient (struct polyline *contour);
 double compute_energy (struct polyline *contour);
+void compute_repulsive_gradient (struct polyline *contour);
+double compute_repulsive_energy (struct polyline *contour);
+double repulsive_field (double dist);
+double repulsive_force (double dist);
 double normsq (double *x, int dim);
 void reorder_node_ptr (struct polyline *contour);
 int settags (struct polyline *contour);
@@ -76,15 +83,19 @@ void check_gradient (struct polyline *contour, double *gx, double *gy);
 #endif
 
 struct polyline *contour;
-static double time = 0.0;
+static double time;
 static double tau;
-static double *gradx, *grady;
-static struct vertex **specnodes;
-static int specnodesnum;
+static double taurn;
+static double taurep;
 static double curenergy = 0.0;
 static double k1_coeff = K1_COEFF;
 static double k2_coeff = K2_COEFF;
 static double k3_coeff = K3_COEFF;
+static double k4_coeff = K4_COEFF;
+
+static double timerrn;
+static double timerrep;
+static int allowrepulsion = ALLOW_REPULSION;
 
 int
 main (int argc, char *argv[])
@@ -120,23 +131,27 @@ main (int argc, char *argv[])
 
 //test_contour (contour);
   vertexnum = settags (contour);
-  gradx = (double *) malloc (vertexnum * sizeof (double));
-  grady = (double *) malloc (vertexnum * sizeof (double));
+  contour->gradx = (double *) malloc (vertexnum * sizeof (double));
+  contour->grady = (double *) malloc (vertexnum * sizeof (double));
 
   count = 0;
   for (v = contour->vertex; v; v = v->next) count++;
-  printf ("ci sono %d vertici\n", count);
+//  printf ("ci sono %d vertici\n", count);
   count = 0;
   for (l = contour->line; l; l = l->next)
   {
     count++;
 //    printf ("lung %lf\n", getlen (l));
   }
-  printf ("ci sono %d archi\n", count);
+//  printf ("ci sono %d archi\n", count);
 
   tau = contour->h * contour->h;
+  taurn = taurep = tau;
   tau = tau*tau;
-  printf ("tau = %lf\n", tau);
+//  printf ("tau = %lf, taurn = %lf, taurep = %lf\n", tau, taurn, taurep);
+  time = 0.0;
+  timerrn = time + taurn;
+  timerrep = -1.0;          /* must compute immediately */
 
   //evolve (contour, incrtime);
 
@@ -245,7 +260,7 @@ insert_cusps_on_arc (struct line *l)
   } while (wl = p->line[1], wl != l);
 
   assert (ccount == cusps);
-printf ("inserted %d cusps\n", cusps);
+//printf ("inserted %d cusps\n", cusps);
   return (iss1);
 }
 
@@ -292,6 +307,36 @@ checktimer (void)
   return (timercmp (&now, &timer, < ));
 }
 
+static int allownodered = 1;
+static int allownoderedatend = 0;
+
+void
+tryredistributenodes (struct polyline *contour)
+{
+  static int count = 0;
+
+  if (time < timerrn) return;
+  count++;
+
+  //printf ("would redistribute nodes: %d...\n", count);
+  if (allownodered) redistributenodes (contour);
+  timerrn += taurn;
+}
+
+void
+tryrepulsiveenergy (struct polyline *contour)
+{
+  static int count = 0;
+
+  if (time < timerrep) return;
+  count++;
+
+  //printf ("would compute repulsive energy: %d...\n", count);
+  compute_repulsive_energy (contour);
+  compute_repulsive_gradient (contour);
+  timerrep += taurep;
+}
+
 double
 evolve (struct polyline *contour, double incrtime)
 {
@@ -302,24 +347,25 @@ evolve (struct polyline *contour, double incrtime)
   int timebsteps = 0;
   int allowbackstep = 0;
   int allowstepcontrol = 0;
-  int allownoderedistribution = 1;
 
   settimer (incrtime);
   gradient_is_ok = 0;
   while (checktimer())
   {
+    tryredistributenodes (contour);
+    tryrepulsiveenergy (contour);
     time += tau;
     timesteps++;
     if (curenergy == 0.0) curenergy = compute_energy (contour);
-    if (! gradient_is_ok) compute_gradient (contour, gradx, grady);
+    if (! gradient_is_ok) compute_gradient (contour);
 
 #ifdef CHECK_GRADIENT
     check_gradient (contour, gradx, grady);
 #endif
     for (v = contour->vertex; v; v = v->next)
     {
-      v->x -= tau*gradx[v->tag];
-      v->y -= tau*grady[v->tag];
+      v->x -= tau*contour->gradx[v->tag];
+      v->y -= tau*contour->grady[v->tag];
     }
     gradient_is_ok = 0;
     newenergy = compute_energy (contour);
@@ -331,8 +377,8 @@ evolve (struct polyline *contour, double incrtime)
       /* torno indietro di uno step e diminuisco tau */
       for (v = contour->vertex; v; v = v->next)
       {
-        v->x += tau*gradx[v->tag];
-        v->y += tau*grady[v->tag];
+        v->x += tau*contour->gradx[v->tag];
+        v->y += tau*contour->grady[v->tag];
       }
       time -= tau;
       timesteps--;
@@ -343,8 +389,8 @@ evolve (struct polyline *contour, double incrtime)
     }
     curenergy = newenergy;
     predicted_decrease = tau * (
-      normsq (gradx, contour->numvertices) +
-      normsq (grady, contour->numvertices) );
+      normsq (contour->gradx, contour->numvertices) +
+      normsq (contour->grady, contour->numvertices) );
     //printf ("predicted decrease/actual decrease = %lf/%lf = %lf\n",
     //   predicted_decrease, decrease, predicted_decrease/decrease);
 
@@ -366,7 +412,7 @@ evolve (struct polyline *contour, double incrtime)
   }
 //  printf ("timesteps: %d, backsteps: %d, time = %lf, energy = %lf\n", 
 //          timesteps, timebsteps, time, curenergy);
-  if (allownoderedistribution) redistributenodes (contour);
+  if (allownoderedatend) redistributenodes (contour);
   return (time);
 }
 
@@ -421,6 +467,11 @@ normsq (double *x, int dim)
   return (norm);
 }
 
+static double *rgradx = 0;
+static double *rgrady = 0;
+static double renergy = 0.0;
+static int rgraddim = 0;
+
 /* qui ci sono i contributi delle tre energie */
 
 double
@@ -433,6 +484,7 @@ compute_energy (struct polyline *contour)
   double energy1 = 0.0;
   double energy2 = 0.0;
   double energy3 = 0.0;
+  double energy4 = 0.0;
   int i, j;
 
   /* primo contributo, dovuto al perimetro */
@@ -498,35 +550,46 @@ compute_energy (struct polyline *contour)
    *  f(d) = (NODE_SEP - d)^2/d   se d < NODE_SEP
    */
 
-  for (i = 0; i < specnodesnum; i++)
+  for (i = 0; i < contour->specnodesnum; i++)
   {
-    v1 = specnodes[i];
-    for (j = i+1; j < specnodesnum; j++)
+    v1 = contour->specnodes[i];
+    for (j = i+1; j < contour->specnodesnum; j++)
     {
-      v2 = specnodes[j];
+      v2 = contour->specnodes[j];
       dx = v1->x - v2->x;
       dy = v1->y - v2->y;
       dist = sqrt (dx*dx + dy*dy);
       if (dist < NODE_SEP)
       {
-        energy3 += k3_coeff*(NODE_SEP - dist)*(NODE_SEP - dist)/dist;
+        energy3 += k3_coeff*repulsive_field (dist);
       }
     }
   }
-  return (energy1 + energy2 + energy3);
+
+  /* quarto contributo: repulsione tra tutti i nodi */
+
+  if (allowrepulsion)
+  {
+    energy4 = k4_coeff*renergy;
+  }
+
+  return (energy1 + energy2 + energy3 + energy4);
 }
 
 /* here we compute the gradient of the energy */
 
 void
-compute_gradient (struct polyline *contour, double *gradx, double *grady)
+compute_gradient (struct polyline *contour)
 {
   struct line *line;
   struct vertex *a, *p, *b, *v1, *v2;
   int i, j, tag1, tag2;
-  double dx, dy, len, xel, yel, distsq, dist, force, fct;
+  double dx, dy, len, xel, yel, distsq, dist, force;
   double alpha, gcx, gcy, la, lb;
+  double *gradx, *grady;
 
+  gradx = contour->gradx;
+  grady = contour->grady;
   for (i = 0; i < contour->numvertices; i++)
     gradx[i] = grady[i] = 0.0;
 
@@ -649,32 +712,34 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
 
   /* terzo contributo, distanza tra i nodi non regolari */
 
-  for (i = 0; i < specnodesnum; i++)
+  for (i = 0; i < contour->specnodesnum; i++)
   {
-    v1 = specnodes[i];
+    v1 = contour->specnodes[i];
     tag1 = v1->tag;
-    for (j = i+1; j < specnodesnum; j++)
+    for (j = i+1; j < contour->specnodesnum; j++)
     {
-      v2 = specnodes[j];
+      v2 = contour->specnodes[j];
       tag2 = v2->tag;
       dx = v1->x - v2->x;
       dy = v1->y - v2->y;
       distsq = dx*dx + dy*dy;
       dist = sqrt (distsq);
-      if (dist < NODE_SEP)
-      {
-        fct = (NODE_SEP - dist)/dist;
-        force = - k3_coeff*fct*(2 + fct)/dist;
-        gradx[tag1] += dx*force;
-        gradx[tag2] -= dx*force;
-        grady[tag1] += dy*force;
-        grady[tag2] -= dy*force;
-      }
-//      dist3 = distsq*sqrt (dx*dx + dy*dy);
-//      gradx[tag1] -= k3_coeff*dx/dist3;
-//      gradx[tag2] += k3_coeff*dx/dist3;
-//      grady[tag1] -= k3_coeff*dy/dist3;
-//      grady[tag2] += k3_coeff*dy/dist3;
+      force = k3_coeff*repulsive_force (dist);
+      gradx[tag1] += dx*force;
+      gradx[tag2] -= dx*force;
+      grady[tag1] += dy*force;
+      grady[tag2] -= dy*force;
+    }
+  }
+
+  /* quarto contributo, repulsione tra tutti i nodi */
+  if (allowrepulsion)
+  {
+    // compute_repulsive_gradient (contour);
+    for (a = contour->vertex; a; a = a->next)
+    {
+      gradx[a->tag] += k4_coeff*rgradx[a->tag];
+      grady[a->tag] += k4_coeff*rgrady[a->tag];
     }
   }
 
@@ -683,6 +748,101 @@ compute_gradient (struct polyline *contour, double *gradx, double *grady)
     if (a->type == V_FIXED) gradx[a->tag] = grady[a->tag] = 0.0;
   }
   return;
+}
+
+/* this shouldn't be computed at each time step! */
+
+double
+compute_repulsive_energy (struct polyline *contour)
+{
+  struct vertex *v, *w;
+  double energy = 0.0;
+  double dx, dy, dist;
+
+  for (v = contour->vertex; v; v = v->next)
+  {
+    if (v->type != V_REGULAR) continue;
+    for (w = v->next; w; w = w->next)
+    {
+      if (w->type != V_REGULAR) continue;
+      dx = v->x - w->x;
+      dy = v->y - w->y;
+      dist = sqrt (dx*dx + dy*dy);
+      energy +=repulsive_field (dist);
+    }
+  }
+  renergy = energy;
+  return (energy);
+}
+
+void
+compute_repulsive_gradient (struct polyline *contour)
+{
+  struct vertex *v, *w;
+  int i, tag1, tag2;
+  double dx, dy, dist, force;
+
+  if (rgraddim != contour->numvertices || rgradx == 0 || rgrady == 0)
+  {
+    if (rgradx) free (rgradx);
+    if (rgrady) free (rgrady);
+    rgraddim = contour->numvertices;
+    rgradx = (double *) malloc (rgraddim * sizeof (double));
+    rgrady = (double *) malloc (rgraddim * sizeof (double));
+  }
+
+  for (i = 0; i < rgraddim; i++)
+  {
+    rgradx[i] = rgrady[i] = 0.0;
+  }
+  
+  for (v = contour->vertex; v; v = v->next)
+  {
+    if (v->type != V_REGULAR) continue;
+    tag1 = v->tag;
+    for (w = v->next; w; w = w->next)
+    {
+      if (w->type != V_REGULAR) continue;
+      tag2 = w->tag;
+      dx = v->x - w->x;
+      dy = v->y - w->y;
+      dist = sqrt (dx*dx + dy*dy);
+      force = repulsive_force (dist);
+      rgradx[tag1] += dx*force;
+      rgradx[tag2] -= dx*force;
+      rgrady[tag1] += dy*force;
+      rgrady[tag2] -= dy*force;
+    }
+  }
+  return;
+}
+
+double
+repulsive_field (double dist)
+{
+  if (dist < NODE_SEP)
+  {
+    return ((NODE_SEP - dist)*(NODE_SEP - dist)/dist);
+  }
+  return (0.0);
+}
+
+/*
+ * this is actually the derivative of the field with respect to
+ * dist divided by dist
+ */
+
+double
+repulsive_force (double dist)
+{
+  double fct;
+
+  if (dist < NODE_SEP)
+  {
+    fct = (NODE_SEP - dist)/dist;
+    return (- fct*(2 + fct)/dist);
+  }
+  return (0.0);
 }
 
 double
@@ -790,18 +950,19 @@ specnodesinit (struct polyline *contour)
   struct vertex *v;
   int i;
 
-  specnodesnum = 0;
+  contour->specnodesnum = 0;
 
   for (v = contour->vertex; v; v = v->next)
   {
-    if (v->type != V_REGULAR) specnodesnum++;
+    if (v->type != V_REGULAR) contour->specnodesnum++;
   }
-  specnodes = (struct vertex **) malloc (specnodesnum*sizeof (struct vertex *));
+  contour->specnodes = (struct vertex **) malloc 
+    (contour->specnodesnum*sizeof (struct vertex *));
   for (i = 0, v = contour->vertex; v; v = v->next)
   {
     if (v->type != V_REGULAR)
     {
-      specnodes[i++] = v;
+      contour->specnodes[i++] = v;
     } 
   }
 }
@@ -870,10 +1031,10 @@ redistributenodes (struct polyline *contour)
     }
   }
   vertexnum = settags (contour);
-  free (gradx);
-  free (grady);
-  gradx = (double *) malloc (vertexnum * sizeof (double));
-  grady = (double *) malloc (vertexnum * sizeof (double));
+  free (contour->gradx);
+  free (contour->grady);
+  contour->gradx = (double *) malloc (vertexnum * sizeof (double));
+  contour->grady = (double *) malloc (vertexnum * sizeof (double));
   curenergy = 0.0;
 //  if (addednodes) printf ("added %d nodes\n", addednodes);
 //  if (removednodes) printf ("removed %d nodes\n", removednodes);
@@ -1142,6 +1303,9 @@ buildpolyline (void)
   contour = (struct polyline *) malloc (sizeof (struct polyline));
   contour->vertex = 0;
   contour->line = 0;
+  contour->gradx = contour->grady = 0;
+  contour->specnodes = 0;
+  contour->specnodesnum = 0;
 
   dx = dy = 1.0;    /* aggiusto alla fine */
   i = 0;            /* conta gli eventi su ciascuna riga */

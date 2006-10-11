@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include "GL/glut.h"
 #include "showcontour.h"
@@ -15,7 +16,7 @@ display (void)
 {
   struct line *line;
   struct vertex *a, *b, *v;
-  double maxx, maxy, minx, miny, xmed, ymed, dx2, dy2;
+  double maxx, maxy, minx, miny, xmed, ymed, zoomx, zoomy, zoom;
 
   maxx = -1000.0;
   maxy = -1000.0;
@@ -30,8 +31,10 @@ display (void)
   }
   xmed = (maxx + minx)/2.0;
   ymed = (maxy + miny)/2.0;
-  dx2 = (maxx - minx)/2.0;
-  dy2 = (maxy - miny)/2.0;
+  zoomx = 1.9/(maxx - minx);
+  zoomy = 1.9/(maxy - miny);
+  zoom = zoomx;
+  if (zoom > zoomy) zoom = zoomy;
   glClear(GL_COLOR_BUFFER_BIT);
   //glBegin(GL_LINELOOP);  per una poligonale chiusa...
   glBegin(GL_LINES);
@@ -40,8 +43,8 @@ display (void)
     {
       a = line->a;
       b = line->b;
-      glVertex2d((a->x - xmed)/dx2, (a->y - ymed)/dy2);
-      glVertex2d((b->x - xmed)/dx2, (b->y - ymed)/dy2);
+      glVertex2d((a->x - xmed)*zoom, (a->y - ymed)*zoom);
+      glVertex2d((b->x - xmed)*zoom, (b->y - ymed)*zoom);
     }
   glEnd();
   glFlush();  /* Single buffered, so needs a flush. */
@@ -87,7 +90,12 @@ visible (int state)
 void
 idle (void)
 {
-  evolve (contour, incrtime);
+  double time;
+  char buf[100];
+
+  time = evolve (contour, incrtime);
+  snprintf (buf, 98, "showconfig, time=%lf", time);
+  glutSetWindowTitle(buf);
   glutPostRedisplay();
 }
 
