@@ -1,9 +1,9 @@
 /*
- * compile with "cc -o glutcontour glutcontour.c parser.o -lglut"
+ * compile with "cc -o showcontour showcontour.c glutcontour.o parser.o -lglut"
  *
  * requires freeglut-devel package (on Fedora core)
  *
- * usage:  "./glutcontour <example.morse"
+ * usage:  "./showcontour <example.morse"
  */
 
 #include <stdio.h>
@@ -358,6 +358,9 @@ tryrepulsiveenergy (struct polyline *contour)
   //printf ("would compute repulsive energy: %d...\n", count);
   compute_repulsive_energy (contour);
   compute_repulsive_gradient (contour);
+#ifdef CHECK_GRADIENT
+  check_gradient (contour);
+#endif
   timerrep += taurep;
 }
 
@@ -383,9 +386,6 @@ evolve (struct polyline *contour, double incrtime)
     if (curenergy == 0.0) curenergy = compute_energy (contour);
     if (! gradient_is_ok) compute_gradient (contour);
 
-#ifdef CHECK_GRADIENT
-    check_gradient (contour);
-#endif
     for (v = contour->vertex; v; v = v->next)
     {
       v->x -= tau*contour->gradx[v->tag];
@@ -449,17 +449,20 @@ check_gradient (struct polyline *contour)
   struct vertex *v;
 
   dx = 1e-7;
+  compute_gradient (contour);  /* anticipate gradient computation */
   gradx = contour->gradx;
   grady = contour->grady;
 
   normgradsq = normsq (gradx, contour->numvertices) +
                normsq (grady, contour->numvertices);
   normgrad = sqrt (normgradsq);
+  compute_repulsive_energy (contour);
   baseenergy = compute_energy (contour);
   for (v = contour->vertex; v; v = v->next)
   {
     saved = v->x;
     v->x += dx;
+    compute_repulsive_energy (contour);
     energy = compute_energy (contour);
     v->x = saved;
     nder = (energy - baseenergy)/dx;
@@ -469,6 +472,7 @@ check_gradient (struct polyline *contour)
       printf ("der/nder = %lf\n", der/nder);
     saved = v->y;
     v->y += dx;
+    compute_repulsive_energy (contour);
     energy = compute_energy (contour);
     v->y = saved;
     nder = (energy - baseenergy)/dx;
