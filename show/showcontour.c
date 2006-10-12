@@ -15,14 +15,14 @@
 #include "showcontour.h"
 #include "../parser.h"
 
-//#define CHECK_GRADIENT 1
+// #define CHECK_GRADIENT 1
 
 #define K1_COEFF 1.0
 #define K2_COEFF 0.1
 #define K3_COEFF 0.7
 #define K4_COEFF 0.2
 
-#define ALLOW_REPULSION 0
+#define ALLOW_REPULSION 1
 #define ALLOW_NODE_REDEFINE 1
 #define ALLOW_NODE_REDEFINE_AT_END 0
 
@@ -88,7 +88,7 @@ int insert_cusps_on_arc (struct line *l);
 void removenode (struct polyline *contour, struct vertex *v);
 void removeline (struct polyline *contour, struct line *l);
 #ifdef CHECK_GRADIENT
-void check_gradient (struct polyline *contour, double *gx, double *gy);
+void check_gradient (struct polyline *contour);
 #endif
 
 struct polyline *contour;
@@ -106,6 +106,8 @@ static double timerrn;
 static double timerrep;
 static int allowrepulsion = ALLOW_REPULSION;
 
+static int test = 0;
+
 int
 main (int argc, char *argv[])
 {
@@ -117,12 +119,25 @@ main (int argc, char *argv[])
   grident = grinit(&argc, argv);
   for (iarg = 1; iarg < argc; iarg++)
   {
-    if (strcmp (argv[iarg], "--grident") == 0)
+    if (*argv[iarg] == '-')    /* this is an option */
     {
-      printf ("%s\n", grident);
-      return (0);
+      if (strcmp (argv[iarg], "--grident") == 0)
+      {
+        printf ("%s\n", grident);
+        return (0);
+      }
+      if (strcmp (argv[iarg], "--test") == 0) {
+        test = 1;
+      } else {
+        printf ("Invalid option: %s\n", argv[iarg]);
+        return (1);
+      }
+      continue;
     }
+    printf ("Invalid argument: %s\n", argv[iarg]);
+    return (1);
   }
+  if (test == 0) allowrepulsion = 0;
   tok = gettoken (stdin);
   if (tok != TOK_MORSE) return (0);
   tok = gettoken (stdin);
@@ -369,7 +384,7 @@ evolve (struct polyline *contour, double incrtime)
     if (! gradient_is_ok) compute_gradient (contour);
 
 #ifdef CHECK_GRADIENT
-    check_gradient (contour, gradx, grady);
+    check_gradient (contour);
 #endif
     for (v = contour->vertex; v; v = v->next)
     {
@@ -427,13 +442,15 @@ evolve (struct polyline *contour, double incrtime)
 
 #ifdef CHECK_GRADIENT
 void
-check_gradient (struct polyline *contour, double *gradx, double *grady)
+check_gradient (struct polyline *contour)
 {
-  double baseenergy, normgradsq, energy;
+  double baseenergy, normgradsq, energy, *gradx, *grady;
   double dx, saved, nder, der, normgrad, relerr;
   struct vertex *v;
 
   dx = 1e-7;
+  gradx = contour->gradx;
+  grady = contour->grady;
 
   normgradsq = normsq (gradx, contour->numvertices) +
                normsq (grady, contour->numvertices);
@@ -579,7 +596,6 @@ compute_energy (struct polyline *contour)
 
   if (allowrepulsion)
   {
-printf ("repulsion\n");
     energy4 = k4_coeff*renergy;
   }
 
@@ -745,7 +761,6 @@ compute_gradient (struct polyline *contour)
   /* quarto contributo, repulsione tra tutti i nodi */
   if (allowrepulsion)
   {
-printf ("repulsion\n");
     // compute_repulsive_gradient (contour);
     for (a = contour->vertex; a; a = a->next)
     {
@@ -1090,8 +1105,8 @@ redistributenodes (struct polyline *contour)
   contour->gradx = (double *) malloc (vertexnum * sizeof (double));
   contour->grady = (double *) malloc (vertexnum * sizeof (double));
   curenergy = 0.0;
-  if (addednodes) printf ("added %d nodes\n", addednodes);
-  if (removednodes) printf ("removed %d nodes\n", removednodes);
+  // if (addednodes) printf ("added %d nodes\n", addednodes);
+  // if (removednodes) printf ("removed %d nodes\n", removednodes);
 }
 
 struct line *
