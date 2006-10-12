@@ -21,7 +21,7 @@
 #define K2_COEFF 0.1     /* k^2 */
 #define K3_COEFF 0.7     /* cross+cusp repulsion */
 #define K4_COEFF 1.0     /* arc repulsion */
-#define K5_COEFF 1.0     /* |k| */
+#define K5_COEFF 0.0     /* |k| */
 
 #define ALLOW_REPULSION 1
 #define ALLOW_NODE_REDEFINE 1
