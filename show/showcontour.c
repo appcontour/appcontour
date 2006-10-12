@@ -17,10 +17,11 @@
 
 //#define CHECK_GRADIENT 1
 
-#define K1_COEFF 1.0
-#define K2_COEFF 0.1
-#define K3_COEFF 0.7
-#define K4_COEFF 1.0
+#define K1_COEFF 1.0     /* perimeter */
+#define K2_COEFF 0.1     /* k^2 */
+#define K3_COEFF 0.7     /* cross+cusp repulsion */
+#define K4_COEFF 1.0     /* arc repulsion */
+#define K5_COEFF 1.0     /* |k| */
 
 #define ALLOW_REPULSION 1
 #define ALLOW_NODE_REDEFINE 1
@@ -65,6 +66,8 @@ double normsq (double *x, int dim);
 void reorder_node_ptr (struct polyline *contour);
 int settags (struct polyline *contour);
 double getlen (struct line *line);
+struct line *nextp (struct line *l, struct vertex *p);
+struct line *prevp (struct line *l, struct vertex *p);
 double get_alpha (struct vertex *a, struct vertex *p, struct vertex *b, 
        double *lapt, double *lbpt);
 void grad_curv (struct vertex *b, struct vertex *p, double alpha, double lb, double la,
@@ -101,6 +104,7 @@ static double k1_coeff = K1_COEFF;
 static double k2_coeff = K2_COEFF;
 static double k3_coeff = K3_COEFF;
 static double k4_coeff = K4_COEFF;
+static double k5_coeff = K5_COEFF;
 
 static double timerrn;
 static double timerrep;
@@ -515,6 +519,7 @@ compute_energy (struct polyline *contour)
   double energy2 = 0.0;
   double energy3 = 0.0;
   double energy4 = 0.0;
+  double energy5 = 0.0;
   int i, j;
 
   /* primo contributo, dovuto al perimetro */
@@ -603,7 +608,39 @@ compute_energy (struct polyline *contour)
     energy4 = k4_coeff*renergy;
   }
 
-  return (energy1 + energy2 + energy3 + energy4);
+  /* fifth contribution: integral of |k| */
+
+  for (p = contour->vertex; p; p = p->next)
+  {
+    switch (p->type)
+    {
+      case V_REGULAR:
+      case V_CUSP:
+        a = p->line[0]->a;
+        b = p->line[1]->b;
+        alpha = get_alpha (a, p, b, &la, &lb);
+        energy5 += k5_coeff*fabs(alpha);
+        break;
+
+      case V_CROSS:
+        a = p->line[0]->a;
+        if (a == p) a = p->line[0]->b;
+        b = p->line[3]->a;
+        if (b == p) b = p->line[3]->b;
+        alpha = get_alpha (a, p, b, &la, &lb);
+        energy5 += k5_coeff*fabs(alpha);
+
+        a = p->line[1]->a;
+        if (a == p) a = p->line[1]->b;
+        b = p->line[2]->a;
+        if (b == p) b = p->line[2]->b;
+        alpha = get_alpha (a, p, b, &la, &lb);
+        energy5 += k5_coeff*fabs(alpha);
+        break;
+    }
+  }
+ 
+  return (energy1 + energy2 + energy3 + energy4 + energy5);
 }
 
 /* here we compute the gradient of the energy */
@@ -612,11 +649,12 @@ void
 compute_gradient (struct polyline *contour)
 {
   struct line *line;
-  struct vertex *a, *p, *b, *v1, *v2;
-  int i, j, tag1, tag2;
+  struct vertex *a, *p, *b, *q, *v1, *v2;
+  int i, j, tag1, tag2, sigma;
   double dx, dy, len, xel, yel, distsq, dist, force;
   double alpha, gcx, gcy, la, lb;
   double *gradx, *grady;
+  double apx, apy, pqx, pqy, qbx, qby, vec1, vec2, pqsq;
 
   gradx = contour->gradx;
   grady = contour->grady;
@@ -771,6 +809,33 @@ compute_gradient (struct polyline *contour)
       gradx[a->tag] += k4_coeff*rgradx[a->tag];
       grady[a->tag] += k4_coeff*rgrady[a->tag];
     }
+  }
+
+  /* fifth contribution: integral of |k| */
+ 
+  for (line = contour->line; line; line = line->next)
+  {
+    p = line->a;
+    q = line->b;
+    /* we need the angles at a and b */
+    b = nextp(line, q)->b;
+    a = prevp(line, p)->a;
+    apx = p->x - a->x;
+    apy = p->y - a->y;
+    pqx = q->x - p->x;
+    pqy = q->y - p->y;
+    qbx = b->x - q->x;
+    qby = b->y - q->y;
+    vec1 = - pqy*apx + pqx*apy;
+    vec2 = - qby*pqx + qbx*pqy;
+    if (vec1 * vec2 >= 0) continue;   /* no inflection */
+    sigma = 2;
+    if (vec2 < 0) sigma = -2;
+    pqsq = pqx*pqx + pqy*pqy;
+    gradx[p->tag] += k5_coeff*sigma*pqy/pqsq;
+    grady[p->tag] -= k5_coeff*sigma*pqx/pqsq;
+    gradx[q->tag] -= k5_coeff*sigma*pqy/pqsq;
+    grady[q->tag] += k5_coeff*sigma*pqx/pqsq;
   }
 
   for (a = contour->vertex; a; a = a->next)
@@ -960,6 +1025,32 @@ grad_curv (struct vertex *b, struct vertex *p, double alpha, double lb, double l
   *gcypt *= 2*alpha/(la + lb)/lb;
 
 //printf ("gcx = %lf, gcy = %lf\n", *gcxpt, *gcypt);
+}
+
+struct line *
+nextp (struct line *l, struct vertex *p)
+{
+  int i;
+
+  if (p->type != V_CROSS) return (p->line[1]);
+  for (i = 0; i < 4; i++)
+  {
+    if (p->line[i] == l) return (p->line[3-i]);
+  }
+  assert (0);
+}
+
+struct line *
+prevp (struct line *l, struct vertex *p)
+{
+  int i;
+
+  if (p->type != V_CROSS) return (p->line[0]);
+  for (i = 0; i < 4; i++)
+  {
+    if (p->line[i] == l) return (p->line[3-i]);
+  }
+  assert (0);
 }
 
 void
