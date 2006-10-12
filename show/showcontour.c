@@ -15,12 +15,12 @@
 #include "showcontour.h"
 #include "../parser.h"
 
-// #define CHECK_GRADIENT 1
+//#define CHECK_GRADIENT 1
 
 #define K1_COEFF 1.0
 #define K2_COEFF 0.1
 #define K3_COEFF 0.7
-#define K4_COEFF 0.2
+#define K4_COEFF 1.0
 
 #define ALLOW_REPULSION 1
 #define ALLOW_NODE_REDEFINE 1
@@ -806,7 +806,7 @@ compute_repulsive_energy (struct polyline *contour)
       f1 = - s1y*px + s1x*py;
       f2 = - s2y*px + s2x*py;
       f3 = repulsive_field (dd) / dsq;
-      energy += f1*f2*f3;
+      energy += fabs(f1*f2*f3);
     }
   }
   renergy = energy;
@@ -821,7 +821,7 @@ compute_repulsive_gradient (struct polyline *contour)
   double s1x, s1y, s2x, s2y, px, py;
   double dd, dsq, f1, f2, f3;
   double fpond, e, ds1ex, ds1ey, ds2ex, ds2ey, hdpex, hdpey;
-  int taga, tagb, tagc, tagd, i;
+  int taga, tagb, tagc, tagd, i, signf1, signf2;
 
   if (rgraddim != contour->numvertices || rgradx == 0 || rgrady == 0)
   {
@@ -857,18 +857,23 @@ compute_repulsive_gradient (struct polyline *contour)
       py = 0.5*(c->y + d->y - a->y - b->y);
       dsq = px*px + py*py;
       dd = sqrt (dsq);
+      signf1 = signf2 = 1;
       f1 = - s1y*px + s1x*py;
+      if (f1 < 0) signf1 = -1;
+      f1 *= signf1;
       f2 = - s2y*px + s2x*py;
+      if (f2 < 0) signf2 = -1;
+      f2 *= signf2;
       f3 = repulsive_field (dd)/dsq;
       fpond = repulsive_force (dd);
 
       e = f1*f2*f3;
-      ds1ex = f2*f3*py;
-      ds1ey = -f2*f3*px;
-      ds2ex = f1*f3*py;
-      ds2ey = -f1*f3*px;
-      hdpex = -f2*f3*s1y - f1*f3*s2y - 2*e*px/dsq + f1*f2*fpond*px/dsq;
-      hdpey =  f2*f3*s1x + f1*f3*s2x - 2*e*py/dsq + f1*f2*fpond*py/dsq;
+      ds1ex = signf1*f2*f3*py;
+      ds1ey = -signf1*f2*f3*px;
+      ds2ex = signf2*f1*f3*py;
+      ds2ey = -signf2*f1*f3*px;
+      hdpex = -signf1*f2*f3*s1y - signf2*f1*f3*s2y - (2*f3 - fpond)*f1*f2*px/dsq;
+      hdpey =  signf1*f2*f3*s1x + signf2*f1*f3*s2x - (2*f3 - fpond)*f1*f2*py/dsq;
 
       hdpex *= 0.5;
       hdpey *= 0.5;
@@ -1177,6 +1182,7 @@ getmorseevent (struct morseevent *morseevent)
       break;
 
     case KEY_U:
+    case KEY_V:
     case KEY_UNDERSCORE:
       morseevent->type = ME_BOT;
       getarcinfo (morseevent);
