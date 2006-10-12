@@ -17,19 +17,28 @@
 
 //#define CHECK_GRADIENT 1
 
-#define BUFSIZE 1000
-#define REL_H 0.5
-#define MAX_H 0.1
-
 #define K1_COEFF 1.0
 #define K2_COEFF 0.1
 #define K3_COEFF 0.7
-#define K4_COEFF 0.02
+#define K4_COEFF 0.2
 
 #define ALLOW_REPULSION 0
+#define ALLOW_NODE_REDEFINE 1
+#define ALLOW_NODE_REDEFINE_AT_END 0
 
 #define NODE_SEP 0.4
 #define ORTO_HEAVINESS 2.0
+#define CUSP_PRECISION 0.8           /* 1 means perfect cusp (180 degrees) */
+/*
+ * a value too near 1 hase the effect of shooting out (sometimes) cusps towards
+ * infinity, probably a side effect of the addition of nodes for elongating
+ * segments.  The energy associated with cusps should be modified in order
+ * to avoid such tendency
+ */
+
+#define BUFSIZE 1000
+#define REL_H 0.5
+#define MAX_H 0.1
 
 #define ME_TRAN 1
 #define ME_TOP 2
@@ -307,8 +316,8 @@ checktimer (void)
   return (timercmp (&now, &timer, < ));
 }
 
-static int allownodered = 1;
-static int allownoderedatend = 0;
+static int allownodered = ALLOW_NODE_REDEFINE;
+static int allownoderedatend = ALLOW_NODE_REDEFINE_AT_END;
 
 void
 tryredistributenodes (struct polyline *contour)
@@ -513,7 +522,7 @@ compute_energy (struct polyline *contour)
         alpha = get_alpha (a, p, b, &la, &lb);
         if (p->type == V_CUSP)
         {
-          alpha -= 0.9*M_PI;
+          alpha -= CUSP_PRECISION*M_PI;
         }
         energy2 += 2*alpha*alpha/(la + lb);
         break;
@@ -570,6 +579,7 @@ compute_energy (struct polyline *contour)
 
   if (allowrepulsion)
   {
+printf ("repulsion\n");
     energy4 = k4_coeff*renergy;
   }
 
@@ -623,7 +633,7 @@ compute_gradient (struct polyline *contour)
         alpha = get_alpha (a, p, b, &la, &lb);
         if (p->type == V_CUSP)
         {
-          alpha -= 0.9*M_PI;
+          alpha -= CUSP_PRECISION*M_PI;
           //printf ("node with cusp...\n");
         }
         grad_curv (b, p, alpha, lb, la, &gcx, &gcy);
@@ -735,6 +745,7 @@ compute_gradient (struct polyline *contour)
   /* quarto contributo, repulsione tra tutti i nodi */
   if (allowrepulsion)
   {
+printf ("repulsion\n");
     // compute_repulsive_gradient (contour);
     for (a = contour->vertex; a; a = a->next)
     {
@@ -755,20 +766,32 @@ compute_gradient (struct polyline *contour)
 double
 compute_repulsive_energy (struct polyline *contour)
 {
-  struct vertex *v, *w;
-  double energy = 0.0;
-  double dx, dy, dist;
+  struct line *s1, *s2;
+  struct vertex *a, *b, *c, *d;
+  double s1x, s1y, s2x, s2y, px, py;
+  double dd, dsq, f1, f2, f3;
+  double energy = 0;
 
-  for (v = contour->vertex; v; v = v->next)
+  for (s1 = contour->line; s1; s1 = s1->next)
   {
-    if (v->type != V_REGULAR) continue;
-    for (w = v->next; w; w = w->next)
+    a = s1->a;
+    b = s1->b;
+    s1x = b->x - a->x;
+    s1y = b->y - a->y;
+    for (s2 = s1->next; s2; s2 = s2->next)
     {
-      if (w->type != V_REGULAR) continue;
-      dx = v->x - w->x;
-      dy = v->y - w->y;
-      dist = sqrt (dx*dx + dy*dy);
-      energy +=repulsive_field (dist);
+      c = s2->a;
+      d = s2->b;
+      s2x = d->x - c->x;
+      s2y = d->y - c->y;
+      px = 0.5*(c->x + d->x - a->x - b->x);
+      py = 0.5*(c->y + d->y - a->y - b->y);
+      dsq = px*px + py*py;
+      dd = sqrt (dsq);
+      f1 = - s1y*px + s1x*py;
+      f2 = - s2y*px + s2x*py;
+      f3 = repulsive_field (dd) / dsq;
+      energy += f1*f2*f3;
     }
   }
   renergy = energy;
@@ -778,9 +801,12 @@ compute_repulsive_energy (struct polyline *contour)
 void
 compute_repulsive_gradient (struct polyline *contour)
 {
-  struct vertex *v, *w;
-  int i, tag1, tag2;
-  double dx, dy, dist, force;
+  struct line *s1, *s2;
+  struct vertex *a, *b, *c, *d;
+  double s1x, s1y, s2x, s2y, px, py;
+  double dd, dsq, f1, f2, f3;
+  double fpond, e, ds1ex, ds1ey, ds2ex, ds2ey, hdpex, hdpey;
+  int taga, tagb, tagc, tagd, i;
 
   if (rgraddim != contour->numvertices || rgradx == 0 || rgrady == 0)
   {
@@ -796,22 +822,50 @@ compute_repulsive_gradient (struct polyline *contour)
     rgradx[i] = rgrady[i] = 0.0;
   }
   
-  for (v = contour->vertex; v; v = v->next)
+  for (s1 = contour->line; s1; s1 = s1->next)
   {
-    if (v->type != V_REGULAR) continue;
-    tag1 = v->tag;
-    for (w = v->next; w; w = w->next)
+    a = s1->a;
+    b = s1->b;
+    s1x = b->x - a->x;
+    s1y = b->y - a->y;
+    taga = a->tag;
+    tagb = b->tag;
+    for (s2 = s1->next; s2; s2 = s2->next)
     {
-      if (w->type != V_REGULAR) continue;
-      tag2 = w->tag;
-      dx = v->x - w->x;
-      dy = v->y - w->y;
-      dist = sqrt (dx*dx + dy*dy);
-      force = repulsive_force (dist);
-      rgradx[tag1] += dx*force;
-      rgradx[tag2] -= dx*force;
-      rgrady[tag1] += dy*force;
-      rgrady[tag2] -= dy*force;
+      c = s2->a;
+      d = s2->b;
+      s2x = d->x - c->x;
+      s2y = d->y - c->y;
+      tagc = c->tag;
+      tagd = d->tag;
+      px = 0.5*(c->x + d->x - a->x - b->x);
+      py = 0.5*(c->y + d->y - a->y - b->y);
+      dsq = px*px + py*py;
+      dd = sqrt (dsq);
+      f1 = - s1y*px + s1x*py;
+      f2 = - s2y*px + s2x*py;
+      f3 = repulsive_field (dd)/dsq;
+      fpond = repulsive_force (dd);
+
+      e = f1*f2*f3;
+      ds1ex = f2*f3*py;
+      ds1ey = -f2*f3*px;
+      ds2ex = f1*f3*py;
+      ds2ey = -f1*f3*px;
+      hdpex = -f2*f3*s1y - f1*f3*s2y - 2*e*px/dsq + f1*f2*fpond*px/dsq;
+      hdpey =  f2*f3*s1x + f1*f3*s2x - 2*e*py/dsq + f1*f2*fpond*py/dsq;
+
+      hdpex *= 0.5;
+      hdpey *= 0.5;
+
+      rgradx[taga] -= ds1ex + hdpex;
+      rgrady[taga] -= ds1ey + hdpey;
+      rgradx[tagb] += ds1ex - hdpex;
+      rgrady[tagb] += ds1ey - hdpey;
+      rgradx[tagc] -= ds2ex - hdpex;
+      rgrady[tagc] -= ds2ey - hdpey;
+      rgradx[tagd] += ds2ex + hdpex;
+      rgrady[tagd] += ds2ey + hdpey;
     }
   }
   return;
@@ -987,7 +1041,7 @@ redistributenodes (struct polyline *contour)
     diffy = a->y - b->y;
     len = sqrt (diffx*diffx + diffy*diffy);
 
-    if (len < h/2)
+    if (len < 0.5*h)
     {   /* can I derefine? */
       v = line->b;
       forward = 1;
@@ -1007,7 +1061,7 @@ redistributenodes (struct polyline *contour)
       diffx = v->x - next->x;
       diffy = v->y - next->y;
       alen = sqrt (diffx*diffx + diffy*diffy);
-      if (alen + len < 1.0*h)   /* can derefine */
+      if (alen + len < 0.9*h)   /* can derefine */
       { /* aline will be removed! */
         removednodes++;
         assert (next->line[backidx] == aline);
@@ -1018,7 +1072,7 @@ redistributenodes (struct polyline *contour)
         removeline (contour, aline);
       }
     } else {
-      /* possibly refine */
+      /* possibly refine, only if len >= 2*h */
       numsub = len/h;
       dt = len/numsub;
       for (i = 1; i < numsub; i++)
@@ -1036,8 +1090,8 @@ redistributenodes (struct polyline *contour)
   contour->gradx = (double *) malloc (vertexnum * sizeof (double));
   contour->grady = (double *) malloc (vertexnum * sizeof (double));
   curenergy = 0.0;
-//  if (addednodes) printf ("added %d nodes\n", addednodes);
-//  if (removednodes) printf ("removed %d nodes\n", removednodes);
+  if (addednodes) printf ("added %d nodes\n", addednodes);
+  if (removednodes) printf ("removed %d nodes\n", removednodes);
 }
 
 struct line *
