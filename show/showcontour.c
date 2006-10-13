@@ -18,6 +18,8 @@
 
 #define ALLOW_NODE_REDEFINE 1
 #define ALLOW_NODE_REDEFINE_AT_END 0
+#define ALLOW_BACKSTEP 0
+#define ALLOW_STEPCONTROL 1
 
 #define BUFSIZE 1000
 #define REL_H 0.5
@@ -328,8 +330,8 @@ evolve (struct polyline *contour, double incrtime)
   int gradient_is_ok;
   int timesteps = 0;
   int timebsteps = 0;
-  int allowbackstep = 0;
-  int allowstepcontrol = 0;
+  int allowbackstep = ALLOW_BACKSTEP;
+  int allowstepcontrol = ALLOW_STEPCONTROL;
 
   settimer (incrtime);
   gradient_is_ok = 0;

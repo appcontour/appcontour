@@ -12,11 +12,13 @@
 #define K4_COEFF 1.0     /* arc repulsion */
 #define K5_COEFF 0.0     /* |k| */
 
-#define ALLOW_REPULSION 1
+#define ALLOW_REPULSION 0
 
 #define NODE_SEP 0.4
 #define ORTO_HEAVINESS 2.0
 #define CUSP_PRECISION 0.8           /* 1 means perfect cusp (180 degrees) */
+#define SMOOTH_K5 0.001
+
 /*
  * a value too near 1 hase the effect of shooting out (sometimes) cusps towards
  * infinity, probably a side effect of the addition of nodes for elongating
@@ -254,9 +256,9 @@ compute_gradient (struct polyline *contour)
 {
   struct line *line;
   struct vertex *a, *p, *b, *q, *v1, *v2;
-  int i, j, tag1, tag2, sigma;
+  int i, j, tag1, tag2;
   double dx, dy, len, xel, yel, distsq, dist, force;
-  double alpha, gcx, gcy, la, lb;
+  double alpha, gcx, gcy, la, lb, sigma;
   double *gradx, *grady;
   double apx, apy, pqx, pqy, qbx, qby, vec1, vec2, pqsq;
 
@@ -433,8 +435,11 @@ compute_gradient (struct polyline *contour)
     vec1 = - pqy*apx + pqx*apy;
     vec2 = - qby*pqx + qbx*pqy;
     if (vec1 * vec2 >= 0) continue;   /* no inflection */
-    sigma = 2;
-    if (vec2 < 0) sigma = -2;
+    if (SMOOTH_K5 == 0.0)
+      sigma = 2.0; else
+      sigma = -vec1*vec2/SMOOTH_K5;
+    if (sigma > 2.0) sigma = 2.0;
+    if (vec2 < 0) sigma *= -1;
     pqsq = pqx*pqx + pqy*pqy;
     gradx[p->tag] += k5_coeff*sigma*pqy/pqsq;
     grady[p->tag] -= k5_coeff*sigma*pqx/pqsq;

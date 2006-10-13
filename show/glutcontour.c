@@ -9,6 +9,8 @@ extern struct polyline *contour;
 static double incrtime = 0.25;
 static int motion = 1;
 
+#define SIZE 0.015
+
 void idle (void);
 
 void
@@ -47,10 +49,8 @@ display (void)
       glVertex2d((b->x - xmed)*zoom, (b->y - ymed)*zoom);
     }
   glEnd();
-  glPointSize(4.0);
 //  glGetDoublev (GL_POINT_SIZE, &ptsize);
 //  printf ("point size: %lf\n", ptsize);
-  glBegin(GL_POINTS);
     glColor3f(1.0, 0.0, 0.0);  /* white */
   for (v = contour->vertex; v; v = v->next)
   {
@@ -58,12 +58,17 @@ display (void)
     {
       case V_CROSS:
       case V_CUSP:
-        glVertex2d((v->x - xmed)*zoom, (v->y - ymed)*zoom);
+        //glBegin(GL_POLYGON);
+        glBegin(GL_LINE_LOOP);
+          glVertex2d((v->x - xmed)*zoom + SIZE, (v->y - ymed)*zoom + SIZE);
+          glVertex2d((v->x - xmed)*zoom + SIZE, (v->y - ymed)*zoom - SIZE);
+          glVertex2d((v->x - xmed)*zoom - SIZE, (v->y - ymed)*zoom - SIZE);
+          glVertex2d((v->x - xmed)*zoom - SIZE, (v->y - ymed)*zoom + SIZE);
+        glEnd();
         break;
 
     }
   }
-  glEnd();
   glFlush();  /* Single buffered, so needs a flush. */
 }
 
