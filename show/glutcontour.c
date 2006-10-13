@@ -47,6 +47,23 @@ display (void)
       glVertex2d((b->x - xmed)*zoom, (b->y - ymed)*zoom);
     }
   glEnd();
+  glPointSize(4.0);
+//  glGetDoublev (GL_POINT_SIZE, &ptsize);
+//  printf ("point size: %lf\n", ptsize);
+  glBegin(GL_POINTS);
+    glColor3f(1.0, 0.0, 0.0);  /* white */
+  for (v = contour->vertex; v; v = v->next)
+  {
+    switch (v->type)
+    {
+      case V_CROSS:
+      case V_CUSP:
+        glVertex2d((v->x - xmed)*zoom, (v->y - ymed)*zoom);
+        break;
+
+    }
+  }
+  glEnd();
   glFlush();  /* Single buffered, so needs a flush. */
 }
 
@@ -125,6 +142,7 @@ grmain (void)
   glutAddMenuEntry ("Decrease responsivity", 3);
   glutAddMenuEntry ("Quit", 666);
   glutAttachMenu (GLUT_RIGHT_BUTTON);
+  //glEnable (GL_POINT_SMOOTH);
   glutMainLoop();
   return (0);
 }

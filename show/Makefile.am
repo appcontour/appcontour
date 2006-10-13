@@ -1,11 +1,16 @@
 bin_PROGRAMS = showcontour
 
 if ENABLE_GLUT
-showcontour_SOURCES = showcontour.c energy.c glutcontour.c
-showcontour_LDADD = ../parser.o -lglut
+GRAPHSOURCE = glutcontour.c
+GRAPHLIB = -lglut
 else
-showcontour_SOURCES = showcontour.c energy.c nullcontour.c
-showcontour_LDADD = ../parser.o -lm
+GRAPHSOURCE = nullcontour.c
+GRAPHLIB = -lm
 endif
+
+showcontour_SOURCES = showcontour.c energy.c showcontour.h energy.h $(GRAPHSOURCE)
+showcontour_LDADD = ../parser.o $(GRAPHLIB)
+
+EXTRA_DIST = glutcontour.c nullcontour.c
 
 AM_CFLAGS = -Wall

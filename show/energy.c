@@ -10,7 +10,7 @@
 #define K2_COEFF 0.1     /* k^2 */
 #define K3_COEFF 0.7     /* cross+cusp repulsion */
 #define K4_COEFF 1.0     /* arc repulsion */
-#define K5_COEFF 1.0     /* |k| */
+#define K5_COEFF 0.0     /* |k| */
 
 #define ALLOW_REPULSION 1
 
@@ -28,15 +28,7 @@
 void check_gradient (struct polyline *contour);
 #endif
 
-static double k1_coeff = K1_COEFF;
-static double k2_coeff = K2_COEFF;
-static double k3_coeff = K3_COEFF;
-static double k4_coeff = K4_COEFF;
-static double k5_coeff = K5_COEFF;
-
-static int allowrepulsion = ALLOW_REPULSION;
-
-extern int test;
+//extern int test;
 extern double time;
 extern double timerrep;
 extern double taurep;
@@ -44,7 +36,12 @@ extern double taurep;
 void
 energyinit (void)
 {
-  if (test == 0) allowrepulsion = 0;
+  allowrepulsion = ALLOW_REPULSION;
+  k1_coeff = K1_COEFF;
+  k2_coeff = K2_COEFF;
+  k3_coeff = K3_COEFF;
+  k4_coeff = K4_COEFF;
+  k5_coeff = K5_COEFF;
 }
 
 void

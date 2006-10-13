@@ -32,6 +32,7 @@
 
 #define TOP_LENGTH 0.25
 
+void parseargs (int argc, char *argv[]);
 void test_contour (struct polyline *contour);
 double normsq (double *x, int dim);
 void reorder_node_ptr (struct polyline *contour);
@@ -66,38 +67,21 @@ static double curenergy = 0.0;
 static double timerrn;
 double timerrep;
 
-int test = 0;
+static int test = 0;
+static char *grident;
 
 int
 main (int argc, char *argv[])
 {
   struct line *l;
   struct vertex *v;
-  int tok, count, vertexnum, iarg;
-  char *grident;
+  int tok, count, vertexnum;
 
   grident = grinit(&argc, argv);
-  for (iarg = 1; iarg < argc; iarg++)
-  {
-    if (*argv[iarg] == '-')    /* this is an option */
-    {
-      if (strcmp (argv[iarg], "--grident") == 0)
-      {
-        printf ("%s\n", grident);
-        return (0);
-      }
-      if (strcmp (argv[iarg], "--test") == 0) {
-        test = 1;
-      } else {
-        printf ("Invalid option: %s\n", argv[iarg]);
-        return (1);
-      }
-      continue;
-    }
-    printf ("Invalid argument: %s\n", argv[iarg]);
-    return (1);
-  }
   energyinit ();
+  parseargs (argc, argv);
+  if (test == 0) allowrepulsion = 0;
+
   tok = gettoken (stdin);
   if (tok != TOK_MORSE) return (0);
   tok = gettoken (stdin);
@@ -141,6 +125,35 @@ main (int argc, char *argv[])
 
   grmain();
   return (0);
+}
+
+void
+parseargs (int argc, char *argv[])
+{
+  int iarg;
+
+  for (iarg = 1; iarg < argc; iarg++)
+  {
+    if (*argv[iarg] == '-')    /* this is an option */
+    {
+      if (strcmp (argv[iarg], "--grident") == 0)
+      {
+        printf ("%s\n", grident);
+        exit (0);
+      }
+      if (strcmp (argv[iarg], "--test") == 0) {
+        test = 1;
+      } else if (strcmp (argv[iarg], "--k5") == 0) {
+        k5_coeff = atof (argv[++iarg]);
+      } else {
+        printf ("Invalid option: %s\n", argv[iarg]);
+        exit (1);
+      }
+      continue;
+    }
+    printf ("Invalid argument: %s\n", argv[iarg]);
+    exit (1);
+  }
 }
 
 void

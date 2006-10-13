@@ -47,15 +47,15 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am__showcontour_SOURCES_DIST = showcontour.c energy.c nullcontour.c \
-	glutcontour.c
-@ENABLE_GLUT_FALSE@am_showcontour_OBJECTS = showcontour.$(OBJEXT) \
-@ENABLE_GLUT_FALSE@	energy.$(OBJEXT) nullcontour.$(OBJEXT)
-@ENABLE_GLUT_TRUE@am_showcontour_OBJECTS = showcontour.$(OBJEXT) \
-@ENABLE_GLUT_TRUE@	energy.$(OBJEXT) glutcontour.$(OBJEXT)
+am__showcontour_SOURCES_DIST = showcontour.c energy.c showcontour.h \
+	energy.h nullcontour.c glutcontour.c
+@ENABLE_GLUT_FALSE@am__objects_1 = nullcontour.$(OBJEXT)
+@ENABLE_GLUT_TRUE@am__objects_1 = glutcontour.$(OBJEXT)
+am_showcontour_OBJECTS = showcontour.$(OBJEXT) energy.$(OBJEXT) \
+	$(am__objects_1)
 showcontour_OBJECTS = $(am_showcontour_OBJECTS)
-@ENABLE_GLUT_FALSE@showcontour_DEPENDENCIES = ../parser.o
-@ENABLE_GLUT_TRUE@showcontour_DEPENDENCIES = ../parser.o
+am__DEPENDENCIES_1 =
+showcontour_DEPENDENCIES = ../parser.o $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -141,10 +141,13 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-@ENABLE_GLUT_FALSE@showcontour_SOURCES = showcontour.c energy.c nullcontour.c
-@ENABLE_GLUT_TRUE@showcontour_SOURCES = showcontour.c energy.c glutcontour.c
-@ENABLE_GLUT_FALSE@showcontour_LDADD = ../parser.o -lm
-@ENABLE_GLUT_TRUE@showcontour_LDADD = ../parser.o -lglut
+@ENABLE_GLUT_FALSE@GRAPHSOURCE = nullcontour.c
+@ENABLE_GLUT_TRUE@GRAPHSOURCE = glutcontour.c
+@ENABLE_GLUT_FALSE@GRAPHLIB = -lm
+@ENABLE_GLUT_TRUE@GRAPHLIB = -lglut
+showcontour_SOURCES = showcontour.c energy.c showcontour.h energy.h $(GRAPHSOURCE)
+showcontour_LDADD = ../parser.o $(GRAPHLIB)
+EXTRA_DIST = glutcontour.c nullcontour.c
 AM_CFLAGS = -Wall
 all: all-am
 
