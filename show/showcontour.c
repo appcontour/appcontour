@@ -19,7 +19,9 @@
 #define ALLOW_NODE_REDEFINE 1
 #define ALLOW_NODE_REDEFINE_AT_END 0
 #define ALLOW_BACKSTEP 0
-#define ALLOW_STEPCONTROL 0
+#define ALLOW_STEPCONTROL 1
+
+#define KICK_OUT_TIME 0.5    /* k^2 only after this time */
 
 #define BUFSIZE 1000
 #define REL_H 0.5
@@ -34,6 +36,8 @@
 
 #define TOP_LENGTH 0.25
 
+void kick_in (void);
+void kick_out (void);
 void parseargs (int argc, char *argv[]);
 void test_contour (struct polyline *contour);
 double normsq (double *x, int dim);
@@ -68,6 +72,7 @@ static double curenergy = 0.0;
 
 static double timerrn;
 double timerrep;
+static double timerkickout;
 
 static int test = 0;
 static char *grident;
@@ -118,6 +123,11 @@ main (int argc, char *argv[])
   tau = contour->h * contour->h;
   taurn = taurep = tau;
   tau = tau*tau;
+  if (KICK_OUT_TIME > 0.0)
+  {
+    timerkickout = KICK_OUT_TIME;
+    kick_in ();
+  }
 //  printf ("tau = %lf, taurn = %lf, taurep = %lf\n", tau, taurn, taurep);
   time = 0.0;
   timerrn = time + taurn;
@@ -127,6 +137,32 @@ main (int argc, char *argv[])
 
   grmain();
   return (0);
+}
+
+static double k2_coeff_saved;
+static double tau_saved;
+static int kicked_in = 0;
+
+void
+kick_in (void)
+{
+  if (kicked_in) {printf ("Warning: already kicked in\n"); return;}
+printf ("kick_in\n");
+  kicked_in = 1;
+  k2_coeff_saved = k2_coeff;
+  k2_coeff = 0;
+  tau_saved = tau;
+  tau = sqrt (tau);
+}
+
+void
+kick_out (void)
+{
+  if (! kicked_in) {printf ("Warning: already kicked out\n"); return;}
+printf ("kick_out\n");
+  kicked_in = 0;
+  k2_coeff = k2_coeff_saved;
+  tau = tau_saved;
 }
 
 void
@@ -145,6 +181,14 @@ parseargs (int argc, char *argv[])
       }
       if (strcmp (argv[iarg], "--test") == 0) {
         test = 1;
+      } else if (strcmp (argv[iarg], "--k1") == 0) {
+        k1_coeff = atof (argv[++iarg]);
+      } else if (strcmp (argv[iarg], "--k2") == 0) {
+        k2_coeff = atof (argv[++iarg]);
+      } else if (strcmp (argv[iarg], "--k3") == 0) {
+        k3_coeff = atof (argv[++iarg]);
+      } else if (strcmp (argv[iarg], "--k4") == 0) {
+        k4_coeff = atof (argv[++iarg]);
       } else if (strcmp (argv[iarg], "--k5") == 0) {
         k5_coeff = atof (argv[++iarg]);
       } else {
@@ -322,6 +366,16 @@ tryredistributenodes (struct polyline *contour)
   timerrn += taurn;
 }
 
+void
+trykick_out (void)
+{
+  if (timerkickout <= 0.0) return;
+  if (time < timerkickout) return;
+
+  kick_out();
+  timerkickout = 0.0;
+}
+
 double
 evolve (struct polyline *contour, double incrtime)
 {
@@ -339,6 +393,7 @@ evolve (struct polyline *contour, double incrtime)
   {
     tryredistributenodes (contour);
     tryrepulsiveenergy (contour);
+    trykick_out ();
     time += tau;
     timesteps++;
     if (curenergy == 0.0) curenergy = compute_energy (contour);
@@ -524,8 +579,8 @@ void
 redistributenodes (struct polyline *contour)
 {
   struct line *line, *nline, *aline;
-  struct vertex *a, *b, *v, *next;
-  double diffx, diffy, len, alen, h, dt;
+  struct vertex *a, *b, *v, *next, *prev;
+  double diffx, diffy, len, alen, h, dt, alpha;
   int numsub, i, vertexnum, forward, backidx;
   int addednodes = 0, removednodes = 0;
 
@@ -543,8 +598,14 @@ redistributenodes (struct polyline *contour)
     if (len < 0.5*h)
     {   /* can I derefine? */
       v = line->b;
+      prev = line->a;
       forward = 1;
-      if (v->type != V_REGULAR) {v = line->a; forward = 0;}
+      if (v->type != V_REGULAR)
+      {
+        v = line->a;
+        prev = line->b;
+        forward = 0;
+      }
       if (v->type != V_REGULAR) continue;
       aline = v->line[forward];
       assert (aline != line);
@@ -557,10 +618,12 @@ redistributenodes (struct polyline *contour)
         for (backidx = 0; backidx < 4; backidx++)
           if (next->line[backidx] == aline) break;
       }
+      alpha = get_alpha (prev, v, next, &len, &alen);
+      if (alpha >= 0.5) printf ("alpha > 0.5\n");
       diffx = v->x - next->x;
       diffy = v->y - next->y;
       alen = sqrt (diffx*diffx + diffy*diffy);
-      if (alen + len < 0.9*h)   /* can derefine */
+      if (alen + len < 0.9*h && alpha < 0.5)   /* can derefine */
       { /* aline will be removed! */
         removednodes++;
         assert (next->line[backidx] == aline);
