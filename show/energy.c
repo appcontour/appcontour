@@ -4,8 +4,6 @@
 #include "showcontour.h"
 #include "energy.h"
 
-//#define CHECK_GRADIENT 1
-
 #define K1_COEFF 1.0     /* perimeter */
 #define K2_COEFF 0.1     /* k^2 */
 #define K3_COEFF 0.7     /* cross+cusp repulsion */
@@ -32,8 +30,8 @@ void check_gradient (struct polyline *contour);
 
 //extern int test;
 extern double time;
-extern double timerrep;
-extern double taurep;
+//extern double timerrep;
+//extern double taurep;
 
 void
 energyinit (void)
@@ -44,23 +42,6 @@ energyinit (void)
   k3_coeff = K3_COEFF;
   k4_coeff = K4_COEFF;
   k5_coeff = K5_COEFF;
-}
-
-void
-tryrepulsiveenergy (struct polyline *contour)
-{
-  static int count = 0;
-
-  if (time < timerrep) return;
-  count++;
-
-  //printf ("would compute repulsive energy: %d...\n", count);
-  compute_repulsive_energy (contour);
-  compute_repulsive_gradient (contour);
-#ifdef CHECK_GRADIENT
-  check_gradient (contour);
-#endif
-  timerrep += taurep;
 }
 
 #ifdef CHECK_GRADIENT

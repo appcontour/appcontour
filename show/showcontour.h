@@ -3,13 +3,27 @@
 #define V_CROSS 3
 #define V_FIXED 4
 
+#define EVENT_REDISTRIBUTENODES 1
+#define EVENT_REPULSIVEENERGY 2
+#define EVENT_KICKOUT 3
+
+//#define CHECK_GRADIENT 1
+
 struct morseevent {
   int type;
   int ori;
   int ori2;
   int cusps;
   int cusps2;
+  struct arc *arc;
+  struct arc *arc2;
   struct morseevent *next;
+};
+
+struct timerevent {
+  int event;
+  double time;
+  struct timerevent *next;
 };
 
 struct polyline {
@@ -35,10 +49,22 @@ struct vertex {
 struct line {
   int tag;
   int orientation;
-  int cusps;
   struct vertex *a;
   struct vertex *b;
+  struct arc *arc;
   struct line *next;
+};
+
+struct arc {
+  int type;
+  int orientation;
+  int cusps;
+  int numsegments;
+  int cuspsinserted;
+  struct line *first;
+  struct line *last;
+  struct line *loop;
+  struct arc *next;
 };
 
 /* prototypes */

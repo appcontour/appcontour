@@ -35,9 +35,11 @@
 #define ME_LASTROW 6
 
 #define TOP_LENGTH 0.25
+#define RENORMALIZE 1
 
-void kick_in (void);
-void kick_out (void);
+void kick_in (struct polyline *contour);
+void kick_out (struct polyline *contour);
+void activate_timer (int event, double time);
 void parseargs (int argc, char *argv[]);
 void test_contour (struct polyline *contour);
 double normsq (double *x, int dim);
@@ -50,7 +52,7 @@ void redistributenodes (struct polyline *contour);
 struct line *splitline (struct polyline *contour, struct line *line, double f);
 void getmorseevent (struct morseevent *mev);
 void getarcinfo (struct morseevent *morseevent);
-void getoricusps (int *oript, int *cuspspt);
+void getoricusps (int *oript, struct arc **arcpt);
 struct polyline *buildpolyline (void);
 struct vertex *newvertex (struct polyline *contour, 
           double x, double y, int type);
@@ -58,6 +60,9 @@ struct line *newline (struct polyline *contour,
                       struct vertex *a, 
                       struct vertex *b);
 int inherit_orientation (struct line *line);
+void setarcinfo (struct polyline *contour);
+int setarcinfo1 (struct line *l);
+void check_contour (struct polyline *contour);
 void insertcusps (struct polyline *contour);
 int insert_cusps_on_arc (struct line *l);
 void removenode (struct polyline *contour, struct vertex *v);
@@ -70,9 +75,9 @@ static double taurn;
 double taurep;
 static double curenergy = 0.0;
 
-static double timerrn;
-double timerrep;
-static double timerkickout;
+//static double timerrn;
+//double timerrep;
+//static double timerkickout;
 
 static int test = 0;
 static char *grident;
@@ -101,6 +106,10 @@ main (int argc, char *argv[])
 
   reorder_node_ptr (contour);
   discretizepolyline (contour);
+  setarcinfo (contour);        /* initialize arc structure */
+
+  check_contour (contour);
+
   insertcusps (contour);
   specnodesinit (contour);
 
@@ -120,18 +129,18 @@ main (int argc, char *argv[])
   }
 //  printf ("ci sono %d archi\n", count);
 
+  time = 0.0;
   tau = contour->h * contour->h;
   taurn = taurep = tau;
   tau = tau*tau;
   if (KICK_OUT_TIME > 0.0)
   {
-    timerkickout = KICK_OUT_TIME;
-    kick_in ();
+    activate_timer (EVENT_KICKOUT, KICK_OUT_TIME);
+    kick_in (contour);
   }
 //  printf ("tau = %lf, taurn = %lf, taurep = %lf\n", tau, taurn, taurep);
-  time = 0.0;
-  timerrn = time + taurn;
-  timerrep = -1.0;          /* must compute immediately */
+  activate_timer (EVENT_REDISTRIBUTENODES, time + taurn);
+  activate_timer (EVENT_REPULSIVEENERGY, -1.0);    /* must compute immediately */
 
   //evolve (contour, incrtime);
 
@@ -139,12 +148,33 @@ main (int argc, char *argv[])
   return (0);
 }
 
+struct timerevent *timerlist = 0;
+struct timerevent dummytimer;
+
+void
+activate_timer (int event, double time)
+{
+  struct timerevent *newtimer;
+
+  if (timerlist == 0)
+  {
+    timerlist = &dummytimer;
+    timerlist->next = 0;
+  }
+  newtimer = (struct timerevent *) malloc (sizeof (struct timerevent));
+  newtimer->next = timerlist->next;
+  timerlist->next = newtimer;
+  newtimer->event = event;
+  newtimer->time = time;
+}
+
 static double k2_coeff_saved;
 static double tau_saved;
+static double h_saved;
 static int kicked_in = 0;
 
 void
-kick_in (void)
+kick_in (struct polyline *contour)
 {
   if (kicked_in) {printf ("Warning: already kicked in\n"); return;}
 printf ("kick_in\n");
@@ -153,16 +183,19 @@ printf ("kick_in\n");
   k2_coeff = 0;
   tau_saved = tau;
   tau = sqrt (tau);
+  h_saved = contour->h;
+  contour->h /= 2;
 }
 
 void
-kick_out (void)
+kick_out (struct polyline *contour)
 {
   if (! kicked_in) {printf ("Warning: already kicked out\n"); return;}
 printf ("kick_out\n");
   kicked_in = 0;
   k2_coeff = k2_coeff_saved;
   tau = tau_saved;
+  contour->h = h_saved;
 }
 
 void
@@ -227,6 +260,134 @@ test_contour (struct polyline *contour)
 }
 
 void
+check_contour (struct polyline *contour)
+{
+  struct line *line, *first, *last, *l;
+  struct arc *arc;
+  int count, found;
+
+  for (line = contour->line; line; line = line->next)
+  {
+    arc = line->arc;
+    if (arc->loop)
+    {
+      /* this is an S1 */
+      assert (arc->first == 0 && arc->last == 0);
+      first = last = arc->loop;
+      l = first;
+      count = 0;
+      found = 0;
+      do {
+        count++;
+        assert (l->arc == arc);
+        assert (l->b->type != V_CROSS);
+        if (l == line) found = 1;
+      } while (l = l->b->line[1], l != first);
+      assert (count == arc->numsegments);
+      assert (found);
+    } else {
+      first = arc->first;
+      last = arc->last;
+      assert (first && last);
+      assert (arc->loop == 0);
+      assert (first->a->type == V_CROSS);
+      assert (last->b->type == V_CROSS);
+      found = 0;
+      if (last == line) found = 1;
+      count = 1;
+      for (l = first; l != last; l = l->b->line[1])
+      {
+        count++;
+        assert (l->arc == arc);
+        assert (l->b->type != V_CROSS);
+        if (l == line) found = 1;
+      }
+      assert (count == arc->numsegments);
+      assert (found);
+    }
+  }
+}
+
+void
+setarcinfo (struct polyline *contour)
+{
+  struct vertex *p;
+  struct line *l;
+  int i, iss1;
+
+  /* first deal with the non-s1 arcs */
+
+  for (p = contour->vertex; p; p = p->next)
+  {
+    if (p->type != V_CROSS) continue;
+    for (i = 0; i < 4; i++)
+    {
+      l = p->line[i];
+      if (l->a != p) continue;   /* we want a 'leaving' arc */
+      iss1 = setarcinfo1 (l);
+      assert (iss1 == 0);
+    }
+  }
+
+  /* now the s1's */
+
+  for (p = contour->vertex; p; p = p->next)
+  {
+    if (p->type == V_CROSS) continue;
+    l = p->line[1];
+    if (l->arc->first) continue;
+    iss1 = setarcinfo1 (l);
+    assert (iss1);
+  }
+
+  /* now check that all arcs are OK */
+
+  for (l = contour->line; l; l = l->next)
+  {
+    assert (l->arc->loop || (l->arc->first && l->arc->last));
+  }
+}
+
+int
+setarcinfo1 (struct line *l)
+{
+  struct arc *firstarc;
+  struct line *wl;
+  struct vertex *p;
+  int count;
+
+  firstarc = l->arc;
+  if (l->a->type == V_CROSS)
+    firstarc->first = l;
+  else
+    firstarc->loop = l;
+
+  p = 0;
+
+  count = 0;
+  wl = l;
+  do
+  {
+    count++;
+    if (wl->arc != firstarc)
+    {
+      fprintf (stderr, "duplicate arc info\n");
+      wl->arc = firstarc;
+      /* note: cannot free memory, because this can be pointed
+       * by other segments, this is a small memory leak
+       */
+    }
+    if ((p = wl->b)->type == V_CROSS) break;
+  } while (wl = p->line[1], wl != l);
+
+  if (p && p->type == V_CROSS) firstarc->last = wl;
+
+  firstarc->numsegments = count;
+  if (firstarc->loop) return (1);
+  return (0);
+}
+
+void
 insertcusps (struct polyline *contour)
 {
   struct vertex *p;
@@ -242,7 +403,9 @@ insertcusps (struct polyline *contour)
     {
       l = p->line[i];
       if (l->a != p) continue;   /* we want a 'leaving' arc */
-      if (l->cusps <= 0) continue;
+      assert (l->arc->cuspsinserted == 0);
+      l->arc->cuspsinserted = 1;
+      if (l->arc->cusps <= 0) continue;
       iss1 = insert_cusps_on_arc (l);
       assert (iss1 == 0);
     }
@@ -254,16 +417,18 @@ insertcusps (struct polyline *contour)
   {
     if (p->type == V_CROSS) continue;
     l = p->line[1];
-    if (l-> cusps <= 0) continue;
+    if (l->arc->cuspsinserted) continue;
+    l->arc->cuspsinserted = 1;
+    if (l->arc->cusps <= 0) continue;
     iss1 = insert_cusps_on_arc (l);
     assert (iss1);
   }
 
-  /* now check that no cusps remain to be places */
+  /* now check that no cusps remain to be placed */
 
   for (l = contour->line; l; l = l->next)
   {
-    assert (l->cusps == 0);
+    assert (l->arc->cuspsinserted);
   }
 }
 
@@ -272,20 +437,14 @@ insert_cusps_on_arc (struct line *l)
 {
   struct line *wl;
   struct vertex *p;
+  struct arc *arc;
   int cusps, iss1, count, ccount, nnodes;
 
   iss1 = 0;
-  count = 0;                /* count number of nodes */
-  cusps = l->cusps;
-  wl = l;
-  do {
-    wl->cusps = 0;
-    count++;
-    if ((p = wl->b)->type == V_CROSS) break;
-  } while (wl = p->line[1], wl != l);
-
-  if (p->type != V_CROSS) iss1 = 1;
-
+  if (l->a->type != V_CROSS) iss1 = 1;
+  arc = l->arc;
+  count = arc->numsegments;                /* count number of nodes */
+  cusps = arc->cusps;
   nnodes = count/(cusps + 1) + 1;
 
   count = ccount = 0;
@@ -354,26 +513,50 @@ static int allownodered = ALLOW_NODE_REDEFINE;
 static int allownoderedatend = ALLOW_NODE_REDEFINE_AT_END;
 
 void
-tryredistributenodes (struct polyline *contour)
+check_timers (struct polyline *contour)
 {
-  static int count = 0;
+  struct timerevent *timer, *prevtimer, *nexttimer;
+  static int rncount = 0;
+  static int repcount = 0;
+  int tc = 0;
 
-  if (time < timerrn) return;
-  count++;
+  for (timer = timerlist->next; timer; timer = nexttimer)
+  {
+    tc++;
+    nexttimer = timer->next;
+    if (time >= timer->time)
+    {
+      switch (timer->event)
+      {
+        case EVENT_REDISTRIBUTENODES:
+        activate_timer (EVENT_REDISTRIBUTENODES, time + taurn);
+        rncount++;
+        //printf ("would redistribute nodes: %d...(%lf, %lf)\n", rncount, time, taurn);
+        if (allownodered) redistributenodes (contour);
+        break;
 
-  //printf ("would redistribute nodes: %d...\n", count);
-  if (allownodered) redistributenodes (contour);
-  timerrn += taurn;
-}
+        case EVENT_REPULSIVEENERGY:
+        activate_timer (EVENT_REPULSIVEENERGY, time + taurep);
+        repcount++;
+        //printf ("would compute repulsive energy: %d...(%lf, %lf)\n", repcount, time, taurep);
+        compute_repulsive_energy (contour);
+        compute_repulsive_gradient (contour);
+#ifdef CHECK_GRADIENT
+        check_gradient (contour);
+#endif
+        break;
 
-void
-trykick_out (void)
-{
-  if (timerkickout <= 0.0) return;
-  if (time < timerkickout) return;
-
-  kick_out();
-  timerkickout = 0.0;
+        case EVENT_KICKOUT:
+        kick_out(contour);
+        break;
+      }
+      for (prevtimer = timerlist; prevtimer; prevtimer = prevtimer->next)
+      {
+        if (prevtimer->next == timer) prevtimer->next = timer->next;
+      }
+      free (timer);
+    }
+  }
 }
 
 double
@@ -391,9 +574,10 @@ evolve (struct polyline *contour, double incrtime)
   gradient_is_ok = 0;
   while (checktimer())
   {
-    tryredistributenodes (contour);
-    tryrepulsiveenergy (contour);
-    trykick_out ();
+    check_timers (contour);
+    //tryredistributenodes (contour);
+    //tryrepulsiveenergy (contour);
+    //trykick_out (contour);
     time += tau;
     timesteps++;
     if (curenergy == 0.0) curenergy = compute_energy (contour);
@@ -436,14 +620,14 @@ evolve (struct polyline *contour, double incrtime)
  /* automatic step-size control does not work yet! */
       if (fabs(predicted_decrease - decrease) < 0.05*predicted_decrease)
       {
-//        printf ("good prediction, increasing tau\n");
         tau *= 1.1;
+        //printf ("good prediction, increasing tau %lg\n", tau);
       }
 
       if (fabs(predicted_decrease - decrease) > 0.2*predicted_decrease)
       {
-//        printf ("bad prediction, decreasing tau\n");
         tau /= 2;
+        //printf ("bad prediction, decreasing tau, %lg\n", tau);
       }
     }
   }
@@ -580,9 +764,10 @@ redistributenodes (struct polyline *contour)
 {
   struct line *line, *nline, *aline;
   struct vertex *a, *b, *v, *next, *prev;
-  double diffx, diffy, len, alen, h, dt, alpha;
+  double diffx, diffy, len, alen, h, dt;
   int numsub, i, vertexnum, forward, backidx;
   int addednodes = 0, removednodes = 0;
+  int ns;
 
   /* contour->h is the target step size */
 
@@ -618,14 +803,19 @@ redistributenodes (struct polyline *contour)
         for (backidx = 0; backidx < 4; backidx++)
           if (next->line[backidx] == aline) break;
       }
-      alpha = get_alpha (prev, v, next, &len, &alen);
-      if (alpha >= 0.5) printf ("alpha > 0.5\n");
+      ns = aline->arc->numsegments;
+      if (ns < 4)
+      {
+        kick_out(contour);
+        printf ("arc with less than 4 segments\n");
+      }
       diffx = v->x - next->x;
       diffy = v->y - next->y;
       alen = sqrt (diffx*diffx + diffy*diffy);
-      if (alen + len < 0.9*h && alpha < 0.5)   /* can derefine */
+      if (alen + len < 0.9*h && ns >= 4)   /* can derefine */
       { /* aline will be removed! */
         removednodes++;
+        line->arc->numsegments--;
         assert (next->line[backidx] == aline);
         if (forward) line->b = next;
           else line->a = next;
@@ -641,6 +831,7 @@ redistributenodes (struct polyline *contour)
       {
         addednodes++;
         nline = splitline (contour, line, dt/len);
+        line->arc->numsegments++;
         len -= dt;
         line = nline;
       }
@@ -673,7 +864,7 @@ splitline (struct polyline *contour, struct line *line, double f)
   p = newvertex (contour, x, y, V_REGULAR);
   nline = (struct line *) malloc (sizeof (struct line));
   nline->orientation = line->orientation;
-  nline->cusps = line->cusps;
+  nline->arc = line->arc;
   nline->next = line->next;
   nline->a = p;
   nline->b = b;
@@ -699,7 +890,7 @@ getmorseevent (struct morseevent *morseevent)
   int tok;
 
   morseevent->ori = morseevent->ori2 = 0;
-  morseevent->cusps = morseevent->cusps2 = 0;
+  morseevent->arc = morseevent->arc2 = 0;
 
   /* ho gia letto la graffa aperta */
   tok = gettokens (stdin);
@@ -752,19 +943,21 @@ getmorseevent (struct morseevent *morseevent)
 void
 getarcinfo (struct morseevent *morseevent)
 {
-  getoricusps (&morseevent->ori, &morseevent->cusps);
+  getoricusps (&morseevent->ori, &morseevent->arc);
   if (morseevent->type == ME_CROSS)
-    getoricusps (&morseevent->ori2, &morseevent->cusps2);
+    getoricusps (&morseevent->ori2, &morseevent->arc2);
 }
 
 void
-getoricusps (int *oript, int *cuspspt)
+getoricusps (int *oript, struct arc **arcpt)
 {
+  struct arc *arc = 0;
   int tok, prevd;
   int require_rbr = 1;
   int depthind = 0;
 
-  *oript = *cuspspt = 0;
+  assert (*arcpt == 0);
+  assert (*oript == 0);
   tok = gettokens (stdin);
   if (tok == ISNUMBER || tok == KEY_LEFT ||
       tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
@@ -810,7 +1003,13 @@ getoricusps (int *oript, int *cuspspt)
       }
     }
   }
-  if (depthind > 0) *cuspspt = depthind - 1;
+  if (*oript)
+  {
+    arc = *arcpt = (struct arc *) malloc (sizeof (struct arc));
+    arc->cusps = arc->cuspsinserted = 0;
+    arc->first = arc->last = arc->loop = 0;
+  }
+  if (depthind > 0) {assert (arc); arc->cusps = depthind - 1;}
   if (require_rbr == 0)
   {
     ungettoken (tok);
@@ -832,6 +1031,7 @@ newline (struct polyline *contour, struct vertex *a, struct vertex *b)
   line->a = a;
   line->b = b;
   line->orientation = 0;
+  line->arc = 0;
   line->next = contour->line;
   contour->line = line;
   return (line);
@@ -924,7 +1124,7 @@ buildpolyline (void)
   contour->specnodes = 0;
   contour->specnodesnum = 0;
 
-  dx = dy = 1.0;    /* aggiusto alla fine */
+  contour->h = dx = dy = 1.0;    /* aggiusto alla fine */
   i = 0;            /* conta gli eventi su ciascuna riga */
   numrows = 0;            /* conta il numero di righe */
   prevdangnodes = prevdangind = dangind = 0;
@@ -976,7 +1176,7 @@ buildpolyline (void)
                 V_REGULAR);
         line = newline (contour, v2, v1);
         line->orientation = morseevent.ori;
-        line->cusps = morseevent.cusps;
+        line->arc = morseevent.arc;
         v1->line[0] = line;
         v2->line[0] = line;
         danglingnodes[dangind++] = v1;
@@ -990,7 +1190,7 @@ buildpolyline (void)
                 V_REGULAR);
         line = newline (contour, v2, v1);
         line->orientation = morseevent.ori;
-        line->cusps = morseevent.cusps;
+        line->arc = morseevent.arc;
         v1->line[0] = line;
         v2->line[0] = line;
         line = newline (contour, prevdanglingnodes[prevdangind], v1);
@@ -1017,12 +1217,12 @@ buildpolyline (void)
         v3->line[0] = line;
         line = newline (contour, v1, v4);
         line->orientation = morseevent.ori;
-        line->cusps = morseevent.cusps;
+        line->arc = morseevent.arc;
         v1->line[2] = line;
         v4->line[0] = line;
         line = newline (contour, v1, v5);
         line->orientation = morseevent.ori2;
-        line->cusps = morseevent.cusps2;
+        line->arc = morseevent.arc2;
         v1->line[3] = line;
         v5->line[0] = line;
         line = newline (contour, prevdanglingnodes[prevdangind], v2);
@@ -1038,7 +1238,7 @@ buildpolyline (void)
         v2 = newvertex (contour, x, y + TOP_LENGTH*dy, V_REGULAR);
         line = newline (contour, v1, v2);
         line->orientation = morseevent.ori;
-        line->cusps = morseevent.cusps;
+        line->arc = morseevent.arc;
         v1->line[0] = line;
         v2->line[0] = line;
         line = newline (contour, prevdanglingnodes[prevdangind], v1);
@@ -1051,16 +1251,20 @@ buildpolyline (void)
     }
   }
 
+#ifdef RENORMALIZE
   /* rinormalizzazione ascisse e ordinate per stare in [-1,1]x[-1,1] */
   dx = 2.0/(maxrowlen + 1);
   dy = 2.0/numrows;
   contour->h = dx;
   if (dy < dx) contour->h = dy;
+#endif
 
   for (v = contour->vertex; v; v = v->next)
   {
+#ifdef RENORMALIZE
     v->x = dx*v->x - 1.0;
     v->y = 1.0 - dy*v->y;
+#endif
     assert (v->line[0]);
     assert (v->line[1]);
     if (v->type == V_CROSS) assert (v->line[2] && v->line[3]);
@@ -1129,7 +1333,8 @@ inherit_orientation (struct line *line)
     {
       goon = 1;
       wline->orientation = 1;
-      wline->cusps = line->cusps;
+      assert (wline->arc == 0);
+      wline->arc = line->arc;
     }
   }
 
@@ -1151,7 +1356,8 @@ inherit_orientation (struct line *line)
     {
       goon = 1;
       wline->orientation = 1;
-      wline->cusps = line->cusps;
+      assert (wline->arc == 0);
+      wline->arc = line->arc;
     }
   }
 
