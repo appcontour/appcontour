@@ -73,16 +73,22 @@ display (void)
 }
 
 void
+toggle_motion (int toggle)
+{
+  if (toggle) motion = 1 - motion;
+  if (motion) {
+    glutIdleFunc (idle);
+  } else {
+    glutIdleFunc (NULL);
+  }
+}
+
+void
 menu (int value)
 {
   switch (value) {
   case 1:
-    motion = 1 - motion;
-    if (motion) {
-      glutIdleFunc (idle);
-    } else {
-      glutIdleFunc (NULL);
-    }
+    toggle_motion (1);
     break;
 
   case 2:
@@ -102,10 +108,7 @@ void
 visible (int state)
 {
   if (state == GLUT_VISIBLE) {
-    if (motion)
-      glutIdleFunc (idle);
-  } else {
-    glutIdleFunc (NULL);
+    toggle_motion (0);
   }
 }
 

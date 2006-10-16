@@ -21,7 +21,8 @@
 #define ALLOW_BACKSTEP 0
 #define ALLOW_STEPCONTROL 1
 
-#define KICK_OUT_TIME 0.5    /* k^2 only after this time */
+#define KICK_OUT_TIME 50.0    /* k^2 only after this time, relative to dx^2 */
+//#define KICK_OUT_TIME 10000    /* k^2 only after this time */
 
 #define BUFSIZE 1000
 #define REL_H 0.5
@@ -72,7 +73,7 @@ struct polyline *contour;
 static double time;
 static double tau;
 static double taurn;
-double taurep;
+static double taurep;
 static double curenergy = 0.0;
 
 //static double timerrn;
@@ -88,6 +89,7 @@ main (int argc, char *argv[])
   struct line *l;
   struct vertex *v;
   int tok, count, vertexnum;
+  double kick_out_time;
 
   grident = grinit(&argc, argv);
   energyinit ();
@@ -135,7 +137,9 @@ main (int argc, char *argv[])
   tau = tau*tau;
   if (KICK_OUT_TIME > 0.0)
   {
-    activate_timer (EVENT_KICKOUT, KICK_OUT_TIME);
+    kick_out_time = KICK_OUT_TIME*contour->baseh*contour->baseh;
+    printf ("kick_in, out at time %lf\n", kick_out_time);
+    activate_timer (EVENT_KICKOUT, kick_out_time);
     kick_in (contour);
   }
 //  printf ("tau = %lf, taurn = %lf, taurep = %lf\n", tau, taurn, taurep);
@@ -172,12 +176,12 @@ static double k2_coeff_saved;
 static double tau_saved;
 static double h_saved;
 static int kicked_in = 0;
+static int immediate_exit = 0;
 
 void
 kick_in (struct polyline *contour)
 {
   if (kicked_in) {printf ("Warning: already kicked in\n"); return;}
-printf ("kick_in\n");
   kicked_in = 1;
   k2_coeff_saved = k2_coeff;
   k2_coeff = 0;
@@ -505,6 +509,11 @@ checktimer (void)
 {
   struct timeval now;
 
+  if (immediate_exit)
+  {
+    immediate_exit = 0;
+    return (0);
+  }
   gettimeofday (&now, 0);
   return (timercmp (&now, &timer, < ));
 }
@@ -591,7 +600,6 @@ evolve (struct polyline *contour, double incrtime)
     gradient_is_ok = 0;
     newenergy = compute_energy (contour);
     decrease = curenergy - newenergy;
- /* perhaps something is wrong, since this happens too often */
     if (allowbackstep && decrease < 0.0)
     {
 //      fprintf (stderr, "WARNING: energy is increasing!\n");
@@ -618,16 +626,25 @@ evolve (struct polyline *contour, double incrtime)
     if (allowstepcontrol)
     {
  /* automatic step-size control does not work yet! */
-      if (fabs(predicted_decrease - decrease) < 0.05*predicted_decrease)
+      //if (fabs(predicted_decrease - decrease) < 0.05*predicted_decrease)
+      if (decrease > 0.95*predicted_decrease)
       {
         tau *= 1.1;
         //printf ("good prediction, increasing tau %lg\n", tau);
       }
 
-      if (fabs(predicted_decrease - decrease) > 0.2*predicted_decrease)
+      //if (fabs(predicted_decrease - decrease) > 0.2*predicted_decrease)
+      if (decrease < 0.4*predicted_decrease)
       {
-        tau /= 2;
-        //printf ("bad prediction, decreasing tau, %lg\n", tau);
+        if (tau > 1e-12) 
+        {
+          tau /= 2;
+          //printf ("bad prediction, decreasing tau, %lg\n", tau);
+        } else {
+          toggle_motion (1);
+          immediate_exit = 1;
+          printf ("stopping motion due to a very small time step\n");
+        }
       }
     }
   }
@@ -716,6 +733,7 @@ discretizepolyline (struct polyline *contour)
 
   newh = REL_H * contour->h;
   if (newh > MAX_H) newh = MAX_H;
+  contour->baseh = contour->h;
   contour->h = newh;
   for (line = contour->line; line; line = line->next)
   {

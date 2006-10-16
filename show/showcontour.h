@@ -35,6 +35,7 @@ struct polyline {
   struct vertex **specnodes;
   int specnodesnum;
   double h;
+  double baseh;
 };
 
 struct vertex {
@@ -70,6 +71,7 @@ struct arc {
 /* prototypes */
 
 char *grinit (int *argcpt, char *argv[]);
+void toggle_motion (int toggle);
 void grsetresponsivity (double incrtime);
 int grmain (void);
 double evolve (struct polyline *contour, double incrtime);
