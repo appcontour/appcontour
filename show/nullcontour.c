@@ -26,6 +26,11 @@ idle (void)
 {
 }
 
+void
+toggle_motion (int toggle)
+{
+}
+
 char *
 grinit (int *argcpt, char *argv[])
 {
