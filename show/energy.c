@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
 #include "showcontour.h"
@@ -10,7 +11,7 @@
 #define K4_COEFF 1.0     /* arc repulsion */
 #define K5_COEFF 0.0     /* |k| */
 
-#define ALLOW_REPULSION 0
+#define ALLOW_REPULSION 1
 
 #define NODE_SEP 0.4
 #define ORTO_HEAVINESS 2.0

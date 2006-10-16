@@ -17,15 +17,15 @@
 #include "../parser.h"
 
 #define ALLOW_NODE_REDEFINE 1
-#define ALLOW_NODE_REDEFINE_AT_END 0
 #define ALLOW_BACKSTEP 0
-#define ALLOW_STEPCONTROL 1
+#define ALLOW_STEPCONTROL 0
 
-#define KICK_OUT_TIME 50.0    /* k^2 only after this time, relative to dx^2 */
-//#define KICK_OUT_TIME 10000    /* k^2 only after this time */
+//#define KICK_OUT_TIME 50.0    /* k^2 only after this time, relative to dx^2 */
+#define KICK_OUT_TIME 10000    /* k^2 only after this time */
 
 #define BUFSIZE 1000
-#define REL_H 0.5
+//#define REL_H 0.5
+#define REL_H 0.25
 #define MAX_H 0.1
 
 #define ME_TRAN 1
@@ -519,7 +519,6 @@ checktimer (void)
 }
 
 static int allownodered = ALLOW_NODE_REDEFINE;
-static int allownoderedatend = ALLOW_NODE_REDEFINE_AT_END;
 
 void
 check_timers (struct polyline *contour)
@@ -584,9 +583,6 @@ evolve (struct polyline *contour, double incrtime)
   while (checktimer())
   {
     check_timers (contour);
-    //tryredistributenodes (contour);
-    //tryrepulsiveenergy (contour);
-    //trykick_out (contour);
     time += tau;
     timesteps++;
     if (curenergy == 0.0) curenergy = compute_energy (contour);
@@ -650,7 +646,6 @@ evolve (struct polyline *contour, double incrtime)
   }
 //  printf ("timesteps: %d, backsteps: %d, time = %lf, energy = %lf\n", 
 //          timesteps, timebsteps, time, curenergy);
-  if (allownoderedatend) redistributenodes (contour);
   return (time);
 }
 
@@ -861,8 +856,8 @@ redistributenodes (struct polyline *contour)
   contour->gradx = (double *) malloc (vertexnum * sizeof (double));
   contour->grady = (double *) malloc (vertexnum * sizeof (double));
   curenergy = 0.0;
-  // if (addednodes) printf ("added %d nodes\n", addednodes);
-  // if (removednodes) printf ("removed %d nodes\n", removednodes);
+  //if (addednodes) printf ("added %d nodes\n", addednodes);
+  //if (removednodes) printf ("removed %d nodes\n", removednodes);
 }
 
 struct line *
