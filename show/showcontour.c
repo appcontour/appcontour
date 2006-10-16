@@ -18,7 +18,7 @@
 
 #define ALLOW_NODE_REDEFINE 1
 #define ALLOW_BACKSTEP 0
-#define ALLOW_STEPCONTROL 0
+#define ALLOW_STEPCONTROL 1
 
 //#define KICK_OUT_TIME 50.0    /* k^2 only after this time, relative to dx^2 */
 #define KICK_OUT_TIME 10000    /* k^2 only after this time */
@@ -70,7 +70,7 @@ void removenode (struct polyline *contour, struct vertex *v);
 void removeline (struct polyline *contour, struct line *l);
 
 struct polyline *contour;
-static double time;
+//static double time;
 static double tau;
 static double taurn;
 static double taurep;
@@ -131,7 +131,7 @@ main (int argc, char *argv[])
   }
 //  printf ("ci sono %d archi\n", count);
 
-  time = 0.0;
+  contour->time = 0.0;
   tau = contour->h * contour->h;
   taurn = taurep = tau;
   tau = tau*tau;
@@ -143,7 +143,7 @@ main (int argc, char *argv[])
     kick_in (contour);
   }
 //  printf ("tau = %lf, taurn = %lf, taurep = %lf\n", tau, taurn, taurep);
-  activate_timer (EVENT_REDISTRIBUTENODES, time + taurn);
+  activate_timer (EVENT_REDISTRIBUTENODES, contour->time + taurn);
   activate_timer (EVENT_REPULSIVEENERGY, -1.0);    /* must compute immediately */
 
   //evolve (contour, incrtime);
@@ -532,21 +532,21 @@ check_timers (struct polyline *contour)
   {
     tc++;
     nexttimer = timer->next;
-    if (time >= timer->time)
+    if (contour->time >= timer->time)
     {
       switch (timer->event)
       {
         case EVENT_REDISTRIBUTENODES:
-        activate_timer (EVENT_REDISTRIBUTENODES, time + taurn);
+        activate_timer (EVENT_REDISTRIBUTENODES, contour->time + taurn);
         rncount++;
-        //printf ("would redistribute nodes: %d...(%lf, %lf)\n", rncount, time, taurn);
+        //printf ("would redistribute nodes: %d...(%lf, %lf)\n", rncount, contour->time, taurn);
         if (allownodered) redistributenodes (contour);
         break;
 
         case EVENT_REPULSIVEENERGY:
-        activate_timer (EVENT_REPULSIVEENERGY, time + taurep);
+        activate_timer (EVENT_REPULSIVEENERGY, contour->time + taurep);
         repcount++;
-        //printf ("would compute repulsive energy: %d...(%lf, %lf)\n", repcount, time, taurep);
+        //printf ("would compute repulsive energy: %d...(%lf, %lf)\n", repcount, contour->time, taurep);
         compute_repulsive_energy (contour);
         compute_repulsive_gradient (contour);
 #ifdef CHECK_GRADIENT
@@ -572,7 +572,7 @@ evolve (struct polyline *contour, double incrtime)
 {
   double newenergy, decrease, predicted_decrease;
   struct vertex *v;
-  int gradient_is_ok;
+  int gradient_is_ok, gradient_is_reliable;
   int timesteps = 0;
   int timebsteps = 0;
   int allowbackstep = ALLOW_BACKSTEP;
@@ -583,17 +583,20 @@ evolve (struct polyline *contour, double incrtime)
   while (checktimer())
   {
     check_timers (contour);
-    time += tau;
-    timesteps++;
     if (curenergy == 0.0) curenergy = compute_energy (contour);
     if (! gradient_is_ok) compute_gradient (contour);
-
+    timesteps++;
     for (v = contour->vertex; v; v = v->next)
     {
       v->x -= tau*contour->gradx[v->tag];
       v->y -= tau*contour->grady[v->tag];
     }
+    gradient_is_reliable = 1;
+    if (k4_coeff && contour->time != contour->rgradtime) 
+        gradient_is_reliable = 0;
+    contour->time += tau;
     gradient_is_ok = 0;
+    if (k4_coeff && gradient_is_reliable) compute_repulsive_energy (contour);
     newenergy = compute_energy (contour);
     decrease = curenergy - newenergy;
     if (allowbackstep && decrease < 0.0)
@@ -605,7 +608,7 @@ evolve (struct polyline *contour, double incrtime)
         v->x += tau*contour->gradx[v->tag];
         v->y += tau*contour->grady[v->tag];
       }
-      time -= tau;
+      contour->time -= tau;
       timesteps--;
       timebsteps++;
       tau /= 4;
@@ -619,7 +622,7 @@ evolve (struct polyline *contour, double incrtime)
     //printf ("predicted decrease/actual decrease = %lf/%lf = %lf\n",
     //   predicted_decrease, decrease, predicted_decrease/decrease);
 
-    if (allowstepcontrol)
+    if (allowstepcontrol && gradient_is_reliable)
     {
  /* automatic step-size control does not work yet! */
       //if (fabs(predicted_decrease - decrease) < 0.05*predicted_decrease)
@@ -646,7 +649,7 @@ evolve (struct polyline *contour, double incrtime)
   }
 //  printf ("timesteps: %d, backsteps: %d, time = %lf, energy = %lf\n", 
 //          timesteps, timebsteps, time, curenergy);
-  return (time);
+  return (contour->time);
 }
 
 double
@@ -1136,6 +1139,10 @@ buildpolyline (void)
   contour->gradx = contour->grady = 0;
   contour->specnodes = 0;
   contour->specnodesnum = 0;
+  contour->renergy = 0;
+  contour->rgradx = contour->rgrady = 0;
+  contour->rgraddim = 0;
+  contour->rentime = contour->rgradtime = -1.0;
 
   contour->h = dx = dy = 1.0;    /* aggiusto alla fine */
   i = 0;            /* conta gli eventi su ciascuna riga */

@@ -36,6 +36,13 @@ struct polyline {
   int specnodesnum;
   double h;
   double baseh;
+  double time;
+  double rentime;
+  double rgradtime;
+  double renergy;
+  double *rgradx;
+  double *rgrady;
+  int rgraddim;
 };
 
 struct vertex {

@@ -89,10 +89,10 @@ check_gradient (struct polyline *contour)
 }
 #endif
 
-static double *rgradx = 0;
-static double *rgrady = 0;
-static double renergy = 0.0;
-static int rgraddim = 0;
+//static double *rgradx = 0;
+//static double *rgrady = 0;
+//static double renergy = 0.0;
+//static int rgraddim = 0;
 
 /* qui ci sono i contributi delle tre energie */
 
@@ -193,7 +193,7 @@ compute_energy (struct polyline *contour)
 
   if (allowrepulsion)
   {
-    energy4 = k4_coeff*renergy;
+    energy4 = k4_coeff*contour->renergy;
   }
 
   /* fifth contribution: integral of |k| */
@@ -394,8 +394,8 @@ compute_gradient (struct polyline *contour)
     // compute_repulsive_gradient (contour);
     for (a = contour->vertex; a; a = a->next)
     {
-      gradx[a->tag] += k4_coeff*rgradx[a->tag];
-      grady[a->tag] += k4_coeff*rgrady[a->tag];
+      gradx[a->tag] += k4_coeff*contour->rgradx[a->tag];
+      grady[a->tag] += k4_coeff*contour->rgrady[a->tag];
     }
   }
 
@@ -447,6 +447,8 @@ compute_repulsive_energy (struct polyline *contour)
   double dd, dsq, f1, f2, f3;
   double energy = 0;
 
+  contour->rentime = contour->time;
+
   for (s1 = contour->line; s1; s1 = s1->next)
   {
     a = s1->a;
@@ -469,7 +471,7 @@ compute_repulsive_energy (struct polyline *contour)
       energy += fabs(f1*f2*f3);
     }
   }
-  renergy = energy;
+  contour->renergy = energy;
   return (energy);
 }
 
@@ -482,17 +484,22 @@ compute_repulsive_gradient (struct polyline *contour)
   double dd, dsq, f1, f2, f3;
   double fpond, e, ds1ex, ds1ey, ds2ex, ds2ey, hdpex, hdpey;
   int taga, tagb, tagc, tagd, i, signf1, signf2;
+  double *rgradx, *rgrady;
 
-  if (rgraddim != contour->numvertices || rgradx == 0 || rgrady == 0)
+  contour->rgradtime = contour->time;
+  rgradx = contour->rgradx;
+  rgrady = contour->rgrady;
+
+  if (contour->rgraddim != contour->numvertices || rgradx == 0 || rgrady == 0)
   {
     if (rgradx) free (rgradx);
     if (rgrady) free (rgrady);
-    rgraddim = contour->numvertices;
-    rgradx = (double *) malloc (rgraddim * sizeof (double));
-    rgrady = (double *) malloc (rgraddim * sizeof (double));
+    contour->rgraddim = contour->numvertices;
+    rgradx = contour->rgradx = (double *) malloc (contour->rgraddim * sizeof (double));
+    rgrady = contour->rgrady = (double *) malloc (contour->rgraddim * sizeof (double));
   }
 
-  for (i = 0; i < rgraddim; i++)
+  for (i = 0; i < contour->rgraddim; i++)
   {
     rgradx[i] = rgrady[i] = 0.0;
   }
