@@ -43,7 +43,6 @@ void kick_out (struct polyline *contour);
 void activate_timer (int event, double time);
 void parseargs (int argc, char *argv[]);
 void test_contour (struct polyline *contour);
-double normsq (double *x, int dim);
 void reorder_node_ptr (struct polyline *contour);
 int settags (struct polyline *contour);
 double getlen (struct line *line);

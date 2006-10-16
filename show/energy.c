@@ -8,7 +8,7 @@
 #define K1_COEFF 1.0     /* perimeter */
 #define K2_COEFF 0.1     /* k^2 */
 #define K3_COEFF 0.7     /* cross+cusp repulsion */
-#define K4_COEFF 1.0     /* arc repulsion */
+#define K4_COEFF 0.1     /* arc repulsion */
 #define K5_COEFF 0.0     /* |k| */
 
 #define ALLOW_REPULSION 1
@@ -24,10 +24,6 @@
  * segments.  The energy associated with cusps should be modified in order
  * to avoid such tendency
  */
-
-#ifdef CHECK_GRADIENT
-void check_gradient (struct polyline *contour);
-#endif
 
 //extern int test;
 extern double time;
@@ -438,6 +434,7 @@ compute_gradient (struct polyline *contour)
 
 /* this shouldn't be computed at each time step! */
 
+#ifdef OLDREPEN
 double
 compute_repulsive_energy (struct polyline *contour)
 {
@@ -558,6 +555,149 @@ compute_repulsive_gradient (struct polyline *contour)
   return;
 }
 
+#else
+
+double
+compute_repulsive_energy (struct polyline *contour)
+{
+  struct line *s1, *s2;
+  struct vertex *a, *b, *c, *d;
+  double s1x, s1y, s2x, s2y, acx, acy, adx, ady, bcx, bcy, bdx, bdy;
+  double s1l, s2l, acl, adl, bcl, bdl, energy;
+
+  contour->rentime = contour->time;
+
+  energy = 0.0;
+  for (s1 = contour->line; s1; s1 = s1->next)
+  {
+    a = s1->a;
+    b = s1->b;
+    s1x = b->x - a->x;
+    s1y = b->y - a->y;
+    s1l = sqrt (s1x*s1x + s1y*s1y);
+    for (s2 = s1->next; s2; s2 = s2->next)
+    {
+      c = s2->a;
+      d = s2->b;
+      s2x = d->x - c->x;
+      s2y = d->y - c->y;
+      acx = a->x - c->x;
+      acy = a->y - c->y;
+      adx = a->x - d->x;
+      ady = a->y - d->y;
+      bcx = b->x - c->x;
+      bcy = b->y - c->y;
+      bdx = b->x - d->x;
+      bdy = b->y - d->y;
+      acl = sqrt (acx*acx + acy*acy);
+      adl = sqrt (adx*adx + ady*ady);
+      bcl = sqrt (bcx*bcx + bcy*bcy);
+      bdl = sqrt (bdx*bdx + bdy*bdy);
+      if (acl == 0.0 || adl == 0.0 || bcl == 0.0 || bdl == 0.0) continue;
+      s2l = sqrt (s2x*s2x + s2y*s2y);
+
+      energy += s1l*s2l*(
+        repulsive_field2 (acl) +
+        repulsive_field2 (adl) +
+        repulsive_field2 (bcl) +
+        repulsive_field2 (bdl) );
+    }
+  }
+  contour->renergy = energy;
+  return (energy);
+}
+
+void
+compute_repulsive_gradient (struct polyline *contour)
+{
+  struct line *s1, *s2;
+  struct vertex *a, *b, *c, *d;
+  double abx, aby, cdx, cdy, acx, acy, adx, ady, bcx, bcy, bdx, bdy;
+  double abl, cdl, acl, adl, bcl, bdl;
+  double f1, f3, fpac, fpad, fpbc, fpbd;
+  int taga, tagb, tagc, tagd, i;
+  double *rgradx, *rgrady;
+
+  contour->rgradtime = contour->time;
+  rgradx = contour->rgradx;
+  rgrady = contour->rgrady;
+
+  if (contour->rgraddim != contour->numvertices || rgradx == 0 || rgrady == 0)
+  {
+    if (rgradx) free (rgradx);
+    if (rgrady) free (rgrady);
+    contour->rgraddim = contour->numvertices;
+    rgradx = contour->rgradx = (double *) malloc (contour->rgraddim * sizeof (double));
+    rgrady = contour->rgrady = (double *) malloc (contour->rgraddim * sizeof (double));
+  }
+
+  for (i = 0; i < contour->rgraddim; i++)
+  {
+    rgradx[i] = rgrady[i] = 0.0;
+  }
+  
+  for (s1 = contour->line; s1; s1 = s1->next)
+  {
+    a = s1->a;
+    b = s1->b;
+    abx = a->x - b->x;
+    aby = a->y - b->y;
+    abl = sqrt (abx*abx + aby*aby);
+    taga = a->tag;
+    tagb = b->tag;
+    for (s2 = s1->next; s2; s2 = s2->next)
+    {
+      c = s2->a;
+      d = s2->b;
+      cdx = c->x - d->x;
+      cdy = c->y - d->y;
+      acx = a->x - c->x;
+      acy = a->y - c->y;
+      adx = a->x - d->x;
+      ady = a->y - d->y;
+      bcx = b->x - c->x;
+      bcy = b->y - c->y;
+      bdx = b->x - d->x;
+      bdy = b->y - d->y;
+      acl = sqrt (acx*acx + acy*acy);
+      adl = sqrt (adx*adx + ady*ady);
+      bcl = sqrt (bcx*bcx + bcy*bcy);
+      bdl = sqrt (bdx*bdx + bdy*bdy);
+      if (acl == 0.0 || adl == 0.0 || bcl == 0.0 || bdl == 0.0) continue;
+      cdl = sqrt (cdx*cdx + cdy*cdy);
+      tagc = c->tag;
+      tagd = d->tag;
+      f3 = repulsive_field2 (acl) + repulsive_field2 (adl) +
+           repulsive_field2 (bcl) + repulsive_field2 (bdl);
+
+      rgradx[tagd] -= abl*f3*cdx/cdl;
+      rgrady[tagd] -= abl*f3*cdy/cdl;
+      rgradx[tagc] += abl*f3*cdx/cdl;
+      rgrady[tagc] += abl*f3*cdy/cdl;
+      rgradx[tagb] -= cdl*f3*abx/abl;
+      rgrady[tagb] -= cdl*f3*aby/abl;
+      rgradx[taga] += cdl*f3*abx/abl;
+      rgrady[taga] += cdl*f3*aby/abl;
+
+      f1 = abl*cdl;
+      fpad = repulsive_force2 (adl);
+      fpbd = repulsive_force2 (bdl);
+      fpac = repulsive_force2 (acl);
+      fpbc = repulsive_force2 (bcl);
+      rgradx[tagd] -= f1*(fpad*adx + fpbd*bdx);
+      rgrady[tagd] -= f1*(fpad*ady + fpbd*bdy);
+      rgradx[tagc] -= f1*(fpac*acx + fpbc*bcx);
+      rgrady[tagc] -= f1*(fpac*acy + fpbc*bcy);
+      rgradx[tagb] += f1*(fpbc*bcx + fpbd*bdx);
+      rgrady[tagb] += f1*(fpbc*bcy + fpbd*bdy);
+      rgradx[taga] += f1*(fpac*acx + fpad*adx);
+      rgrady[taga] += f1*(fpac*acy + fpad*ady);
+    }
+  }
+  return;
+}
+#endif
+
 double
 repulsive_field (double dist)
 {
@@ -582,6 +722,35 @@ repulsive_force (double dist)
   {
     fct = (NODE_SEP - dist)/dist;
     return (- fct*(2 + fct)/dist);
+  }
+  return (0.0);
+}
+
+double
+repulsive_field2 (double dist)
+{
+  if (dist < NODE_SEP)
+  {
+    return ((NODE_SEP - dist)*(NODE_SEP - dist)/(dist*dist));
+  }
+  return (0.0);
+}
+
+/*
+ * this is actually the derivative of the field with respect to
+ * dist divided by dist
+ */
+
+double
+repulsive_force2 (double dist)
+{
+  double dsqsq;
+
+  if (dist < NODE_SEP)
+  {
+    dsqsq = dist*dist;
+    dsqsq = dsqsq*dsqsq;
+    return (2*NODE_SEP*(dist - NODE_SEP)/dsqsq);
   }
   return (0.0);
 }

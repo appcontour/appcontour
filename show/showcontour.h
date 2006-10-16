@@ -7,7 +7,7 @@
 #define EVENT_REPULSIVEENERGY 2
 #define EVENT_KICKOUT 3
 
-//#define CHECK_GRADIENT 1
+#define CHECK_GRADIENT 1
 
 struct morseevent {
   int type;
@@ -84,4 +84,8 @@ int grmain (void);
 double evolve (struct polyline *contour, double incrtime);
 struct line *nextp (struct line *l, struct vertex *p);
 struct line *prevp (struct line *l, struct vertex *p);
+double normsq (double *x, int dim);
+#ifdef CHECK_GRADIENT
+void check_gradient (struct polyline *contour);
+#endif
 
