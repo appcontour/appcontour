@@ -53,6 +53,7 @@ struct line *newline (struct polyline *contour,
 int inherit_orientation (struct line *line);
 void setarcinfo (struct polyline *contour);
 int setarcinfo1 (struct line *l);
+struct arc *mergearcinfo (struct arc *arc1, struct arc *arc2);
 void check_contour (struct polyline *contour);
 void insertcusps (struct polyline *contour);
 int insert_cusps_on_arc (struct line *l);
@@ -365,8 +366,8 @@ setarcinfo1 (struct line *l)
     count++;
     if (wl->arc != firstarc)
     {
-      fprintf (stderr, "duplicate arc info\n");
-      wl->arc = firstarc;
+      wl->arc = mergearcinfo (firstarc, wl->arc);
+      if (wl->arc) wl->arc->refcount++;
       /* note: cannot free memory, because this can be pointed
        * by other segments, this is a small memory leak
        */
@@ -379,6 +380,27 @@ setarcinfo1 (struct line *l)
   firstarc->numsegments = count;
   if (firstarc->loop) return (1);
   return (0);
+}
+
+struct arc *
+mergearcinfo (struct arc *arc1, struct arc *arc2)
+{
+  int conflict = 0;
+
+  //fprintf (stderr, "duplicate arc info\n");
+  //if (arc1->orientation != arc2->orientation) conflict++;
+  if (arc1->cusps != arc2->cusps) conflict++;
+
+  /* should check also all other information */
+  if (conflict > 0)
+  {
+    fprintf (stderr, "conflicting information for same arc!\n");
+    exit (111);
+  }
+  arc1->numsegments += arc2->numsegments;
+  arc2->refcount--;
+  if (arc2->refcount <= 0) free (arc2);
+  return (arc1);
 }
 
 void
@@ -871,6 +893,7 @@ splitline (struct polyline *contour, struct line *line, double f)
   nline = (struct line *) malloc (sizeof (struct line));
   nline->orientation = line->orientation;
   nline->arc = line->arc;
+  nline->arc->refcount++;
   nline->next = line->next;
   nline->a = p;
   nline->b = b;
@@ -932,20 +955,19 @@ removeline (struct polyline *contour, struct line *line)
   if (contour->line == line)
   {
     contour->line = line->next;
-    free (line);
-    return;
   } else {
     for (l = contour->line; l; l = l->next)
     {
       if (l->next == line)
       {
         l->next = line->next;
-        free (line);
-        return;
+        break;
       }
     }
   }
-  assert (0);
+  line->arc->refcount--;
+  if (line->arc->refcount <= 0) free (line->arc);
+  free (line);
 }
 
 void
@@ -972,19 +994,23 @@ removenode (struct polyline *contour, struct vertex *node)
   assert (0);
 }
 
+#define NEWNEW 1
 struct polyline *
 buildpolyline (void)
 {
-  double dx, dy, x, y;
+  double dx, dy, dx1, dy1, dx2, dy2, x, y;
   struct morseevent morseevent;
   struct vertex *danglingnodes[BUFSIZE];
   struct vertex *prevdanglingnodes[BUFSIZE];
-  struct vertex *v1, *v2, *v3, *v4, *v5, *v;
-  struct line *line;
+  struct vertex *v1, *v2, *v3, *v4, *v5, *v, *dangv;
+  struct line *line, *dangline;
   struct polyline *contour;
-  int goon, i, k, prevdangnodes, dangind, prevdangind;
-  int numrows = 0, maxrowlen = 0, oriented;
+  int goon, i, ii, k, prevdangnodes, dangind, prevdangind;
+  int numrows = 0, maxrowlen = 0, oriented, dangori;
   int counttrans = 0;
+#ifdef NEWNEW
+  int start;
+#endif
 
   contour = (struct polyline *) malloc (sizeof (struct polyline));
   contour->vertex = 0;
@@ -1002,15 +1028,72 @@ buildpolyline (void)
   numrows = 0;            /* conta il numero di righe */
   prevdangnodes = prevdangind = dangind = 0;
   y = x = 0.0;
+  dx1 = dx2 = dy1 = dy2 = 0.0;
   goon = 1;
   while (goon)
   {
     i++;
     x += dx;
+#ifdef NEWNEW
+    y -= dy;
+#endif
     getmorseevent (&morseevent, 1);
     if (morseevent.type != ME_TRAN)
     {
+      start = 1;
+      switch (morseevent.type)
+      {
+        case ME_TOP:
+          dx1 = dx2 = 0.0;
+          dy1 = dy2 = dy;
+          break;
+        case ME_BOT:
+          dx1 = dx2 = dx;
+          dy1 = dy2 = 0.0;
+          break;
+        case ME_CROSS:
+          dx1 = dx;
+          dy2 = dy;
+          dx2 = dy1 = 0.0;
+          break;
+
+        case ME_NEWROW:
+        case ME_LASTROW:
+          start = 0;
+          dx1 = dx - dx1;
+          dx2 = dx - dx2;
+          dy1 = dy - dy1;
+          dy2 = dy - dy2;
+          break;
+      }
+#ifdef NEWNEW
+      if (start)
+      {
+        x += dx1 + dx2;
+        y += dy1 + dy2;
+      }
+#endif
       // printf ("counted %d consecutive trans\n", counttrans);
+      prevdangind -= counttrans;
+      x -= counttrans*dx;
+#ifdef NEWNEW
+      y += counttrans*dy;
+#endif
+      for (ii = 0; ii < counttrans; ii++)
+      {
+        v1 = newvertex (contour, x, y - TOP_LENGTH*dy, V_REGULAR);
+        v2 = newvertex (contour, x, y + TOP_LENGTH*dy, V_REGULAR);
+        line = newline (contour, v1, v2);
+        v1->line[0] = line;
+        v2->line[0] = line;
+        line = newline (contour, prevdanglingnodes[prevdangind], v1);
+        v1->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
+        danglingnodes[dangind++] = v2;
+        x += dx;
+#ifdef NEWNEW
+        y -= dy;
+#endif
+      }
       counttrans = 0;
     }
     switch (morseevent.type)
@@ -1029,8 +1112,14 @@ buildpolyline (void)
         break;
 
       case ME_NEWROW:
+#ifdef NEWNEW
+        y += i*dy;
+        x -= i*dx;
+printf ("newrow, i = %d, x = %lf, y = %lf\n", i, x, y);
+#else
         y += dy;
         x = 0.0;
+#endif
         numrows++; i--;
         if (i > maxrowlen) maxrowlen = i;
         i = 0;
@@ -1055,6 +1144,7 @@ buildpolyline (void)
         line = newline (contour, v2, v1);
         line->orientation = morseevent.ori;
         line->arc = morseevent.arc;
+        if (line->arc) line->arc->refcount++;
         v1->line[0] = line;
         v2->line[0] = line;
         danglingnodes[dangind++] = v1;
@@ -1069,6 +1159,7 @@ buildpolyline (void)
         line = newline (contour, v2, v1);
         line->orientation = morseevent.ori;
         line->arc = morseevent.arc;
+        if (line->arc) line->arc->refcount++;
         v1->line[0] = line;
         v2->line[0] = line;
         line = newline (contour, prevdanglingnodes[prevdangind], v1);
@@ -1096,11 +1187,13 @@ buildpolyline (void)
         line = newline (contour, v1, v4);
         line->orientation = morseevent.ori;
         line->arc = morseevent.arc;
+        if (line->arc) line->arc->refcount++;
         v1->line[2] = line;
         v4->line[0] = line;
         line = newline (contour, v1, v5);
         line->orientation = morseevent.ori2;
         line->arc = morseevent.arc2;
+        if (line->arc) line->arc->refcount++;
         v1->line[3] = line;
         v5->line[0] = line;
         line = newline (contour, prevdanglingnodes[prevdangind], v2);
@@ -1119,16 +1212,29 @@ buildpolyline (void)
          * all other work should be moved in the above
          * section cumulatively
          */
-        v1 = newvertex (contour, x, y - TOP_LENGTH*dy, V_REGULAR);
-        v2 = newvertex (contour, x, y + TOP_LENGTH*dy, V_REGULAR);
-        line = newline (contour, v1, v2);
-        line->orientation = morseevent.ori;
-        line->arc = morseevent.arc;
-        v1->line[0] = line;
-        v2->line[0] = line;
-        line = newline (contour, prevdanglingnodes[prevdangind], v1);
-        v1->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
-        danglingnodes[dangind++] = v2;
+        dangv = prevdanglingnodes[prevdangind++];
+        dangline = dangv->line[0];
+        dangori = dangline->orientation;
+        if (dangline->b != dangv) dangori *= -1;
+        if (morseevent.arc) morseevent.arc->refcount++;
+        if (morseevent.ori*dangori != 0
+            && morseevent.ori != dangori)
+          fprintf (stderr, "Conflicting orientation!\n");
+        if (dangline->arc == 0) dangline->arc = morseevent.arc;
+          else if (morseevent.arc) 
+            dangline->arc = mergearcinfo (dangline->arc, morseevent.arc);
+        if (dangline->orientation == 0) 
+          dangline->orientation = morseevent.ori;
+        if (dangline->b != dangv) dangline->orientation *= -1;
+
+//        v1 = newvertex (contour, x, y - TOP_LENGTH*dy, V_REGULAR);
+//        v2 = newvertex (contour, x, y + TOP_LENGTH*dy, V_REGULAR);
+//        line = newline (contour, v1, v2);
+//        v1->line[0] = line;
+//        v2->line[0] = line;
+//        line = newline (contour, prevdanglingnodes[prevdangind-1], v1);
+//        v1->line[1] = prevdanglingnodes[prevdangind-1]->line[1] = line;
+//        danglingnodes[dangind++] = v2;
         break;
 
       default:
@@ -1220,6 +1326,7 @@ inherit_orientation (struct line *line)
       wline->orientation = 1;
       assert (wline->arc == 0);
       wline->arc = line->arc;
+      wline->arc->refcount++;
     }
   }
 
@@ -1243,6 +1350,7 @@ inherit_orientation (struct line *line)
       wline->orientation = 1;
       assert (wline->arc == 0);
       wline->arc = line->arc;
+      wline->arc->refcount++;
     }
   }
 

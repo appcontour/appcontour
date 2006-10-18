@@ -53,7 +53,7 @@ struct line {
 };
 
 struct arc {
-  int type;
+  //int type;
   int orientation;
   int cusps;
   int numsegments;
@@ -62,6 +62,7 @@ struct arc {
   struct line *last;
   struct line *loop;
   struct arc *next;
+  int refcount;
 };
 
 /* prototypes */
