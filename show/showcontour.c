@@ -22,11 +22,11 @@
 #define ALLOW_STEPCONTROL 1
 
 //#define KICK_OUT_TIME 50.0    /* k^2 only after this time, relative to dx^2 */
-#define KICK_OUT_TIME 10000    /* k^2 only after this time */
+#define KICK_OUT_TIME 0.0
 
 #define BUFSIZE 1000
-//#define REL_H 0.5
-#define REL_H 0.25
+#define REL_H 0.5
+//#define REL_H 0.25
 #define MAX_H 0.1
 
 #define TOP_LENGTH 0.25
@@ -994,23 +994,20 @@ removenode (struct polyline *contour, struct vertex *node)
   assert (0);
 }
 
-#define NEWNEW 1
 struct polyline *
 buildpolyline (void)
 {
-  double dx, dy, dx1, dy1, dx2, dy2, x, y;
+  double dx, dy, dx1, dy1, dx12, dy12, x, y, xstart, ystart;
+  double xmax, xmin, ymax, ymin;
   struct morseevent morseevent;
   struct vertex *danglingnodes[BUFSIZE];
   struct vertex *prevdanglingnodes[BUFSIZE];
-  struct vertex *v1, *v2, *v3, *v4, *v5, *v, *dangv;
+  struct vertex *v1, *v2, *v4, *v5, *v, *dangv;
   struct line *line, *dangline;
   struct polyline *contour;
   int goon, i, ii, k, prevdangnodes, dangind, prevdangind;
-  int numrows = 0, maxrowlen = 0, oriented, dangori;
-  int counttrans = 0;
-#ifdef NEWNEW
-  int start;
-#endif
+  int oriented, dangori;
+  int counttrans = 0, after;
 
   contour = (struct polyline *) malloc (sizeof (struct polyline));
   contour->vertex = 0;
@@ -1025,64 +1022,69 @@ buildpolyline (void)
 
   contour->h = dx = dy = 1.0;    /* aggiusto alla fine */
   i = 0;            /* conta gli eventi su ciascuna riga */
-  numrows = 0;            /* conta il numero di righe */
   prevdangnodes = prevdangind = dangind = 0;
-  y = x = 0.0;
-  dx1 = dx2 = dy1 = dy2 = 0.0;
+  y = x = ystart = xstart = 0.0;
+  dx1 = dx12 = dy1 = dy12 = 0.0;
   goon = 1;
+  after = 0;
   while (goon)
   {
     i++;
     x += dx;
-#ifdef NEWNEW
     y -= dy;
-#endif
     getmorseevent (&morseevent, 1);
     if (morseevent.type != ME_TRAN)
     {
-      start = 1;
       switch (morseevent.type)
       {
         case ME_TOP:
-          dx1 = dx2 = 0.0;
-          dy1 = dy2 = dy;
+        case ME_BOT:
+        case ME_CROSS:
+          assert (after == 0);
+          after = 1;
+          break;
+      }
+      switch (morseevent.type)
+      {
+        case ME_TOP:
+          dx1 = dx12 = 0.0;
+          dy1 = dy;
+          dy12 = 2*dy;
           break;
         case ME_BOT:
-          dx1 = dx2 = dx;
-          dy1 = dy2 = 0.0;
+          dx1 = dx;
+          dx12 = 2*dx;
+          dy1 = dy12 = 0.0;
           break;
         case ME_CROSS:
-          dx1 = dx;
-          dy2 = dy;
-          dx2 = dy1 = 0.0;
+          dx1 = dx12 = dx;
+          dy1 = 0.0;
+          dy12 = dy;
           break;
 
         case ME_NEWROW:
         case ME_LASTROW:
-          start = 0;
-          dx1 = dx - dx1;
-          dx2 = dx - dx2;
-          dy1 = dy - dy1;
-          dy2 = dy - dy2;
+          if (after)
+          {
+            after = 0;
+            dx1 = dx - dx1;
+            dy1 = dy - dy1;
+            dx12 = 2*dx - dx12;
+            dy12 = 2*dy - dy12;
+          } else {
+            counttrans = 0;
+            morseevent.type = ME_RESET;
+          }
           break;
       }
-#ifdef NEWNEW
-      if (start)
-      {
-        x += dx1 + dx2;
-        y += dy1 + dy2;
-      }
-#endif
       // printf ("counted %d consecutive trans\n", counttrans);
       prevdangind -= counttrans;
       x -= counttrans*dx;
-#ifdef NEWNEW
       y += counttrans*dy;
-#endif
       for (ii = 0; ii < counttrans; ii++)
       {
-        v1 = newvertex (contour, x, y - TOP_LENGTH*dy, V_REGULAR);
-        v2 = newvertex (contour, x, y + TOP_LENGTH*dy, V_REGULAR);
+        v1 = newvertex (contour, x + dx1, y + dy1, V_REGULAR);
+        v2 = newvertex (contour, x + dx12, y + dy12, V_REGULAR);
         line = newline (contour, v1, v2);
         v1->line[0] = line;
         v2->line[0] = line;
@@ -1090,9 +1092,7 @@ buildpolyline (void)
         v1->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
         danglingnodes[dangind++] = v2;
         x += dx;
-#ifdef NEWNEW
         y -= dy;
-#endif
       }
       counttrans = 0;
     }
@@ -1101,7 +1101,6 @@ buildpolyline (void)
       case ME_LASTROW:
         goon = 0;
         i--;
-        if (i > maxrowlen) maxrowlen = i;
         if (prevdangnodes != prevdangind)
         {
           fprintf (stderr, "dangling nodes: prev = %d, current = %d\n",
@@ -1112,16 +1111,11 @@ buildpolyline (void)
         break;
 
       case ME_NEWROW:
-#ifdef NEWNEW
-        y += i*dy;
-        x -= i*dx;
-printf ("newrow, i = %d, x = %lf, y = %lf\n", i, x, y);
-#else
-        y += dy;
-        x = 0.0;
-#endif
-        numrows++; i--;
-        if (i > maxrowlen) maxrowlen = i;
+        xstart += 2*dx - dx12;
+        ystart += 2*dy - dy12;
+        x = xstart;
+        y = ystart;
+        i--;
         i = 0;
         if (prevdangnodes != prevdangind)
         {
@@ -1137,53 +1131,42 @@ printf ("newrow, i = %d, x = %lf, y = %lf\n", i, x, y);
         break;
 
       case ME_TOP:
-        v1 = newvertex (contour, x - TOP_LENGTH*dx, y + TOP_LENGTH*dy,
-                V_REGULAR);
-        v2 = newvertex (contour, x + TOP_LENGTH*dx, y + TOP_LENGTH*dy,
-                V_REGULAR);
-        line = newline (contour, v2, v1);
+        x -= dx;
+        y += dy;
+        v = newvertex (contour, x + dx, y, V_REGULAR);
+        v1 = newvertex (contour, x + dx, y + dy, V_REGULAR);
+        v2 = newvertex (contour, x + 2*dx, y, V_REGULAR);
+        line = newline (contour, v, v1);
         line->orientation = morseevent.ori;
         line->arc = morseevent.arc;
         if (line->arc) line->arc->refcount++;
         v1->line[0] = line;
+        v->line[0] = line;
+        line = newline (contour, v, v2);
         v2->line[0] = line;
+        v->line[1] = line;
         danglingnodes[dangind++] = v1;
         danglingnodes[dangind++] = v2;
         break;
-
       case ME_BOT:
-        v1 = newvertex (contour, x - TOP_LENGTH*dx, y - TOP_LENGTH*dy,
-                V_REGULAR);
-        v2 = newvertex (contour, x + TOP_LENGTH*dx, y - TOP_LENGTH*dy,
-                V_REGULAR);
-        line = newline (contour, v2, v1);
+        x += dx;
+        y -= dy;
+        v = newvertex (contour, x, y + dy, V_REGULAR);
+        line = newline (contour, prevdanglingnodes[prevdangind], v);
+        v->line[0] = prevdanglingnodes[prevdangind++]->line[1] = line;
+        line = newline (contour, prevdanglingnodes[prevdangind], v);
         line->orientation = morseevent.ori;
         line->arc = morseevent.arc;
         if (line->arc) line->arc->refcount++;
-        v1->line[0] = line;
-        v2->line[0] = line;
-        line = newline (contour, prevdanglingnodes[prevdangind], v1);
-        v1->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
-        line = newline (contour, prevdanglingnodes[prevdangind], v2);
-        v2->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
+        v->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
         break;
 
       case ME_CROSS:
-        v1 = newvertex (contour, x, y, V_CROSS);
-        v2 = newvertex (contour, x - TOP_LENGTH*dx, y - TOP_LENGTH*dy,
-                V_REGULAR);
-        v3 = newvertex (contour, x + TOP_LENGTH*dx, y - TOP_LENGTH*dy,
-                V_REGULAR);
-        v4 = newvertex (contour, x - TOP_LENGTH*dx, y + TOP_LENGTH*dy,
-                V_REGULAR);
-        v5 = newvertex (contour, x + TOP_LENGTH*dx, y + TOP_LENGTH*dy,
-                V_REGULAR);
-        line = newline (contour, v2, v1);
-        v1->line[0] = line;
-        v2->line[0] = line;
-        line = newline (contour, v3, v1);
-        v1->line[1] = line;
-        v3->line[0] = line;
+        x += dx;
+        y -= dy;
+        v1 = newvertex (contour, x, y + dy, V_CROSS);
+        v4 = newvertex (contour, x, y + 2*dy, V_REGULAR);
+        v5 = newvertex (contour, x + dx, y + dy, V_REGULAR);
         line = newline (contour, v1, v4);
         line->orientation = morseevent.ori;
         line->arc = morseevent.arc;
@@ -1196,20 +1179,20 @@ printf ("newrow, i = %d, x = %lf, y = %lf\n", i, x, y);
         if (line->arc) line->arc->refcount++;
         v1->line[3] = line;
         v5->line[0] = line;
-        line = newline (contour, prevdanglingnodes[prevdangind], v2);
-        v2->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
-        line = newline (contour, prevdanglingnodes[prevdangind], v3);
-        v3->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
+        line = newline (contour, prevdanglingnodes[prevdangind], v1);
+        v1->line[0] = prevdanglingnodes[prevdangind++]->line[1] = line;
+        line = newline (contour, prevdanglingnodes[prevdangind], v1);
+        v1->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
         danglingnodes[dangind++] = v4;
         danglingnodes[dangind++] = v5;
         break;
 
       case ME_TRAN:
         counttrans++;
-        /* in prospect, we want here only to deal with
+        /* we want here only to deal with
          * the (possible) arc information, attaching it
          * to dangling and already defined arcs
-         * all other work should be moved in the above
+         * all other work has been moved in the above
          * section cumulatively
          */
         dangv = prevdanglingnodes[prevdangind++];
@@ -1227,14 +1210,12 @@ printf ("newrow, i = %d, x = %lf, y = %lf\n", i, x, y);
           dangline->orientation = morseevent.ori;
         if (dangline->b != dangv) dangline->orientation *= -1;
 
-//        v1 = newvertex (contour, x, y - TOP_LENGTH*dy, V_REGULAR);
-//        v2 = newvertex (contour, x, y + TOP_LENGTH*dy, V_REGULAR);
-//        line = newline (contour, v1, v2);
-//        v1->line[0] = line;
-//        v2->line[0] = line;
-//        line = newline (contour, prevdanglingnodes[prevdangind-1], v1);
-//        v1->line[1] = prevdanglingnodes[prevdangind-1]->line[1] = line;
-//        danglingnodes[dangind++] = v2;
+        break;
+
+      case ME_RESET:
+        x = xstart;
+        y = ystart;
+        prevdangind = dangind = 0;
         break;
 
       default:
@@ -1242,10 +1223,20 @@ printf ("newrow, i = %d, x = %lf, y = %lf\n", i, x, y);
     }
   }
 
+  /* compute containing rectangle */
+  xmax = xmin = contour->vertex->x;
+  ymax = ymin = contour->vertex->y;
+  for (v = contour->vertex; v; v = v->next)
+  {
+    if (xmax < v->x) xmax = v->x;
+    if (xmin > v->x) xmin = v->x;
+    if (ymax < v->y) ymax = v->y;
+    if (ymin > v->y) ymin = v->y;
+  }
 #ifdef RENORMALIZE
   /* rinormalizzazione ascisse e ordinate per stare in [-1,1]x[-1,1] */
-  dx = 2.0/(maxrowlen + 1);
-  dy = 2.0/numrows;
+  dx = 2.0/(xmax - xmin);
+  dy = 2.0/(ymax - ymin);
   contour->h = dx;
   if (dy < dx) contour->h = dy;
 #endif

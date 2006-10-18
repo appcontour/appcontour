@@ -7,8 +7,8 @@
 extern struct polyline *contour;
 
 static double incrtime = 0.25;
-//static int motion = 1;
-static int motion = 0;     /* for now start with no motion */
+static int motion = 1;
+//static int motion = 0;     /* for now start with no motion */
 
 #define SIZE 0.015
 

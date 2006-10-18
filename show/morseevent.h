@@ -4,6 +4,7 @@
 #define ME_CROSS 4
 #define ME_NEWROW 5
 #define ME_LASTROW 6
+#define ME_RESET 7
 
 struct morseevent {
   int type;

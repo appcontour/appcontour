@@ -7,7 +7,7 @@
 #define EVENT_REPULSIVEENERGY 2
 #define EVENT_KICKOUT 3
 
-#define CHECK_GRADIENT 1
+//#define CHECK_GRADIENT 1
 
 struct timerevent {
   int event;
