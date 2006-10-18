@@ -47,12 +47,12 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am__showcontour_SOURCES_DIST = showcontour.c energy.c showcontour.h \
-	energy.h nullcontour.c glutcontour.c
+am__showcontour_SOURCES_DIST = showcontour.c morseevent.c morseevent.h \
+	energy.c showcontour.h energy.h nullcontour.c glutcontour.c
 @ENABLE_GLUT_FALSE@am__objects_1 = nullcontour.$(OBJEXT)
 @ENABLE_GLUT_TRUE@am__objects_1 = glutcontour.$(OBJEXT)
-am_showcontour_OBJECTS = showcontour.$(OBJEXT) energy.$(OBJEXT) \
-	$(am__objects_1)
+am_showcontour_OBJECTS = showcontour.$(OBJEXT) morseevent.$(OBJEXT) \
+	energy.$(OBJEXT) $(am__objects_1)
 showcontour_OBJECTS = $(am_showcontour_OBJECTS)
 am__DEPENDENCIES_1 =
 showcontour_DEPENDENCIES = ../parser.o $(am__DEPENDENCIES_1)
@@ -145,7 +145,7 @@ target_alias = @target_alias@
 @ENABLE_GLUT_TRUE@GRAPHSOURCE = glutcontour.c
 @ENABLE_GLUT_FALSE@GRAPHLIB = -lm
 @ENABLE_GLUT_TRUE@GRAPHLIB = -lglut
-showcontour_SOURCES = showcontour.c energy.c showcontour.h energy.h $(GRAPHSOURCE)
+showcontour_SOURCES = showcontour.c morseevent.c morseevent.h energy.c showcontour.h energy.h $(GRAPHSOURCE)
 showcontour_LDADD = ../parser.o $(GRAPHLIB)
 EXTRA_DIST = glutcontour.c nullcontour.c
 AM_CFLAGS = -Wall
@@ -217,6 +217,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/energy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glutcontour.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/morseevent.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nullcontour.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/showcontour.Po@am__quote@
 

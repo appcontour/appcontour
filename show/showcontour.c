@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include "showcontour.h"
+#include "morseevent.h"
 #include "energy.h"
 #include "../parser.h"
 
@@ -27,13 +28,6 @@
 //#define REL_H 0.5
 #define REL_H 0.25
 #define MAX_H 0.1
-
-#define ME_TRAN 1
-#define ME_TOP 2
-#define ME_BOT 3
-#define ME_CROSS 4
-#define ME_NEWROW 5
-#define ME_LASTROW 6
 
 #define TOP_LENGTH 0.25
 #define RENORMALIZE 1
@@ -50,9 +44,6 @@ void discretizepolyline (struct polyline *contour);
 void specnodesinit (struct polyline *contour);
 void redistributenodes (struct polyline *contour);
 struct line *splitline (struct polyline *contour, struct line *line, double f);
-void getmorseevent (struct morseevent *mev);
-void getarcinfo (struct morseevent *morseevent);
-void getoricusps (int *oript, struct arc **arcpt);
 struct polyline *buildpolyline (void);
 struct vertex *newvertex (struct polyline *contour, 
           double x, double y, int type);
@@ -899,144 +890,6 @@ splitline (struct polyline *contour, struct line *line, double f)
   return (nline);
 }
 
-void
-getmorseevent (struct morseevent *morseevent)
-{
-  int tok;
-
-  morseevent->ori = morseevent->ori2 = 0;
-  morseevent->arc = morseevent->arc2 = 0;
-
-  /* ho gia letto la graffa aperta */
-  tok = gettokens (stdin);
-
-  switch (tok)
-  {
-    case TOK_SEMICOLON:
-      tok = gettokens (stdin);
-      if (tok == TOK_RBRACE)
-      {
-        morseevent->type = ME_LASTROW;
-      } else {
-        morseevent->type = ME_NEWROW;
-      }
-      ungettoken (tok);
-      break;
-
-    case KEY_HAT:
-    case KEY_A:
-      morseevent->type = ME_TOP;
-      getarcinfo (morseevent);
-      break;
-
-    case KEY_U:
-    case KEY_V:
-    case KEY_UNDERSCORE:
-      morseevent->type = ME_BOT;
-      getarcinfo (morseevent);
-      break;
-
-    case KEY_SLASH:
-    case KEY_BSLASH:
-    case KEY_BACKQUOTE:
-    case TOK_LPAREN:
-    case TOK_RPAREN:
-    case KEY_PIPE:
-    case KEY_I:
-      morseevent->type = ME_TRAN;
-      getarcinfo (morseevent);
-      break;
-
-    case KEY_X:
-      morseevent->type = ME_CROSS;
-      getarcinfo (morseevent);
-      break;
-  }
-  return;
-}
-
-void
-getarcinfo (struct morseevent *morseevent)
-{
-  getoricusps (&morseevent->ori, &morseevent->arc);
-  if (morseevent->type == ME_CROSS)
-    getoricusps (&morseevent->ori2, &morseevent->arc2);
-}
-
-void
-getoricusps (int *oript, struct arc **arcpt)
-{
-  struct arc *arc = 0;
-  int tok, prevd;
-  int require_rbr = 1;
-  int depthind = 0;
-
-  assert (*arcpt == 0);
-  assert (*oript == 0);
-  tok = gettokens (stdin);
-  if (tok == ISNUMBER || tok == KEY_LEFT ||
-      tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
-  {
-    ungettoken (tok);
-    tok = TOK_LBRACKET;
-    require_rbr = 0;
-  }
-  if (tok != TOK_LBRACKET)
-  {
-    ungettoken (tok);
-    return;
-  }
-  tok = gettokens (stdin);
-  if (tok == TOK_RBRACKET) return;
-  if (tok == KEY_LEFT || tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
-  {
-    if (tok == KEY_LEFT || tok == KEY_DOWN) *oript = 1;
-    if (tok == KEY_RIGHT || tok == KEY_UP) *oript = -1;
-    tok = gettokens (stdin);
-  }
-  if (tok == TOK_COMMA || tok == ISNUMBER)
-  {
-    if (tok == ISNUMBER) ungettoken (tok);
-    prevd = 0;
-    while ((tok = gettokens (stdin)) == ISNUMBER ||
-            tok == TOK_PLUS || tok == TOK_MINUS)
-    {
-      switch (tok)
-      {
-        case ISNUMBER:
-        prevd = gettokennumber ();
-        depthind++;
-        break;
-        case TOK_PLUS:
-        ++prevd;
-        depthind++;
-        break;
-        case TOK_MINUS:
-        --prevd;
-        depthind++;
-        break;
-      }
-    }
-  }
-  if (*oript)
-  {
-    arc = *arcpt = (struct arc *) malloc (sizeof (struct arc));
-    arc->cusps = arc->cuspsinserted = 0;
-    arc->first = arc->last = arc->loop = 0;
-  }
-  if (depthind > 0) {assert (arc); arc->cusps = depthind - 1;}
-  if (require_rbr == 0)
-  {
-    ungettoken (tok);
-    tok = TOK_RBRACKET;
-  }
-  if (tok != TOK_RBRACKET)
-  {
-    fprintf (stderr, "Error: right paren expected: %d\n", tok);
-    return;
-  }
-}
-
 struct line *
 newline (struct polyline *contour, struct vertex *a, struct vertex *b)
 {
@@ -1131,6 +984,7 @@ buildpolyline (void)
   struct polyline *contour;
   int goon, i, k, prevdangnodes, dangind, prevdangind;
   int numrows = 0, maxrowlen = 0, oriented;
+  int counttrans = 0;
 
   contour = (struct polyline *) malloc (sizeof (struct polyline));
   contour->vertex = 0;
@@ -1153,7 +1007,12 @@ buildpolyline (void)
   {
     i++;
     x += dx;
-    getmorseevent (&morseevent);
+    getmorseevent (&morseevent, 1);
+    if (morseevent.type != ME_TRAN)
+    {
+      // printf ("counted %d consecutive trans\n", counttrans);
+      counttrans = 0;
+    }
     switch (morseevent.type)
     {
       case ME_LASTROW:
@@ -1253,6 +1112,13 @@ buildpolyline (void)
         break;
 
       case ME_TRAN:
+        counttrans++;
+        /* in prospect, we want here only to deal with
+         * the (possible) arc information, attaching it
+         * to dangling and already defined arcs
+         * all other work should be moved in the above
+         * section cumulatively
+         */
         v1 = newvertex (contour, x, y - TOP_LENGTH*dy, V_REGULAR);
         v2 = newvertex (contour, x, y + TOP_LENGTH*dy, V_REGULAR);
         line = newline (contour, v1, v2);

@@ -9,17 +9,6 @@
 
 #define CHECK_GRADIENT 1
 
-struct morseevent {
-  int type;
-  int ori;
-  int ori2;
-  int cusps;
-  int cusps2;
-  struct arc *arc;
-  struct arc *arc2;
-  struct morseevent *next;
-};
-
 struct timerevent {
   int event;
   double time;
