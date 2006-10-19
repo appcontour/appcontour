@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP EGREP ENABLE_GLUT_TRUE ENABLE_GLUT_FALSE LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP EGREP GTK_CONFIG ENABLE_GLUT_TRUE ENABLE_GLUT_FALSE ENABLE_GTK_TRUE ENABLE_GTK_FALSE LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -856,6 +856,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-glut             glut engine for showcontour
+  --with-gtk              gtk engine for showcontour
   --with-none             no graphic engine for showcontour
 
 Some influential environment variables:
@@ -1761,27 +1762,38 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 # Check whether --with-glut or --without-glut was given.
 if test "${with_glut+set}" = set; then
   withval="$with_glut"
-  glut="yes"; nograph="no"
+  glut="yes"; gtk="no"; nograph="no"
 else
   glut="no"
+fi;
+
+
+# Check whether --with-gtk or --without-gtk was given.
+if test "${with_gtk+set}" = set; then
+  withval="$with_gtk"
+  gtk="yes"; glut="no"
+else
+  nograph="no"
 fi;
 
 
 # Check whether --with-none or --without-none was given.
 if test "${with_none+set}" = set; then
   withval="$with_none"
-  nograph="yes"; glut="no"
+  nograph="yes"; gtk="no"; glut="no"
 else
   nograph="no"
 fi;
 
-if (test "$glut" != "yes" -a "$nograph" != "yes"); then
+if (test "$glut" != "yes" -a "$nograph" != "yes" -a "$gtk" != "yes"); then
   { { echo "$as_me:$LINENO: error: You must select an interface for showcontour to build.
      Possible options are:
+       --with-gtk     GTK engine
        --with-glut    GLUT engine
        --with-none    no graphic engine" >&5
 echo "$as_me: error: You must select an interface for showcontour to build.
      Possible options are:
+       --with-gtk     GTK engine
        --with-glut    GLUT engine
        --with-none    no graphic engine" >&2;}
    { (exit 1); exit 1; }; };
@@ -3536,6 +3548,56 @@ fi
 done
 
 
+if (test "$gtk" = "yes"); then
+    # Extract the first word of "gtk-config", so it can be a program name with args.
+set dummy gtk-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_GTK_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $GTK_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_GTK_CONFIG="$GTK_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in ${PATH}
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_GTK_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_GTK_CONFIG" && ac_cv_path_GTK_CONFIG="no"
+  ;;
+esac
+fi
+GTK_CONFIG=$ac_cv_path_GTK_CONFIG
+
+if test -n "$GTK_CONFIG"; then
+  echo "$as_me:$LINENO: result: $GTK_CONFIG" >&5
+echo "${ECHO_T}$GTK_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  if (test "${GTK_CONFIG}" = "no"); then
+     { { echo "$as_me:$LINENO: error: No gtk library found, use --with-none or --with-glut." >&5
+echo "$as_me: error: No gtk library found, use --with-none or --with-glut." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+  CFLAGS="${CFLAGS} `${GTK_CONFIG} --cflags`"
+  LIBS="${LIBS} `${GTK_CONFIG} --libs`"
+fi
+
 if (test "$glut" = "yes"); then
 
 for ac_header in GL/glut.h
@@ -3684,8 +3746,8 @@ if test `eval echo '${'$as_ac_Header'}'` = yes; then
 _ACEOF
 
 else
-  { { echo "$as_me:$LINENO: error: No glut.h found, use --with-none." >&5
-echo "$as_me: error: No glut.h found, use --with-none." >&2;}
+  { { echo "$as_me:$LINENO: error: No glut.h found, use --with-none or --with-gtk." >&5
+echo "$as_me: error: No glut.h found, use --with-none or --with-gtk." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -3764,8 +3826,8 @@ _ACEOF
   LIBS="-lglut $LIBS"
 
 else
-  { { echo "$as_me:$LINENO: error: No glut library found, use --with-none." >&5
-echo "$as_me: error: No glut library found, use --with-none." >&2;}
+  { { echo "$as_me:$LINENO: error: No glut library found, use --with-none or --with-gtk." >&5
+echo "$as_me: error: No glut library found, use --with-none or --with-gtk." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -3779,6 +3841,16 @@ if test "$glut" = "yes"; then
 else
   ENABLE_GLUT_TRUE='#'
   ENABLE_GLUT_FALSE=
+fi
+
+
+
+if test "$gtk" = "yes"; then
+  ENABLE_GTK_TRUE=
+  ENABLE_GTK_FALSE='#'
+else
+  ENABLE_GTK_TRUE='#'
+  ENABLE_GTK_FALSE=
 fi
 
 
@@ -4128,6 +4200,13 @@ if test -z "${ENABLE_GLUT_TRUE}" && test -z "${ENABLE_GLUT_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"ENABLE_GLUT\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"ENABLE_GLUT\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${ENABLE_GTK_TRUE}" && test -z "${ENABLE_GTK_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"ENABLE_GTK\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"ENABLE_GTK\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -4704,8 +4783,11 @@ s,@am__fastdepCC_TRUE@,$am__fastdepCC_TRUE,;t t
 s,@am__fastdepCC_FALSE@,$am__fastdepCC_FALSE,;t t
 s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
+s,@GTK_CONFIG@,$GTK_CONFIG,;t t
 s,@ENABLE_GLUT_TRUE@,$ENABLE_GLUT_TRUE,;t t
 s,@ENABLE_GLUT_FALSE@,$ENABLE_GLUT_FALSE,;t t
+s,@ENABLE_GTK_TRUE@,$ENABLE_GTK_TRUE,;t t
+s,@ENABLE_GTK_FALSE@,$ENABLE_GTK_FALSE,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

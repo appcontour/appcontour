@@ -4,8 +4,12 @@ if ENABLE_GLUT
 GRAPHSOURCE = glutcontour.c
 GRAPHLIB = -lglut
 else
+if ENABLE_GTK
+GRAPHSOURCE = gtkcontour.c
+else
 GRAPHSOURCE = nullcontour.c
 GRAPHLIB = -lm
+endif
 endif
 
 showcontour_SOURCES = showcontour.c morseevent.c morseevent.h energy.c showcontour.h energy.h $(GRAPHSOURCE)
