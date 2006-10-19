@@ -14,6 +14,7 @@
 #include <sys/time.h>
 #include "showcontour.h"
 #include "morseevent.h"
+#include "doptimize.h"
 #include "energy.h"
 #include "../parser.h"
 
@@ -40,6 +41,7 @@ void test_contour (struct polyline *contour);
 void reorder_node_ptr (struct polyline *contour);
 int settags (struct polyline *contour);
 double getlen (struct line *line);
+void renormalize (struct polyline *contour);
 void discretizepolyline (struct polyline *contour);
 void specnodesinit (struct polyline *contour);
 void redistributenodes (struct polyline *contour);
@@ -57,8 +59,6 @@ struct arc *mergearcinfo (struct arc *arc1, struct arc *arc2);
 void check_contour (struct polyline *contour);
 void insertcusps (struct polyline *contour);
 int insert_cusps_on_arc (struct line *l);
-void removenode (struct polyline *contour, struct vertex *v);
-void removeline (struct polyline *contour, struct line *l);
 
 struct polyline *contour;
 //static double time;
@@ -98,6 +98,11 @@ main (int argc, char *argv[])
   if (tok != TOK_RBRACE) exit (1);
 
   reorder_node_ptr (contour);
+  doptimize (contour);
+
+#ifdef RENORMALIZE
+  renormalize (contour);
+#endif
   discretizepolyline (contour);
   setarcinfo (contour);        /* initialize arc structure */
 
@@ -1000,7 +1005,6 @@ struct polyline *
 buildpolyline (void)
 {
   double dx, dy, dx1, dy1, dx12, dy12, x, y, xstart, ystart;
-  double xmax, xmin, ymax, ymin;
   struct morseevent morseevent;
   struct vertex *danglingnodes[BUFSIZE];
   struct vertex *prevdanglingnodes[BUFSIZE];
@@ -1225,30 +1229,8 @@ buildpolyline (void)
     }
   }
 
-  /* compute containing rectangle */
-  xmax = xmin = contour->vertex->x;
-  ymax = ymin = contour->vertex->y;
   for (v = contour->vertex; v; v = v->next)
   {
-    if (xmax < v->x) xmax = v->x;
-    if (xmin > v->x) xmin = v->x;
-    if (ymax < v->y) ymax = v->y;
-    if (ymin > v->y) ymin = v->y;
-  }
-#ifdef RENORMALIZE
-  /* rinormalizzazione ascisse e ordinate per stare in [-1,1]x[-1,1] */
-  dx = 2.0/(xmax - xmin);
-  dy = 2.0/(ymax - ymin);
-  contour->h = dx;
-  if (dy < dx) contour->h = dy;
-#endif
-
-  for (v = contour->vertex; v; v = v->next)
-  {
-#ifdef RENORMALIZE
-    v->x = dx*v->x - 1.0;
-    v->y = 1.0 - dy*v->y;
-#endif
     assert (v->line[0]);
     assert (v->line[1]);
     if (v->type == V_CROSS) assert (v->line[2] && v->line[3]);
@@ -1279,6 +1261,35 @@ buildpolyline (void)
   if (oriented == 0) fprintf (stderr, "Cannot orient arc\n");
 
   return (contour);
+}
+
+void
+renormalize (struct polyline *contour)
+{
+  struct vertex *v;
+  double xmax, ymax, xmin, ymin, dx, dy;
+
+  /* compute containing rectangle */
+  xmax = xmin = contour->vertex->x;
+  ymax = ymin = contour->vertex->y;
+  for (v = contour->vertex; v; v = v->next)
+  {
+    if (xmax < v->x) xmax = v->x;
+    if (xmin > v->x) xmin = v->x;
+    if (ymax < v->y) ymax = v->y;
+    if (ymin > v->y) ymin = v->y;
+  }
+  /* rinormalizzazione ascisse e ordinate per stare in [-1,1]x[-1,1] */
+  dx = 2.0/(xmax - xmin);
+  dy = 2.0/(ymax - ymin);
+  contour->h = dx;
+  if (dy < dx) contour->h = dy;
+
+  for (v = contour->vertex; v; v = v->next)
+  {
+    v->x = dx*v->x - 1.0;
+    v->y = 1.0 - dy*v->y;
+  }
 }
 
 /* inherit orientation to directly adjacent arcs */

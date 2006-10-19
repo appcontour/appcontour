@@ -147,6 +147,27 @@ char *
 grinit (int *argcpt, char *argv[])
 {
   static char ident[]="glut";
+  int goon = 1;
+  int i, j;
+
+  while (goon)
+  {
+    goon = 0;
+    for (i = 1; i < *argcpt; i++)
+    {
+      if (strcmp (argv[i], "--nomotion") == 0)
+      {
+        motion = 0;
+        goon = 1;
+        (*argcpt)--;
+        for (j = i; j < *argcpt; j++)
+        {
+          argv[j] = argv[j+1];
+        }
+      }
+    }
+  }
+
   glutInit(argcpt, argv);
   return (ident);
 }

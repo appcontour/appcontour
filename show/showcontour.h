@@ -77,6 +77,8 @@ double evolve (struct polyline *contour, double incrtime);
 struct line *nextp (struct line *l, struct vertex *p);
 struct line *prevp (struct line *l, struct vertex *p);
 double normsq (double *x, int dim);
+void removenode (struct polyline *contour, struct vertex *v);
+void removeline (struct polyline *contour, struct line *l);
 #ifdef CHECK_GRADIENT
 void check_gradient (struct polyline *contour);
 #endif
