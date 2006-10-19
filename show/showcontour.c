@@ -103,7 +103,7 @@ main (int argc, char *argv[])
 
   check_contour (contour);
 
-  insertcusps (contour);
+  insertcusps (contour);       /* also sets the d value of each segment */
   specnodesinit (contour);
 
 //test_contour (contour);
@@ -467,6 +467,7 @@ insert_cusps_on_arc (struct line *l)
   wl = l;
   do {
     count++;
+    if (arc->d) wl->d = arc->d[ccount];
     if ((p = wl->b)->type == V_CROSS) break;
     if (count >= nnodes)
     {
@@ -892,6 +893,7 @@ splitline (struct polyline *contour, struct line *line, double f)
   p = newvertex (contour, x, y, V_REGULAR);
   nline = (struct line *) malloc (sizeof (struct line));
   nline->orientation = line->orientation;
+  nline->d = line->d;
   nline->arc = line->arc;
   nline->arc->refcount++;
   nline->next = line->next;

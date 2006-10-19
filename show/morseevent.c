@@ -196,9 +196,10 @@ void
 getoricusps (int *oript, struct arc **arcpt)
 {
   struct arc *arc = 0;
-  int tok, prevd;
+  int i, tok, prevd;
   int require_rbr = 1;
   int depthind = 0;
+  int dbuffer[200];
 
   assert (*arcpt == 0);
   assert (*oript == 0);
@@ -235,16 +236,21 @@ getoricusps (int *oript, struct arc **arcpt)
       {
         case ISNUMBER:
         prevd = gettokennumber ();
-        depthind++;
+        dbuffer[depthind++] = prevd;
         break;
         case TOK_PLUS:
         ++prevd;
-        depthind++;
+        dbuffer[depthind++] = prevd;
         break;
         case TOK_MINUS:
         --prevd;
-        depthind++;
+        dbuffer[depthind++] = prevd;
         break;
+      }
+      if (depthind >= 198)
+      {
+        fprintf (stderr, "too many cusps of a single arc\n");
+        depthind--;
       }
     }
   }
@@ -254,8 +260,15 @@ getoricusps (int *oript, struct arc **arcpt)
     arc->cusps = arc->cuspsinserted = 0;
     arc->first = arc->last = arc->loop = 0;
     arc->refcount = 0;
+    arc->d = 0;
   }
-  if (depthind > 0) {assert (arc); arc->cusps = depthind - 1;}
+  if (depthind > 0) 
+  {
+    assert (arc);
+    arc->cusps = depthind - 1;
+    arc->d = (int *) malloc (depthind * sizeof (int));
+    for (i = 0; i < depthind; i++) arc->d[i] = dbuffer[i];
+  }
   if (require_rbr == 0)
   {
     ungettoken (tok);

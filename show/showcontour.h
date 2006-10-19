@@ -46,6 +46,7 @@ struct vertex {
 struct line {
   int tag;
   int orientation;
+  int d;
   struct vertex *a;
   struct vertex *b;
   struct arc *arc;
@@ -58,6 +59,7 @@ struct arc {
   int cusps;
   int numsegments;
   int cuspsinserted;
+  int *d;
   struct line *first;
   struct line *last;
   struct line *loop;

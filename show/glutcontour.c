@@ -48,6 +48,8 @@ display (void)
       b = line->b;
       glVertex2d((a->x - xmed)*zoom, (a->y - ymed)*zoom);
       glVertex2d((b->x - xmed)*zoom, (b->y - ymed)*zoom);
+      //if (line->a->type != V_REGULAR) printf ("line->d = %d\n", line->d);
+      //if (line->arc->loop == line) printf ("loop: %d\n", line->d);
     }
   glEnd();
 //  glGetDoublev (GL_POINT_SIZE, &ptsize);
