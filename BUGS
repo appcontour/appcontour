@@ -1,2 +1,3 @@
-solved: printmorse does not work on the result of applying rule N3 to example "two_hills.morse"
+it seems that arc information is not recovered correctly by
+showcontour for examples "eight.knot" and "simpleknotfake.knot"
 
