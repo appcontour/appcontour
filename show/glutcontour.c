@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include "GL/glut.h"
 #include "showcontour.h"
 
@@ -10,7 +11,7 @@ static double incrtime = 0.25;
 static int motion = 1;
 //static int motion = 0;     /* for now start with no motion */
 
-#define SIZE 0.015
+#define SIZE 0.01
 
 void idle (void);
 
@@ -20,6 +21,9 @@ display (void)
   struct line *line;
   struct vertex *a, *b, *v;
   double maxx, maxy, minx, miny, xmed, ymed, zoomx, zoomy, zoom;
+  double xb, yb;
+  char dbuf[80];
+  int i;
 
   maxx = -1000.0;
   maxy = -1000.0;
@@ -52,9 +56,21 @@ display (void)
       //if (line->arc->loop == line) printf ("loop: %d\n", line->d);
     }
   glEnd();
+  for (line = contour->line; line; line = line->next)
+  {
+    if (line->a->type != V_REGULAR || line->arc->loop == line) 
+    {
+      snprintf (dbuf, 70, " %d", line->d);
+      xb = line->b->x;
+      yb = line->b->y;
+      glRasterPos2d((xb - xmed)*zoom, (yb - ymed)*zoom);
+      for (i = 0; i < strlen (dbuf); i++)
+        glutBitmapCharacter (GLUT_BITMAP_HELVETICA_12, dbuf[i]);
+    }
+  }
 //  glGetDoublev (GL_POINT_SIZE, &ptsize);
 //  printf ("point size: %lf\n", ptsize);
-    glColor3f(1.0, 0.0, 0.0);  /* white */
+  glColor3f(1.0, 0.0, 0.0);  /* red */
   for (v = contour->vertex; v; v = v->next)
   {
     switch (v->type)
