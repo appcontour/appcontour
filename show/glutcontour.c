@@ -21,7 +21,7 @@ display (void)
   struct line *line;
   struct vertex *a, *b, *v;
   double maxx, maxy, minx, miny, xmed, ymed, zoomx, zoomy, zoom;
-  double xb, yb;
+  double xb, yb, gray;
   char dbuf[80];
   int i;
 
@@ -45,9 +45,11 @@ display (void)
   glClear(GL_COLOR_BUFFER_BIT);
   //glBegin(GL_LINELOOP);  per una poligonale chiusa...
   glBegin(GL_LINES);
-    glColor3f(1.0, 1.0, 1.0);  /* white */
+//    glColor3f(1.0, 1.0, 1.0);  /* white */
     for (line = contour->line; line; line = line->next)
     {
+      gray = 1.0/(line->d + 1);
+      glColor3f(gray, gray, gray);  /* white */
       a = line->a;
       b = line->b;
       glVertex2d((a->x - xmed)*zoom, (a->y - ymed)*zoom);

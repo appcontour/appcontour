@@ -184,11 +184,13 @@ void
 getarcinfo (struct morseevent *morseevent)
 {
   getoricusps (&morseevent->ori, &morseevent->arc);
-  if (abs(morseevent->ori) == 2) morseevent->ori /= 2;    /* significa speficicato left o right */
+  if (abs(morseevent->ori) == 2) morseevent->ori /= 2;
+                                     /* significa speficicato left o right */
   if (morseevent->type == ME_CROSS)
   {
     getoricusps (&morseevent->ori2, &morseevent->arc2);
-    if (abs(morseevent->ori) == 2) morseevent->ori /= -2;  /* significa specificato left o right */
+    if (abs(morseevent->ori2) == 2) morseevent->ori2 /= -2;
+                                     /* significa specificato left o right */
   }
 }
 
@@ -222,20 +224,25 @@ getoricusps (int *oript, struct arc **arcpt)
   {
     if (tok == KEY_LEFT || tok == KEY_DOWN) *oript = 1;
     if (tok == KEY_RIGHT || tok == KEY_UP) *oript = -1;
-    if (tok == KEY_LEFT || tok == KEY_RIGHT) *oript *= 2;    /* left/right restituisce +2 o -2 */
+    if (tok == KEY_LEFT || tok == KEY_RIGHT) *oript *= 2;
+                                      /* left/right restituisce +2 o -2 */
     tok = gettokens (stdin);
   }
   if (tok == TOK_COMMA || tok == ISNUMBER)
   {
-    if (tok == ISNUMBER) ungettoken (tok);
-    prevd = 0;
+    prevd = -1;
+    if (tok == ISNUMBER)
+    {
+      prevd = gettokennumber ();
+      ungettoken (tok);
+    }
     while ((tok = gettokens (stdin)) == ISNUMBER ||
             tok == TOK_PLUS || tok == TOK_MINUS)
     {
       switch (tok)
       {
         case ISNUMBER:
-        prevd = gettokennumber ();
+        if (prevd < 0) prevd = gettokennumber ();
         dbuffer[depthind++] = prevd;
         break;
         case TOK_PLUS:

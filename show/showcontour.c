@@ -448,10 +448,13 @@ insertcusps (struct polyline *contour)
     assert (iss1);
   }
 
-  /* now check that no cusps remain to be placed */
+  /* now check that no cusps remain to be placed
+   * and also place depth value on arcs with no cusps
+   */
 
   for (l = contour->line; l; l = l->next)
   {
+    if (l->arc->cusps == 0) l->d = l->arc->d[0];
     assert (l->arc->cuspsinserted);
   }
 }
