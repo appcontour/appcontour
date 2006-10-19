@@ -467,9 +467,8 @@ insert_cusps_on_arc (struct line *l)
   iss1 = 0;
   if (l->a->type != V_CROSS) iss1 = 1;
   arc = l->arc;
-  count = arc->numsegments;                /* count number of nodes */
   cusps = arc->cusps;
-  nnodes = count/(cusps + 1) + 1;
+  nnodes = arc->numsegments/(cusps + 1) + 1;
 
   count = ccount = 0;
   wl = l;
@@ -479,8 +478,8 @@ insert_cusps_on_arc (struct line *l)
     if ((p = wl->b)->type == V_CROSS) break;
     if (count >= nnodes)
     {
-      count = 0;
       ccount++;
+      nnodes = arc->numsegments*(ccount + 1)/(cusps + 1) + 1;
       assert (p->type == V_REGULAR);
       p->type = V_CUSP;
     }
