@@ -72,6 +72,7 @@ static double curenergy = 0.0;
 //static double timerkickout;
 
 static int test = 0;
+static int dodoptimize = 1;
 static char *grident;
 
 int
@@ -98,7 +99,7 @@ main (int argc, char *argv[])
   if (tok != TOK_RBRACE) exit (1);
 
   reorder_node_ptr (contour);
-  doptimize (contour);
+  if (dodoptimize) doptimize (contour);
 
 #ifdef RENORMALIZE
   renormalize (contour);
@@ -214,6 +215,8 @@ parseargs (int argc, char *argv[])
       }
       if (strcmp (argv[iarg], "--test") == 0) {
         test = 1;
+      } else if (strcmp (argv[iarg], "--nodoptimize") == 0) {
+        dodoptimize = 0;
       } else if (strcmp (argv[iarg], "--k1") == 0) {
         k1_coeff = atof (argv[++iarg]);
       } else if (strcmp (argv[iarg], "--k2") == 0) {

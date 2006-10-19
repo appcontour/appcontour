@@ -1,7 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 #include "showcontour.h"
 #include "doptimize.h"
+
+#define DOPT_UTURN 1
+#define DOPT_PLATEAU 1
+#define DOPT_PLATEAU_BACK 1
 
 void
 doptimize (struct polyline *contour)
@@ -12,10 +17,24 @@ doptimize (struct polyline *contour)
   while (goon)
   {
     goon = 0;
+#ifdef DOPT_UTURN
     for (line = contour->line; line; line = line->next)
     {
       goon += check_u_turn (contour, line);
     }
+#endif
+#ifdef DOPT_PLATEAU
+    for (line = contour->line; line; line = line->next)
+    {
+      goon += check_plateau (contour, line);
+    }
+#endif
+#ifdef DOPT_PLATEAU_BACK
+    for (line = contour->line; line; line = line->next)
+    {
+      goon += check_plateau_back (contour, line);
+    }
+#endif
   }
 }
 
@@ -69,4 +88,154 @@ check_u_turn (struct polyline *contour, struct line *line)
   removeline (contour, l3);
 
   return (1);
+}
+
+int
+check_plateau (struct polyline *contour, struct line *line)
+{
+  struct vertex *a, *b, *c, *p, *q;
+  struct line *l2, *ll;
+  int linex, liney, l2x, l2y, llx, lly, i;
+  int vec1, vecgen, dimplateau, dx, dy, px, py;
+
+  a = line->a;
+  if (a->type == V_CROSS) return (0);
+  b = line->b;
+  if (b->type == V_CROSS) return (0);
+  linex = b->x - a->x;
+  liney = b->y - a->y;
+
+  l2 = b->line[1];
+  c = l2->b;
+  if (c->type == V_CROSS) return (0);
+  l2x = c->x - b->x;
+  l2y = c->y - b->y;
+  vec1 = - linex*l2y + liney*l2x;
+  if (abs (vec1) != 1.0) return (0);
+  p = c;
+  i = 0;
+  while (1)
+  {
+    i++;
+    ll = p->line[1];
+    q = ll->b;
+    llx = q->x - p->x;
+    lly = q->y - p->y;
+    vecgen = - l2x*lly + l2y*llx;
+    p = q;
+    if (vecgen == - vec1) return (0);
+    if (q->type == V_CROSS) break;
+    if (vecgen == vec1) break;
+  }
+  dimplateau = i;
+  if (dimplateau <= 1) return (0);
+
+  dx = l2x - linex;
+  dy = l2y - liney;
+
+  printf ("trovato plateau: %d (%lf, %lf)\n", dimplateau, b->x, b->y);
+
+  p = b;
+  i = 0;
+  while (1)
+  {
+    ll = p->line[1];
+    q = ll->b;
+    px = p->x;
+    py = p->y;
+    if (site_occupied (contour, px + dx, py + dy))
+    {
+      /* site is not free, cannot move node p */
+      return (i);
+    }
+    i++;
+    if (i >= dimplateau) return (i - 1);
+    /* can move node p */
+    p->x += dx;
+    p->y += dy;
+    p = q;
+  }
+  assert (0);
+  return (0);
+}
+
+int
+check_plateau_back (struct polyline *contour, struct line *line)
+{
+  struct vertex *a, *b, *c, *p, *q;
+  struct line *l2, *ll;
+  int linex, liney, l2x, l2y, llx, lly, i;
+  int vec1, vecgen, dimplateau, dx, dy, px, py;
+
+  a = line->b;
+  if (a->type == V_CROSS) return (0);
+  b = line->a;
+  if (b->type == V_CROSS) return (0);
+  linex = b->x - a->x;
+  liney = b->y - a->y;
+
+  l2 = b->line[0];
+  c = l2->a;
+  if (c->type == V_CROSS) return (0);
+  l2x = c->x - b->x;
+  l2y = c->y - b->y;
+  vec1 = - linex*l2y + liney*l2x;
+  if (abs (vec1) != 1.0) return (0);
+  p = c;
+  i = 0;
+  while (1)
+  {
+    i++;
+    ll = p->line[0];
+    q = ll->a;
+    llx = q->x - p->x;
+    lly = q->y - p->y;
+    vecgen = - l2x*lly + l2y*llx;
+    p = q;
+    if (vecgen == - vec1) return (0);
+    if (q->type == V_CROSS) break;
+    if (vecgen == vec1) break;
+  }
+  dimplateau = i;
+  if (dimplateau <= 1) return (0);
+
+  dx = l2x - linex;
+  dy = l2y - liney;
+
+  printf ("trovato backw plateau: %d (%lf, %lf)\n", dimplateau, b->x, b->y);
+
+  p = b;
+  i = 0;
+  while (1)
+  {
+    ll = p->line[0];
+    q = ll->a;
+    px = p->x;
+    py = p->y;
+    if (site_occupied (contour, px + dx, py + dy))
+    {
+      /* site is not free, cannot move node p */
+      return (i);
+    }
+    i++;
+    if (i >= dimplateau) return (i - 1);
+    /* can move node p */
+    p->x += dx;
+    p->y += dy;
+    p = q;
+  }
+  assert (0);
+  return (0);
+}
+
+struct vertex *
+site_occupied (struct polyline *contour, int px, int py)
+{
+  struct vertex *v;
+
+  for (v = contour->vertex; v; v = v->next)
+  {
+    if (px == (int) v->x && py == (int) v->y) return (v);
+  }
+  return (0);
 }
