@@ -1284,6 +1284,7 @@ renormalize (struct polyline *contour)
     if (ymax < v->y) ymax = v->y;
     if (ymin > v->y) ymin = v->y;
   }
+  //printf ("(%lf, %lf), (%lf, %lf)\n", xmin, ymin, xmax, ymax);
   /* rinormalizzazione ascisse e ordinate per stare in [-1,1]x[-1,1] */
   dx = 2.0/(xmax - xmin);
   dy = 2.0/(ymax - ymin);

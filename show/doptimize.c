@@ -6,15 +6,16 @@
 
 #define DOPT_UTURN 1
 #define DOPT_PLATEAU 1
-#define DOPT_PLATEAU_BACK 1
+//#define DOPT_PLATEAU_BACK 1 /* an infinite loop can result */
 
 void
 doptimize (struct polyline *contour)
 {
   struct line *line;
   int goon = 1;
+  int count = 0;
 
-  while (goon)
+  while (goon && count++ < 1000)
   {
     goon = 0;
 #ifdef DOPT_UTURN
@@ -133,8 +134,6 @@ check_plateau (struct polyline *contour, struct line *line)
   dx = l2x - linex;
   dy = l2y - liney;
 
-  //printf ("trovato plateau: %d (%lf, %lf)\n", dimplateau, b->x, b->y);
-
   p = b;
   i = 0;
   while (1)
@@ -153,6 +152,7 @@ check_plateau (struct polyline *contour, struct line *line)
     /* can move node p */
     p->x += dx;
     p->y += dy;
+    //printf ("trovato plateau: %d:%d (%d,%d) (%lf, %lf)\n", dimplateau, i, dx, dy, b->x, b->y);
     p = q;
   }
   assert (0);
@@ -202,8 +202,6 @@ check_plateau_back (struct polyline *contour, struct line *line)
   dx = l2x - linex;
   dy = l2y - liney;
 
-  //printf ("trovato backw plateau: %d (%lf, %lf)\n", dimplateau, b->x, b->y);
-
   p = b;
   i = 0;
   while (1)
@@ -222,6 +220,7 @@ check_plateau_back (struct polyline *contour, struct line *line)
     /* can move node p */
     p->x += dx;
     p->y += dy;
+    //printf ("trovato backw plateau: %d:%d (%d,%d) (%lf, %lf)\n", dimplateau, i, dx, dy, b->x, b->y);
     p = q;
   }
   assert (0);
