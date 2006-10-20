@@ -7,7 +7,7 @@
 #define DOPT_UTURN 1
 #define DOPT_PLATEAU 1
 //#define DOPT_PLATEAU_BACK 1 /* an infinite loop can result */
-//#define DOPT_CHECK_CROSS_TURN 1
+#define DOPT_CHECK_CROSS_TURN 1
 
 void
 doptimize (struct polyline *contour)
@@ -254,14 +254,15 @@ check_cross_turn (struct polyline *contour, struct line *line)
   int backward4 = 0;
   double temp;
 
-  a = line->a;
+  lae = line;
+  a = lae->a;
   if (a->type != V_CROSS)
   {
     backward4 = 1;
-    a = line->b;
+    a = lae->b;
   }
   if (a->type != V_CROSS) return (0);
-  lae = line;
+  e = backward4 ? lae->a : lae->b;
   for (i4 = 0; i4 < 4; i4++)
   {
     if (a->line[i4] == lae) break;
@@ -324,10 +325,17 @@ check_cross_turn (struct polyline *contour, struct line *line)
 
   /* all conditions are satisfied! */
 
-  printf ("found a corner turn (%lf,%lf)\n", a->x, a->y);
+  //printf ("found a corner turn (%lf,%lf)\n", a->x, a->y);
 
-  e = lae->b;
-  if (e == a) {backward4 = 1; e = lae->a;}
+  //printf ("a (%lf,%lf)\n", a->x, a->y);
+  //printf ("b1 (%lf,%lf)\n", b1->x, b1->y);
+  //printf ("b2 (%lf,%lf)\n", b2->x, b2->y);
+  //printf ("b3 (%lf,%lf)\n", b3->x, b3->y);
+  //printf ("b4 (%lf,%lf)\n", b4->x, b4->y);
+  //printf ("b5 (%lf,%lf)\n", b5->x, b5->y);
+  //printf ("c1 (%lf,%lf)\n", c1->x, c1->y);
+  //printf ("c2 (%lf,%lf)\n", c2->x, c2->y);
+  //printf ("e (%lf,%lf)\n", e->x, e->y);
   temp = a->x;
   a->x = c2->x;
   c2->x = temp;
@@ -347,6 +355,7 @@ check_cross_turn (struct polyline *contour, struct line *line)
     lac1->a = c1;
     lc1c2->b = c1;
     lc1c2->a = c2;
+    lae->b = c2;
     c1->line[1] = lac1;
     c1->line[0] = lc1c2;
     c2->line[1] = lc1c2;
@@ -356,6 +365,7 @@ check_cross_turn (struct polyline *contour, struct line *line)
     lac1->b = c1;
     lc1c2->a = c1;
     lc1c2->b = c2;
+    lae->a = c2;
     c1->line[0] = lac1;
     c1->line[1] = lc1c2;
     c2->line[0] = lc1c2;
