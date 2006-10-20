@@ -9,6 +9,7 @@ extern struct polyline *contour;
 
 static double incrtime = 0.25;
 static int motion = 1;
+static int steps = -1;
 //static int motion = 0;     /* for now start with no motion */
 
 #define SIZE 0.01
@@ -21,7 +22,7 @@ display (void)
   struct line *line;
   struct vertex *a, *b, *v;
   double maxx, maxy, minx, miny, xmed, ymed, zoomx, zoomy, zoom;
-  double xb, yb, gray;
+  double xb, yb, gray, vx, vy, vnorm;
   char dbuf[80];
   int i;
 
@@ -60,14 +61,22 @@ display (void)
   glEnd();
   for (line = contour->line; line; line = line->next)
   {
-    if (line->a->type != V_REGULAR || line->arc->loop == line) 
+    if ((line->a->type == V_REGULAR && line->a->line[0]->a->type != V_REGULAR) || line->arc->loop == line) 
     {
-      snprintf (dbuf, 70, " %d", line->d);
-      xb = line->b->x;
-      yb = line->b->y;
-      glRasterPos2d((xb - xmed)*zoom, (yb - ymed)*zoom);
-      for (i = 0; i < strlen (dbuf); i++)
-        glutBitmapCharacter (GLUT_BITMAP_HELVETICA_12, dbuf[i]);
+      if (line->d > 0)
+      {
+        snprintf (dbuf, 70, "%d", line->d);
+        xb = (line->b->x + line->a->x)/2.0;
+        yb = (line->b->y + line->a->y)/2.0;
+        vx = (line->b->x - line->a->x);
+        vy = (line->b->y - line->a->y);
+        vnorm = sqrt (vx*vx + vy*vy);
+        xb -= vy*0.02/vnorm;
+        yb += vx*0.02/vnorm;
+        glRasterPos2d((xb - xmed)*zoom, (yb - ymed)*zoom);
+        for (i = 0; i < strlen (dbuf); i++)
+          glutBitmapCharacter (GLUT_BITMAP_HELVETICA_12, dbuf[i]);
+      }
     }
   }
 //  glGetDoublev (GL_POINT_SIZE, &ptsize);
@@ -157,7 +166,7 @@ grinit (int *argcpt, char *argv[])
     goon = 0;
     for (i = 1; i < *argcpt; i++)
     {
-      if (strcmp (argv[i], "--nomotion") == 0)
+      if (strcmp (argv[i], "--pause") == 0)
       {
         motion = 0;
         goon = 1;
@@ -165,6 +174,15 @@ grinit (int *argcpt, char *argv[])
         for (j = i; j < *argcpt; j++)
         {
           argv[j] = argv[j+1];
+        }
+      }
+      if (strcmp (argv[i], "--steps") == 0)
+      {
+        steps = atoi (argv[i+1]);
+        (*argcpt) -= 2;
+        for (j = i; j < *argcpt; j++)
+        {
+          argv[j] = argv[j+2];
         }
       }
     }
