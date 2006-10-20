@@ -7,6 +7,7 @@
 #define DOPT_UTURN 1
 #define DOPT_PLATEAU 1
 //#define DOPT_PLATEAU_BACK 1 /* an infinite loop can result */
+//#define DOPT_CHECK_CROSS_TURN 1
 
 void
 doptimize (struct polyline *contour)
@@ -34,6 +35,12 @@ doptimize (struct polyline *contour)
     for (line = contour->line; line; line = line->next)
     {
       goon += check_plateau_back (contour, line);
+    }
+#endif
+#ifdef DOPT_CHECK_CROSS_TURN
+    for (line = contour->line; line; line = line->next)
+    {
+      goon += check_cross_turn (contour, line);
     }
 #endif
   }
@@ -225,6 +232,148 @@ check_plateau_back (struct polyline *contour, struct line *line)
   }
   assert (0);
   return (0);
+}
+
+/*
+ * make a cross turn around a corner
+ */
+
+static int i1i2[] = {1,3,0,2};
+
+int
+check_cross_turn (struct polyline *contour, struct line *line)
+{
+  struct vertex *a, *b1, *b2, *b3, *b4, *b5, *c1, *c2, *d, *e;
+  struct line *lab1, *lac1, *lb1b2, *lb2b3, *lb3b4, *lb4b5;
+  struct line *lc1c2, *lc2c3, *lad, *lae;
+  int i1, i2, i3, i4;
+  int lac1x, lac1y, lc1c2x, lc1c2y, vec1;
+  int backward1 = 0;
+  int backward2 = 0;
+  int backward3 = 0;
+  int backward4 = 0;
+  double temp;
+
+  a = line->a;
+  if (a->type != V_CROSS)
+  {
+    backward4 = 1;
+    a = line->b;
+  }
+  if (a->type != V_CROSS) return (0);
+  lae = line;
+  for (i4 = 0; i4 < 4; i4++)
+  {
+    if (a->line[i4] == lae) break;
+  }
+  assert (i4 < 4);
+  i2 = 3 - i4;
+  lac1 = a->line[i2];
+  c1 = lac1->b;
+  if (c1 == a) {backward2 = 1; c1 = lac1->a;}
+  if (c1->type == V_CROSS) return (0);
+
+  lc1c2 = c1->line[1-backward2];
+
+  c2 = backward2 ? lc1c2->a : lc1c2->b;
+  if (c2->type == V_CROSS) return (0);
+
+  lac1x = c1->x - a->x;
+  lac1y = c1->y - a->y;
+  lc1c2x = c2->x - c1->x;
+  lc1c2y = c2->y - c1->y;
+  vec1 = lac1x*lc1c2y - lac1y*lc1c2x;
+  if (vec1 == 0) return (0);
+
+  i1 = (vec1 == 1) ? i1i2[i4] : i1i2[i2];
+  i3 = 3 - i1;
+
+  lab1 = a->line[i1];
+  b1 = lab1->b;
+  if (b1 == a) {backward1 = 1; b1 = lab1->a;}
+  if (b1->type == V_CROSS) return (0);
+
+  lb1b2 = b1->line[1-backward1];
+  b2 = backward1 ? lb1b2->a : lb1b2->b;
+  if (b2->type == V_CROSS) return (0);
+
+  lad = a->line[i3];
+  d = lad->b;
+  if (d == a) {backward3 = 1; d = lad->a;}
+  if (d->type == V_CROSS) return (0);
+
+  if (c2->x - c1->x != c1->x - b2->x) return (0);
+//printf ("quo c1 (%lf,%lf), c2 (%lf,%lf), b2 (%lf,%lf)\n", c1->x, c1->y, c2->x, c2->y, b2->x, b2->y);
+  if (c2->y - c1->y != c1->y - b2->y) return (0);
+
+  lb2b3 = b2->line[1-backward1];
+  b3 = backward1 ? lb2b3->a : lb2b3->b;
+  if (b3->type == V_CROSS) return (0);
+  if (b3->x - b2->x != b2->x - b1->x) return (0);
+  if (b3->y - b2->y != b2->y - b1->y) return (0);
+  lb3b4 = b3->line[1-backward1];
+  b4 = backward1 ? lb3b4->a : lb3b4->b;
+  if (b4->type == V_CROSS) return (0);
+  if (b4->x - c1->x != c1->x - a->x) return (0);
+  if (b4->y - c1->y != c1->y - a->y) return (0);
+  lb4b5 = b4->line[1-backward1];
+  b5 = backward1 ? lb4b5->a : lb4b5->b;
+  if (b5->type == V_CROSS) return (0);
+  if (b5->x - b4->x != b4->x - b3->x) return (0);
+  if (b5->y - b4->y != b4->y - b3->y) return (0);
+
+  /* all conditions are satisfied! */
+
+  printf ("found a corner turn (%lf,%lf)\n", a->x, a->y);
+
+  e = lae->b;
+  if (e == a) {backward4 = 1; e = lae->a;}
+  temp = a->x;
+  a->x = c2->x;
+  c2->x = temp;
+  temp = a->y;
+  a->y = c2->y;
+  c2->y = temp;
+  a->line[i4] = lac1;
+  a->line[i1] = lb4b5;
+  lc2c3 = c2->line[1-backward2];
+  a->line[i2] = lc2c3;
+  // a->line[i3] does not change
+  if (backward2) lc2c3->b = a; else lc2c3->a = a;
+  if (backward1) lb4b5->b = a; else lb4b5->a = a;
+  if (backward4)
+  {
+    lac1->b = a;
+    lac1->a = c1;
+    lc1c2->b = c1;
+    lc1c2->a = c2;
+    c1->line[1] = lac1;
+    c1->line[0] = lc1c2;
+    c2->line[1] = lc1c2;
+    c2->line[0] = lae;
+  } else {
+    lac1->a = a;
+    lac1->b = c1;
+    lc1c2->a = c1;
+    lc1c2->b = c2;
+    c1->line[0] = lac1;
+    c1->line[1] = lc1c2;
+    c2->line[0] = lc1c2;
+    c2->line[1] = lae;
+  }
+  lc1c2->arc = lae->arc;
+  lac1->arc = lae->arc;
+
+  removenode (contour, b1);
+  removenode (contour, b2);
+  removenode (contour, b3);
+  removenode (contour, b4);
+  removeline (contour, lab1);
+  removeline (contour, lb1b2);
+  removeline (contour, lb2b3);
+  removeline (contour, lb3b4);
+
+  return (1);
 }
 
 struct vertex *
