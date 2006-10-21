@@ -327,6 +327,11 @@ setarcinfo (struct polyline *contour)
     {
       l = p->line[i];
       if (l->a != p) continue;   /* we want a 'leaving' arc */
+if (l->arc->loop)
+{
+  printf ("Questo e' un loop(bis)\n");
+  assert (0);
+}
       iss1 = setarcinfo1 (l);
       assert (iss1 == 0);
     }
