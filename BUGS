@@ -1,6 +1,4 @@
 infinite loop in doptimize for the result of
 "contour knot2morse examples/simpleknotfake.morse" [SOLVED by disabling an optimizer]
 
-it seems that arc information is not recovered correctly by
-showcontour for examples "eight.knot" and "simpleknotfake.knot" [SOLVED]
-
+example potato.morse has a problem with the discrete optimization.

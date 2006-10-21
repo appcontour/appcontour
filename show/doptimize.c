@@ -9,7 +9,7 @@
 //#define DOPT_PLATEAU_BACK 1  /* don't define both: an infinite loop results */
 #define DOPT_FLIP_LEFT
 #define DOPT_CHECK_CROSS_TURN
-#define DOPT_CHECK_CROSS_SLIDE
+//#define DOPT_CHECK_CROSS_SLIDE  /* this is contained in lower_plateau */
 #define DOPT_CHECK_CROSS_STAIRS
 #define DOPT_LOWER_PLATEAU
 
@@ -19,7 +19,7 @@ doptimize (struct polyline *contour)
   struct line *line;
   int goon = 1;
   int count = 0;
-  //int goonl;
+  int goonl;
 
   while (goon && count++ < 10000)
   {
@@ -69,10 +69,10 @@ doptimize (struct polyline *contour)
 #ifdef DOPT_LOWER_PLATEAU
     for (line = contour->line; line; line = line->next)
     {
-      //goonl = check_lower_plateau (contour, line);
-      //if (goonl < 0) return;
-      //goon += goonl;
-      goon += check_lower_plateau (contour, line);
+      goonl = check_lower_plateau (contour, line);
+      if (goonl < 0) return;
+      goon += goonl;
+      //goon += check_lower_plateau (contour, line);
     }
 #endif
   }
@@ -646,15 +646,16 @@ check_cross_stairs (struct polyline *contour, struct line *line)
 int
 check_lower_plateau (struct polyline *contour, struct line *line)
 {
-  struct vertex *a, *b, *aback, *bprev;
-  struct line *l, *lback, *lend;
+  struct vertex *a, *b, *aback, *bprev, *bt, *btt;
+  struct line *l, *lback, *lend, *l1, *l2, *l3;
   int abx, aby, px, py, qx, qy, bprevx, bprevy;
-  int i, vec, vecg, count;
+  int i, i1, i2, i3, i4, vec, vecg, count;
+  int backward2, crossingfound = 0;
 
   a = line->a;
   if (a->type == V_CROSS) return (0);
   b = line->b;
-  if (b->type == V_CROSS) return (0);
+  //if (b->type == V_CROSS) return (0);
 
   abx = b->x - a->x;
   aby = b->y - a->y;
@@ -669,37 +670,115 @@ check_lower_plateau (struct polyline *contour, struct line *line)
   if (vec == 0) return (0);
   count = 0;
 
-  l = b->line[1];
+  l = line;
   while (1)
   {
     count++;
-    bprev = b;
-    b = l->b;
-    if (b->type == V_CROSS) return (0);
+    if (b->type == V_CROSS)
+    {
+      for (i1 = 0; i1 < 4; i1++)
+      {
+        if (b->line[i1] == l) break;
+      }
+      assert (i1 < 4);
+      i3 = 3 - i1;
+      l = b->line[i3];
+      assert (l->a == b);
+      i2 = i1i2[i1];
+      if (vec < 0) i2 = i1i2[i3];
+      bt = b->line[i2]->b;
+      backward2 = 0;
+      if (bt == b) {backward2 = 1; bt = b->line[i2]->a;}
+      if (bt->type == V_CROSS) return (0);
+      if (backward2)
+      {
+        btt = bt->line[0]->a;
+      } else {
+        btt = bt->line[1]->b;
+      }
+      if (btt->x - bt->x != bt->x - b->x) return (0);
+      if (btt->y - bt->y != bt->y - b->y) return (0);
+      crossingfound = 1;
+      assert (l->b != b);
+      b = l->b;
+    } else {
+      l = b->line[1];
+      bprev = b;
+      b = l->b;
 
-    qx = b->x - bprev->x;
-    qy = b->y - bprev->y;
-    vecg = qx*aby - qy*abx;
-    if (vecg == -vec) return (0);  /* not a plateau */
-    if (vecg == vec) break;        /* this IS a plateau */
+      qx = b->x - bprev->x;
+      qy = b->y - bprev->y;
+      vecg = qx*aby - qy*abx;
+      if (vecg == -vec) return (0);  /* not a plateau */
+      if (vecg == vec && bprev->type == V_CROSS) return (0);
+      if (vecg == vec)
+      {
+        if (b->type == V_CROSS) return (0);
+        break;        /* this IS a plateau */
+      }
 
-    bprevx = bprev->x;
-    bprevy = bprev->y;
-    if (site_occupied (contour, bprevx - px, bprevy - py)) return (0);
-                   /* there is an occupied cell */
-    l = b->line[1];
+      bprevx = bprev->x;
+      bprevy = bprev->y;
+      if (site_occupied (contour, bprevx - px, bprevy - py)) return (0);
+                 /* there is an occupied cell */
+    }
   }
+
   if (count < 2) return (0);
 
   //printf ("plateau found at (%lf,%lf) of size %d\n", a->x, a->y, count);
 
   /* change coordinates */
   b = line->b;
+  l = line;
   for (i = 1; i < count; i++)
   {
     b->x -= px;
     b->y -= py;
-    l = b->line[1];
+    if (b->type == V_CROSS)
+    {
+      for (i1 = 0; i1 < 4; i1++)
+      {
+        if (b->line[i1] == l) break;
+      }
+      i3 = 3 - i1;
+      l = b->line[i3];
+      i2 = i1i2[i1];
+      if (vec < 0) i2 = i1i2[i3];
+      i4 = 3 - i2;
+      l2 = b->line[i2];
+      bt = l2->b;
+      backward2 = 0;
+      if (bt == b) {backward2 = 1; bt = b->line[i2]->a;}
+      assert (bt->type != V_CROSS);
+      bt->x += px;
+      bt->y += py;
+      l1 = b->line[i4];
+      l3 = bt->line[1-backward2];
+      if (backward2)
+      {
+        assert (l1->a == b);
+        l1->a = bt;
+        l2->b = bt;
+        l2->a = b;
+        l3->b = b;
+      } else {
+        assert (l1->b == b);
+        l1->b = bt;
+        l2->a = bt;
+        l2->b = b;
+        l3->a = b;
+      }
+      bt->line[backward2] = l1;
+      bt->line[1-backward2] = l2;
+      b->line[i2] = l3;
+      b->line[i4] = l2;
+      l2->arc->refcount--;
+      l2->arc = l1->arc;
+      l2->arc->refcount++;
+    } else {
+      l = b->line[1];
+    }
     b = l->b;
   }
   /* change topological info at start */
@@ -714,6 +793,11 @@ check_lower_plateau (struct polyline *contour, struct line *line)
   removenode (contour, b);
   removeline (contour, lend);
 
+  //if (crossingfound)
+  //{
+    //printf ("crossing... (%lf,%lf)\n", line->b->x, line->b->y);
+    //return (-1);
+  //}
   return (1);
 }
 
