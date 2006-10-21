@@ -21,7 +21,7 @@ function morse ()
 
 function show ()
 {
-  eval $commandchain | contour printmorse 2>/dev/null | $showcontour --title "$examplename $rules" &
+  eval $commandchain | contour printmorse 2>/dev/null | $showcontour --title "$examplename $rules" 2>/dev/null &
 }
 
 function back ()

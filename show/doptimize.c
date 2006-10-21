@@ -12,6 +12,7 @@
 #define DOPT_CHECK_CROSS_TURN
 #define DOPT_CHECK_CROSS_STAIRS
 #define DOPT_LOWER_PLATEAU
+#define DOPT_UNWIND
 
 void
 doptimize (struct polyline *contour)
@@ -76,6 +77,15 @@ doptimize (struct polyline *contour)
       //if (goonl < 0) return;
       //goon += goonl;
       goon += check_lower_plateau (contour, line);
+    }
+#endif
+#ifdef DOPT_UNWIND
+    for (line = contour->line; line; line = line->next)
+    {
+      //goonl = check_unwind (contour, line);
+      //if (goonl < 0) return;
+      //goon += goonl;
+      goon += check_unwind (contour, line);
     }
 #endif
   }
@@ -805,6 +815,170 @@ check_lower_plateau (struct polyline *contour, struct line *line)
     //printf ("crossing... (%lf,%lf)\n", line->b->x, line->b->y);
     //return (-1);
   //}
+  return (1);
+}
+
+int
+check_unwind (struct polyline *contour, struct line *lb)
+{
+  struct vertex *a, *b, *c, *d, *e, *f, *g, *h;
+  struct line *la, *lc, *ld, *le, *lf, *lg, *lh, *li;
+  int backward1 = 0;
+  int backward2 = 0;
+  int backward3 = 0;
+  int backward4 = 0;
+  int i1, i2, i3, i4;
+  int dex, dey, gdx, gdy, vec;
+  double temp;
+
+  e = lb->a;
+  d = lb->b;
+  if (e->type != V_CROSS)
+  {
+    backward1 = 1;
+    e = lb->b;
+    d = lb->a;
+  }
+  if (e->type != V_CROSS) return (0);
+  if (d->type == V_CROSS) return (0);
+  la = d->line[1-backward1];
+  g = backward1 ? la->a : la->b;
+  if (g->type == V_CROSS) return (0);
+
+  dex = e->x - d->x;
+  dey = e->y - d->y;
+  gdx = d->x - g->x;
+  gdy = d->y - g->y;
+
+  vec = dex*gdy - dey*gdx;
+  if (vec == 0) return (0);
+
+  for (i1 = 0; i1 < 4; i1++)
+  {
+    if (e->line[i1] == lb) break;
+  }
+  i3 = 3 - i1;
+  i2 = i1i2[i1];
+  if (vec < 0) i2 = i1i2[i3];
+  i4 = 3 - i2;
+
+  lc = e->line[i2];
+  lg = e->line[i3];
+  lh = e->line[i4];
+
+  a = lc->b;
+  if (a == e) {backward2 = 1; a = lc->a;}
+  if (a->type == V_CROSS) return (0);
+  ld = a->line[1-backward2];
+  b = backward2 ? ld->a : ld->b;
+  if (b->type == V_CROSS) return (0);
+  if (b->x - a->x != a->x - g->x) return (0);
+  if (b->y - a->y != a->y - g->y) return (0);
+  le = b->line[1-backward2];
+  c = backward2 ? le->a : le->b;
+  if (c->type == V_CROSS) return (0);
+  if (c->x - b->x != b->x - a->x) return (0);
+  if (c->y - b->y != b->y - a->y) return (0);
+  lf = c->line[1-backward2];
+  h = backward2 ? lf->a : lf->b;
+  if (h->type == V_CROSS) return (0);
+
+  f = lg->b;
+  if (f == e) {backward3 = 1; f = lg->a;}
+  if (f->type == V_CROSS) return (0);
+  li = f->line[1-backward3];
+
+  if (h->x - f->x != f->x - e->x) return (0);
+  if (h->y - f->y != f->y - e->y) return (0);
+
+  if (lh->b == e) backward4 = 1;
+
+  //printf ("found an unwind at (%lf,%lf)\n", e->x, e->y);
+
+  /* changing coordinates */
+
+  temp = e->x;
+  e->x = f->x;
+  f->x = temp;
+  temp = e->y;
+  e->y = f->y;
+  f->y = temp;
+
+  /* changing topological links */
+
+  assert (e->line[i1] == lb);
+  e->line[i2] = lf;
+  e->line[i3] = li;
+  e->line[i4] = ld;
+
+  if (backward1)
+  {
+    b->line[1] = lb;
+    b->line[0] = lc;
+    a->line[1] = lc;
+    a->line[0] = la;
+    assert (lb->b == e);
+    lb->a = b;
+    lc->b = b;
+    lc->a = a;
+    la->b = a;
+  } else {
+    b->line[0] = lb;
+    b->line[1] = lc;
+    a->line[0] = lc;
+    a->line[1] = la;
+    assert (lb->a == e);
+    lb->b = b;
+    lc->a = b;
+    lc->b = a;
+    la->a = a;
+  }
+
+  if (backward2)
+  {
+    assert (lf->a == h);
+    lf->b = e;
+  } else {
+    assert (lf->b == h);
+    lf->a = e;
+  }
+
+  if (backward3) li->b = e; else li->a = e;
+
+  if (backward4)
+  {
+    f->line[1] = ld;
+    f->line[0] = lh;
+    ld->b = e;
+    ld->a = f;
+    lh->b = f;
+  } else {
+    f->line[0] = ld;
+    f->line[1] = lh;
+    ld->a = e;
+    ld->b = f;
+    lh->a = f;
+  }
+
+  /* maintain arc references and refcount */
+
+  lc->arc->refcount--;
+  assert (lc->arc->refcount > 0);
+  lc->arc = la->arc;
+  lc->arc->refcount++;
+
+  ld->arc->refcount--;
+  assert (ld->arc->refcount > 0);
+  ld->arc = lh->arc;
+  ld->arc->refcount++;
+
+  /* removals */
+
+  removenode (contour, c);
+  removenode (contour, d);
+  removeline (contour, le);
+  removeline (contour, lg);
+
   return (1);
 }
 

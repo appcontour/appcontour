@@ -6,4 +6,5 @@ int check_cross_slide (struct polyline *contour, struct line *line);
 int check_cross_turn (struct polyline *contour, struct line *line);
 int check_cross_stairs (struct polyline *contour, struct line *line);
 int check_lower_plateau (struct polyline *contour, struct line *line);
+int check_unwind (struct polyline *contour, struct line *line);
 struct vertex *site_occupied (struct polyline *contour, int px, int py);
