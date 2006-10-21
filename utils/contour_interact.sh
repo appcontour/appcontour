@@ -2,6 +2,8 @@
 #
 example=$1
 
+showcontouroptions="--steps 4"
+
 function displayinfo ()
 {
   eval $commandchain | contour info 2>/dev/null
@@ -19,7 +21,7 @@ function morse ()
 
 function show ()
 {
-  eval $commandchain | contour printmorse 2>/dev/null | $showcontour &
+  eval $commandchain | contour printmorse 2>/dev/null | $showcontour --title "$examplename $rules" &
 }
 
 function back ()
@@ -83,7 +85,7 @@ do
     grident=`$p/showcontour --grident`
     if [ "$grident" != "null" ]
     then
-      showcontour="$p/showcontour"
+      showcontour="$p/showcontour $showcontouroptions"
       echo "found showcontour [$grident] in $p"
     fi
     break

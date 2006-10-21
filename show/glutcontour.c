@@ -9,8 +9,8 @@ extern struct polyline *contour;
 
 static double incrtime = 0.25;
 static int motion = 1;
-static int steps = -1;
-//static int motion = 0;     /* for now start with no motion */
+static int steps = 10000;
+static char *title = 0;
 
 #define SIZE 0.01
 
@@ -148,9 +148,11 @@ idle (void)
   double time;
   char buf[100];
 
+  steps--;
+  if (steps <= 0) {toggle_motion(1); steps = 10000;}
   time = evolve (contour, incrtime);
-  snprintf (buf, 98, "showconfig, time=%lf", time);
-  glutSetWindowTitle(buf);
+  snprintf (buf, 98, "showcontour, time=%lf", time);
+  if (title) glutSetWindowTitle(title); else glutSetWindowTitle(buf);
   glutPostRedisplay();
 }
 
@@ -179,6 +181,15 @@ grinit (int *argcpt, char *argv[])
       if (strcmp (argv[i], "--steps") == 0)
       {
         steps = atoi (argv[i+1]);
+        (*argcpt) -= 2;
+        for (j = i; j < *argcpt; j++)
+        {
+          argv[j] = argv[j+2];
+        }
+      }
+      if (strcmp (argv[i], "--title") == 0)
+      {
+        title = argv[i+1];
         (*argcpt) -= 2;
         for (j = i; j < *argcpt; j++)
         {

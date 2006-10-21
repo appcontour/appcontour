@@ -4,12 +4,14 @@
 #include "showcontour.h"
 #include "doptimize.h"
 
-#define DOPT_UTURN 1
+#define DOPT_UTURN
 //#define DOPT_PLATEAU 1
 //#define DOPT_PLATEAU_BACK 1  /* don't define both: an infinite loop results */
-#define DOPT_FLIP_LEFT 1
-#define DOPT_CHECK_CROSS_TURN 1
-#define DOPT_CHECK_CROSS_SLIDE 1
+#define DOPT_FLIP_LEFT
+#define DOPT_CHECK_CROSS_TURN
+#define DOPT_CHECK_CROSS_SLIDE
+#define DOPT_CHECK_CROSS_STAIRS
+#define DOPT_LOWER_PLATEAU
 
 void
 doptimize (struct polyline *contour)
@@ -17,6 +19,7 @@ doptimize (struct polyline *contour)
   struct line *line;
   int goon = 1;
   int count = 0;
+  //int goonl;
 
   while (goon && count++ < 10000)
   {
@@ -55,7 +58,21 @@ doptimize (struct polyline *contour)
     for (line = contour->line; line; line = line->next)
     {
       goon += check_cross_slide (contour, line);
-      //if (check_cross_slide (contour, line)) return;
+    }
+#endif
+#ifdef DOPT_CHECK_CROSS_STAIRS
+    for (line = contour->line; line; line = line->next)
+    {
+      goon += check_cross_stairs (contour, line);
+    }
+#endif
+#ifdef DOPT_LOWER_PLATEAU
+    for (line = contour->line; line; line = line->next)
+    {
+      //goonl = check_lower_plateau (contour, line);
+      //if (goonl < 0) return;
+      //goon += goonl;
+      goon += check_lower_plateau (contour, line);
     }
 #endif
   }
@@ -281,7 +298,6 @@ check_cross_turn (struct polyline *contour, struct line *line)
   if (d->type == V_CROSS) return (0);
 
   if (c2->x - c1->x != c1->x - b2->x) return (0);
-//printf ("quo c1 (%lf,%lf), c2 (%lf,%lf), b2 (%lf,%lf)\n", c1->x, c1->y, c2->x, c2->y, b2->x, b2->y);
   if (c2->y - c1->y != c1->y - b2->y) return (0);
 
   lb2b3 = b2->line[1-backward1];
@@ -455,6 +471,249 @@ check_cross_slide (struct polyline *contour, struct line *line)
   removenode (contour, d1);
   removeline (contour, lac1);
   removeline (contour, lad1);
+  return (1);
+}
+
+int
+check_cross_stairs (struct polyline *contour, struct line *line)
+{
+  struct vertex *a, *b1, *b2, *c1, *c2, *c3, *c4, *d1, *d2, *d3;
+  struct line *lab1, *lac1, *lad1, *lb1b2, *lc1c2, *ld1d2;
+  struct line *lb2b3, *lc2c3, *ld2d3, *lc3c4;
+  int i1, i2, i3, i4, temp;
+  int backward1 = 0;
+  int backward2 = 0;
+  int backward3 = 0;
+  int backward4 = 0;
+  int lab1x, lab1y, lb1b2x, lb1b2y, vec;
+
+  a = line->a;
+  if (a->type != V_CROSS)
+  {
+    backward1 = 1;
+    a = line->b;
+  }
+  if (a->type != V_CROSS) return (0);
+  for (i1 = 0; i1 < 4; i1++)
+  {
+    if (a->line[i1] == line) break;
+  }
+  i3 = 3 - i1;
+  lab1 = a->line[i3];
+  b1 = lab1->b;
+  if (b1 == a) {backward3 = 1; b1 = lab1->a;}
+  if (b1->type == V_CROSS) return (0);
+  lb1b2 = b1->line[1-backward3];
+  b2 = backward3 ? lb1b2->a : lb1b2->b;
+  if (b2->type == V_CROSS) return (0);
+
+  lab1x = b1->x - a->x;
+  lab1y = b1->y - a->y;
+  lb1b2x = b2->x - b1->x;
+  lb1b2y = b2->y - b1->y;
+  vec = lab1x*lb1b2y - lab1y*lb1b2x; 
+  /* vec = 1 for descending stairs (ab1=(1,0), b1b2=(0,1)) */
+
+  if (vec == 0) return (0);
+  assert (abs(vec) == 1);
+  if (vec > 0) i2 = i1i2[i1]; else i2 = i1i2[i3];
+
+  i4 = 3 - i2;
+
+  lac1 = a->line[i2];
+  lad1 = a->line[i4];
+  c1 = lac1->b;
+  if (c1 == a) {backward2 = 1; c1 = lac1->a;}
+  d1 = lad1->b;
+  if (d1 == a) {backward4 = 1; d1 = lad1->a;}
+  if (c1->type == V_CROSS) return (0);
+  if (d1->type == V_CROSS) return (0);
+
+  lc1c2 = c1->line[1-backward2];
+  ld1d2 = d1->line[1-backward4];
+
+  c2 = backward2 ? lc1c2->a : lc1c2->b;
+  d2 = backward4 ? ld1d2->a : ld1d2->b;
+  if (c2->type == V_CROSS) return (0);
+  if (d2->type == V_CROSS) return (0);
+  if (c2->x - b1->x != b1->x - b2->x) return (0);
+  if (c2->y - b1->y != b1->y - b2->y) return (0);
+  if (d2->x - d1->x != d1->x - a->x) return (0);
+  if (d2->y - d1->y != d1->y - a->y) return (0);
+
+  lc2c3 = c2->line[1-backward2];
+  lb2b3 = b2->line[1-backward3];
+  ld2d3 = d2->line[1-backward4];
+
+  c3 = backward2 ? lc2c3->a : lc2c3->b;
+  d3 = backward4 ? ld2d3->a : ld2d3->b;
+  if (c3->type == V_CROSS) return (0);
+  if (d3->type == V_CROSS) return (0);
+  if (c3->x - c2->x != c2->x - c1->x) return (0);
+  if (c3->y - c2->y != c2->y - c1->y) return (0);
+  if (d3->x - b2->x != b2->x - b1->x) return (0);
+  if (d3->y - b2->y != b2->y - b1->y) return (0);
+
+  lc3c4 = c3->line[1-backward2];
+  c4 = backward2 ? lc3c4->a : lc3c4->b;
+  if (c4->type == V_CROSS) return (0);
+  if (c4->x - b1->x != b1->x - a->x) return (0);
+  if (c4->y - b1->y != b1->y - a->y) return (0);
+
+  //printf ("stairs found (%lf,%lf)\n", a->x, a->y);
+
+  /* changing coordinates */
+
+  temp = a->x;
+  a->x = b2->x;
+  b2->x = temp;
+  temp = a->y;
+  a->y = b2->y;
+  b2->y = temp;
+
+  c3->x = b1->x;
+  c3->y = b1->y;
+
+  b1->x = d1->x;
+  b1->y = d1->y;
+
+  /* changing topological links */
+
+  a->line[i1] = lab1;
+  assert (a->line[i2] == lac1);
+  a->line[i3] = lb2b3;
+  a->line[i4] = ld2d3;
+
+  if (backward2)
+  {
+    c3->line[1] = lac1;
+    lac1->a  = c3;
+    assert (lac1->b == a);
+  } else {
+    c3->line[0] = lac1;
+    lac1->b  = c3;
+    assert (lac1->a == a);
+  }
+
+  if (backward3) lb2b3->b = a; else lb2b3->a = a;
+  if (backward4) ld2d3->b = a; else ld2d3->a = a;
+
+  if (backward1)
+  {
+    lab1->b = a;
+    lab1->a = b1;
+    lb1b2->b = b1;
+    lb1b2->a = b2;
+    line->b = b2;
+    b1->line[1] = lab1;
+    b1->line[0] = lb1b2;
+    b2->line[1] = lb1b2;
+    b2->line[0] = line;
+  } else {
+    lab1->a = a;
+    lab1->b = b1;
+    lb1b2->a = b1;
+    lb1b2->b = b2;
+    line->a = b2;
+    b1->line[0] = lab1;
+    b1->line[1] = lb1b2;
+    b2->line[0] = lb1b2;
+    b2->line[1] = line;
+  }
+
+  /* maintain arc references and refcount */
+  lab1->arc->refcount--;
+  lb1b2->arc->refcount--;
+  assert (lab1->arc->refcount > 0);
+  assert (lb1b2->arc->refcount > 0);
+  lab1->arc = line->arc;
+  lb1b2->arc = line->arc;
+  line->arc->refcount += 2;
+
+  /* rimozioni */
+  removenode (contour, c1);
+  removenode (contour, c2);
+  removenode (contour, d1);
+  removenode (contour, d2);
+  removeline (contour, lc1c2);
+  removeline (contour, lc2c3);
+  removeline (contour, lad1);
+  removeline (contour, ld1d2);
+
+  return (1);
+}
+
+int
+check_lower_plateau (struct polyline *contour, struct line *line)
+{
+  struct vertex *a, *b, *aback, *bprev;
+  struct line *l, *lback, *lend;
+  int abx, aby, px, py, qx, qy, bprevx, bprevy;
+  int i, vec, vecg, count;
+
+  a = line->a;
+  if (a->type == V_CROSS) return (0);
+  b = line->b;
+  if (b->type == V_CROSS) return (0);
+
+  abx = b->x - a->x;
+  aby = b->y - a->y;
+
+  lback = a->line[0];
+  aback = lback->a;
+
+  px = a->x - aback->x;
+  py = a->y - aback->y;
+
+  vec = abx*py - aby*px;
+  if (vec == 0) return (0);
+  count = 0;
+
+  l = b->line[1];
+  while (1)
+  {
+    count++;
+    bprev = b;
+    b = l->b;
+    if (b->type == V_CROSS) return (0);
+
+    qx = b->x - bprev->x;
+    qy = b->y - bprev->y;
+    vecg = qx*aby - qy*abx;
+    if (vecg == -vec) return (0);  /* not a plateau */
+    if (vecg == vec) break;        /* this IS a plateau */
+
+    bprevx = bprev->x;
+    bprevy = bprev->y;
+    if (site_occupied (contour, bprevx - px, bprevy - py)) return (0);
+                   /* there is an occupied cell */
+    l = b->line[1];
+  }
+  if (count < 2) return (0);
+
+  //printf ("plateau found at (%lf,%lf) of size %d\n", a->x, a->y, count);
+
+  /* change coordinates */
+  b = line->b;
+  for (i = 1; i < count; i++)
+  {
+    b->x -= px;
+    b->y -= py;
+    l = b->line[1];
+    b = l->b;
+  }
+  /* change topological info at start */
+  line->a = lback->a;
+  line->a->line[1] = line;
+  removenode (contour, a);
+  removeline (contour, lback);
+  /* change topological info at end */
+  lend = b->line[1];
+  l->b = lend->b;
+  l->b->line[0] = l;
+  removenode (contour, b);
+  removeline (contour, lend);
+
   return (1);
 }
 
