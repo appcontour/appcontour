@@ -1,4 +1,4 @@
 infinite loop in doptimize for the result of
 "contour knot2morse examples/simpleknotfake.morse" [SOLVED by disabling an optimizer]
 
-example potato.morse has a problem with the discrete optimization.
+example potato.morse has a problem with the discrete optimization [SOLVED]

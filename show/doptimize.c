@@ -4,12 +4,12 @@
 #include "showcontour.h"
 #include "doptimize.h"
 
-#define DOPT_UTURN
 //#define DOPT_PLATEAU 1
 //#define DOPT_PLATEAU_BACK 1  /* don't define both: an infinite loop results */
+//#define DOPT_CHECK_CROSS_SLIDE  /* this is contained in lower_plateau */
+#define DOPT_UTURN
 #define DOPT_FLIP_LEFT
 #define DOPT_CHECK_CROSS_TURN
-//#define DOPT_CHECK_CROSS_SLIDE  /* this is contained in lower_plateau */
 #define DOPT_CHECK_CROSS_STAIRS
 #define DOPT_LOWER_PLATEAU
 
@@ -19,7 +19,7 @@ doptimize (struct polyline *contour)
   struct line *line;
   int goon = 1;
   int count = 0;
-  int goonl;
+  //int goonl;
 
   while (goon && count++ < 10000)
   {
@@ -51,6 +51,9 @@ doptimize (struct polyline *contour)
 #ifdef DOPT_CHECK_CROSS_TURN
     for (line = contour->line; line; line = line->next)
     {
+      //goonl = check_cross_turn (contour, line);
+      //if (goonl < 0) return;
+      //goon += goonl;
       goon += check_cross_turn (contour, line);
     }
 #endif
@@ -69,10 +72,10 @@ doptimize (struct polyline *contour)
 #ifdef DOPT_LOWER_PLATEAU
     for (line = contour->line; line; line = line->next)
     {
-      goonl = check_lower_plateau (contour, line);
-      if (goonl < 0) return;
-      goon += goonl;
-      //goon += check_lower_plateau (contour, line);
+      //goonl = check_lower_plateau (contour, line);
+      //if (goonl < 0) return;
+      //goon += goonl;
+      goon += check_lower_plateau (contour, line);
     }
 #endif
   }
@@ -237,7 +240,7 @@ static int i1i2[] = {1,3,0,2};
 int
 check_cross_turn (struct polyline *contour, struct line *line)
 {
-  struct vertex *a, *b1, *b2, *b3, *b4, *b5, *c1, *c2, *d, *e;
+  struct vertex *a, *b1, *b2, *b3, *b4, *b5, *c1, *c2, *c3, *d, *e;
   struct line *lab1, *lac1, *lb1b2, *lb2b3, *lb3b4, *lb4b5;
   struct line *lc1c2, *lc2c3, *lad, *lae;
   int i1, i2, i3, i4;
@@ -272,6 +275,10 @@ check_cross_turn (struct polyline *contour, struct line *line)
 
   c2 = backward2 ? lc1c2->a : lc1c2->b;
   if (c2->type == V_CROSS) return (0);
+  lc2c3 = c2->line[1-backward2];
+  c3 = backward2 ? lc2c3->a : lc2c3->b;
+  if (c3->x - c2->x != c2->x - c1->x) return (0);
+  if (c3->y - c2->y != c2->y - c1->y) return (0);
 
   lac1x = c1->x - a->x;
   lac1y = c1->y - a->y;
@@ -328,7 +335,7 @@ check_cross_turn (struct polyline *contour, struct line *line)
   c2->y = temp;
   a->line[i4] = lac1;
   a->line[i1] = lb4b5;
-  lc2c3 = c2->line[1-backward2];
+  //lc2c3 = c2->line[1-backward2];
   a->line[i2] = lc2c3;
   // a->line[i3] does not change
   if (backward2) lc2c3->b = a; else lc2c3->a = a;
