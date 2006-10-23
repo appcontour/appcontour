@@ -9,9 +9,9 @@
 extern struct polyline *contour;
 
 static double incrtime = 0.25;
-int motion = 1;
-int steps = 10000;
-char *title = 0;
+extern int motion;
+extern int steps;
+extern char *title;
 
 #define SIZE 0.01
 

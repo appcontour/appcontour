@@ -1,9 +1,9 @@
 #include <string.h>
 #include "grcommon.h"
 
-extern int motion;
-extern int steps;
-extern char *title;
+int motion = 1;
+int steps = 10000;
+char *title = 0;
 
 void
 grparser (int *argcpt, char *argv[])
