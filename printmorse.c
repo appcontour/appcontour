@@ -277,18 +277,18 @@ nested_morse (struct morse *mb1, struct morse *mb2, int arcbelow)
 
   if (debug) printf ("entering nested morse\n");
 
+  cl = countleft (mb1);
+  cr = countright (mb2);
   if (arcbelow)
   {
     if (mb1->next != mb2) nested_morse (mb1->next, mb2->next, 0);
-    crbefore++;
-    crafter++;
+    crbefore += cl;
+    crafter += cr;
     morse_close (mb1, mb2);
-    crbefore--;
-    crafter--;
+    crbefore -= cl;
+    crafter -= cr;
     return;
   }
-  cl = countleft (mb1);
-  cr = countright (mb2);
   crbefore += cl;
   crafter += cr;
   /* devo creare una nuova linea di morse */
