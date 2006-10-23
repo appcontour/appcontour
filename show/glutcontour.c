@@ -4,13 +4,14 @@
 #include <string.h>
 #include "GL/glut.h"
 #include "showcontour.h"
+#include "grcommon.h"
 
 extern struct polyline *contour;
 
 static double incrtime = 0.25;
-static int motion = 1;
-static int steps = 10000;
-static char *title = 0;
+int motion = 1;
+int steps = 10000;
+char *title = 0;
 
 #define SIZE 0.01
 
@@ -160,45 +161,8 @@ char *
 grinit (int *argcpt, char *argv[])
 {
   static char ident[]="glut";
-  int goon = 1;
-  int i, j;
 
-  while (goon)
-  {
-    goon = 0;
-    for (i = 1; i < *argcpt; i++)
-    {
-      if (strcmp (argv[i], "--pause") == 0)
-      {
-        motion = 0;
-        goon = 1;
-        (*argcpt)--;
-        for (j = i; j < *argcpt; j++)
-        {
-          argv[j] = argv[j+1];
-        }
-      }
-      if (strcmp (argv[i], "--steps") == 0)
-      {
-        steps = atoi (argv[i+1]);
-        (*argcpt) -= 2;
-        for (j = i; j < *argcpt; j++)
-        {
-          argv[j] = argv[j+2];
-        }
-      }
-      if (strcmp (argv[i], "--title") == 0)
-      {
-        title = argv[i+1];
-        (*argcpt) -= 2;
-        for (j = i; j < *argcpt; j++)
-        {
-          argv[j] = argv[j+2];
-        }
-      }
-    }
-  }
-
+  grparser (argcpt, argv);
   glutInit(argcpt, argv);
   return (ident);
 }

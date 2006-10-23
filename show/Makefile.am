@@ -12,7 +12,7 @@ GRAPHLIB = -lm
 endif
 endif
 
-showcontour_SOURCES = showcontour.c doptimize.c doptimize.h morseevent.c morseevent.h energy.c showcontour.h energy.h $(GRAPHSOURCE)
+showcontour_SOURCES = showcontour.c grcommon.c grcommon.h doptimize.c doptimize.h morseevent.c morseevent.h energy.c showcontour.h energy.h $(GRAPHSOURCE)
 showcontour_LDADD = ../parser.o $(GRAPHLIB)
 
 EXTRA_DIST = glutcontour.c nullcontour.c
