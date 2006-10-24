@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include "grcommon.h"
 
 int motion = 1;
@@ -29,6 +30,7 @@ grparser (int *argcpt, char *argv[])
       if (strcmp (argv[i], "--steps") == 0)
       {
         steps = atoi (argv[i+1]);
+        goon = 1;
         (*argcpt) -= 2;
         for (j = i; j < *argcpt; j++)
         {
@@ -38,6 +40,7 @@ grparser (int *argcpt, char *argv[])
       if (strcmp (argv[i], "--title") == 0)
       {
         title = argv[i+1];
+        goon = 1;
         (*argcpt) -= 2;
         for (j = i; j < *argcpt; j++)
         {
