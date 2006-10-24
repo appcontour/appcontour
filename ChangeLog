@@ -1,3 +1,18 @@
+2006-10-23: nuovo programma per la visualizzazione grafica di un
+	contorno apparente.
+	Utilizzabile anche da "utils/contour_interact.sh"
+
+2006-10-05: la regora N6 e' ora diventata CR2 (come nel paper)
+
+2006-10-03: finalmente e' possibile costruire una descrizione di morse
+	a partire da una region description
+
+2006-09-26: possibilita' di specificazione nomefile come secondo argomento.
+	Nuove rule A1 e A2 (rimuovi regione ad anello).
+	Nuove rule N6, CN1, CN2L, CN2R, CN2LB, CN2RB, CN3
+
+	Nuova funzione "knot2morse"; con alcuni esempi in 'examples'
+
 2006-09-21: errore nel controllo dei valori di d in un
 	nodo.  I 4 valori sono controllati correttamente,
 	ma l'arco in cui d salta di due ha una direzione
@@ -5,7 +20,7 @@
 
 	Completata la rule n1 e aggiunte le regole n2, n3, n4,
 	che possono essere chiamate anche come (ad es)
-        n1:3 per indicare l'applicazione della regola 1 solo
+	n1:3 per indicare l'applicazione della regola 1 solo
 	al terzo match.
 
 	Nuova funzione testallrules
@@ -15,13 +30,3 @@
 	Nuova rule N5
 	Nuove rule C1 e C2
 
-2006-09-26: possibilita' di specificazione nomefile come secondo argomento.
-	Nuove rule A1 e A2 (rimuovi regione ad anello).
-	Nuove rule N6, CN1, CN2L, CN2R, CN2LB, CN2RB, CN3
-
-	Nuova funzione "knot2morse"; con alcuni esempi in 'examples'
-
-2006-10-03: finalmente e' possibile costruire una descrizione di morse
-	a partire da una region description
-
-2006-10-05: la regora N6 e' ora diventata CR2 (come nel paper)

@@ -14,6 +14,83 @@
 #define DOPT_LOWER_PLATEAU
 #define DOPT_UNWIND
 
+/* macro definitions */
+
+#define TESTALIGNED(n1,n2,n3) \
+  if (n3->x - n2->x != n2->x - n1->x) return (0);  \
+  if (n3->y - n2->y != n2->y - n1->y) return (0);
+
+#define SWAPCOORDS(n1,n2) \
+  temp = n1->x;   \
+  n1->x = n2->x;  \
+  n2->x = temp;   \
+  temp = n1->y;   \
+  n1->y = n2->y;  \
+  n2->y = temp;
+#define RMN(node) removenode (contour, node)
+#define RML(line) removeline (contour, line)
+#define MVARC(ld,lh) \
+  ld->arc->refcount--;\
+  assert (ld->arc->refcount > 0);\
+  ld->arc = lh->arc;\
+  ld->arc->refcount++;
+#define CHAINFC2(bw,cross,l1)\
+  if (bw) \
+  {       \
+    l1->b = cross;    \
+  } else {            \
+    l1->a = cross;    \
+  }
+#define CHAINFC3(bw,cross,l1,n1)\
+  if (bw) \
+  {       \
+    l1->b = cross;    \
+    l1->a = n1;       \
+    n1->line[1] = l1; \
+  } else {            \
+    l1->a = cross;    \
+    l1->b = n1;       \
+    n1->line[0] = l1; \
+  }
+#define CHAINFC4(bw,cross,l1,n1,l2)\
+  if (bw) \
+  {       \
+    l1->b = cross;    \
+    l1->a = n1;       \
+    n1->line[1] = l1; \
+    n1->line[0] = l2; \
+    l2->b = n1;       \
+  } else {            \
+    l1->a = cross;    \
+    l1->b = n1;       \
+    n1->line[0] = l1; \
+    n1->line[1] = l2; \
+    l2->a = n1;       \
+  }
+#define CHAINFC6(bw,cross,l1,n1,l2,n2,l3)\
+  if (bw) \
+  {       \
+    l1->b = cross;    \
+    l1->a = n1;       \
+    n1->line[1] = l1; \
+    n1->line[0] = l2; \
+    l2->b = n1;       \
+    l2->a = n2;       \
+    n2->line[1] = l2; \
+    n2->line[0] = l3; \
+    l3->b = n2;       \
+  } else {            \
+    l1->a = cross;    \
+    l1->b = n1;       \
+    n1->line[0] = l1; \
+    n1->line[1] = l2; \
+    l2->a = n1;       \
+    l2->b = n2;       \
+    n2->line[0] = l2; \
+    n2->line[1] = l3; \
+    l3->a = n2;       \
+  }
+
 void
 doptimize (struct polyline *contour)
 {
@@ -135,10 +212,10 @@ check_u_turn (struct polyline *contour, struct line *line)
   /* modify contour, remove b, c; l2, l3 */
   line->b = d;
   d->line[0] = line;
-  removenode (contour, b);
-  removenode (contour, c);
-  removeline (contour, l2);
-  removeline (contour, l3);
+  RMN (b);
+  RMN (c);
+  RML (l2);
+  RML (l3);
 
   return (1);
 }
@@ -287,8 +364,7 @@ check_cross_turn (struct polyline *contour, struct line *line)
   if (c2->type == V_CROSS) return (0);
   lc2c3 = c2->line[1-backward2];
   c3 = backward2 ? lc2c3->a : lc2c3->b;
-  if (c3->x - c2->x != c2->x - c1->x) return (0);
-  if (c3->y - c2->y != c2->y - c1->y) return (0);
+  TESTALIGNED (c1, c2, c3);
 
   lac1x = c1->x - a->x;
   lac1y = c1->y - a->y;
@@ -314,80 +390,44 @@ check_cross_turn (struct polyline *contour, struct line *line)
   if (d == a) {backward3 = 1; d = lad->a;}
   if (d->type == V_CROSS) return (0);
 
-  if (c2->x - c1->x != c1->x - b2->x) return (0);
-  if (c2->y - c1->y != c1->y - b2->y) return (0);
+  TESTALIGNED (b2, c1, c2);
 
   lb2b3 = b2->line[1-backward1];
   b3 = backward1 ? lb2b3->a : lb2b3->b;
   if (b3->type == V_CROSS) return (0);
-  if (b3->x - b2->x != b2->x - b1->x) return (0);
-  if (b3->y - b2->y != b2->y - b1->y) return (0);
+  TESTALIGNED (b1, b2, b3);
   lb3b4 = b3->line[1-backward1];
   b4 = backward1 ? lb3b4->a : lb3b4->b;
   if (b4->type == V_CROSS) return (0);
-  if (b4->x - c1->x != c1->x - a->x) return (0);
-  if (b4->y - c1->y != c1->y - a->y) return (0);
+  TESTALIGNED (a, c1, b4);
   lb4b5 = b4->line[1-backward1];
   b5 = backward1 ? lb4b5->a : lb4b5->b;
   if (b5->type == V_CROSS) return (0);
-  if (b5->x - b4->x != b4->x - b3->x) return (0);
-  if (b5->y - b4->y != b4->y - b3->y) return (0);
+  TESTALIGNED (b3, b4, b5);
 
   /* all conditions are satisfied! */
 
   //printf ("found a corner turn (%lf,%lf)\n", a->x, a->y);
 
-  temp = a->x;
-  a->x = c2->x;
-  c2->x = temp;
-  temp = a->y;
-  a->y = c2->y;
-  c2->y = temp;
+  SWAPCOORDS (a, c2);
   a->line[i4] = lac1;
   a->line[i1] = lb4b5;
   //lc2c3 = c2->line[1-backward2];
   a->line[i2] = lc2c3;
   // a->line[i3] does not change
-  if (backward2) lc2c3->b = a; else lc2c3->a = a;
-  if (backward1) lb4b5->b = a; else lb4b5->a = a;
-  if (backward4)
-  {
-    lac1->b = a;
-    lac1->a = c1;
-    lc1c2->b = c1;
-    lc1c2->a = c2;
-    lae->b = c2;
-    c1->line[1] = lac1;
-    c1->line[0] = lc1c2;
-    c2->line[1] = lc1c2;
-    c2->line[0] = lae;
-  } else {
-    lac1->a = a;
-    lac1->b = c1;
-    lc1c2->a = c1;
-    lc1c2->b = c2;
-    lae->a = c2;
-    c1->line[0] = lac1;
-    c1->line[1] = lc1c2;
-    c2->line[0] = lc1c2;
-    c2->line[1] = lae;
-  }
-  lc1c2->arc->refcount--;
-  lac1->arc->refcount--;
-  assert (lc1c2->arc->refcount > 0);
-  assert (lac1->arc->refcount > 0);
-  lc1c2->arc = lae->arc;
-  lac1->arc = lae->arc;
-  lae->arc->refcount += 2;
-
-  removenode (contour, b1);
-  removenode (contour, b2);
-  removenode (contour, b3);
-  removenode (contour, b4);
-  removeline (contour, lab1);
-  removeline (contour, lb1b2);
-  removeline (contour, lb2b3);
-  removeline (contour, lb3b4);
+  CHAINFC2 (backward1, a, lb4b5);
+  CHAINFC2 (backward2, a, lc2c3);
+  CHAINFC6 (backward4, a, lac1, c1, lc1c2, c2, lae);
+  MVARC (lc1c2, lae);
+  MVARC (lac1, lae);
+  RMN (b1);
+  RMN (b2);
+  RMN (b3);
+  RMN (b4);
+  RML (lab1);
+  RML (lb1b2);
+  RML (lb2b3);
+  RML (lb3b4);
 
   return (1);
 }
@@ -442,52 +482,30 @@ check_cross_slide (struct polyline *contour, struct line *line)
 
   if (c2->x - c1->x != b1->x - a->x) return (0);
   if (c2->y - c1->y != b1->y - a->y) return (0);
-  if (b2->x - b1->x != b1->x - a->x) return (0);
-  if (b2->y - b1->y != b1->y - a->y) return (0);
+  TESTALIGNED (a, b1, b2);
   if (d2->x - d1->x != b1->x - a->x) return (0);
   if (d2->y - d1->y != b1->y - a->y) return (0);
 
   //printf ("found a cross slide (%lf,%lf)\n", a->x, a->y);
 
-  temp = a->x;
-  a->x = b1->x;
-  b1->x = temp;
-  temp = a->y;
-  a->y = b1->y;
-  b1->y = temp;
+  SWAPCOORDS (a, b1);
   a->line[i1] = lab1;
   a->line[i2] = lc1c2;
   a->line[i3] = lb1b2;
   a->line[i4] = ld1d2;
-  lab1->arc->refcount--;
-  assert (lab1->arc->refcount > 0);
-  lab1->arc = line->arc;
-  line->arc->refcount++;
-  if (backward2) lc1c2->b = a;
-    else lc1c2->a = a;
-  if (backward4) ld1d2->b = a;
-    else ld1d2->a = a;
-  if (backward3) lb1b2->b = a;
-    else lb1b2->a = a;
-  if (backward1)
-  {
-    lab1->b = a;
-    lab1->a = b1;
-    b1->line[0] = line;
-    b1->line[1] = lab1;
-    line->b = b1;
-  } else {
-    lab1->a = a;
-    lab1->b = b1;
-    b1->line[0] = lab1;
-    b1->line[1] = line;
-    line->a = b1;
-  }
 
-  removenode (contour, c1);
-  removenode (contour, d1);
-  removeline (contour, lac1);
-  removeline (contour, lad1);
+  MVARC (lab1, line);
+
+  CHAINFC4 (backward1, a, lab1, b1, line);
+  CHAINFC2 (backward2, a, lc1c2);
+  CHAINFC2 (backward3, a, lb1b2);
+  CHAINFC2 (backward4, a, ld1d2);
+
+  RMN (c1);
+  RMN (d1);
+  RML (lac1);
+  RML (lad1);
+
   return (1);
 }
 
@@ -553,10 +571,8 @@ check_cross_stairs (struct polyline *contour, struct line *line)
   d2 = backward4 ? ld1d2->a : ld1d2->b;
   if (c2->type == V_CROSS) return (0);
   if (d2->type == V_CROSS) return (0);
-  if (c2->x - b1->x != b1->x - b2->x) return (0);
-  if (c2->y - b1->y != b1->y - b2->y) return (0);
-  if (d2->x - d1->x != d1->x - a->x) return (0);
-  if (d2->y - d1->y != d1->y - a->y) return (0);
+  TESTALIGNED (b2, b1, c2);
+  TESTALIGNED (a, d1, d2);
 
   lc2c3 = c2->line[1-backward2];
   lb2b3 = b2->line[1-backward3];
@@ -566,27 +582,19 @@ check_cross_stairs (struct polyline *contour, struct line *line)
   d3 = backward4 ? ld2d3->a : ld2d3->b;
   if (c3->type == V_CROSS) return (0);
   if (d3->type == V_CROSS) return (0);
-  if (c3->x - c2->x != c2->x - c1->x) return (0);
-  if (c3->y - c2->y != c2->y - c1->y) return (0);
-  if (d3->x - b2->x != b2->x - b1->x) return (0);
-  if (d3->y - b2->y != b2->y - b1->y) return (0);
+  TESTALIGNED (c1, c2, c3);
+  TESTALIGNED (b1, b2, d3);
 
   lc3c4 = c3->line[1-backward2];
   c4 = backward2 ? lc3c4->a : lc3c4->b;
   if (c4->type == V_CROSS) return (0);
-  if (c4->x - b1->x != b1->x - a->x) return (0);
-  if (c4->y - b1->y != b1->y - a->y) return (0);
+  TESTALIGNED (a, b1, c4);
 
   //printf ("stairs found (%lf,%lf)\n", a->x, a->y);
 
   /* changing coordinates */
 
-  temp = a->x;
-  a->x = b2->x;
-  b2->x = temp;
-  temp = a->y;
-  a->y = b2->y;
-  b2->y = temp;
+  SWAPCOORDS (a, b2);
 
   c3->x = b1->x;
   c3->y = b1->y;
@@ -601,61 +609,24 @@ check_cross_stairs (struct polyline *contour, struct line *line)
   a->line[i3] = lb2b3;
   a->line[i4] = ld2d3;
 
-  if (backward2)
-  {
-    c3->line[1] = lac1;
-    lac1->a  = c3;
-    assert (lac1->b == a);
-  } else {
-    c3->line[0] = lac1;
-    lac1->b  = c3;
-    assert (lac1->a == a);
-  }
-
-  if (backward3) lb2b3->b = a; else lb2b3->a = a;
-  if (backward4) ld2d3->b = a; else ld2d3->a = a;
-
-  if (backward1)
-  {
-    lab1->b = a;
-    lab1->a = b1;
-    lb1b2->b = b1;
-    lb1b2->a = b2;
-    line->b = b2;
-    b1->line[1] = lab1;
-    b1->line[0] = lb1b2;
-    b2->line[1] = lb1b2;
-    b2->line[0] = line;
-  } else {
-    lab1->a = a;
-    lab1->b = b1;
-    lb1b2->a = b1;
-    lb1b2->b = b2;
-    line->a = b2;
-    b1->line[0] = lab1;
-    b1->line[1] = lb1b2;
-    b2->line[0] = lb1b2;
-    b2->line[1] = line;
-  }
+  CHAINFC6 (backward1, a, lab1, b1, lb1b2, b2, line);
+  CHAINFC3 (backward2, a, lac1, c3)
+  CHAINFC2 (backward3, a, lb2b3);
+  CHAINFC2 (backward4, a, ld2d3);
 
   /* maintain arc references and refcount */
-  lab1->arc->refcount--;
-  lb1b2->arc->refcount--;
-  assert (lab1->arc->refcount > 0);
-  assert (lb1b2->arc->refcount > 0);
-  lab1->arc = line->arc;
-  lb1b2->arc = line->arc;
-  line->arc->refcount += 2;
+  MVARC (lab1, line);
+  MVARC (lb1b2, line);
 
   /* rimozioni */
-  removenode (contour, c1);
-  removenode (contour, c2);
-  removenode (contour, d1);
-  removenode (contour, d2);
-  removeline (contour, lc1c2);
-  removeline (contour, lc2c3);
-  removeline (contour, lad1);
-  removeline (contour, ld1d2);
+  RMN (c1);
+  RMN (c2);
+  RMN (d1);
+  RMN (d2);
+  RML (lc1c2);
+  RML (lc2c3);
+  RML (lad1);
+  RML (ld1d2);
 
   return (1);
 }
@@ -713,8 +684,7 @@ check_lower_plateau (struct polyline *contour, struct line *line)
       } else {
         btt = bt->line[1]->b;
       }
-      if (btt->x - bt->x != bt->x - b->x) return (0);
-      if (btt->y - bt->y != bt->y - b->y) return (0);
+      TESTALIGNED (b, bt, btt);
       crossingfound = 1;
       assert (l->b != b);
       b = l->b;
@@ -790,9 +760,7 @@ check_lower_plateau (struct polyline *contour, struct line *line)
       bt->line[1-backward2] = l2;
       b->line[i2] = l3;
       b->line[i4] = l2;
-      l2->arc->refcount--;
-      l2->arc = l1->arc;
-      l2->arc->refcount++;
+      MVARC (l2, l1);
     } else {
       l = b->line[1];
     }
@@ -801,14 +769,14 @@ check_lower_plateau (struct polyline *contour, struct line *line)
   /* change topological info at start */
   line->a = lback->a;
   line->a->line[1] = line;
-  removenode (contour, a);
-  removeline (contour, lback);
+  RMN (a);
+  RML (lback);
   /* change topological info at end */
   lend = b->line[1];
   l->b = lend->b;
   l->b->line[0] = l;
-  removenode (contour, b);
-  removeline (contour, lend);
+  RMN (b);
+  RML (lend);
 
   //if (crossingfound)
   //{
@@ -872,13 +840,11 @@ check_unwind (struct polyline *contour, struct line *lb)
   ld = a->line[1-backward2];
   b = backward2 ? ld->a : ld->b;
   if (b->type == V_CROSS) return (0);
-  if (b->x - a->x != a->x - g->x) return (0);
-  if (b->y - a->y != a->y - g->y) return (0);
+  TESTALIGNED (g, a, b);
   le = b->line[1-backward2];
   c = backward2 ? le->a : le->b;
   if (c->type == V_CROSS) return (0);
-  if (c->x - b->x != b->x - a->x) return (0);
-  if (c->y - b->y != b->y - a->y) return (0);
+  TESTALIGNED (a, b, c);
   lf = c->line[1-backward2];
   h = backward2 ? lf->a : lf->b;
   if (h->type == V_CROSS) return (0);
@@ -888,8 +854,7 @@ check_unwind (struct polyline *contour, struct line *lb)
   if (f->type == V_CROSS) return (0);
   li = f->line[1-backward3];
 
-  if (h->x - f->x != f->x - e->x) return (0);
-  if (h->y - f->y != f->y - e->y) return (0);
+  TESTALIGNED (e, f, h);
 
   if (lh->b == e) backward4 = 1;
 
@@ -897,12 +862,7 @@ check_unwind (struct polyline *contour, struct line *lb)
 
   /* changing coordinates */
 
-  temp = e->x;
-  e->x = f->x;
-  f->x = temp;
-  temp = e->y;
-  e->y = f->y;
-  f->y = temp;
+  SWAPCOORDS (e, f);
 
   /* changing topological links */
 
@@ -911,73 +871,22 @@ check_unwind (struct polyline *contour, struct line *lb)
   e->line[i3] = li;
   e->line[i4] = ld;
 
-  if (backward1)
-  {
-    b->line[1] = lb;
-    b->line[0] = lc;
-    a->line[1] = lc;
-    a->line[0] = la;
-    assert (lb->b == e);
-    lb->a = b;
-    lc->b = b;
-    lc->a = a;
-    la->b = a;
-  } else {
-    b->line[0] = lb;
-    b->line[1] = lc;
-    a->line[0] = lc;
-    a->line[1] = la;
-    assert (lb->a == e);
-    lb->b = b;
-    lc->a = b;
-    lc->b = a;
-    la->a = a;
-  }
-
-  if (backward2)
-  {
-    assert (lf->a == h);
-    lf->b = e;
-  } else {
-    assert (lf->b == h);
-    lf->a = e;
-  }
-
-  if (backward3) li->b = e; else li->a = e;
-
-  if (backward4)
-  {
-    f->line[1] = ld;
-    f->line[0] = lh;
-    ld->b = e;
-    ld->a = f;
-    lh->b = f;
-  } else {
-    f->line[0] = ld;
-    f->line[1] = lh;
-    ld->a = e;
-    ld->b = f;
-    lh->a = f;
-  }
+  CHAINFC6 (backward1, e, lb, b, lc, a, la);
+  CHAINFC2 (backward2, e, lf);
+  CHAINFC2 (backward3, e, li);
+  CHAINFC4 (backward4, e, ld, f, lh);
 
   /* maintain arc references and refcount */
 
-  lc->arc->refcount--;
-  assert (lc->arc->refcount > 0);
-  lc->arc = la->arc;
-  lc->arc->refcount++;
-
-  ld->arc->refcount--;
-  assert (ld->arc->refcount > 0);
-  ld->arc = lh->arc;
-  ld->arc->refcount++;
+  MVARC (lc, la);
+  MVARC (ld, lh);
 
   /* removals */
 
-  removenode (contour, c);
-  removenode (contour, d);
-  removeline (contour, le);
-  removeline (contour, lg);
+  RMN (c);
+  RMN (d);
+  RML (le);
+  RML (lg);
 
   return (1);
 }

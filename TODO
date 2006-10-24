@@ -1,5 +1,2 @@
 showcontour:
-	implementazione energia repulsiva, ora c'e' una implementazione
-	brutale che pero' non funziona
-
-	integrale di modulo di k... potrebbe aiutare ad eliminare i flessi.
+	export in formato xfig e postscript
