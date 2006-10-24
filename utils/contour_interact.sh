@@ -109,8 +109,7 @@ do
   applicable=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
   echo "Applicable rules: $applicable"
   applicable=" $applicable "
-  echo -n "Contour> "
-  read command arg
+  read -e -p "Contour> " command arg
   if [ "$?" != "0" ]
   then
     exit
