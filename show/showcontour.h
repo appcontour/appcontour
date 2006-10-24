@@ -74,6 +74,7 @@ void toggle_motion (int toggle);
 void grsetresponsivity (double incrtime);
 int grmain (void);
 double evolve (struct polyline *contour, double incrtime);
+void redistributenodes (struct polyline *contour);
 struct line *nextp (struct line *l, struct vertex *p);
 struct line *prevp (struct line *l, struct vertex *p);
 double normsq (double *x, int dim);

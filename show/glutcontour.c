@@ -12,10 +12,20 @@ static double incrtime = 0.25;
 extern int motion;
 extern int steps;
 extern char *title;
+static int isfullscreen = 0;
 
 #define SIZE 0.01
 
+#define MENU_TOGGLE_MOTION 1
+#define MENU_SINGLE_STEP 2
+#define MENU_REFINE 3
+#define MENU_DEREFINE 4
+#define MENU_INC_RESP 10
+#define MENU_DEC_RESP 11
+#define MENU_QUIT 100
+
 void idle (void);
+void keyboard (unsigned char key, int x, int y);
 
 void
 display (void)
@@ -117,20 +127,42 @@ toggle_motion (int toggle)
 void
 menu (int value)
 {
+  double time;
+
   switch (value) {
-  case 1:
+  case MENU_TOGGLE_MOTION:
     toggle_motion (1);
     break;
 
-  case 2:
+  case MENU_SINGLE_STEP:
+    motion = 1;
+    steps = 1;
+    toggle_motion (0);
+    break;
+
+  case MENU_REFINE:
+    contour->h /= sqrt(2.0);
+    redistributenodes (contour);
+    time = evolve (contour, 0.1);
+    redistributenodes (contour);
+    break;
+
+  case MENU_DEREFINE:
+    contour->h *= sqrt(2.0);
+    redistributenodes (contour);
+    time = evolve (contour, 0.1);
+    redistributenodes (contour);
+    break;
+
+  case MENU_INC_RESP:
     incrtime /= sqrt(2.0);
     break;
 
-  case 3:
+  case MENU_DEC_RESP:
     incrtime *= sqrt(2.0);
     break;
 
-  case 666:
+  case MENU_QUIT:
     exit (0);
   }
 }
@@ -157,6 +189,50 @@ idle (void)
   glutPostRedisplay();
 }
 
+void
+mykeyboard (unsigned char key, int x, int y)
+{
+  static int posx, posy, sizex, sizey;
+
+  switch (key)
+  {
+    case 'q':
+    case 'Q':
+      menu (MENU_QUIT);
+      break;
+    case 'p':
+    case 'P':
+    case ' ':
+      menu (MENU_TOGGLE_MOTION);
+      break;
+    case 's':
+    case 'S':
+      menu (MENU_SINGLE_STEP);
+      break;
+    case 'f':
+    case 'F':
+      isfullscreen = 1 - isfullscreen;
+      if (isfullscreen)
+      {
+        posx = glutGet (GLUT_WINDOW_X);
+        posy = glutGet (GLUT_WINDOW_Y);
+        sizex = glutGet (GLUT_WINDOW_WIDTH);
+        sizey = glutGet (GLUT_WINDOW_HEIGHT);
+        glutFullScreen ();
+      } else {
+        glutPositionWindow (posx - 4, posy - 20);
+        glutReshapeWindow (sizex, sizey);
+        /* ugly... it seems that we must take into account
+         * the window decoration, which can depend on the
+         * window manager used
+         */
+      }
+      break;
+    default:
+      break;
+  }
+}
+
 char *
 grinit (int *argcpt, char *argv[])
 {
@@ -180,11 +256,15 @@ grmain (void)
   glutDisplayFunc(display);
   glutVisibilityFunc(visible);
   glutCreateMenu (menu);
-  glutAddMenuEntry ("Toggle motion", 1);
-  glutAddMenuEntry ("Increase responsivity", 2);
-  glutAddMenuEntry ("Decrease responsivity", 3);
-  glutAddMenuEntry ("Quit", 666);
+  glutAddMenuEntry ("Toggle motion (p)", MENU_TOGGLE_MOTION);
+  glutAddMenuEntry ("Single step (s)", MENU_SINGLE_STEP);
+  glutAddMenuEntry ("Refine nodes", MENU_REFINE);
+  glutAddMenuEntry ("Derefine nodes", MENU_DEREFINE);
+  glutAddMenuEntry ("Increase responsivity", MENU_INC_RESP);
+  glutAddMenuEntry ("Decrease responsivity", MENU_DEC_RESP);
+  glutAddMenuEntry ("Quit (q)", MENU_QUIT);
   glutAttachMenu (GLUT_RIGHT_BUTTON);
+  glutKeyboardFunc (mykeyboard);
   //glEnable (GL_POINT_SMOOTH);
   glutMainLoop();
   return (0);

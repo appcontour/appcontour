@@ -44,7 +44,6 @@ double getlen (struct line *line);
 void renormalize (struct polyline *contour);
 void discretizepolyline (struct polyline *contour);
 void specnodesinit (struct polyline *contour);
-void redistributenodes (struct polyline *contour);
 struct line *splitline (struct polyline *contour, struct line *line, double f);
 struct polyline *buildpolyline (void);
 struct vertex *newvertex (struct polyline *contour, 
@@ -178,7 +177,11 @@ static int immediate_exit = 0;
 void
 kick_in (struct polyline *contour)
 {
-  if (kicked_in) {fprintf (stderr, "Warning: already kicked in\n"); return;}
+  if (kicked_in) 
+  {
+    //fprintf (stderr, "Warning: already kicked in\n");
+    return;
+  }
   kicked_in = 1;
   k2_coeff_saved = k2_coeff;
   k2_coeff = 0;
@@ -191,7 +194,11 @@ kick_in (struct polyline *contour)
 void
 kick_out (struct polyline *contour)
 {
-  if (! kicked_in) {fprintf (stderr, "Warning: already kicked out\n"); return;}
+  if (! kicked_in)
+  {
+    //fprintf (stderr, "Warning: already kicked out\n");
+    return;
+  }
 printf ("kick_out\n");
   kicked_in = 0;
   k2_coeff = k2_coeff_saved;
@@ -851,7 +858,7 @@ redistributenodes (struct polyline *contour)
       if (ns < 4)
       {
         kick_out(contour);
-        fprintf (stderr, "arc with less than 4 segments\n");
+        //fprintf (stderr, "arc with less than 4 segments\n");
       }
       diffx = v->x - next->x;
       diffy = v->y - next->y;
