@@ -36,7 +36,7 @@
 void kick_in (struct polyline *contour);
 void kick_out (struct polyline *contour);
 void activate_timer (int event, double time);
-void parseargs (int argc, char *argv[]);
+FILE *parseargs (int argc, char *argv[]);
 void test_contour (struct polyline *contour);
 void reorder_node_ptr (struct polyline *contour);
 int settags (struct polyline *contour);
@@ -45,7 +45,7 @@ void renormalize (struct polyline *contour);
 void discretizepolyline (struct polyline *contour);
 void specnodesinit (struct polyline *contour);
 struct line *splitline (struct polyline *contour, struct line *line, double f);
-struct polyline *buildpolyline (void);
+struct polyline *buildpolyline (FILE *filein);
 struct vertex *newvertex (struct polyline *contour, 
           double x, double y, int type);
 struct line *newline (struct polyline *contour, 
@@ -81,20 +81,22 @@ main (int argc, char *argv[])
   struct vertex *v;
   int tok, count, vertexnum;
   double kick_out_time;
+  FILE *filein;
 
   grident = grinit(&argc, argv);
   energyinit ();
-  parseargs (argc, argv);
+  filein = parseargs (argc, argv);
+  if (filein == 0) filein = stdin;
   if (test == 0) allowrepulsion = 0;
 
-  tok = gettoken (stdin);
+  tok = gettoken (filein);
   if (tok != TOK_MORSE) return (0);
-  tok = gettoken (stdin);
+  tok = gettoken (filein);
   if (tok != TOK_LBRACE) return (0);
 
-  contour = buildpolyline ();
+  contour = buildpolyline (filein);
 
-  tok = gettoken (stdin);
+  tok = gettoken (filein);
   if (tok != TOK_RBRACE) exit (1);
 
   reorder_node_ptr (contour);
@@ -206,10 +208,11 @@ printf ("kick_out\n");
   contour->h = h_saved;
 }
 
-void
+FILE *
 parseargs (int argc, char *argv[])
 {
   int iarg;
+  FILE *filein = 0;
 
   for (iarg = 1; iarg < argc; iarg++)
   {
@@ -234,15 +237,30 @@ parseargs (int argc, char *argv[])
         k4_coeff = atof (argv[++iarg]);
       } else if (strcmp (argv[iarg], "--k5") == 0) {
         k5_coeff = atof (argv[++iarg]);
+      } else if (strcmp (argv[iarg], "--help") == 0) {
+        printf ("usage: %s [--help] [--nodoptimize] [--pause]\n", argv[0]);
+        printf ("      [--steps <n>][--title <title>]\n");
+        exit (0);
       } else {
         printf ("Invalid option: %s\n", argv[iarg]);
         exit (1);
       }
       continue;
     }
-    printf ("Invalid argument: %s\n", argv[iarg]);
-    exit (1);
+    if (filein == 0)
+    {
+      filein = fopen (argv[iarg], "r");
+      if (filein == 0)
+      {
+        perror ("Error opening morse file");
+        exit (10);
+      }
+    } else {
+      printf ("Invalid argument: %s\n", argv[iarg]);
+      exit (1);
+    }
   }
+  return (filein);
 }
 
 void
@@ -477,13 +495,15 @@ insert_cusps_on_arc (struct line *l)
   struct line *wl;
   struct vertex *p;
   struct arc *arc;
-  int cusps, iss1, count, ccount, nnodes;
+  int cusps, iss1, count, ccount, nnodes, nums;
 
   iss1 = 0;
   if (l->a->type != V_CROSS) iss1 = 1;
   arc = l->arc;
   cusps = arc->cusps;
-  nnodes = arc->numsegments/(cusps + 1) + 1;
+  // nnodes = arc->numsegments/(cusps + 1) + 1;
+  nums = arc->numsegments;
+  nnodes = (nums + 1)/(cusps + 1);
 
   count = ccount = 0;
   wl = l;
@@ -494,9 +514,13 @@ insert_cusps_on_arc (struct line *l)
     if (count >= nnodes)
     {
       ccount++;
-      nnodes = arc->numsegments*(ccount + 1)/(cusps + 1) + 1;
+      nums -= count;
+      count = 0;
+      // nnodes = arc->numsegments*(ccount + 1)/(cusps + 1) + 1;
+      nnodes = (nums + 1)/(cusps + 1 - ccount);
       assert (p->type == V_REGULAR);
       p->type = V_CUSP;
+      //if (ccount >= cusps) break;
     }
   } while (wl = p->line[1], wl != l);
 
@@ -1019,7 +1043,7 @@ removenode (struct polyline *contour, struct vertex *node)
 }
 
 struct polyline *
-buildpolyline (void)
+buildpolyline (FILE *filein)
 {
   double dx, dy, dx1, dy1, dx12, dy12, x, y, xstart, ystart;
   struct morseevent morseevent;
@@ -1055,7 +1079,7 @@ buildpolyline (void)
     i++;
     x += dx;
     y -= dy;
-    getmorseevent (&morseevent, 1);
+    getmorseevent (filein, &morseevent, 1);
     if (morseevent.type != ME_TRAN)
     {
       switch (morseevent.type)

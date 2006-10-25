@@ -13,7 +13,7 @@
  */
 
 void
-getmorseevent (struct morseevent *morseevent, int maxone)
+getmorseevent (FILE *filein, struct morseevent *morseevent, int maxone)
 {
   static int countdanglingup = 0;
   static int countdanglingdown = 0;
@@ -58,7 +58,7 @@ getmorseevent (struct morseevent *morseevent, int maxone)
     morseevent->arc = mesaved.arc;
     morseevent->arc2 = mesaved.arc2;
   } else {
-    getmorseeventl (morseevent);
+    getmorseeventl (filein, morseevent);
   }
   if (maxone == 0) return;
 
@@ -90,7 +90,7 @@ getmorseevent (struct morseevent *morseevent, int maxone)
       rettran2 = countdanglingdown;
       retsaved = 1;
       countspecial = 0;
-      getmorseevent (morseevent, 1);
+      getmorseevent (filein, morseevent, 1);
       return;
     }
   }
@@ -128,17 +128,17 @@ getmorseevent (struct morseevent *morseevent, int maxone)
 }
 
 void
-getmorseeventl (struct morseevent *morseevent)
+getmorseeventl (FILE *filein, struct morseevent *morseevent)
 {
   int tok;
 
   /* ho gia letto la graffa aperta */
-  tok = gettokens (stdin);
+  tok = gettokens (filein);
 
   switch (tok)
   {
     case TOK_SEMICOLON:
-      tok = gettokens (stdin);
+      tok = gettokens (filein);
       if (tok == TOK_RBRACE)
       {
         morseevent->type = ME_LASTROW;
@@ -151,14 +151,14 @@ getmorseeventl (struct morseevent *morseevent)
     case KEY_HAT:
     case KEY_A:
       morseevent->type = ME_TOP;
-      getarcinfo (morseevent);
+      getarcinfo (filein, morseevent);
       break;
 
     case KEY_U:
     case KEY_V:
     case KEY_UNDERSCORE:
       morseevent->type = ME_BOT;
-      getarcinfo (morseevent);
+      getarcinfo (filein, morseevent);
       break;
 
     case KEY_SLASH:
@@ -169,33 +169,33 @@ getmorseeventl (struct morseevent *morseevent)
     case KEY_PIPE:
     case KEY_I:
       morseevent->type = ME_TRAN;
-      getarcinfo (morseevent);
+      getarcinfo (filein, morseevent);
       break;
 
     case KEY_X:
       morseevent->type = ME_CROSS;
-      getarcinfo (morseevent);
+      getarcinfo (filein, morseevent);
       break;
   }
   return;
 }
 
 void
-getarcinfo (struct morseevent *morseevent)
+getarcinfo (FILE *filein, struct morseevent *morseevent)
 {
-  getoricusps (&morseevent->ori, &morseevent->arc);
+  getoricusps (filein, &morseevent->ori, &morseevent->arc);
   if (abs(morseevent->ori) == 2) morseevent->ori /= 2;
                                      /* significa speficicato left o right */
   if (morseevent->type == ME_CROSS)
   {
-    getoricusps (&morseevent->ori2, &morseevent->arc2);
+    getoricusps (filein, &morseevent->ori2, &morseevent->arc2);
     if (abs(morseevent->ori2) == 2) morseevent->ori2 /= -2;
                                      /* significa specificato left o right */
   }
 }
 
 void
-getoricusps (int *oript, struct arc **arcpt)
+getoricusps (FILE *filein, int *oript, struct arc **arcpt)
 {
   struct arc *arc = 0;
   int i, tok, prevd;
@@ -205,7 +205,7 @@ getoricusps (int *oript, struct arc **arcpt)
 
   assert (*arcpt == 0);
   assert (*oript == 0);
-  tok = gettokens (stdin);
+  tok = gettokens (filein);
   if (tok == ISNUMBER || tok == KEY_LEFT ||
       tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
   {
@@ -218,7 +218,7 @@ getoricusps (int *oript, struct arc **arcpt)
     ungettoken (tok);
     return;
   }
-  tok = gettokens (stdin);
+  tok = gettokens (filein);
   if (tok == TOK_RBRACKET) return;
   if (tok == KEY_LEFT || tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
   {
@@ -226,7 +226,7 @@ getoricusps (int *oript, struct arc **arcpt)
     if (tok == KEY_RIGHT || tok == KEY_UP) *oript = -1;
     if (tok == KEY_LEFT || tok == KEY_RIGHT) *oript *= 2;
                                       /* left/right restituisce +2 o -2 */
-    tok = gettokens (stdin);
+    tok = gettokens (filein);
   }
   if (tok == TOK_COMMA || tok == ISNUMBER)
   {
@@ -236,7 +236,7 @@ getoricusps (int *oript, struct arc **arcpt)
       prevd = gettokennumber ();
       ungettoken (tok);
     }
-    while ((tok = gettokens (stdin)) == ISNUMBER ||
+    while ((tok = gettokens (filein)) == ISNUMBER ||
             tok == TOK_PLUS || tok == TOK_MINUS)
     {
       switch (tok)

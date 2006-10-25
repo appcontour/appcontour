@@ -17,8 +17,8 @@ struct morseevent {
 //  struct morseevent *next;
 };
 
-void getmorseevent (struct morseevent *mev, int maxone);
-void getmorseeventl (struct morseevent *mev);
-void getarcinfo (struct morseevent *morseevent);
-void getoricusps (int *oript, struct arc **arcpt);
+void getmorseevent (FILE *filein, struct morseevent *mev, int maxone);
+void getmorseeventl (FILE *filein, struct morseevent *mev);
+void getarcinfo (FILE *filein, struct morseevent *morseevent);
+void getoricusps (FILE *filein, int *oript, struct arc **arcpt);
 
