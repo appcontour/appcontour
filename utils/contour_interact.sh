@@ -109,6 +109,7 @@ do
   applicable=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
   echo "Applicable rules: $applicable"
   applicable=" $applicable "
+  set -o history
   read -e -p "Contour> " command arg
   if [ "$?" != "0" ]
   then
@@ -118,6 +119,8 @@ do
   then
     continue
   fi
+
+  history -s $command $arg
 
   case $command in
     info)
