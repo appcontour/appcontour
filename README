@@ -26,6 +26,20 @@ given in plain text files.  It is capable of:
 - reading a "sketch" description, which is of purely topological
 type and very similar to how the sketch is kept in the progam memory
 
+- a filter is present ("contour knot2morse") that can produce a
+morse description corresponding to a surface having the form of a
+thin tube that follow the shape described in a file of type "knot"
+(or directly given on standard input).
+A knot description is enclosed in a "knot { ... }" directive and
+strongly resembles a morse description; only now we are describing
+the form of the tube as if it were just a (knotted) string,
+i.e. of zero width.  The usual symbols "^", "|", "X", "U", ... can
+be used, with the addition of the lower case letter "x", which indicates
+a crossing with the string in the direction nw-se going above the
+string in the direction ne-sw, whereas the upper case "X" indicates
+a crossing with then nw-se string going below the other one.
+Have a look in the 'examples' directory for some basic shapes.
+
 - using unix pipes it is possible to feed the output of the program
 (sketch description) into the program itself, thus allowing to
 concatenate a sequence of "moves".
@@ -76,23 +90,73 @@ know an example of the contrary at the moment.
 the number of connected components of the 3D scene (the number of
 surfaces):
 
-$ contour countcc example
+  $ contour countcc example
 
 - extracting one of the connected components:
 
-$ contour extractcc n example
+  $ contour extractcc n example
 
 - computing the Euler characteristic:
 
-$ contour characteristic example
+  $ contour characteristic example
+
+- asking for information:
+
+  $ contour info example
+
+which counts the number of arcs, extended arcs, nodes, cusps
+and other information regarding the 2D apparent contour; it also
+outpus the number of connected components and the total Euler 
+characteristic of the 3D scene corresponding to the contour.
+
+
 
 
    TOOLS
 
-the script "trasforma" makes use of the program contour in an
+   *** script contour_interact.sh ***
+
+The main tool (which gets installed by "make install") is
+"contour_interact.sh"; it requires an example as its single
+argument.  The example can be given as a morse, region or
+knot description, as in the example:
+
+  $ contour_interact.sh examples/simpleknotfake.knot
+  ...
+  Contour> 
+
+This is a script that allows an easier interaction with both
+the contour program and the showcontour displaying tool (see
+below).
+A brief information is displayed about the example (containing
+the list of applicable rules), then the user can:
+
+- enter the name of an applicable rule; which is applied and
+the list of applicable rules of the result is displayed.
+A new rule can then be entered which will be applied in
+sequence.
+
+- the command "back" allows to "back-step" from the last rule
+applied.
+
+- "show" calls the "showcontour" graphical interface (if present)
+to present a visual display of the apparent contour (see below).
+
+- "info" for a list of informations on the contour (obtained by the
+"info" command of contour).
+
+- "print"/"morse" to show the 'region' description and a 'morse'
+description.
+
+- "quit" or "exit".
+
+
+  *** script transform.sh ***
+
+the script "trasform.sh" makes use of the program contour in an
 extensive way.  The command
 
-$ ./trasforma example
+$ ./trasform.sh example
 
 will apply all possible sequences of "moves" to example and
 places all the results in a directory named "example.transformations"
@@ -109,15 +173,52 @@ It may be useful to run "$ md5sum *" in the results directory to quickly
 show which results are FOR SURE identical.
 
 
+  *** graphic display with "showcontour" ***
+
+This is an interface that produced a graphic display starting from
+a morse description (given as standard input or by the file indicated
+as the firse argument).
+The following options can be used:
+
+--pause   do not "smooth" the contour using the continuous smoothing
+          evolution.
+
+--nodoptimize   do not perform the "discrete optimization" step that
+          tries to simplify the initial contour directly obtained by the
+          morse description.
+
+--steps <n>  stop after <n> "frames" (each frame is the result of the
+          computation (continuous smoothing evolution) iterated for 
+          a given cpu time, by default 1/4 of a second.
+
+--title "title"  gives the title of the graphic window.
+
+During the evolution, in the graphic window, a menu allows to perform
+a few tasks.  For the "glut" graphic interface the menu appears by 
+pressing the right menu button.
+
+
+
    INSTALLATION
 
-Per compilare il programma basta fare
+Compilation and installation are quite standard on a unix system,
+with the usual chain of commands "./configure", "make", "make install";
+we refer to the file INSTALL for details.
+The only variant concerns the "./configure" script that requires an
+option indicating what is the graphic library that we want to use.
+Possible choices at the moment are:
 
-$ ./configure
-$ make
+  ./configure --with-gtk|--with-glut|--with-none
 
-(opzionalmente "make install" fatto da root installa in /usr/local/bin).
+the latter produces a useless "showcontour" displaying tool.
 
+"make install" will install "contour", "showcontour" and
+"contour_interact.sh" in /usr/local/bin (or in the directory
+indicated by the "--prefix" option, in the "bin" subdir).
+
+
+
+--------------- translation in progress -------------
 
    DESCRIZIONE "MORSE".
 

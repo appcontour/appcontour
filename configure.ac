@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(appcontour, 0.7.1, paolini@dmf.unicatt.it)
+AC_INIT(appcontour, 0.8, paolini@dmf.unicatt.it)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([contour.c])
 AC_CONFIG_HEADER([config.h])
@@ -66,5 +66,5 @@ AM_CONDITIONAL(ENABLE_GTK, test "$gtk" = "yes")
 # Checks for library functions.
 AC_FUNC_MALLOC
 
-AC_CONFIG_FILES([Makefile show/Makefile])
+AC_CONFIG_FILES([Makefile show/Makefile utils/Makefile])
 AC_OUTPUT

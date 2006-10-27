@@ -1,3 +1,18 @@
+
+2006-10-23: alcuni bug-fix in "contour", specificatamente riguardanti il filtro
+	printmorse.
+
+	il programma di appoggio "showcontour" permette di produrre una visualizzazione
+	grafica di un contorno apparente a partire da una descrizione morse.
+
+	dopo numerosi tentativi piu' o meno a vuoto, la situazione attuale prevede
+	una fase preliminare di ottimizzazione "discreta" in cui il contorno (senza
+	cuspidi) e' descritto con una poligonale fatta da segmenti orizzontali o
+	verticali di lunghezza unitaria; solo in seguito viene effettuata una rapida
+	ottimizzazione a livello continuo con l'introduzione delle cuspidi.
+
+--- from here news are listed in forward cronological order ---
+
 2006-09-21: completata la rule N1
 	$ contour applyrule n1 <esempio.morse
 
@@ -43,15 +58,3 @@
 	comando "contour info" per ottenere un po' di statistica sul contorno.
 
 2006-10-05: Nota, la regola N6 e' stata rinominata in CR2 (come nel paper)
-
-2006-10-23: alcuni bug-fix in "contour", specificatamente riguardanti il filtro
-	printmorse.
-
-	il programma di appoggio "showcontour" permette di produrre una visualizzazione
-	grafica di un contorno apparente a partire da una descrizione morse.
-
-	dopo numerosi tentativi piu' o meno a vuoto, la situazione attuale prevede
-	una fase preliminare di ottimizzazione "discreta" in cui il contorno (senza
-	cuspidi) e' descritto con una poligonale fatta da segmenti orizzontali o
-	verticali di lunghezza unitaria; solo in seguito viene effettuata una rapida
-	ottimizzazione a livello continuo con l'introduzione delle cuspidi.

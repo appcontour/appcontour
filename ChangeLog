@@ -1,3 +1,5 @@
+2006-10-27: bump version to 0.8, preparing for a distribution.
+
 2006-10-23: nuovo programma per la visualizzazione grafica di un
 	contorno apparente.
 	Utilizzabile anche da "utils/contour_interact.sh"
