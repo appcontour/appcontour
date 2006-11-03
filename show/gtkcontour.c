@@ -190,13 +190,13 @@ gtk_graf_expose (GtkWidget *widget, GdkPixmap *pixmap, double time)
 	color_line=color_black;
         break;
       case 1:
-	color_line=color_gray1;
+	color_line=color_gray2;
         break;
       case 2:
 	color_line=color_gray2;
         break;
       default:
-	color_line=color_white;
+	color_line=color_gray1;
       }
 
       gdk_gc_set_foreground(widget->style->fg_gc[widget->state],&color_line);
