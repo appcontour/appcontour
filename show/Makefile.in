@@ -49,7 +49,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am__showcontour_SOURCES_DIST = showcontour.c grcommon.c grcommon.h \
 	doptimize.c doptimize.h morseevent.c morseevent.h energy.c \
-	showcontour.h energy.h nullcontour.c gtkcontour.c \
+	xfigexport.c showcontour.h energy.h nullcontour.c gtkcontour.c \
 	glutcontour.c
 @ENABLE_GLUT_FALSE@@ENABLE_GTK_FALSE@am__objects_1 =  \
 @ENABLE_GLUT_FALSE@@ENABLE_GTK_FALSE@	nullcontour.$(OBJEXT)
@@ -58,7 +58,7 @@ am__showcontour_SOURCES_DIST = showcontour.c grcommon.c grcommon.h \
 @ENABLE_GLUT_TRUE@am__objects_1 = glutcontour.$(OBJEXT)
 am_showcontour_OBJECTS = showcontour.$(OBJEXT) grcommon.$(OBJEXT) \
 	doptimize.$(OBJEXT) morseevent.$(OBJEXT) energy.$(OBJEXT) \
-	$(am__objects_1)
+	xfigexport.$(OBJEXT) $(am__objects_1)
 showcontour_OBJECTS = $(am_showcontour_OBJECTS)
 am__DEPENDENCIES_1 =
 showcontour_DEPENDENCIES = ../parser.o $(am__DEPENDENCIES_1)
@@ -155,7 +155,7 @@ target_alias = @target_alias@
 @ENABLE_GLUT_TRUE@GRAPHSOURCE = glutcontour.c
 @ENABLE_GLUT_FALSE@@ENABLE_GTK_FALSE@GRAPHLIB = -lm
 @ENABLE_GLUT_TRUE@GRAPHLIB = -lglut
-showcontour_SOURCES = showcontour.c grcommon.c grcommon.h doptimize.c doptimize.h morseevent.c morseevent.h energy.c showcontour.h energy.h $(GRAPHSOURCE)
+showcontour_SOURCES = showcontour.c grcommon.c grcommon.h doptimize.c doptimize.h morseevent.c morseevent.h energy.c xfigexport.c showcontour.h energy.h $(GRAPHSOURCE)
 showcontour_LDADD = ../parser.o $(GRAPHLIB)
 AM_CFLAGS = -Wall
 all: all-am
@@ -232,6 +232,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/morseevent.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nullcontour.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/showcontour.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xfigexport.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

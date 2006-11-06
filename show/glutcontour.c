@@ -22,6 +22,7 @@ static int isfullscreen = 0;
 #define MENU_DEREFINE 4
 #define MENU_INC_RESP 10
 #define MENU_DEC_RESP 11
+#define MENU_XFIG_EXPORT 12
 #define MENU_QUIT 100
 
 void idle (void);
@@ -128,6 +129,7 @@ void
 menu (int value)
 {
   double time;
+  FILE *exportfile;
 
   switch (value) {
   case MENU_TOGGLE_MOTION:
@@ -160,6 +162,12 @@ menu (int value)
 
   case MENU_DEC_RESP:
     incrtime *= sqrt(2.0);
+    break;
+
+  case MENU_XFIG_EXPORT:
+    exportfile = fopen ("showcontour.fig", "w");
+    xfig_export (contour, exportfile);
+    fclose (exportfile);
     break;
 
   case MENU_QUIT:
@@ -262,6 +270,7 @@ grmain (void)
   glutAddMenuEntry ("Derefine nodes", MENU_DEREFINE);
   glutAddMenuEntry ("Increase responsivity", MENU_INC_RESP);
   glutAddMenuEntry ("Decrease responsivity", MENU_DEC_RESP);
+  glutAddMenuEntry ("xfig export", MENU_XFIG_EXPORT);
   glutAddMenuEntry ("Quit (q)", MENU_QUIT);
   glutAttachMenu (GLUT_RIGHT_BUTTON);
   glutKeyboardFunc (mykeyboard);
