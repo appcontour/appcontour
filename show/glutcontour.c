@@ -75,7 +75,7 @@ display (void)
   glEnd();
   for (line = contour->line; line; line = line->next)
   {
-    if ((line->a->type == V_REGULAR && line->a->line[0]->a->type != V_REGULAR) || line->earc->loop == line) 
+    if ((line->a->type == V_REGULAR && line->a->line[0]->a->type != V_REGULAR) || line->rarc->loop == line) 
     {
       if (line->d > 0)
       {

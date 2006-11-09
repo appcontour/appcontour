@@ -112,6 +112,7 @@ main (int argc, char *argv[])
 
   insertcusps (contour);       /* also sets the d value of each segment */
   specnodesinit (contour);
+  init_rarc (contour);
 
 //test_contour (contour);
   vertexnum = settags (contour);
@@ -406,9 +407,6 @@ setarcinfo1 (struct line *l)
     {
       wl->earc = mergearcinfo (firstarc, wl->earc);
       if (wl->earc) wl->earc->refcount++;
-      /* note: cannot free memory, because this can be pointed
-       * by other segments, this is a small memory leak
-       */
     }
     if ((p = wl->b)->type == V_CROSS) break;
   } while (wl = p->line[1], wl != l);
@@ -943,6 +941,12 @@ splitline (struct polyline *contour, struct line *line, double f)
   nline->earc = line->earc;
   nline->earc->refcount++;
   nline->rarc = 0;
+  if (line->rarc)
+  {
+    nline->rarc = line->rarc;
+    nline->rarc->numsegments++;
+    if (line->rarc->last == line) line->rarc->last = nline;
+  }
   nline->next = line->next;
   nline->a = p;
   nline->b = b;
@@ -1021,6 +1025,12 @@ init_rarc (struct polyline *contour)
       l = b->line[1];
     }
     rarc->last = l;
+    if (earc->loop && earc->cusps == 0)
+    {
+      assert (l->b->line[1] == rarc->first);
+      rarc->loop = rarc->first;
+      rarc->first = rarc->last = 0;
+    }
     assert (count == earc->numsegments);
     assert (icus == earc->cusps);
   }
@@ -1065,6 +1075,7 @@ void
 removeline (struct polyline *contour, struct line *line)
 {
   struct line *l;
+  struct rarc *rarc;
 
   if (contour->line == line)
   {
@@ -1081,6 +1092,21 @@ removeline (struct polyline *contour, struct line *line)
   }
   line->earc->refcount--;
   if (line->earc->refcount <= 0) free (line->earc);
+  if ((rarc = line->rarc))
+  {
+    rarc->numsegments--;
+    if (rarc->loop == line)
+      rarc->loop = line->b->line[1];  /* there cannot be crosses for a loop */
+    if (rarc->first == line)
+      rarc->first = line->b->line[1];  /* there cannot be a cross here */
+    if (rarc->last == line)
+      rarc->last = line->a->line[0];  /* there cannot be a cross here */
+
+    assert (rarc->first != line || rarc->numsegments == 0);
+    assert (rarc->last != line || rarc->numsegments == 0);
+    assert (rarc->loop != line || rarc->numsegments == 0);
+    if (rarc->numsegments == 0) free (rarc);
+  }
   free (line);
 }
 

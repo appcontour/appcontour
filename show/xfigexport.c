@@ -24,7 +24,7 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
   fprintf (file, "Landscape\nCenter\nInches\nLetter\n100.00\nSingle\n");
   fprintf (file, "-2\n1200 2\n");
 
-  init_rarc (contour);
+  //init_rarc (contour);
   maxx = -1000.0;
   maxy = -1000.0;
   minx =  1000.0;
@@ -45,27 +45,30 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
 
   for (line = contour->line; line; line = line->next)
   {
+    assert (line->rarc);
     arc = line->rarc;
     if (arc->first != line && arc->loop != line) continue;
     /* let's walk along the arc */
-//printf ("walking (%d)...\n", arc->numsegments);
     last = arc->last;
     if (last == 0)
     {
-//printf ("isloop\n");
       last = arc->loop;
       assert (last);
       last = last->a->line[0];
     }
-//printf ("last defined\n");
     w = (arc->d == 0) ? 2 : 1;
-    fprintf (file, "2 1 0 %d 0 7 50 -1 -1 0.000 0 0 -1 0 0 %d\n", 
-                    w, arc->numsegments + 1);
     a = line->a;
+    if (arc->loop)
+      fprintf (file, "2 3 0 %d 0 7 50 -1 -1 0.000 0 0 -1 0 0 %d\n", 
+                    w, arc->numsegments + 1);
+    else {
+      fprintf (file, "2 1 0 %d 0 7 50 -1 -1 0.000 0 0 -1 0 0 %d\n", 
+                    w, arc->numsegments + 1);
+    }
     fprintf (file, "  %d %d\n", conv(a));
-    l = line;
+    l = markline = line;
     count = 0;
-    markcount = count/3;
+    markcount = arc->numsegments/3 + 1;
     while (1)
     {
 //printf ("   another segment\n");
@@ -78,7 +81,12 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
     }
     assert (count == arc->numsegments);
     /* print depth value */
-    if (arc->d > 0) printf ("depth = %d\n", arc->d);
+    if (arc->d > 0)
+    {
+      fprintf (file, "4 0 0 50 -1 0 24 0.0000 4 135 450 ");
+      fprintf (file, "%d %d %d\\001\n", conv(markline->a), arc->d);
+      printf ("depth = %d\n", arc->d);
+    }
   }
   return;
 }
