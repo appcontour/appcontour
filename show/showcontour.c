@@ -54,7 +54,7 @@ struct line *newline (struct polyline *contour,
 int inherit_orientation (struct line *line);
 void setarcinfo (struct polyline *contour);
 int setarcinfo1 (struct line *l);
-struct arc *mergearcinfo (struct arc *arc1, struct arc *arc2);
+struct earc *mergearcinfo (struct earc *arc1, struct earc *arc2);
 void check_contour (struct polyline *contour);
 void insertcusps (struct polyline *contour);
 int insert_cusps_on_arc (struct line *l);
@@ -291,12 +291,12 @@ void
 check_contour (struct polyline *contour)
 {
   struct line *line, *first, *last, *l;
-  struct arc *arc;
+  struct earc *arc;
   int count, found;
 
   for (line = contour->line; line; line = line->next)
   {
-    arc = line->arc;
+    arc = line->earc;
     if (arc->loop)
     {
       /* this is an S1 */
@@ -307,7 +307,7 @@ check_contour (struct polyline *contour)
       found = 0;
       do {
         count++;
-        assert (l->arc == arc);
+        assert (l->earc == arc);
         assert (l->b->type != V_CROSS);
         if (l == line) found = 1;
       } while (l = l->b->line[1], l != first);
@@ -326,7 +326,7 @@ check_contour (struct polyline *contour)
       for (l = first; l != last; l = l->b->line[1])
       {
         count++;
-        assert (l->arc == arc);
+        assert (l->earc == arc);
         assert (l->b->type != V_CROSS);
         if (l == line) found = 1;
       }
@@ -352,7 +352,7 @@ setarcinfo (struct polyline *contour)
     {
       l = p->line[i];
       if (l->a != p) continue;   /* we want a 'leaving' arc */
-if (l->arc->loop)
+if (l->earc->loop)
 {
   printf ("Questo e' un loop(bis)\n");
   assert (0);
@@ -368,7 +368,7 @@ if (l->arc->loop)
   {
     if (p->type == V_CROSS) continue;
     l = p->line[1];
-    if (l->arc->first) continue;
+    if (l->earc->first) continue;
     iss1 = setarcinfo1 (l);
     assert (iss1);
   }
@@ -377,19 +377,19 @@ if (l->arc->loop)
 
   for (l = contour->line; l; l = l->next)
   {
-    assert (l->arc->loop || (l->arc->first && l->arc->last));
+    assert (l->earc->loop || (l->earc->first && l->earc->last));
   }
 }
 
 int
 setarcinfo1 (struct line *l)
 {
-  struct arc *firstarc;
+  struct earc *firstarc;
   struct line *wl;
   struct vertex *p;
   int count;
 
-  firstarc = l->arc;
+  firstarc = l->earc;
   if (l->a->type == V_CROSS)
     firstarc->first = l;
   else
@@ -402,10 +402,10 @@ setarcinfo1 (struct line *l)
   do
   {
     count++;
-    if (wl->arc != firstarc)
+    if (wl->earc != firstarc)
     {
-      wl->arc = mergearcinfo (firstarc, wl->arc);
-      if (wl->arc) wl->arc->refcount++;
+      wl->earc = mergearcinfo (firstarc, wl->earc);
+      if (wl->earc) wl->earc->refcount++;
       /* note: cannot free memory, because this can be pointed
        * by other segments, this is a small memory leak
        */
@@ -420,8 +420,8 @@ setarcinfo1 (struct line *l)
   return (0);
 }
 
-struct arc *
-mergearcinfo (struct arc *arc1, struct arc *arc2)
+struct earc *
+mergearcinfo (struct earc *arc1, struct earc *arc2)
 {
   int conflict = 0;
 
@@ -457,9 +457,9 @@ insertcusps (struct polyline *contour)
     {
       l = p->line[i];
       if (l->a != p) continue;   /* we want a 'leaving' arc */
-      assert (l->arc->cuspsinserted == 0);
-      l->arc->cuspsinserted = 1;
-      if (l->arc->cusps <= 0) continue;
+      assert (l->earc->cuspsinserted == 0);
+      l->earc->cuspsinserted = 1;
+      if (l->earc->cusps <= 0) continue;
       iss1 = insert_cusps_on_arc (l);
       assert (iss1 == 0);
     }
@@ -471,9 +471,9 @@ insertcusps (struct polyline *contour)
   {
     if (p->type == V_CROSS) continue;
     l = p->line[1];
-    if (l->arc->cuspsinserted) continue;
-    l->arc->cuspsinserted = 1;
-    if (l->arc->cusps <= 0) continue;
+    if (l->earc->cuspsinserted) continue;
+    l->earc->cuspsinserted = 1;
+    if (l->earc->cusps <= 0) continue;
     iss1 = insert_cusps_on_arc (l);
     assert (iss1);
   }
@@ -484,8 +484,8 @@ insertcusps (struct polyline *contour)
 
   for (l = contour->line; l; l = l->next)
   {
-    if (l->arc->cusps == 0) l->d = l->arc->d[0];
-    assert (l->arc->cuspsinserted);
+    if (l->earc->cusps == 0) l->d = l->earc->d[0];
+    assert (l->earc->cuspsinserted);
   }
 }
 
@@ -494,12 +494,12 @@ insert_cusps_on_arc (struct line *l)
 {
   struct line *wl;
   struct vertex *p;
-  struct arc *arc;
+  struct earc *arc;
   int cusps, iss1, count, ccount, nnodes, nums;
 
   iss1 = 0;
   if (l->a->type != V_CROSS) iss1 = 1;
-  arc = l->arc;
+  arc = l->earc;
   cusps = arc->cusps;
   // nnodes = arc->numsegments/(cusps + 1) + 1;
   nums = arc->numsegments;
@@ -878,7 +878,7 @@ redistributenodes (struct polyline *contour)
         for (backidx = 0; backidx < 4; backidx++)
           if (next->line[backidx] == aline) break;
       }
-      ns = aline->arc->numsegments;
+      ns = aline->earc->numsegments;
       if (ns < 4)
       {
         kick_out(contour);
@@ -890,7 +890,7 @@ redistributenodes (struct polyline *contour)
       if (alen + len < 0.9*h && ns >= 4)   /* can derefine */
       { /* aline will be removed! */
         removednodes++;
-        line->arc->numsegments--;
+        line->earc->numsegments--;
         assert (next->line[backidx] == aline);
         if (forward) line->b = next;
           else line->a = next;
@@ -906,7 +906,7 @@ redistributenodes (struct polyline *contour)
       {
         addednodes++;
         nline = splitline (contour, line, dt/len);
-        line->arc->numsegments++;
+        line->earc->numsegments++;
         len -= dt;
         line = nline;
       }
@@ -940,8 +940,9 @@ splitline (struct polyline *contour, struct line *line, double f)
   nline = (struct line *) malloc (sizeof (struct line));
   nline->orientation = line->orientation;
   nline->d = line->d;
-  nline->arc = line->arc;
-  nline->arc->refcount++;
+  nline->earc = line->earc;
+  nline->earc->refcount++;
+  nline->rarc = 0;
   nline->next = line->next;
   nline->a = p;
   nline->b = b;
@@ -961,6 +962,57 @@ splitline (struct polyline *contour, struct line *line, double f)
   return (nline);
 }
 
+void
+init_rarc (struct polyline *contour)
+{
+  struct line *line, *l, *last;
+  struct vertex *b;
+  struct earc *earc;
+  struct rarc *rarc;
+  int icus, count;
+
+  for (line = contour->line; line; line = line->next)
+  {
+    if (line->rarc) continue;
+    earc = line->earc;
+    if (earc->first != line && earc->loop != line) continue;
+    /* let's walk along the arc */
+    last = earc->last;
+    if (last == 0)
+    {
+      last = earc->loop;
+      last = last->a->line[0];
+    }
+    icus = 0;
+    rarc = (struct rarc *) malloc (sizeof (struct rarc));
+    rarc->d = earc->d[icus];
+    rarc->first = line;
+    rarc->numsegments = 0;
+    l = line;
+    count = 0;
+    while (1)
+    {
+      b = l->b;
+      count++;
+      l->rarc = rarc;
+      rarc->numsegments++;
+      if (b->type == V_CUSP)
+      {
+        rarc->last = l;
+        icus++;
+        rarc = (struct rarc *) malloc (sizeof (struct rarc));
+        rarc->d = earc->d[icus];
+        rarc->first = b->line[1];
+        rarc->numsegments = 0;
+      }
+      if (l == last) break;
+      l = b->line[1];
+    }
+    assert (count == earc->numsegments);
+    assert (icus == earc->cusps);
+  }
+}
+
 struct line *
 newline (struct polyline *contour, struct vertex *a, struct vertex *b)
 {
@@ -970,7 +1022,8 @@ newline (struct polyline *contour, struct vertex *a, struct vertex *b)
   line->a = a;
   line->b = b;
   line->orientation = 0;
-  line->arc = 0;
+  line->earc = 0;
+  line->rarc = 0;
   line->next = contour->line;
   contour->line = line;
   return (line);
@@ -1013,8 +1066,8 @@ removeline (struct polyline *contour, struct line *line)
       }
     }
   }
-  line->arc->refcount--;
-  if (line->arc->refcount <= 0) free (line->arc);
+  line->earc->refcount--;
+  if (line->earc->refcount <= 0) free (line->earc);
   free (line);
 }
 
@@ -1185,8 +1238,8 @@ buildpolyline (FILE *filein)
         v2 = newvertex (contour, x + 2*dx, y, V_REGULAR);
         line = newline (contour, v, v1);
         line->orientation = morseevent.ori;
-        line->arc = morseevent.arc;
-        if (line->arc) line->arc->refcount++;
+        line->earc = morseevent.arc;
+        if (line->earc) line->earc->refcount++;
         v1->line[0] = line;
         v->line[0] = line;
         line = newline (contour, v, v2);
@@ -1203,8 +1256,8 @@ buildpolyline (FILE *filein)
         v->line[0] = prevdanglingnodes[prevdangind++]->line[1] = line;
         line = newline (contour, prevdanglingnodes[prevdangind], v);
         line->orientation = morseevent.ori;
-        line->arc = morseevent.arc;
-        if (line->arc) line->arc->refcount++;
+        line->earc = morseevent.arc;
+        if (line->earc) line->earc->refcount++;
         v->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
         break;
 
@@ -1216,14 +1269,14 @@ buildpolyline (FILE *filein)
         v5 = newvertex (contour, x + dx, y + dy, V_REGULAR);
         line = newline (contour, v1, v4);
         line->orientation = morseevent.ori;
-        line->arc = morseevent.arc;
-        if (line->arc) line->arc->refcount++;
+        line->earc = morseevent.arc;
+        if (line->earc) line->earc->refcount++;
         v1->line[2] = line;
         v4->line[0] = line;
         line = newline (contour, v1, v5);
         line->orientation = morseevent.ori2;
-        line->arc = morseevent.arc2;
-        if (line->arc) line->arc->refcount++;
+        line->earc = morseevent.arc2;
+        if (line->earc) line->earc->refcount++;
         v1->line[3] = line;
         v5->line[0] = line;
         line = newline (contour, prevdanglingnodes[prevdangind], v1);
@@ -1250,9 +1303,9 @@ buildpolyline (FILE *filein)
         if (morseevent.ori*dangori != 0
             && morseevent.ori != dangori)
           fprintf (stderr, "Conflicting orientation!\n");
-        if (dangline->arc == 0) dangline->arc = morseevent.arc;
+        if (dangline->earc == 0) dangline->earc = morseevent.arc;
           else if (morseevent.arc) 
-            dangline->arc = mergearcinfo (dangline->arc, morseevent.arc);
+            dangline->earc = mergearcinfo (dangline->earc, morseevent.arc);
         if (dangline->orientation == 0) 
           dangline->orientation = morseevent.ori;
         if (dangline->b != dangv) dangline->orientation *= -1;
@@ -1370,9 +1423,9 @@ inherit_orientation (struct line *line)
     {
       goon = 1;
       wline->orientation = 1;
-      assert (wline->arc == 0);
-      wline->arc = line->arc;
-      wline->arc->refcount++;
+      assert (wline->earc == 0);
+      wline->earc = line->earc;
+      wline->earc->refcount++;
     }
   }
 
@@ -1394,9 +1447,9 @@ inherit_orientation (struct line *line)
     {
       goon = 1;
       wline->orientation = 1;
-      assert (wline->arc == 0);
-      wline->arc = line->arc;
-      wline->arc->refcount++;
+      assert (wline->earc == 0);
+      wline->earc = line->earc;
+      wline->earc->refcount++;
     }
   }
 

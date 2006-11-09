@@ -12,13 +12,13 @@ struct morseevent {
   int ori2;
 //  int cusps;
 //  int cusps2;
-  struct arc *arc;
-  struct arc *arc2;
+  struct earc *arc;
+  struct earc *arc2;
 //  struct morseevent *next;
 };
 
 void getmorseevent (FILE *filein, struct morseevent *mev, int maxone);
 void getmorseeventl (FILE *filein, struct morseevent *mev);
 void getarcinfo (FILE *filein, struct morseevent *morseevent);
-void getoricusps (FILE *filein, int *oript, struct arc **arcpt);
+void getoricusps (FILE *filein, int *oript, struct earc **arcpt);
 

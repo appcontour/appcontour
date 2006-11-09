@@ -195,9 +195,9 @@ getarcinfo (FILE *filein, struct morseevent *morseevent)
 }
 
 void
-getoricusps (FILE *filein, int *oript, struct arc **arcpt)
+getoricusps (FILE *filein, int *oript, struct earc **arcpt)
 {
-  struct arc *arc = 0;
+  struct earc *arc = 0;
   int i, tok, prevd;
   int require_rbr = 1;
   int depthind = 0;
@@ -263,11 +263,12 @@ getoricusps (FILE *filein, int *oript, struct arc **arcpt)
   }
   if (*oript)
   {
-    arc = *arcpt = (struct arc *) malloc (sizeof (struct arc));
+    arc = *arcpt = (struct earc *) malloc (sizeof (struct earc));
     arc->cusps = arc->cuspsinserted = 0;
     arc->first = arc->last = arc->loop = 0;
     arc->refcount = 0;
     arc->d = 0;
+    //arc->parent = 0;
   }
   if (depthind > 0) 
   {

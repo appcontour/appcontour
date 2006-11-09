@@ -30,10 +30,10 @@
 #define RMN(node) removenode (contour, node)
 #define RML(line) removeline (contour, line)
 #define MVARC(ld,lh) \
-  ld->arc->refcount--;\
-  assert (ld->arc->refcount > 0);\
-  ld->arc = lh->arc;\
-  ld->arc->refcount++;
+  ld->earc->refcount--;\
+  assert (ld->earc->refcount > 0);\
+  ld->earc = lh->earc;\
+  ld->earc->refcount++;
 #define CHAINFC2(bw,cross,l1)\
   if (bw) \
   {       \

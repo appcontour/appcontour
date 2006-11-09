@@ -5,6 +5,7 @@
 #include "GL/glut.h"
 #include "showcontour.h"
 #include "grcommon.h"
+#include "xfigexport.h"
 
 extern struct polyline *contour;
 
@@ -13,6 +14,7 @@ extern int motion;
 extern int steps;
 extern char *title;
 static int isfullscreen = 0;
+static struct grflags grflags;
 
 #define SIZE 0.01
 
@@ -73,7 +75,7 @@ display (void)
   glEnd();
   for (line = contour->line; line; line = line->next)
   {
-    if ((line->a->type == V_REGULAR && line->a->line[0]->a->type != V_REGULAR) || line->arc->loop == line) 
+    if ((line->a->type == V_REGULAR && line->a->line[0]->a->type != V_REGULAR) || line->earc->loop == line) 
     {
       if (line->d > 0)
       {
@@ -165,8 +167,8 @@ menu (int value)
     break;
 
   case MENU_XFIG_EXPORT:
-    exportfile = fopen ("showcontour.fig", "w");
-    xfig_export (contour, exportfile);
+    exportfile = fopen ("contour.fig", "w");
+    xfig_export (contour, exportfile, &grflags);
     fclose (exportfile);
     break;
 

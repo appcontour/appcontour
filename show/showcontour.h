@@ -49,11 +49,12 @@ struct line {
   int d;
   struct vertex *a;
   struct vertex *b;
-  struct arc *arc;
+  struct earc *earc;
+  struct rarc *rarc;
   struct line *next;
 };
 
-struct arc {
+struct earc {
   //int type;
   int orientation;
   int cusps;
@@ -63,8 +64,17 @@ struct arc {
   struct line *first;
   struct line *last;
   struct line *loop;
-  struct arc *next;
+  //struct arc *next;
+  //struct arc *parent;
   int refcount;
+};
+
+struct rarc {
+  int numsegments;
+  int d;
+  struct line *first;
+  struct line *last;
+  struct line *loop;
 };
 
 /* prototypes */
@@ -75,6 +85,7 @@ void grsetresponsivity (double incrtime);
 int grmain (void);
 double evolve (struct polyline *contour, double incrtime);
 void redistributenodes (struct polyline *contour);
+void init_rarc (struct polyline *contour);
 struct line *nextp (struct line *l, struct vertex *p);
 struct line *prevp (struct line *l, struct vertex *p);
 double normsq (double *x, int dim);
