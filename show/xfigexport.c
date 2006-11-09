@@ -48,12 +48,16 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
     arc = line->rarc;
     if (arc->first != line && arc->loop != line) continue;
     /* let's walk along the arc */
+//printf ("walking (%d)...\n", arc->numsegments);
     last = arc->last;
     if (last == 0)
     {
+//printf ("isloop\n");
       last = arc->loop;
+      assert (last);
       last = last->a->line[0];
     }
+//printf ("last defined\n");
     w = (arc->d == 0) ? 2 : 1;
     fprintf (file, "2 1 0 %d 0 7 50 -1 -1 0.000 0 0 -1 0 0 %d\n", 
                     w, arc->numsegments + 1);
@@ -64,6 +68,7 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
     markcount = count/3;
     while (1)
     {
+//printf ("   another segment\n");
       b = l->b;
       fprintf (file, "  %d %d\n", conv(b));
       count++;

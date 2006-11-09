@@ -969,7 +969,7 @@ init_rarc (struct polyline *contour)
   struct vertex *b;
   struct earc *earc;
   struct rarc *rarc;
-  int icus, count;
+  int icus, count, canbreak;
 
   for (line = contour->line; line; line = line->next)
   {
@@ -987,6 +987,7 @@ init_rarc (struct polyline *contour)
     rarc = (struct rarc *) malloc (sizeof (struct rarc));
     rarc->d = earc->d[icus];
     rarc->first = line;
+    rarc->loop = rarc->last = 0;
     rarc->numsegments = 0;
     l = line;
     count = 0;
@@ -996,18 +997,30 @@ init_rarc (struct polyline *contour)
       count++;
       l->rarc = rarc;
       rarc->numsegments++;
-      if (b->type == V_CUSP)
+      canbreak = 1;
+      if (b->type == V_CUSP && l != last)
       {
-        rarc->last = l;
+        if (earc->loop && icus == 0)
+        {  /* this is the first cusp of a loop
+            * we want to start here... 
+            */
+          last = l;
+          canbreak = 0;
+          count = 0;
+        } else {
+          rarc->last = l;
+          rarc = (struct rarc *) malloc (sizeof (struct rarc));
+        }
         icus++;
-        rarc = (struct rarc *) malloc (sizeof (struct rarc));
         rarc->d = earc->d[icus];
         rarc->first = b->line[1];
+        rarc->loop = rarc->last = 0;
         rarc->numsegments = 0;
       }
-      if (l == last) break;
+      if (l == last && canbreak) break;
       l = b->line[1];
     }
+    rarc->last = l;
     assert (count == earc->numsegments);
     assert (icus == earc->cusps);
   }
