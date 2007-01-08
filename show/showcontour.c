@@ -16,6 +16,7 @@
 #include "morseevent.h"
 #include "doptimize.h"
 #include "energy.h"
+#include "grcommon.h"
 #include "../parser.h"
 
 #define ALLOW_NODE_REDEFINE 1
@@ -70,9 +71,21 @@ static double curenergy = 0.0;
 //double timerrep;
 //static double timerkickout;
 
+char *xfigproblem = 0;
+static double skiptime = 0.0;
 static int test = 0;
 static int dodoptimize = 1;
-static char *grident;
+#ifdef HAVE_GTK
+static int gr_id = GO_GTK;
+#else
+#ifdef HAVE_GLUT
+static int gr_id = GO_GLUT;
+#else
+static int gr_id = GO_NULL;
+#endif
+#endif
+
+//static char *grident;
 
 int
 main (int argc, char *argv[])
@@ -82,12 +95,13 @@ main (int argc, char *argv[])
   int tok, count, vertexnum;
   double kick_out_time;
   FILE *filein;
+  char *grident;
 
-  grident = grinit(&argc, argv);
   energyinit ();
   filein = parseargs (argc, argv);
   if (filein == 0) filein = stdin;
   if (test == 0) allowrepulsion = 0;
+  grident = grinit(&argc, argv);
 
   tok = gettoken (filein);
   if (tok != TOK_MORSE) return (0);
@@ -145,8 +159,10 @@ main (int argc, char *argv[])
   activate_timer (EVENT_REDISTRIBUTENODES, contour->time + taurn);
   activate_timer (EVENT_REPULSIVEENERGY, -1.0);    /* must compute immediately */
 
-  //evolve (contour, incrtime);
-
+  if (skiptime > 0.0)
+  {
+    evolve (contour, skiptime);
+  }
   grmain();
   return (0);
 }
@@ -212,22 +228,62 @@ printf ("kick_out\n");
 FILE *
 parseargs (int argc, char *argv[])
 {
-  int iarg;
+  int iarg, gr_lid;
   FILE *filein = 0;
 
+  grparser (&argc, argv);
   for (iarg = 1; iarg < argc; iarg++)
   {
     if (*argv[iarg] == '-')    /* this is an option */
     {
       if (strcmp (argv[iarg], "--grident") == 0)
       {
-        printf ("%s\n", grident);
+        switch (gr_id)
+        {
+          case GO_NULL:
+          printf ("%s\n", "null");
+          break;
+
+          case GO_GTK:
+          printf ("%s\n", "gtk");
+          break;
+
+          case GO_GLUT:
+          printf ("%s\n", "glut");
+          break;
+
+          case GO_XFIG:
+          printf ("%s\n", "xfig");
+          break;
+
+          default:
+          printf ("unknown\n");
+          break;
+        }
         exit (0);
       }
       if (strcmp (argv[iarg], "--test") == 0) {
         test = 1;
       } else if (strcmp (argv[iarg], "--nodoptimize") == 0) {
         dodoptimize = 0;
+      } else if (strcmp (argv[iarg], "--xfigfile") == 0) {
+        ++iarg;
+        xfigproblem = argv[iarg];
+      } else if (strcmp (argv[iarg], "--skip") == 0) {
+        skiptime = atof(argv[++iarg]);
+      } else if (strcmp (argv[iarg], "--go") == 0) {
+        ++iarg;
+        gr_lid = 0;
+        if (strcmp (argv[iarg], "null") == 0) gr_lid = GO_NULL;
+#ifdef HAVE_GTK
+        if (strcmp (argv[iarg], "gtk") == 0) gr_lid = GO_GTK;
+#endif
+#ifdef HAVE_GLUT
+        if (strcmp (argv[iarg], "glut") == 0) gr_lid = GO_GLUT;
+#endif
+        if (strcmp (argv[iarg], "xfig") == 0) gr_lid = GO_XFIG;
+        if (gr_lid) gr_id = gr_lid;
+          else printf ("Invalid gr value: %s\n", argv[iarg]);
       } else if (strcmp (argv[iarg], "--k1") == 0) {
         k1_coeff = atof (argv[++iarg]);
       } else if (strcmp (argv[iarg], "--k2") == 0) {
@@ -1493,4 +1549,56 @@ inherit_orientation (struct line *line)
   }
 
   return (goon);
+}
+
+char *
+grinit (int *argcpt, char *argv[])
+{
+  static char idxfig[] = "xfig";
+  static char idnull[] = "null";
+  static char idunknown[] = "unknown";
+
+  switch (gr_id)
+  {
+    case GO_XFIG:
+    return (idxfig);
+
+    case GO_NULL:
+    return (idnull);
+
+#ifdef HAVE_GTK
+    case GO_GTK:
+    return (gtk_grinit (argcpt, argv));
+#endif
+#ifdef HAVE_GLUT
+    case GO_GLUT:
+    return (glut_grinit (argcpt, argv));
+#endif
+    default:
+    return (idunknown);
+  }
+}
+
+int
+grmain (void)
+{
+  switch (gr_id)
+  {
+    case GO_XFIG:
+    return (0);
+
+    case GO_NULL:
+    return (0);
+
+#ifdef HAVE_GTK
+    case GO_GTK:
+    return (gtk_grmain ());
+#endif
+#ifdef HAVE_GLUT
+    case GO_GLUT:
+    return (glut_grmain ());
+#endif
+    default:
+    return (0);
+  }
 }

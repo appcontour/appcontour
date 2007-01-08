@@ -27,7 +27,7 @@ static struct grflags grflags;
 #define MENU_XFIG_EXPORT 12
 #define MENU_QUIT 100
 
-void idle (void);
+void glut_idle (void);
 void keyboard (unsigned char key, int x, int y);
 
 void
@@ -117,11 +117,11 @@ display (void)
 }
 
 void
-toggle_motion (int toggle)
+glut_toggle_motion (int toggle)
 {
   if (toggle) motion = 1 - motion;
   if (motion) {
-    glutIdleFunc (idle);
+    glutIdleFunc (glut_idle);
   } else {
     glutIdleFunc (NULL);
   }
@@ -131,17 +131,17 @@ void
 menu (int value)
 {
   double time;
-  FILE *exportfile;
+  //FILE *exportfile;
 
   switch (value) {
   case MENU_TOGGLE_MOTION:
-    toggle_motion (1);
+    glut_toggle_motion (1);
     break;
 
   case MENU_SINGLE_STEP:
     motion = 1;
     steps = 1;
-    toggle_motion (0);
+    glut_toggle_motion (0);
     break;
 
   case MENU_REFINE:
@@ -167,9 +167,9 @@ menu (int value)
     break;
 
   case MENU_XFIG_EXPORT:
-    exportfile = fopen ("contour.fig", "w");
-    xfig_export (contour, exportfile, &grflags);
-    fclose (exportfile);
+    //exportfile = fopen ("contour.fig", "w");
+    xfig_export0 (contour, xfigproblem, &grflags);
+    //fclose (exportfile);
     break;
 
   case MENU_QUIT:
@@ -181,18 +181,18 @@ void
 visible (int state)
 {
   if (state == GLUT_VISIBLE) {
-    toggle_motion (0);
+    glut_toggle_motion (0);
   }
 }
 
 void
-idle (void)
+glut_idle (void)
 {
   double time;
   char buf[100];
 
   steps--;
-  if (steps <= 0) {toggle_motion(1); steps = 10000;}
+  if (steps <= 0) {glut_toggle_motion(1); steps = 10000;}
   time = evolve (contour, incrtime);
   snprintf (buf, 98, "showcontour, time=%lf", time);
   if (title) glutSetWindowTitle(title); else glutSetWindowTitle(buf);
@@ -244,11 +244,11 @@ mykeyboard (unsigned char key, int x, int y)
 }
 
 char *
-grinit (int *argcpt, char *argv[])
+glut_grinit (int *argcpt, char *argv[])
 {
   static char ident[]="glut";
 
-  grparser (argcpt, argv);
+  //grparser (argcpt, argv);
   glutInit(argcpt, argv);
   return (ident);
 }
@@ -260,7 +260,7 @@ grsetresponsivity (double lincrtime)
 }
 
 int
-grmain (void)
+glut_grmain (void)
 {
   glutCreateWindow("showcontour");
   glutDisplayFunc(display);

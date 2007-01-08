@@ -10,11 +10,36 @@
 #define YOFF 200
 
 #define conv(a) (int)((a->x - minx)*zoom) + XOFF,(int)((a->y - miny)*zoom) + YOFF
+#define BUFLEN 200
+
+void
+xfig_export0 (struct polyline *contour, char *problem, struct grflags *grflags)
+{
+  static int xfig_count = 0;
+  char defaultproblem[] = "contour";
+  char buffer[BUFLEN];
+  FILE *file;
+
+  if (problem == 0)
+  {
+    problem = defaultproblem;
+  }
+  if (xfig_count > 0)
+  {
+    snprintf (buffer, BUFLEN, "%s_%05d.fig", problem, xfig_count);
+  } else {
+    snprintf (buffer, BUFLEN, "%s.fig", problem);
+  }
+  xfig_count++;
+  file = fopen (buffer, "w");
+  xfig_export (contour, file, grflags);
+  fclose (file);
+}
 
 void
 xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
 {
-  struct line *line, *l, *last, *markline;
+ struct line *line, *l, *last, *markline;
   struct vertex *v, *a, *b;
   struct rarc *arc;
   double maxx, maxy, minx, miny, xmed, ymed, zoomx, zoomy, zoom;

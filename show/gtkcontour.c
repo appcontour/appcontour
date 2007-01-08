@@ -247,10 +247,10 @@ gtk_graf_expose (GtkWidget *widget, GdkPixmap *pixmap, double time)
 }
 
 char
-*grinit (int *argcpt, char *argv[])
+*gtk_grinit (int *argcpt, char *argv[])
 {
   static char ident[]="gtk";
-  grparser (argcpt, argv);
+//  grparser (argcpt, argv);
   nograf=motion;   
   gtk_init(argcpt, &argv);
   return (ident);
@@ -282,7 +282,7 @@ idle (gpointer data)
 }
 
 int
-grmain ()
+gtk_grmain ()
 {
   GtkWidget *window;
   GtkWidget *graf;

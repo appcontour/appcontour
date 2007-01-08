@@ -1,3 +1,10 @@
+#include "../config.h"
+
+#define GO_NULL 1
+#define GO_GTK 2
+#define GO_GLUT 3
+#define GO_XFIG 4
+
 #define V_REGULAR 1
 #define V_CUSP 2
 #define V_CROSS 3
@@ -8,6 +15,8 @@
 #define EVENT_KICKOUT 3
 
 //#define CHECK_GRADIENT 1
+
+extern char *xfigproblem;
 
 struct timerevent {
   int event;
@@ -80,9 +89,18 @@ struct rarc {
 /* prototypes */
 
 char *grinit (int *argcpt, char *argv[]);
+#ifdef HAVE_GTK
+char *gtk_grinit (int *argcpt, char *argv[]);
+#endif
+#ifdef HAVE_GLUT
+char *glut_grinit (int *argcpt, char *argv[]);
+#endif
+
 void toggle_motion (int toggle);
 void grsetresponsivity (double incrtime);
 int grmain (void);
+int glut_grmain (void);
+int gtk_grmain (void);
 double evolve (struct polyline *contour, double incrtime);
 void redistributenodes (struct polyline *contour);
 void init_rarc (struct polyline *contour);
