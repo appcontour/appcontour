@@ -16,7 +16,7 @@
 #include "morseevent.h"
 #include "doptimize.h"
 #include "energy.h"
-#include "grcommon.h"
+#include "xfigexport.h"
 #include "../parser.h"
 
 #define ALLOW_NODE_REDEFINE 1
@@ -72,6 +72,7 @@ static double curenergy = 0.0;
 //static double timerkickout;
 
 char *xfigproblem = 0;
+char *title = 0;
 static double skiptime = 0.0;
 static int test = 0;
 static int dodoptimize = 1;
@@ -271,7 +272,7 @@ parseargs (int argc, char *argv[])
         xfigproblem = argv[iarg];
       } else if (strcmp (argv[iarg], "--skip") == 0) {
         skiptime = atof(argv[++iarg]);
-      } else if (strcmp (argv[iarg], "--go") == 0) {
+      } else if (strcmp (argv[iarg], "--gro") == 0) {
         ++iarg;
         gr_lid = 0;
         if (strcmp (argv[iarg], "null") == 0) gr_lid = GO_NULL;
@@ -283,7 +284,10 @@ parseargs (int argc, char *argv[])
 #endif
         if (strcmp (argv[iarg], "xfig") == 0) gr_lid = GO_XFIG;
         if (gr_lid) gr_id = gr_lid;
-          else printf ("Invalid gr value: %s\n", argv[iarg]);
+          else printf ("Invalid gro value: %s\n", argv[iarg]);
+      } else if (strcmp (argv[iarg], "--title") == 0) {
+        title = argv[++iarg];
+        if (xfigproblem == 0) xfigproblem = argv[iarg];
       } else if (strcmp (argv[iarg], "--k1") == 0) {
         k1_coeff = atof (argv[++iarg]);
       } else if (strcmp (argv[iarg], "--k2") == 0) {
@@ -1579,12 +1583,27 @@ grinit (int *argcpt, char *argv[])
   }
 }
 
+extern int steps;
+
 int
 grmain (void)
 {
+  int i;
+  static double incrtime = 0.25;
+
   switch (gr_id)
   {
     case GO_XFIG:
+    xfig_export0 (contour, xfigproblem, &grflags);
+    if (steps >= 10000) steps = 0;
+    if (steps)
+    {
+      for (i = 0; i < steps; i++)
+      {
+        evolve (contour, incrtime);
+        xfig_export0 (contour, xfigproblem, &grflags);
+      }
+    }
     return (0);
 
     case GO_NULL:

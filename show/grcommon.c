@@ -4,7 +4,8 @@
 
 int motion = 1;
 int steps = 10000;
-char *title = 0;
+
+struct grflags grflags;
 
 void
 grparser (int *argcpt, char *argv[])
@@ -30,16 +31,6 @@ grparser (int *argcpt, char *argv[])
       if (strcmp (argv[i], "--steps") == 0)
       {
         steps = atoi (argv[i+1]);
-        goon = 1;
-        (*argcpt) -= 2;
-        for (j = i; j < *argcpt; j++)
-        {
-          argv[j] = argv[j+2];
-        }
-      }
-      if (strcmp (argv[i], "--title") == 0)
-      {
-        title = argv[i+1];
         goon = 1;
         (*argcpt) -= 2;
         for (j = i; j < *argcpt; j++)

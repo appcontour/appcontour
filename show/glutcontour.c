@@ -4,7 +4,6 @@
 #include <string.h>
 #include "GL/glut.h"
 #include "showcontour.h"
-#include "grcommon.h"
 #include "xfigexport.h"
 
 extern struct polyline *contour;
@@ -14,7 +13,6 @@ extern int motion;
 extern int steps;
 extern char *title;
 static int isfullscreen = 0;
-static struct grflags grflags;
 
 #define SIZE 0.01
 

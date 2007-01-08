@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include "showcontour.h"
-#include "grcommon.h"
 #include "xfigexport.h"
 
 #define XFIGMAXX 11000
