@@ -1602,3 +1602,27 @@ grmain (void)
     return (0);
   }
 }
+
+void
+toggle_motion (int motion)
+{
+  switch (gr_id)
+  {
+    case GO_XFIG:
+    return;
+
+    case GO_NULL:
+    return;
+
+#ifdef HAVE_GTK
+    case GO_GTK:
+    return (gtk_toggle_motion (motion));
+#endif
+#ifdef HAVE_GLUT
+    case GO_GLUT:
+    return (glut_toggle_motion (motion));
+#endif
+    default:
+    return;
+  }
+}

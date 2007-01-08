@@ -1,13 +1,16 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* You have a usable glut library. */
+#undef HAVE_GLUT
+
 /* Define to 1 if you have the <GL/glut.h> header file. */
 #undef HAVE_GL_GLUT_H
 
+/* You have a usable gtk library. */
+#undef HAVE_GTK
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* Define to 1 if you have the `glut' library (-lglut). */
-#undef HAVE_LIBGLUT
 
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */

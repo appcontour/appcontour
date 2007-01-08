@@ -1,4 +1,6 @@
-#include "../config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #define GO_NULL 1
 #define GO_GTK 2
@@ -97,6 +99,8 @@ char *glut_grinit (int *argcpt, char *argv[]);
 #endif
 
 void toggle_motion (int toggle);
+void glut_toggle_motion (int toggle);
+void gtk_toggle_motion (int toggle);
 void grsetresponsivity (double incrtime);
 int grmain (void);
 int glut_grmain (void);

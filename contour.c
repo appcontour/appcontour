@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <string.h>
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include "contour.h"
 #include "parser.h"
 

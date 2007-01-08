@@ -7,20 +7,23 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([contour.c])
 AC_CONFIG_HEADER([config.h])
 
+#glut="yes"
+gtk="yes"
+
 AC_ARG_WITH([glut],
-  AC_HELP_STRING([--with-glut], [glut engine for showcontour]),
-  glut="yes"; gtk="no"; nograph="no",
-  glut="no")
+  AC_HELP_STRING([--without-glut], [no glut engine for showcontour]),
+  glut="no",
+  glut="yes")
 
 AC_ARG_WITH([gtk],
-  AC_HELP_STRING([--with-gtk], [gtk engine for showcontour]),
-  gtk="yes"; glut="no", nograph="no",
-  gtk="no")
+  AC_HELP_STRING([--without-gtk], [no gtk engine for showcontour]),
+  gtk="no",
+  gtk="yes")
 
-AC_ARG_WITH([none],
-  AC_HELP_STRING([--with-none], [no graphic engine for showcontour]),
-  nograph="yes"; gtk="no"; glut="no",
-  nograph="no")
+#AC_ARG_WITH([none],
+#  AC_HELP_STRING([--with-none], [no graphic engine for showcontour]),
+#  nograph="yes"; gtk="no"; glut="no",
+#  nograph="no")
 
 if (test "$glut" != "yes" -a "$nograph" != "yes" -a "$gtk" != "yes"); then
   AC_MSG_ERROR([You must select an interface for showcontour to build.
@@ -39,6 +42,7 @@ AC_PROG_CC
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h])
 
+GRAPHIC_LIB=""
 if (test "$gtk" = "yes"); then
   dnl check for GTK gtk-config.
   AC_PATH_PROG(GTK_CONFIG, gtk-config, no, ${PATH})
@@ -46,7 +50,8 @@ if (test "$gtk" = "yes"); then
      AC_MSG_ERROR([No gtk library found, use --with-none or --with-glut.])
   fi
   CFLAGS="${CFLAGS} `${GTK_CONFIG} --cflags`"
-  LIBS="${LIBS} `${GTK_CONFIG} --libs`"
+  GRAPHIC_LIB="${GRAPHIC_LIB} `${GTK_CONFIG} --libs`"
+  AC_DEFINE(HAVE_GTK, 1, [You have a usable gtk library.])
 fi
 
 if (test "$glut" = "yes"); then
@@ -54,10 +59,15 @@ if (test "$glut" = "yes"); then
   AC_CHECK_HEADERS(GL/glut.h, ,
     [AC_MSG_ERROR([No glut.h found, use --with-none or --with-gtk.])])
   dnl check for GLUT.
-  AC_CHECK_LIB(glut, glutMainLoop, ,
+  AC_CHECK_LIB(glut, glutMainLoop, [GRAPHIC_LIB="${GRAPHIC_LIB} -lglut"],
     [AC_MSG_ERROR([No glut library found, use --with-none or --with-gtk.])])
+  AC_DEFINE(HAVE_GLUT, 1, [You have a usable glut library.])
 fi
 
+if (test "$GRAPHIC_LIB" = ""); then
+  GRAPHIC_LIB="-lm"
+fi
+AC_SUBST(GRAPHIC_LIB)
 AM_CONDITIONAL(ENABLE_GLUT, test "$glut" = "yes")
 AM_CONDITIONAL(ENABLE_GTK, test "$gtk" = "yes")
 

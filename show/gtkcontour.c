@@ -322,7 +322,7 @@ gtk_grmain ()
   return 0;
 }
 
-void toggle_motion(int i )
+void gtk_toggle_motion(int i )
 {
       nograf = 0;
 }
