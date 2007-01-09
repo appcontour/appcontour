@@ -264,7 +264,7 @@ idle (gpointer data)
   GdkPixmap *local_pixmap;
   local_pixmap=pixmap;
 
-  time = evolve (contour, incrtime);
+  time = evolve (contour, incrtime, 0.0);
   gtk_graf_expose(graf,local_pixmap,time);
   pixmap=local_pixmap;
   gdk_draw_pixmap(graf->window,
@@ -362,14 +362,14 @@ static void menuitem_response(GtkWidget *graf, gint value, GtkWidget *menu_item)
   case MENU_DEREFINE :
     contour->h *= sqrt(2.0);
     redistributenodes (contour);
-    time = evolve (contour, 0.1);
+    time = evolve (contour, 0.1, 0.0);
     redistributenodes (contour);
     break;
 
   case MENU_REFINE :
     contour->h /= sqrt(2.0);
     redistributenodes (contour);
-    time = evolve (contour, 0.1);
+    time = evolve (contour, 0.1, 0.0);
     redistributenodes (contour);
     break;
    

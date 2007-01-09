@@ -162,7 +162,7 @@ main (int argc, char *argv[])
 
   if (skiptime > 0.0)
   {
-    evolve (contour, skiptime);
+    evolve (contour, 3600.0, skiptime);
   }
   grmain();
   return (0);
@@ -601,12 +601,15 @@ settags (struct polyline *contour)
 }
 
 static struct timeval timer;
+static double simtime;
 
 void
-settimer (double incrtime)
+settimer (double incrtime, double incsimtime)
 {
   int seconds, useconds;
 
+  simtime = -1.0;
+  if (incsimtime > 0.0) simtime = contour->time + incsimtime;
   gettimeofday(&timer, 0);
 
   seconds = (int) incrtime;
@@ -632,6 +635,7 @@ checktimer (void)
     return (0);
   }
   gettimeofday (&now, 0);
+  if (simtime > 0.0 && contour->time > simtime) return (0);
   return (timercmp (&now, &timer, < ));
 }
 
@@ -685,7 +689,7 @@ check_timers (struct polyline *contour)
 }
 
 double
-evolve (struct polyline *contour, double incrtime)
+evolve (struct polyline *contour, double incrtime, double incsimtime)
 {
   double newenergy, decrease, predicted_decrease;
   struct vertex *v;
@@ -695,7 +699,7 @@ evolve (struct polyline *contour, double incrtime)
   int allowbackstep = ALLOW_BACKSTEP;
   int allowstepcontrol = ALLOW_STEPCONTROL;
 
-  settimer (incrtime);
+  settimer (incrtime, incsimtime);
   gradient_is_ok = 0;
   while (checktimer())
   {
@@ -1600,7 +1604,7 @@ grmain (void)
     {
       for (i = 0; i < steps; i++)
       {
-        evolve (contour, incrtime);
+        evolve (contour, incrtime, 0.0);
         xfig_export0 (contour, xfigproblem, &grflags);
       }
     }

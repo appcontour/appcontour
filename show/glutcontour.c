@@ -145,14 +145,14 @@ menu (int value)
   case MENU_REFINE:
     contour->h /= sqrt(2.0);
     redistributenodes (contour);
-    time = evolve (contour, 0.1);
+    time = evolve (contour, 0.1, 0.0);
     redistributenodes (contour);
     break;
 
   case MENU_DEREFINE:
     contour->h *= sqrt(2.0);
     redistributenodes (contour);
-    time = evolve (contour, 0.1);
+    time = evolve (contour, 0.1, 0.0);
     redistributenodes (contour);
     break;
 
@@ -191,7 +191,7 @@ glut_idle (void)
 
   steps--;
   if (steps <= 0) {glut_toggle_motion(1); steps = 10000;}
-  time = evolve (contour, incrtime);
+  time = evolve (contour, incrtime, 0.0);
   snprintf (buf, 98, "showcontour, time=%lf", time);
   if (title) glutSetWindowTitle(title); else glutSetWindowTitle(buf);
   glutPostRedisplay();

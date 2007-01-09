@@ -105,7 +105,10 @@ void grsetresponsivity (double incrtime);
 int grmain (void);
 int glut_grmain (void);
 int gtk_grmain (void);
-double evolve (struct polyline *contour, double incrtime);
+double evolve (struct polyline *contour, double incrtime, double incsimtime);
+/* incrtime is a realtime increment, incsimtime is an increment in the
+ * simulation time
+ */
 void redistributenodes (struct polyline *contour);
 void init_rarc (struct polyline *contour);
 struct line *nextp (struct line *l, struct vertex *p);
