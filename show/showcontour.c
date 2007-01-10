@@ -272,7 +272,7 @@ parseargs (int argc, char *argv[])
         xfigproblem = argv[iarg];
       } else if (strcmp (argv[iarg], "--skip") == 0) {
         skiptime = atof(argv[++iarg]);
-      } else if (strcmp (argv[iarg], "--gro") == 0) {
+      } else if (strcmp (argv[iarg], "--ge") == 0) {
         ++iarg;
         gr_lid = 0;
         if (strcmp (argv[iarg], "null") == 0) gr_lid = GO_NULL;
@@ -284,7 +284,7 @@ parseargs (int argc, char *argv[])
 #endif
         if (strcmp (argv[iarg], "xfig") == 0) gr_lid = GO_XFIG;
         if (gr_lid) gr_id = gr_lid;
-          else printf ("Invalid gro value: %s\n", argv[iarg]);
+          else printf ("Invalid ge value: %s\n", argv[iarg]);
       } else if (strcmp (argv[iarg], "--title") == 0) {
         title = argv[++iarg];
         if (xfigproblem == 0) xfigproblem = argv[iarg];
@@ -301,9 +301,9 @@ parseargs (int argc, char *argv[])
       } else if (strcmp (argv[iarg], "--help") == 0) {
         printf ("usage: %s [--help] [--nodoptimize] [--pause]\n", argv[0]);
         printf ("      [--steps <n>][--title <title>]\n");
-        printf ("      [--gro <graphic engine>][--skip <simtime>]\n");
+        printf ("      [--ge <graphic engine>][--skip <simtime>]\n");
         printf ("      [--xfigspecial][--onlyvisible]\n");
-        printf ("\nvalid graphic engines: ");
+        printf ("\nvalid graphic engines (option --ge): ");
 #ifdef HAVE_GTK
         printf ("gtk ");
 #endif
