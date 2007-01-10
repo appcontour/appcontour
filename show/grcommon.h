@@ -4,6 +4,7 @@
 
 struct grflags {
   int onlyvisible;
+  int xfigspecial;
   };
 
 extern struct grflags grflags;

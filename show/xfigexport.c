@@ -8,7 +8,8 @@
 #define XOFF 200
 #define YOFF 200
 
-#define conv(a) (int)((a->x - minx)*zoom) + XOFF,(int)((a->y - miny)*zoom) + YOFF
+//  #define conv(a) (int)((a->x - minx)*zoom) + XOFF,(int)((a->y - miny)*zoom) + YOFF
+#define conv(a) (int)((a->x - minx)*zoom) + XOFF,(int)((maxy - a->y)*zoom) + YOFF
 #define BUFLEN 200
 
 void
@@ -107,9 +108,14 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
     /* print depth value */
     if (arc->d > 0)
     {
-      fprintf (file, "4 0 0 50 -1 0 24 0.0000 4 135 450 ");
-      fprintf (file, "%d %d %d\\001\n", conv(markline->a), arc->d);
-      printf ("depth = %d\n", arc->d);
+      fprintf (file, "4 0 0 50 -1 0 24 0.0000 %d 135 450 ", 
+        grflags->xfigspecial?2:0);
+      fprintf (file, "%d %d ", conv(markline->a));
+      if (grflags->xfigspecial) fprintf (file, "$");
+      fprintf (file, "%d", arc->d);
+      if (grflags->xfigspecial) fprintf (file, "$");
+      fprintf (file, "\\001\n");
+      //printf ("depth = %d\n", arc->d);
     }
   }
   return;

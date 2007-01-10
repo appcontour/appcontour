@@ -301,6 +301,16 @@ parseargs (int argc, char *argv[])
       } else if (strcmp (argv[iarg], "--help") == 0) {
         printf ("usage: %s [--help] [--nodoptimize] [--pause]\n", argv[0]);
         printf ("      [--steps <n>][--title <title>]\n");
+        printf ("      [--gro <graphic engine>][--skip <simtime>]\n");
+        printf ("      [--xfigspecial][--onlyvisible]\n");
+        printf ("\nvalid graphic engines: ");
+#ifdef HAVE_GTK
+        printf ("gtk ");
+#endif
+#ifdef HAVE_GLUT
+        printf ("glut ");
+#endif
+        printf ("xfig\n");
         exit (0);
       } else {
         printf ("Invalid option: %s\n", argv[iarg]);

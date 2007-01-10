@@ -13,6 +13,9 @@ grparser (int *argcpt, char *argv[])
   int goon = 1;
   int i, j;
 
+  grflags.xfigspecial = 0;
+  grflags.onlyvisible = 0;
+
   while (goon)
   {
     goon = 0;
@@ -36,6 +39,26 @@ grparser (int *argcpt, char *argv[])
         for (j = i; j < *argcpt; j++)
         {
           argv[j] = argv[j+2];
+        }
+      }
+      if (strcmp (argv[i], "--xfigspecial") == 0)
+      {
+        grflags.xfigspecial = 1;
+        goon = 1;
+        (*argcpt)--;
+        for (j = i; j < *argcpt; j++)
+        {
+          argv[j] = argv[j+1];
+        }
+      }
+      if (strcmp (argv[i], "--onlyvisible") == 0)
+      {
+        grflags.xfigspecial = 1;
+        goon = 1;
+        (*argcpt)--;
+        for (j = i; j < *argcpt; j++)
+        {
+          argv[j] = argv[j+1];
         }
       }
     }
