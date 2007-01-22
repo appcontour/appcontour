@@ -39,11 +39,12 @@ xfig_export0 (struct polyline *contour, char *problem, struct grflags *grflags)
 void
 xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
 {
- struct line *line, *l, *last, *markline;
+  struct line *line, *l, *last, *markline;
   struct vertex *v, *a, *b;
   struct rarc *arc;
   double maxx, maxy, minx, miny, xmed, ymed, zoomx, zoomy, zoom;
-  int count, markcount, w;
+  int count, markcount, w, st;
+  double stv;
 
   fprintf (file, "#FIG 3.2\n");
   fprintf (file, "Landscape\nCenter\nInches\nLetter\n100.00\nSingle\n");
@@ -81,14 +82,19 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
       assert (last);
       last = last->a->line[0];
     }
-    w = (arc->d == 0) ? 2 : 1;
+    w = (arc->d == 0) ? grflags->visiblewidth : 1;
+    stv = 0.0;
+    st = arc->d;
+    if (arc->d > 2) st = 2;
+    if (st == 1) stv = grflags->dashlength;
+    if (st == 2) stv = grflags->dotspacing;
     a = line->a;
     if (arc->loop)
-      fprintf (file, "2 3 0 %d 0 7 50 -1 -1 0.000 0 0 -1 0 0 %d\n", 
-                    w, arc->numsegments + 1);
+      fprintf (file, "2 3 %d %d 0 7 50 -1 -1 %5.3f 0 0 -1 0 0 %d\n", 
+                    st, w, stv, arc->numsegments + 1);
     else {
-      fprintf (file, "2 1 0 %d 0 7 50 -1 -1 0.000 0 0 -1 0 0 %d\n", 
-                    w, arc->numsegments + 1);
+      fprintf (file, "2 1 %d %d 0 7 50 -1 -1 %5.3f 0 0 -1 0 0 %d\n", 
+                    st, w, stv, arc->numsegments + 1);
     }
     fprintf (file, "  %d %d\n", conv(a));
     l = markline = line;
@@ -106,7 +112,7 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
     }
     assert (count == arc->numsegments);
     /* print depth value */
-    if (arc->d > 0)
+    if (arc->d > st)
     {
       fprintf (file, "4 0 0 50 -1 0 24 0.0000 %d 135 450 ", 
         grflags->xfigspecial?2:0);
