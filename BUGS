@@ -1,20 +1,19 @@
-Another problem with printmorse :-(:
+testallrules for
 
-contour applyrule n5 examples/three_spheres.morse | contour applyrule n5:7 | contour applyrule n1 | contour printmorse
-
-produces a wrong description:
-
-morse {
- ^l,0 ;
- |  ^l,2  | ;
- X d,0 d,0  |  | ;
- |  ^l,0  |  |  | ;
- X d,0 d,2  |  |  |  | ;
- X d,0  |  |  |  | ;
- |  U  | ;
- X  |  | ;
- |  U  | ;
- U ;
+sketch {
+Arc 1: (0);
+Arc 2: (0);
+Arc 3: [0 1 0 1 2);
+Arc 4: [0 1 2 1 2);
+Arc 5: [0];
+Arc 6: [0];
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 2): (-a2);
+Region 2 (f = 4): (+a3);
+Region 3 (f = 0): (-a5 -a6);
+Region 4 (f = 2): (+a1) (-a3 +a5 -a4 +a6);
+Region 5 (f = 4): (+a4) (+a2);
 }
 
-[SOLVED]
+(prova.sketch) enters some loop (probably due to new rule T1.
+

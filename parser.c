@@ -6,7 +6,7 @@
 #include <string.h>
 #include "parser.h"
 
-extern int debug;
+extern int debug, heisemberg;
 static int onecharword = 0;
 
 char

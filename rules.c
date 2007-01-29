@@ -12,7 +12,9 @@ int
 apply_rule (char *rule, struct sketch *sketch)
 {
   int res, rcount = 1;
-  char *chpt;
+  char *chpt, *endrule;
+  extern int heisemberg;
+  extern int quiet;
 
   canonify (sketch);
   if (appcontourcheck (sketch, 0) == 0)
@@ -27,7 +29,14 @@ apply_rule (char *rule, struct sketch *sketch)
     if (*chpt == ':')
     {
       *chpt++ = 0;
-      rcount = atoi (chpt);
+      rcount = strtol (chpt, &endrule, 10);
+      if (rcount < 1) rcount = 1;
+      if (*endrule == ':')
+      {
+        *endrule++ = 0;
+        heisemberg = atoi (endrule);
+        if (!quiet) fprintf (stderr, "transfer of islands requested: %d\n", heisemberg);
+      }
     }
   }
   free_connected_components (sketch);
@@ -56,6 +65,7 @@ apply_rule (char *rule, struct sketch *sketch)
   else if (strcasecmp (rule, "cr4r") == 0) res = rule_cr4r (sketch, rcount);
   else if (strcasecmp (rule, "cr4lb") == 0) res = rule_cr4lb (sketch, rcount);
   else if (strcasecmp (rule, "cr4rb") == 0) res = rule_cr4rb (sketch, rcount);
+  else if (strcasecmp (rule, "t1") == 0) res = rule_t1 (sketch, rcount);
   else printf ("Invalid rule %s\n", rule);
 
   if (debug) printf ("res = %d\n", res);
@@ -112,6 +122,8 @@ testallrules (struct sketch *sketch)
   exitcode = testsinglerule ("CR4R", rule_cr4r, exitcode, sketch);
   exitcode = testsinglerule ("CR4LB", rule_cr4lb, exitcode, sketch);
   exitcode = testsinglerule ("CR4RB", rule_cr4rb, exitcode, sketch);
+  //exitcode = testsinglerule ("T1", rule_t1, exitcode, sketch);
+  /* commented out because there is an infinite loop in some cases */
   printf ("\n");
   return (exitcode);
 }
@@ -356,6 +368,106 @@ rule_c2 (struct sketch *sketch, int rcount)
   }
   return (0);
 }
+
+int
+rule_t1 (struct sketch *sketch, int rcount)
+{
+  int onlytest = 0;
+  struct region *r, *r1, *r2;
+  struct border *sp1, *sp2;
+  struct borderlist *bl1, *bl2;
+  struct arc *a1, *a2;
+  int i, ok, d1min, d1max, changes;
+  extern int heisemberg;
+
+  if (rcount < 0) {onlytest = 1; rcount *= -1;}
+
+  /* nel caso piu' frequente di una isola, la sposta nell'altra
+   * regione
+   */
+  if (heisemberg < 0) heisemberg = 1;
+
+  /* cerca una regione candidata, che deve avere
+   * due archi orientati positivamente con regioni affacciate
+   * diverse e |d1 - d2| = 1 per almeno un paio di archi tra due
+   * cuspidi sui rispettivi archi.  Inoltre ci deve essere almeno una
+   * isola da trasferire nelle regioni affacciate.
+   */
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    //fprintf (stderr, "testing region %d\n", r->tag);
+    if (r->border->sponda == 0) continue;  /* questa e' la regione esterna */
+    for (bl1 = r->border; bl1; bl1 = bl1->next)
+    {
+      for (bl2 = bl1; bl2; bl2 = bl2->next)
+      {
+        sp1 = bl1->sponda;
+        do {
+          if (sp1->orientation <= 0) continue;
+          a1 = sp1->info;
+          d1min = d1max = a1->depths[0];
+          for (i = 1; i < a1->dvalues; i++)
+          {
+            if (a1->depths[i] < d1min) d1min = a1->depths[i];
+            if (a1->depths[i] > d1max) d1max = a1->depths[i];
+          }
+          r1 = a1->regionright->border->region;
+          if (bl2 == bl1) sp2 = sp1; else sp2 = bl2->sponda;
+          do {
+//fprintf (stderr, "region %d, d1min=%d d1max=%d\n", r->tag, d1min, d1max);
+//fprintf (stderr, "d = %d\n", sp2->info->depths[0]);
+            if (sp2->orientation <= 0) continue;
+            if (sp2 == sp1) continue;
+            a2 = sp2->info;
+            ok = 0;
+            for (i = 0; i < a2->dvalues; i++)
+            {
+              if (a2->depths[i] <= d1max + 1 && a2->depths[i] >= d1min - 1)
+              {
+                if (d1min < d1max || a2->depths[i] != d1max)
+                {
+                  ok = 1;
+                  break;
+                }
+              }
+            }
+            if (ok == 0) continue;
+            r2 = a2->regionright->border->region;
+            if (r2 == r1) continue;
+            if (r1->border->next == 0 && r2->border->next == 0) continue;
+            if (debug) printf ("spostamento di isole, regione %d\n", r->tag);
+            /* ho trovato un possibile trasferimento di isole */
+            if (rcount-- <= 1)
+            {
+              if (onlytest) return (1);
+              /* sposta isole... */
+              if (heisemberg < 0)
+              {
+                fprintf (stderr, "You need to indicate which isles to transfer, use\n");
+                fprintf (stderr, "switch \"--ti <int>\", or the special rule names ");
+                fprintf (stderr, "T1::<int>, T1:2:<int>, ...\n");
+                fprintf (stderr, "<int> is interpreted as a bit mask\n");
+                return (1);
+              }
+              transfer_isles (a1->regionright->border, a2->regionright->border,
+                              heisemberg);
+              changes = adjust_isexternalinfo (sketch);
+              if (changes) fprintf (stderr, "changes: %d\n", changes);
+              //fprintf (stderr, "not implemented\n");
+              return (1);
+            }
+          } while (sp2 = sp2->next, sp2 != bl2->sponda);
+          sp1 = sp1->next;
+        } while (sp1 = sp1->next, sp1 != bl1->sponda);
+      }
+    }
+  }
+  return (0);
+}
+
+
+
 
 int
 rule_a1 (struct sketch *sketch, int rcount)
@@ -1007,7 +1119,8 @@ taglia_nodo (struct border *b1n, struct sketch *sketch,
   struct border *b1p, *b2p, *b3p, *b4p, *b2n;
   struct region *r2, *r4;
   struct arc *arc12, *arc23, *arc34, *arc41, *arcleft, *arcright;
-  int changes;
+  int changes, allowed_changes;
+  extern int heisemberg;
 
   if (debug) printf ("entering taglia_nodo\n");
   if (debug) printsketch (sketch);
@@ -1031,7 +1144,11 @@ taglia_nodo (struct border *b1n, struct sketch *sketch,
    */
   topo_change_g (b2p, b4p, TC_DILATION, sketch);
   changes = adjust_isexternalinfo (sketch);
-  assert (changes <= 1);
+  allowed_changes = 1;
+  if (heisemberg >= 0) allowed_changes++;
+  /* heisemberg procedure can mix connected components */
+  if (changes > allowed_changes) fprintf (stderr, "changes: %d\n", changes);
+  assert (changes <= allowed_changes);
   if (debug) printf ("changes = %d\n", changes);
   /* purtroppo non e' facile sapere quale delle due componenti
    * connesse sara' un buco, tiro a indovinare e poi utilizzo

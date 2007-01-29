@@ -1,0 +1,109 @@
+Data structure internally used by "contour".
+
+A "sketch" is a structure holding pointer to the "region
+description.  Data is present for all (oriented) arcs;
+orientation is such that the largest value of "f" is
+on the left.
+An arc contains zero or more cusps; can be closed without
+endpoints (no crossings on the arc), can have the same
+crossing as starting and ending point (endpoints = 1),
+have two different crossings as starting and ending points
+(endpoints = 2).
+The notation used in the region description is:
+
+  (...) if endpoints = 0
+  [...) if endpoints = 1
+  [...] if endpoints = 2
+
+Note that in our context arcs are "extended arcs"; cusps are not
+endpoints of arcs, but are internal to an arc.
+
+The regions are described by listing the connected components
+of their boundary and for each connected component the circular
+list of arcs of that connected component, traversed in a
+counterclockwise order (the interior of the region on the left).
+Since we are somehow referring to one "side" of the arc, we use
+a different data structure ("border"), the pointer to it is
+"sponda", italian work for one shore of a river), which in turn 
+points to the arc structure.
+In this way for each arc we have an "arc" structure and two
+"border" structures.
+
+It is possible to have more than one "sketch" (apparent
+contour) in memory.
+
+--------------------------------------------------------
+
+sketch
+
+   arcs:      pointer to the arcs data (struct arc).  The arcs
+              are organized in a list, of which this is the first.
+   regions:   pointer to the regions data (struct region), there is
+              a list of regions, of which the pointed one is the
+              first (by convention it is the unbounded region)
+
+--------------------------------------------------------
+
+arc
+
+  regionleft:  pointer to the "border" associated to the
+               region on the left of the arc (where the
+               value of "f" is higher).
+  regionright: pointer to the "border" data associated to
+               the region on the right.
+  depths:  points to a vector of integers holding the depth
+           values from one cusp to the next (following the
+           orientation of the arc).
+  depthsdim: is the allocated dimension of the "depths" vector.
+           it might be larger than strictly necessary.
+  cusps:   number of cusps on the arc.
+  dvalues: number of dvalues (usually one more than the number of cusps)
+           this is not true for "closed" type arcs (0 endpoints),
+           in which case it is equal to the number of cusps unless the
+           latter is zero. In any case the depths vector is required to
+           hold cusps + 1 values, with the last equal to the first in case
+           of closed arcs.
+  next:    pointer to the next arc in a unordered list holding all arcs
+           that form the contour (the list is null terminated).
+  endpoints: an integer that can be 0, 1 or 2 for arcs of type (...),
+           [...) and [...] respectively.
+  tag:     the numbering of the arc as represented in the region description.
+
+--------------------------------------------------------
+
+region
+
+  f:       integer containing the value of "f" (this is inferred from arc
+           orientation, and not given from the user.
+  tag:     numbering of the region as represented in the region description.
+  border:  pointer to a "borderlist" structure (list of connected components
+           of the boundary).
+  next:    next region in the list of regions (null terminated).
+
+--------------------------------------------------------
+
+borderlist
+
+  region:  pointer back to the parent region
+  sponda:  (italian for "shore") pointer to a "border" structure representing
+           the side of the arc which is part of this connected components; the
+           rest of the "border" are accessed in a circular list.
+  next:    next connected component (null if this is the last connected
+           component of this region.
+           Usually the "external" boundary is listed first; this can be not the
+           case, temporary, after some particular topological changes.
+
+--------------------------------------------------------
+
+border     represents a "shore" of an arc (the arc from the point of view
+           of one of the two adjacent regions)
+
+  orientation: integer +1 or -1 based on whether this region is on the
+               left of the arc or not.
+  info:        pointer to the "arc" data structure (d values, ...).
+  border:      pointer to the parent "borderlist" to which this "shore" belongs.
+  next:        next shore of the boundary, traversed counterclockwise as viewed
+               from the interior of the region.  The resulting list is circular
+               (not null terminated).
+
+--------------------------------------------------------

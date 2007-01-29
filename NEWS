@@ -1,3 +1,16 @@
+2007-01-28: added new rule T1 that actually is a sequence C2^{-1} C2 at the
+	same place; this is not the identity since when reapplying C2 the
+	islands can be replaced differently.
+
+2007-01-28: added option "--transfer_islands" (--ti) that allows to control
+	the future location of islands (holes) after application of rules under some
+	circumstances.  For examples "C2" applied to "torus3.morse".
+	This option is followed by an integer that is interpreted as a sequence
+	of bit (from the lowest significant) each bit, if equals one, means
+	that the corresponding island has to be transferred to the other region.
+	e.g. "contour --ti 1 applyrule c2 torus3.morse".
+
+2007-01-25: presentation of "appcountour" at an Oberwolfach workshop.
 
 2006-10-23: alcuni bug-fix in "contour", specificatamente riguardanti il filtro
 	printmorse.

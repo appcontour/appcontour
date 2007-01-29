@@ -133,7 +133,29 @@ do
       morse
       ;;
     show)
-      show
+      if [ -n "$arg" ]
+      then
+        c1=`echo "$arg" | cut -f1 -d':'`
+        c2=`echo "$arg" | cut -s -f2 -d':'`
+        if [ -n "$c2" ]
+        then
+          c1="${c1}:${c2}"
+        fi
+        if echo "$applicable" | grep -qi " $c1 "
+        then
+          echo "OK, applying rule $arg would result in this"
+          savedrules="$rules"
+          rules="$rules $arg"
+          buildcommandchain
+          show
+          rules="$savedrules"
+          buildcommandchain
+        else
+          echo "$arg is not an applicable rule"
+        fi
+      else
+        show
+      fi
       ;;
     back)
       back
@@ -146,13 +168,19 @@ do
       echo -n "help, quit, print, info, morse, back"
       if [ -n "$showcontour" ]
       then
-        echo ", show"
+        echo ", show [rule]"
       else
         echo ""
       fi
       ;;
     *)
-    if echo "$applicable" | grep -qi " $command "
+    c1=`echo "$command" | cut -f1 -d':'`
+    c2=`echo "$command" | cut -s -f2 -d':'`
+    if [ -n "$c2" ]
+    then
+      c1="${c1}:${c2}"
+    fi
+    if echo "$applicable" | grep -qi " $c1 "
     then
       echo "OK, applying rule $command"
       rules="$rules $command"

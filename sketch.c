@@ -928,10 +928,12 @@ mergearcsc (struct arc *arc1, struct arc *arc2, int dincr,
  * di sapere se si tratta di erosione o di dilatazione
  */
 
+
 int
 topo_change_g (struct border *b1, struct border *b2, int type, 
                struct sketch *sketch)
 {
+  extern int heisemberg;
   struct region *r1, *r2, *newr;
   struct borderlist *bl1, *bl2, *newbl;
   int res = 0;
@@ -962,11 +964,13 @@ topo_change_g (struct border *b1, struct border *b2, int type,
      * scelta arbitraria, consistente nel lascare tutti i buchi nella regione
      * originale, mentre b2 sta sulla nuova regione, che non ha buchi
      */
-    if (bl1->region->border->next)   /* ci sono buchi, avviso l'utente! */
-    {
+    if (bl1->region->border->next && heisemberg < 0)
+    {   /* ci sono buchi, avviso l'utente! */
       fprintf (stderr, "Warning: Heisenberg rules!\n");
       fprintf (stderr, "  splitting a region with holes requires a degree of ");
-      fprintf (stderr, "arbitrarieness,\n  I will put all holes in one of the regions.");
+      fprintf (stderr, "arbitraryness,\n  I will put all holes in one of the regions.\n");
+      fprintf (stderr, "  Use option \"--ti <int>\" or C2::<int> (e.g.) to control ");
+      fprintf (stderr, "the behaviour\n");
     }
     res = topo_change (b1, b2);
     /* e' stata creato un nuovo bordo per b2, che devo recuperare */
@@ -976,6 +980,10 @@ topo_change_g (struct border *b1, struct border *b2, int type,
     newr = newregion (sketch);
     newr->border = newbl;
     newbl->region = newr;
+    if (heisemberg >= 0) /* move "holes" according to heisemberg */
+    {
+      transfer_isles (bl1, newbl, heisemberg);
+    }
   } else {           /* type = TC_DILATION:   2 regioni -> 1 regione */
     assert (bl1 != bl2);
     assert (r1 == regionunion (r1, r2, sketch));
@@ -1154,6 +1162,75 @@ redefineborder (struct border *b1, struct borderlist *bl2)
     bp->border = bl2;
     bp = bp->next;
   } while (bp != b1);
+}
+
+/*
+ * bl1 e bl2 sono c.c. del bordo di due regioni r1 e r2 distinte;
+ * "transfer_isles" trasferisce intere "isole" da una regione all'altra
+ * in un senso o nell'altro in base al valore di "hei"; ogni bit di
+ * "hei" uguale a 1 indica la volonta' di trasferire una isola.
+ *
+ * Attenzione: questa descrizione e' intuitiva se bl1 e bl2 sono il bordo
+ * esterno delle rispettive regioni, ma l'operazione viene fatta anche
+ * se (ad esempio) bl1 e' il bordo di un buco di r1, nel qual caso
+ * il bordo esterno viene trattato come se fosse un'isola, mentre bl1
+ * viene trattato come fosse il bordo esterno. In questo caso
+ * l'esito finale non rispettera' la convenzione sulla precedenza del
+ * bordo esterno nella lista delle c.c. del bordo delle regioni.
+ *
+ * Questa routine *non* effettua controlli di consistenza, che sono
+ * quindi responsabilita' del chiamante.
+ */
+
+void
+transfer_isles (struct borderlist *bl1, struct borderlist *bl2, int hei)
+{
+  struct region *r1, *r2;
+  struct borderlist *holes, *hpt, *hptn;
+  int countholes = 0;
+
+  r1 = bl1->region;
+  r2 = bl2->region;
+
+  if (r1 == r2) return;   /* stessa regione, non faccio nulla */
+
+  bl1 = extractborderlist (bl1);
+  bl2 = extractborderlist (bl2);
+
+  holes = r1->border;
+  if (holes == 0)
+  {
+    holes = r2->border;
+  } else {
+    hpt = holes;
+    while (hpt->next) hpt = hpt->next;
+    hpt->next = r2->border;
+  }
+  r1->border = bl1;
+  r2->border = bl2;
+  hpt = holes;
+  while (hpt)
+  {
+    countholes++;
+    hptn = hpt->next;
+    if (hei & 1)
+    {
+      if (hpt->region == r1) hpt->region = r2;
+        else hpt->region = r1;
+    }
+    hei >>= 1;
+    if (hpt->region == r1)
+    {
+      hpt->next = bl1->next;
+      bl1->next = hpt;
+    } else {
+      hpt->next = bl2->next;
+      bl2->next = hpt;
+    }
+    hpt = hptn;
+  }
+  if (hei) fprintf (stderr, 
+     "more changes requested than present islands (%d)\n", countholes);
 }
 
 /*

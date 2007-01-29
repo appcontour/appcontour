@@ -76,6 +76,7 @@ int rule_n5 (struct sketch *s, int count);
 int rule_cr2 (struct sketch *s, int count);
 int rule_c1 (struct sketch *s, int count);
 int rule_c2 (struct sketch *s, int count);
+int rule_t1 (struct sketch *s, int count);
 int rule_a1 (struct sketch *s, int count);
 int rule_a2 (struct sketch *s, int count);
 int rule_a12 (struct sketch *s, int count, int ddiff);
@@ -180,6 +181,7 @@ struct region *regionunion (struct region *r1, struct region *r2,
 struct borderlist *extractborderlist (struct borderlist *bl);
 void redefineregion (struct region *, struct region *);
 void redefineborder (struct border *, struct borderlist *);
+void transfer_isles (struct borderlist *bl1, struct borderlist *bl2, int hei);
 
 struct sketch *newsketch (void);
 struct region *newregion (struct sketch *s);

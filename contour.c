@@ -23,6 +23,7 @@
 
 int debug = 0;
 int quiet = 0;
+int heisemberg = -1;
 
 int
 main (int argc, char *argv[])
@@ -49,11 +50,29 @@ main (int argc, char *argv[])
       debug = 1;
       continue;
     }
+    if (strcmp(argv[i],"--heisemberg") == 0 ||
+        strcmp(argv[i],"--ti") == 0 ||
+        strcmp(argv[i],"--transfer_islands") == 0)
+    {
+      heisemberg = atoi (argv[++i]);
+      continue;
+    }
     if (strcmp(argv[i],"--help") == 0)
     {
-      printf ("usage: %s [print|printmorse|isappcon|compare|canonify|applyrule|\n",
-                                          argv[0]);
-      printf ("       testallrules|info|extractcc|characteristic|knot2morse]\n");
+      printf ("usage: %s [options] command [file]\n", argv[0]);
+      printf ("  possible commands are:\n");
+      printf ("  print, printmorse, isappcon, canonify, countcc\n");
+      printf ("  testallrules, info, characteristic, knot2morse\n");
+      printf ("  compare: lessicographic comparison between two contours, in this\n");
+      printf ("    case the stdin (or file) must contain two descriptions\n");
+      printf ("  applyrule <rule>: apply indicated rule to contour\n");
+      printf ("  extractcc <int>: extract 3D connected component\n");
+      printf ("  removecc <int>: remove 3D connected component from contour\n");
+      printf ("\n  possible options are:\n");
+      printf ("  --help: this help\n");
+      printf ("  --transfer_islands <int_coded_flags>: information on island\n");
+      printf ("      location in case of ambiguity (e.g. rule C2)\n");
+      printf ("\n  if file is not given, description is taken from standard input\n");
       exit (0);
     }
     if (infile)
