@@ -122,7 +122,7 @@ testallrules (struct sketch *sketch)
   exitcode = testsinglerule ("CR4R", rule_cr4r, exitcode, sketch);
   exitcode = testsinglerule ("CR4LB", rule_cr4lb, exitcode, sketch);
   exitcode = testsinglerule ("CR4RB", rule_cr4rb, exitcode, sketch);
-  //exitcode = testsinglerule ("T1", rule_t1, exitcode, sketch);
+  exitcode = testsinglerule ("T1", rule_t1, exitcode, sketch);
   /* commented out because there is an infinite loop in some cases */
   printf ("\n");
   return (exitcode);
@@ -415,11 +415,12 @@ rule_t1 (struct sketch *sketch, int rcount)
           r1 = a1->regionright->border->region;
           if (bl2 == bl1) sp2 = sp1; else sp2 = bl2->sponda;
           do {
-//fprintf (stderr, "region %d, d1min=%d d1max=%d\n", r->tag, d1min, d1max);
-//fprintf (stderr, "d = %d\n", sp2->info->depths[0]);
+            //fprintf (stderr, "region %d, d1min=%d d1max=%d\n", r->tag, d1min, d1max);
+            //fprintf (stderr, "d = %d\n", sp2->info->depths[0]);
             if (sp2->orientation <= 0) continue;
             if (sp2 == sp1) continue;
             a2 = sp2->info;
+            //fprintf (stderr, "a1: %d, a2: %d\n", a1->tag, a2->tag);
             ok = 0;
             for (i = 0; i < a2->dvalues; i++)
             {
@@ -454,11 +455,9 @@ rule_t1 (struct sketch *sketch, int rcount)
                               heisemberg);
               changes = adjust_isexternalinfo (sketch);
               if (changes) fprintf (stderr, "changes: %d\n", changes);
-              //fprintf (stderr, "not implemented\n");
               return (1);
             }
           } while (sp2 = sp2->next, sp2 != bl2->sponda);
-          sp1 = sp1->next;
         } while (sp1 = sp1->next, sp1 != bl1->sponda);
       }
     }
