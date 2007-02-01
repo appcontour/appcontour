@@ -459,6 +459,8 @@ postprocesssketch (struct sketch *sketch)
   struct borderlist *hole;
   struct arc *arc;
   int tag, goon, fleft, fright;
+  extern int dorecomputef;
+  extern int finfinity;
 
   /*
    * sfortunatamente free_connected_components distrugge l'informazione
@@ -537,27 +539,30 @@ postprocesssketch (struct sketch *sketch)
     }
   }
 
-  if (debug) printf ("5: definizione dei valori di f\n");
+  if (debug && dorecomputef) printf ("5: definizione dei valori di f\n");
 
-  for (region = sketch->regions; region; region = region->next)
+  if (dorecomputef)
   {
-    region->f = F_UNDEF;
-  }
-  assert (sketch->regions->border->sponda == 0);
-  sketch->regions->f = 0;    /* valore 0 nella regione esterna */
-  goon = 1;
-  while (goon)
-  {
-    goon = 0;
-    for (arc = sketch->arcs; arc; arc = arc->next)
+    for (region = sketch->regions; region; region = region->next)
     {
-      fleft = arc->regionleft->border->region->f;
-      fright = arc->regionright->border->region->f;
-      if (fleft == F_UNDEF && fright == F_UNDEF) continue;
-      if (fleft != F_UNDEF && fright != F_UNDEF) continue;
-      goon = 1;
-      if (fright != F_UNDEF) arc->regionleft->border->region->f = fright + 2;
-        else arc->regionright->border->region->f = fleft - 2;
+      region->f = F_UNDEF;
+    }
+    assert (sketch->regions->border->sponda == 0);
+    sketch->regions->f = finfinity;    /* valore 0 nella regione esterna */
+    goon = 1;
+    while (goon)
+    {
+      goon = 0;
+      for (arc = sketch->arcs; arc; arc = arc->next)
+      {
+        fleft = arc->regionleft->border->region->f;
+        fright = arc->regionright->border->region->f;
+        if (fleft == F_UNDEF && fright == F_UNDEF) continue;
+        if (fleft != F_UNDEF && fright != F_UNDEF) continue;
+        goon = 1;
+        if (fright != F_UNDEF) arc->regionleft->border->region->f = fright + 2;
+          else arc->regionright->border->region->f = fleft - 2;
+      }
     }
   }
 

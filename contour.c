@@ -20,16 +20,23 @@
 #define ACTION_CHARACTERISTIC 11
 #define ACTION_REMOVECC 12
 #define ACTION_INFO 13
+#define ACTION_FRONTBACK 14
+#define ACTION_LEFTRIGHT 15
+#define ACTION_EVERT 16
 
 int debug = 0;
 int quiet = 0;
 int heisemberg = -1;
+int docanonify = 1;
+int dorecomputef = 1;
+int finfinity = 0;
 
 int
 main (int argc, char *argv[])
 {
   struct sketch *sketch, *s1, *s2;
   int i, count, action=ACTION_NONE, res, ccid = 0;
+  int newextregion = 0;
   char rule[10];
   FILE *infile = 0;
 
@@ -50,11 +57,23 @@ main (int argc, char *argv[])
       debug = 1;
       continue;
     }
+    if (strcmp(argv[i],"--nocanonify") == 0)
+    {
+      docanonify = 0;
+      continue;
+    }
     if (strcmp(argv[i],"--heisemberg") == 0 ||
         strcmp(argv[i],"--ti") == 0 ||
         strcmp(argv[i],"--transfer_islands") == 0)
     {
       heisemberg = atoi (argv[++i]);
+      continue;
+    }
+    if (strcmp(argv[i],"--darkmatter") == 0 ||
+        strcmp(argv[i],"--finfinity") == 0 ||
+        strcmp(argv[i],"--fi") == 0)
+    {
+      finfinity = atoi (argv[++i]);
       continue;
     }
     if (strcmp(argv[i],"--help") == 0)
@@ -120,6 +139,15 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"printmorse") == 0) action = ACTION_PRINTMORSE;
     if (strcmp(argv[i],"characteristic") == 0) action = ACTION_CHARACTERISTIC;
     if (strcmp(argv[i],"info") == 0) action = ACTION_INFO;
+    if (strcmp(argv[i],"frontback") == 0) action = ACTION_FRONTBACK;
+    if (strcmp(argv[i],"leftright") == 0) action = ACTION_LEFTRIGHT;
+    if (strcmp(argv[i],"evert") == 0)
+    {
+      action = ACTION_EVERT;
+      i++;
+      if (i >= argc) {fprintf (stderr, "specify a region tag\n"); exit (11);}
+      newextregion = atoi (argv[i]);
+    }
     if (action == ACTION_NONE)
     {
       fprintf (stderr, "invalid arg[%d] = %s\n", i, argv[i]);
@@ -133,7 +161,7 @@ main (int argc, char *argv[])
     case ACTION_PRINTSKETCH:
     sketch = readcontour (infile);
     // printsketch (sketch);
-    canonify (sketch);
+    if (docanonify) canonify (sketch);
     printsketch (sketch);
     break;
 
@@ -218,7 +246,7 @@ main (int argc, char *argv[])
 
     case ACTION_PRINTMORSE:
     sketch = readcontour (infile);
-    canonify (sketch);
+    if (docanonify) canonify (sketch);
     printmorse (sketch);
     break;
 
@@ -231,6 +259,29 @@ main (int argc, char *argv[])
     case ACTION_INFO:
     sketch = readcontour (infile);
     showinfo (sketch);
+    break;
+
+    case ACTION_FRONTBACK:
+    sketch = readcontour (infile);
+    frontback (sketch);
+    if (docanonify) canonify (sketch);
+    printsketch (sketch);
+    break;
+
+    case ACTION_LEFTRIGHT:
+    sketch = readcontour (infile);
+    leftright (sketch);
+    if (docanonify) canonify (sketch);
+    printsketch (sketch);
+    break;
+
+    case ACTION_EVERT:
+    sketch = readcontour (infile);
+    changeextregion (sketch, newextregion);
+    dorecomputef = 0;
+    if (docanonify) postprocesssketch (sketch);
+    if (docanonify) canonify (sketch);
+    printsketch (sketch);
     break;
 
     default:

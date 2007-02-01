@@ -105,6 +105,7 @@ readsketch_region (int regionid, struct sketch *sketch, FILE *file)
   struct region *region;
   struct borderlist *bl;
   int tok;
+  static int printwarning = 1;
 
   region = newregion (sketch);
   assert (region->border == 0);
@@ -119,12 +120,16 @@ readsketch_region (int regionid, struct sketch *sketch, FILE *file)
 
   if ((tok = gettoken (file)) == TOK_LPAREN)
   {
-    fprintf (stderr, "warning: definition of f is skipped\n");
+    if (printwarning)
+      fprintf (stderr, "warning: definition of f is skipped\n");
+    printwarning = 0;
     if (gettoken (file) != KEY_F)
     {fprintf (stderr, "'f' expected\n"); return (0);}
     if (gettoken (file) != TOK_EQUAL)
     {fprintf (stderr, "'=' expected\n"); return (0);}
-    if (gettoken (file) != ISNUMBER)
+    tok = gettoken (file);
+    if (tok == TOK_MINUS) tok = gettoken (file);
+    if (tok != ISNUMBER)
     {fprintf (stderr, "number expected\n"); return (0);}
     if (gettoken (file) != TOK_RPAREN)
     {fprintf (stderr, "')' expected\n"); return (0);}

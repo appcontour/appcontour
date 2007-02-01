@@ -7,6 +7,7 @@ extern int quiet;
 /* prototipi */
 int checkdnodecons (struct border *b, int dd[4]);
 int getdatnode (struct border *b);
+struct border *reverse_border (struct border *);
 /* fine prototipi */
 
 /*
@@ -55,6 +56,99 @@ showinfo (struct sketch *sketch)
   if (! quiet) printf ("Properties of the 3D surface:\n");
   printf ("Connected comp.   %d\n", count_connected_components (sketch));
   printf ("Total Euler ch.   %d\n", euler_characteristic (sketch));
+}
+
+/*
+ * switch front-back (end up with a specular 3D surface)
+ */
+
+int
+frontback (struct sketch *s)
+{
+  struct arc *arc;
+  int f_low, i;
+
+  for (arc = s->arcs; arc; arc = arc->next)
+  {
+    f_low = arc->regionright->border->region->f;
+    assert (f_low != F_UNDEF);
+    for (i = 0; i <= arc->cusps; i++)
+    {
+      arc->depths[i] = f_low - arc->depths[i];
+    }
+  }
+  return (1);
+}
+
+/*
+ * switch left-right (end up with a specular 3D surface)
+ */
+
+int
+leftright (struct sketch *s)
+{
+  struct arc *arc;
+  struct region *r;
+  struct borderlist *bl;
+  int ndv, i, dtemp;
+
+  for (arc = s->arcs; arc; arc = arc->next)
+  {
+    ndv = arc->cusps + 1;
+    for (i = 0; i < ndv/2; i++)
+    {
+      dtemp = arc->depths[i];
+      arc->depths[i] = arc->depths[ndv - i];
+      arc->depths[ndv - i] = dtemp;
+    }
+  }
+  for (r = s->regions; r; r = r->next)
+  {
+    for (bl = r->border; bl; bl = bl->next)
+    {
+      if (bl->sponda == 0) continue;
+      bl->sponda = reverse_border (bl->sponda);
+    }
+  }
+  return (1);
+}
+
+struct border *
+reverse_border (struct border *b)
+{
+  if (b == b->next) return (b);
+
+  printf ("non implementato\n");
+  return (0);
+}
+
+/*
+ * change the external region.  This corresponds to working on the
+ * compactification of R^2 (S^2) and sliding the north pole into
+ * the selected region.  In the end the value of f at infinity can
+ * be different from zero.
+ */
+
+int
+changeextregion (struct sketch *s, int tag)
+{
+  struct region *r, *newext = 0, *oldext = 0;
+  struct borderlist *bl;
+  int changes;
+
+  for (r = s->regions; r; r = r->next)
+  {
+    if (r->tag == tag) newext = r;
+    if (r->border->sponda == 0) oldext = r;
+  }
+  if (newext == oldext) return (1);
+  assert (newext && oldext);
+  bl = extractborderlist (oldext->border);
+  bl->region = newext;
+  bl->next = newext->border;
+  newext->border = bl;
+  changes = adjust_isexternalinfo (s);
+  return (1);
 }
 
 /*

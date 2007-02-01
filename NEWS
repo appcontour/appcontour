@@ -1,3 +1,13 @@
+2007-02-01: new commands and options:
+	--darkmatter (or --fi, or --finfinity): set value of f at
+	infinity, by default this is zero.
+	--nocanonify: inhibit canonification of result for a number
+	of commands.
+	evert: change the region at infinity to the one with the 
+	given "tag" number.
+	frontback: invert the digned distance.
+        leftright: non implemented.
+
 2007-01-28: added new rule T1 that actually is a sequence C2^{-1} C2 at the
 	same place; this is not the identity since when reapplying C2 the
 	islands can be replaced differently.
