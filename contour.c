@@ -29,6 +29,7 @@ int quiet = 0;
 int heisemberg = -1;
 int docanonify = 1;
 int dorecomputef = 1;
+int doretagregions = 1;
 int finfinity = 0;
 
 int

@@ -15,6 +15,10 @@ extern int debug;
 
 #define BUFSIZE 100
 
+/* local prototypes */
+void readregioninfo (FILE *file, struct border *actregion);
+/* end local prototypes */
+
 struct sketch *
 readmorse (FILE *file)
 {
@@ -113,6 +117,12 @@ readrow (FILE *file, struct sketch *sketch,
       case KEY_PIPE:
       tok = KEY_I;
       break;
+    }
+
+    if (tok == TOK_LBRACE)
+    {
+      readregioninfo (file, actregions[actr]);
+      continue;
     }
 
     if (tok == KEY_A)
@@ -509,3 +519,33 @@ getarcinfo (int key, FILE *file,
   }
   return (orientation);
 }
+
+void
+readregioninfo (FILE *file, struct border *actregion)
+{
+  int tok, tag;
+  extern int doretagregions;
+
+  while ((tok = gettoken (file)))
+  {
+    if (tok == TOK_RBRACE) break;
+    if (tok == TOK_TAG)
+    {
+      if ((tok = gettoken (file)) != TOK_COLON)
+      {
+        ungettoken (tok);
+        continue;
+      }
+      if ((tok = gettoken (file)) != ISNUMBER)
+      {
+        ungettoken (tok);
+        continue;
+      }
+      tag = gettokennumber ();
+      actregion->border->region->tag = tag;
+      doretagregions = 0;
+    }
+  }
+  return;
+}
+

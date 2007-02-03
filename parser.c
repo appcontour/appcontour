@@ -132,6 +132,7 @@ gettoken (FILE *file)
   if (strcmp(tokenword,"morse") == 0) return (TOK_MORSE);
   if (strcmp(tokenword,"sketch") == 0) return (TOK_SKETCH);
   if (strcmp(tokenword,"knot") == 0) return (TOK_KNOT);
+  if (strcmp(tokenword,"tag") == 0) return (TOK_TAG);
   if (strcasecmp(tokenword,"arc") == 0) return (TOK_ARC);
   if (strcasecmp(tokenword,"region") == 0) return (TOK_REGION);
   if (isdigit(tokenword[0])) return (ISNUMBER);

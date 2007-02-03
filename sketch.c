@@ -460,6 +460,7 @@ postprocesssketch (struct sketch *sketch)
   struct arc *arc;
   int tag, goon, fleft, fright;
   extern int dorecomputef;
+  extern int doretagregions;
   extern int finfinity;
 
   /*
@@ -491,10 +492,11 @@ postprocesssketch (struct sketch *sketch)
     }
   }
 
-  if (debug) printf ("2: rinumero gli archi e le regioni\n");
+  if (debug && doretagregions) printf ("2: rinumero gli archi e le regioni\n");
+  if (debug && !doretagregions) printf ("2: rinumero gli archi\n");
 
-  for (tag = 0, region = sketch->regions; region; region = region->next)
-          region->tag = tag++;
+  for (tag = 0, region = sketch->regions; region; tag++, region = region->next)
+          if (doretagregions) region->tag = tag;
   sketch->regioncount = tag;
   for (tag = 1, arc = sketch->arcs; arc; arc = arc->next)
           arc->tag = tag++;

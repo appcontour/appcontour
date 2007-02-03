@@ -1,3 +1,15 @@
+2007-02-03: region numbering in morse description:
+	a "morse description" can now force a numbering for the
+	regions (syntax: {tag:<n>}).  This is useful when the region
+	numbering is used for some required action (rule application
+	or changing the unbounded region...
+	When at least one region has a forced tag in the morse description,
+	the whole renumbering that would take place after reading is
+	disabled (in function postprocesssketch).
+	Note that in particular action "print" performes a "canonify"
+	before printing, that would itself renumber the regions before
+	printing; this can be desabled with the option "--nocanonify".
+
 2007-02-01: new commands and options:
 	--darkmatter (or --fi, or --finfinity): set value of f at
 	infinity, by default this is zero.
