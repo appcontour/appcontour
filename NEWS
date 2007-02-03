@@ -17,8 +17,8 @@
 	of commands.
 	evert: change the region at infinity to the one with the 
 	given "tag" number.
-	frontback: invert the digned distance.
-        leftright: non implemented.
+	frontback: invert the depth distance.
+        leftright: exchange left with right (completed feb 3).
 
 2007-01-28: added new rule T1 that actually is a sequence C2^{-1} C2 at the
 	same place; this is not the identity since when reapplying C2 the

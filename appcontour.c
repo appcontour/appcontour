@@ -90,16 +90,16 @@ leftright (struct sketch *s)
   struct arc *arc;
   struct region *r;
   struct borderlist *bl;
-  int ndv, i, dtemp;
+  int ndvmezzi, i, dtemp;
 
   for (arc = s->arcs; arc; arc = arc->next)
   {
-    ndv = arc->cusps + 1;
-    for (i = 0; i < ndv/2; i++)
+    ndvmezzi = (arc->cusps + 1)/2;
+    for (i = 0; i < ndvmezzi; i++)
     {
       dtemp = arc->depths[i];
-      arc->depths[i] = arc->depths[ndv - i];
-      arc->depths[ndv - i] = dtemp;
+      arc->depths[i] = arc->depths[arc->cusps - i];
+      arc->depths[arc->cusps - i] = dtemp;
     }
   }
   for (r = s->regions; r; r = r->next)
@@ -113,13 +113,30 @@ leftright (struct sketch *s)
   return (1);
 }
 
+/*
+ * recursively implemented.  It is important that the data
+ * is not moved, created, removed, and only the "next" pointers
+ * are changed.
+ * Now it is clear that this can be done more efficiently with just a single
+ * iteration, but I am too lazy...
+ */
+
 struct border *
 reverse_border (struct border *b)
 {
+  struct border *p;
+  struct border *n;
+
   if (b == b->next) return (b);
 
-  printf ("non implementato\n");
-  return (0);
+  p = prevborder (b);
+  n = b->next;
+  p->next = n;
+  b->next = p;
+  reverse_border (p);
+  n->next = b;
+
+  return (b);
 }
 
 /*
