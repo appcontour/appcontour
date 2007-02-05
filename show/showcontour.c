@@ -74,6 +74,7 @@ static double curenergy = 0.0;
 char *xfigproblem = 0;
 char *title = 0;
 static double skiptime = 0.0;
+static double skiprtime = 0.0;
 static int test = 0;
 static int dodoptimize = 1;
 #ifdef HAVE_GTK
@@ -160,9 +161,11 @@ main (int argc, char *argv[])
   activate_timer (EVENT_REDISTRIBUTENODES, contour->time + taurn);
   activate_timer (EVENT_REPULSIVEENERGY, -1.0);    /* must compute immediately */
 
-  if (skiptime > 0.0)
+  if (skiptime > 0.0 || skiprtime > 0.0)
   {
-    evolve (contour, 3600.0, skiptime);
+    if (skiptime <= 0.0) skiptime = 100.0;
+    if (skiprtime <= 0.0) skiprtime = 3600.0;
+    evolve (contour, skiprtime, skiptime);
   }
   grmain();
   return (0);
@@ -272,6 +275,8 @@ parseargs (int argc, char *argv[])
         xfigproblem = argv[iarg];
       } else if (strcmp (argv[iarg], "--skip") == 0) {
         skiptime = atof(argv[++iarg]);
+      } else if (strcmp (argv[iarg], "--skiprtime") == 0) {
+        skiprtime = atof(argv[++iarg]);
       } else if (strcmp (argv[iarg], "--ge") == 0) {
         ++iarg;
         gr_lid = 0;
@@ -302,6 +307,7 @@ parseargs (int argc, char *argv[])
         printf ("usage: %s [--help] [--nodoptimize] [--pause]\n", argv[0]);
         printf ("      [--steps <n>][--title <title>]\n");
         printf ("      [--ge <graphic engine>][--skip <simtime>]\n");
+        printf ("      [--skiprtime <seconds>]\n");
         printf ("      [--xfigspecial][--onlyvisible]\n");
         printf ("\nvalid graphic engines (option --ge): ");
 #ifdef HAVE_GTK

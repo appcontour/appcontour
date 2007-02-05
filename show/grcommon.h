@@ -6,6 +6,7 @@ struct grflags {
   int onlyvisible;
   int xfigspecial;
   int visiblewidth;
+  int invisiblewidth;
   double dashlength;
   double dotspacing;
   };

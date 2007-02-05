@@ -82,7 +82,7 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
       assert (last);
       last = last->a->line[0];
     }
-    w = (arc->d == 0) ? grflags->visiblewidth : 1;
+    w = (arc->d == 0) ? grflags->visiblewidth : grflags->invisiblewidth;
     stv = 0.0;
     st = arc->d;
     if (arc->d > 2) st = 2;
@@ -90,10 +90,10 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
     if (st == 2) stv = grflags->dotspacing;
     a = line->a;
     if (arc->loop)
-      fprintf (file, "2 3 %d %d 0 7 50 -1 -1 %5.3f 0 0 -1 0 0 %d\n", 
+      fprintf (file, "2 3 %d %d 0 7 50 -1 -1 %5.3f 0 1 -1 0 0 %d\n", 
                     st, w, stv, arc->numsegments + 1);
     else {
-      fprintf (file, "2 1 %d %d 0 7 50 -1 -1 %5.3f 0 0 -1 0 0 %d\n", 
+      fprintf (file, "2 1 %d %d 0 7 50 -1 -1 %5.3f 0 1 -1 0 0 %d\n", 
                     st, w, stv, arc->numsegments + 1);
     }
     fprintf (file, "  %d %d\n", conv(a));
