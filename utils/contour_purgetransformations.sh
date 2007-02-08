@@ -20,7 +20,7 @@ echo "subdirectory of ${ex}.transformations"
 
 mkdir duplicated
 
-count=`ls *_${ex}* | cut -f1 -d'_' | tail -n 1`
+count=`ls | tail -n 50 | grep _${ex} | cut -f1 -d'_' | tail -n 1`
 count=${count#0}
 count=${count#0}
 count=${count#0}
