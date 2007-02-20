@@ -117,6 +117,7 @@ gettoken (FILE *file)
   if (strcmp(tokenword,"u") == 0) return (KEY_UP);
   if (strcmp(tokenword,"d") == 0) return (KEY_DOWN);
   if (strcmp(tokenword,"f") == 0) return (KEY_F);
+  if (strcmp(tokenword,"c") == 0) return (KEY_CUSP);
   if (strcmp(tokenword,"ne") == 0) return (KEY_NE);
   if (strcmp(tokenword,"nw") == 0) return (KEY_NW);
   if (strcmp(tokenword,"se") == 0) return (KEY_SE);

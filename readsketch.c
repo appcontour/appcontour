@@ -6,6 +6,8 @@
 
 extern int debug;
 
+static int has_huffman_labelling = 0;
+
 struct sketch *
 readsketch (FILE *file)
 {
@@ -22,6 +24,7 @@ readsketch (FILE *file)
     return (0);
   }
   sketch = newsketch ();
+  has_huffman_labelling = 0;
   while ((tok = gettoken (file)) != TOK_RBRACE)
   {
     //ungettoken (tok);
@@ -51,6 +54,7 @@ readsketch (FILE *file)
     }
     if (debug) printsketch (sketch);
   }
+  sketch->huffman_labelling = has_huffman_labelling;
   if (debug) printsketch (sketch);
   postprocesssketch (sketch);
   return (sketch);
@@ -60,7 +64,7 @@ int
 readsketch_arc (int arcid, struct sketch *sketch, FILE *file)
 {
   struct arc *arc;
-  int tok, i, depthsdim, buf[100];
+  int tok, i, cusps_no_d, depthsdim, buf[100];
 
   arc = newarc (sketch);
   tok = gettoken (file);
@@ -79,16 +83,22 @@ readsketch_arc (int arcid, struct sketch *sketch, FILE *file)
   {printf ("'(' or '[' expected\n"); return (0);}
 
   depthsdim = 0;
-  while ((tok = gettoken (file)) == ISNUMBER)
+  cusps_no_d = 0;
+  while ((tok = gettoken (file)) == ISNUMBER || tok == KEY_CUSP)
   {
+    if (tok == KEY_CUSP) {cusps_no_d++; continue;}
     if (depthsdim > 98) {printf ("too many d values for arc %d\n", arc->tag);
                  return (0);}
     buf[depthsdim++] = gettokennumber ();
+    has_huffman_labelling = 1;
   }
+  assert (cusps_no_d == 0 || depthsdim == 0);
   if (debug) printf ("letti %d valori di d\n", depthsdim);
   arc->depths = (int *) malloc (depthsdim * sizeof (int));
   arc->depthsdim = depthsdim;
   arc->cusps = depthsdim - 1;
+  if (arc->cusps < 0) arc->cusps = 0;
+  if (cusps_no_d > 0) arc->cusps = cusps_no_d;
   for (i = 0; i < depthsdim; i++) arc->depths[i] = buf[i];
 
   if (tok != TOK_RPAREN && tok != TOK_RBRACKET)

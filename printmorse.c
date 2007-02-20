@@ -6,6 +6,7 @@ extern int debug;
 
 static int crbefore = 0;
 static int crafter = 0;
+static int has_huffman_labelling = 1;
 
 struct morse {
   struct border *left;
@@ -53,6 +54,7 @@ morse_ohmoto (struct sketch *sketch)
 {
   do_compute_ohmoto = 1;
   cumulative_invariant = 0;
+  has_huffman_labelling = sketch->huffman_labelling;
   morse_islands (sketch->regions->border->next);
   return (cumulative_invariant);
 }
@@ -63,6 +65,7 @@ printmorse (struct sketch *sketch)
   struct arc *arc;
 
   do_compute_ohmoto = 0;
+  has_huffman_labelling = sketch->huffman_labelling;
   if (debug) printf ("Entering in printmorse\n");
   printf ("morse {\n");
   morse_islands (sketch->regions->border->next);
@@ -494,14 +497,20 @@ outinfodepths (struct arc *arc)
 
   assert (arc->tag >= 0);  /* we already wrote the information */
   arc->tag *= -1;
-  d = arc->depths[0];
-  printf ("%d", d);
-  for (i = 1; i <= arc->cusps; i++)
+  if (has_huffman_labelling)
   {
-    if (abs (arc->depths[i] - d) != 1) fprintf (stderr, 
-           "erroneous d values across cusp\n");
-    if (arc->depths[i] > d) printf ("+");
-    if (arc->depths[i] < d) printf ("-");
-    d = arc->depths[i];
+    d = arc->depths[0];
+    printf ("%d", d);
+    for (i = 1; i <= arc->cusps; i++)
+    {
+      if (abs (arc->depths[i] - d) != 1) fprintf (stderr, 
+             "erroneous d values across cusp\n");
+      if (arc->depths[i] > d) printf ("+");
+      if (arc->depths[i] < d) printf ("-");
+      d = arc->depths[i];
+    }
+  } else {
+    for (i = 1; i <= arc->cusps; i++)
+      printf ("c");
   }
 }

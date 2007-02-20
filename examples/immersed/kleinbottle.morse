@@ -1,0 +1,11 @@
+#
+# an immersion of the klein bottle
+#
+morse {
+   ^l ;
+| ^r | ;
+| X | ;
+| |dcc |u | ;
+| X | ;
+ U U ;
+}

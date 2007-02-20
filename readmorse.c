@@ -19,6 +19,8 @@ extern int debug;
 void readregioninfo (FILE *file, struct border *actregion);
 /* end local prototypes */
 
+static int has_huffman_labelling = 0;
+
 struct sketch *
 readmorse (FILE *file)
 {
@@ -76,6 +78,7 @@ readmorse (FILE *file)
     }
   }
   free (infborder);
+  if (has_huffman_labelling) sketch->huffman_labelling = 1;
   if (debug) printf ("postprocessing...\n");
   postprocesssketch (sketch);
   return (sketch);
@@ -403,9 +406,10 @@ getarcinfo (int key, FILE *file,
   int depths[50];
   int depthind = 0, require_rbr = 1;
   struct arc *arc;
+  int cusps_no_d = 0;
 
   tok = gettokens (file);
-  if (tok == ISNUMBER || tok == KEY_LEFT || 
+  if (tok == ISNUMBER || tok == KEY_CUSP || tok == KEY_LEFT || 
       tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
   {
     ungettoken (tok);
@@ -424,12 +428,12 @@ getarcinfo (int key, FILE *file,
     orientation = tok;
     tok = gettokens (file);
   }
-  if (tok == TOK_COMMA || tok == ISNUMBER)
+  if (tok == TOK_COMMA || tok == ISNUMBER || tok == KEY_CUSP)
   {
-    if (tok == ISNUMBER) ungettoken (tok);
+    if (tok == ISNUMBER || tok == KEY_CUSP) ungettoken (tok);
     prevd = 0;
     while ((tok = gettokens (file)) == ISNUMBER || 
-            tok == TOK_PLUS || tok == TOK_MINUS)
+            tok == TOK_PLUS || tok == TOK_MINUS || tok == KEY_CUSP)
     {
       switch (tok)
       {
@@ -441,6 +445,9 @@ getarcinfo (int key, FILE *file,
         break;
         case TOK_MINUS:
         depths[depthind++] = --prevd;
+        break;
+        case KEY_CUSP:
+        cusps_no_d++;
         break;
       }
     }
@@ -495,17 +502,30 @@ getarcinfo (int key, FILE *file,
              arc->tag);
     return (ORIENT_EMPTY);
   }
-  arc->depths = (int *) malloc (depthind*sizeof(int));
-  /* nota: in caso di loop senza nodi e' necessario   
-   * indicare una profondita' in piu' (uguale al valore
-   * iniziale) per segnalare il numero giusto di cuspidi
-   */
-  arc->cusps = depthind - 1;  /* questo e' il valore che fa testo */
-  arc->depthsdim = depthind;
-  for (i = 0; i < depthind; i++)
+  if (depthind > 0 && cusps_no_d > 0)
   {
-    arc->depths[i] = depths[i];
+    fprintf (stderr,
+             "cannot give cusps information in both ways for arc %d\n",
+             arc->tag);
+    return (ORIENT_EMPTY);
   }
+  arc->depths = (int *) malloc (depthind*sizeof(int));
+  arc->depthsdim = depthind;
+  arc->cusps = depthind - 1;  /* questo e' il valore che fa testo */
+  if (arc->cusps < 0) arc->cusps = 0;
+  if (depthind > 0)
+  {
+    /* nota: in caso di loop senza nodi e' necessario   
+     * indicare una profondita' in piu' (uguale al valore
+     * iniziale) per segnalare il numero giusto di cuspidi
+     */
+    has_huffman_labelling++;
+    for (i = 0; i < depthind; i++)
+    {
+      arc->depths[i] = depths[i];
+    }
+  }
+  if (cusps_no_d) arc->cusps = cusps_no_d;
   if (bright == 0) orientation = 0;
   if (orientation)
   {

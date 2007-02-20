@@ -1,0 +1,12 @@
+#
+# this is the apparent contour of the Boy surface,
+# an immersion of the projective plane in R^3
+#
+morse {
+      ^l       ;
+  (   ^lc )    ;
+   X     X     ;
+ /  \dc /uc \  ;
+ \    X     /  ;
+    Ur   Ur    ;
+}

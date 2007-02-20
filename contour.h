@@ -8,6 +8,7 @@
 struct sketch {
   struct arc *arcs;
   struct region *regions;
+  int huffman_labelling;
   int arccount;
   int regioncount;
   int cc_tagged;

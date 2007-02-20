@@ -519,7 +519,7 @@ postprocesssketch (struct sketch *sketch)
     arc->endpoints = 0;
     if (arc->regionleft->next != arc->regionleft) arc->endpoints++;
     if (arc->regionright->next != arc->regionright) arc->endpoints++;
-    if (arc->cusps != arc->depthsdim - 1)
+    if (sketch->huffman_labelling && arc->cusps != arc->depthsdim - 1)
       fprintf (stderr, "depthsdim not equal cusps + 1, this is not a problem\n");
     if (arc->endpoints == 0 && arc->depths)
     { /* in questo caso il numero di cuspidi e' uguale al numero
@@ -724,11 +724,21 @@ printsketch (struct sketch *sketch)
       assert (a->depthsdim >= 0);
       printf ("%c", chleft);
       notfirst = 0;
-      for (i = 0; i <= a->cusps; i++)
+      if (a->depthsdim > 0)
       {
-        if (notfirst) printf (" ");
-        notfirst = 1;
-        printf ("%d", a->depths[i]);
+        for (i = 0; i <= a->cusps; i++)
+        {
+          if (notfirst) printf (" ");
+          notfirst = 1;
+          printf ("%d", a->depths[i]);
+        }
+      } else {
+        for (i = 0; i < a->cusps; i++)
+        {
+          if (notfirst) printf (" ");
+          notfirst = 1;
+          printf ("c");
+        }
       }
       printf ("%c;\n", chright);
     } else printf (" [no information]\n");
@@ -1297,6 +1307,7 @@ newsketch ()
   s->arccount = 0;
   s->regioncount = 0;
   s->cc_tagged = 0;
+  s->huffman_labelling = 0;
   return (s);
 }
 

@@ -47,6 +47,10 @@ showinfo (struct sketch *sketch)
   twiceohmotoinvariant = compute_ohmoto (sketch);
   ohmotoinvariant = twiceohmotoinvariant/2.0;
 
+  if (! quiet)
+    printf ("This is an apparent contour %s Huffman labelling\n\n", 
+      sketch->huffman_labelling?("with"):("without"));
+
   if (! quiet) printf ("Properties of the 2D apparent contour:\n");
   printf ("Arcs:             %d\n", numsmallarcs);
   printf ("Extended arcs:    %d\n", numarcs);
@@ -58,10 +62,11 @@ showinfo (struct sketch *sketch)
   printf ("Connected comp.   %d\n", numholes);
 
   if (! quiet) printf ("\nInvariants of the 2D apparent contour:\n");
-  printf ("Third Aicardi-Ohmoto invariant: %lf\n", ohmotoinvariant);
+  printf ("Third Aicardi-Ohmoto invariant: %.1lf\n", ohmotoinvariant);
 
   if (! quiet) printf ("\nProperties of the 3D surface:\n");
-  printf ("Connected comp.   %d\n", count_connected_components (sketch));
+  if (sketch->huffman_labelling)
+    printf ("Connected comp.   %d\n", count_connected_components (sketch));
   printf ("Total Euler ch.   %d\n", euler_characteristic (sketch));
 }
 

@@ -40,6 +40,7 @@
 #define KEY_BACKQUOTE 38
 #define TOK_KNOT 39
 #define TOK_TAG 40
+#define KEY_CUSP 41
 
 #define TOK_ERROR  9999
 #define TOK_EOF    9990
