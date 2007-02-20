@@ -58,7 +58,7 @@ showinfo (struct sketch *sketch)
   printf ("Connected comp.   %d\n", numholes);
 
   if (! quiet) printf ("\nInvariants of the 2D apparent contour:\n");
-  printf ("Third Ohmoto-Aicardi invariant: %lf\n", ohmotoinvariant);
+  printf ("Third Aicardi-Ohmoto invariant: %lf\n", ohmotoinvariant);
 
   if (! quiet) printf ("\nProperties of the 3D surface:\n");
   printf ("Connected comp.   %d\n", count_connected_components (sketch));
