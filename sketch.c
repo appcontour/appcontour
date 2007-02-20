@@ -1366,6 +1366,7 @@ newarc (struct sketch *s)
   a->tag = ++s->arccount;
   a->transparent = 0;
   a->regionleft = a->regionright = 0;
+  a->link_number = F_UNDEF;
   return (a);
 }
 

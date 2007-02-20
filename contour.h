@@ -13,6 +13,12 @@ struct sketch {
   int cc_tagged;
 };
 
+/*
+ * please note: the value of f is also twice the
+ * link number associated to this region, thus
+ * we do not compute it
+ */
+
 struct region {
   int f;
   int tag;
@@ -39,6 +45,7 @@ struct arc {
   int tag;
   int endpoints;
   int transparent;
+  int link_number;
   struct border *regionleft;
   struct border *regionright;
   int cusps;
@@ -139,6 +146,8 @@ int remove_connected_component (int ccid, struct sketch *sketch);
 int frontback (struct sketch *s);
 int leftright (struct sketch *s);
 int changeextregion (struct sketch *s, int tag);
+int compute_ohmoto (struct sketch *s);
+void compute_link_num_arcs (struct sketch *s);
 
 void canonify (struct sketch *s);
 void canonifyarc (struct arc *arc);
@@ -214,3 +223,5 @@ int knot2morse (FILE *file);
 
 /* printmorse */
 void printmorse (struct sketch *sketch);
+int morse_ohmoto (struct sketch *sketch);
+

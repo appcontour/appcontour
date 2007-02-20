@@ -38,11 +38,31 @@ void outinfodepths (struct arc *arc);
 #define TYPE_CROSS 2
 #define TYPE_BOT 3
 
+/*
+ * note: at the moment, computation of the ohmoto invariant
+ * can be done as a byproduct of a "morse" description of
+ * the sketch, thus we let the "realprintmorse" function do
+ * both things
+ */
+
+static int do_compute_ohmoto = 0;
+static int cumulative_invariant = 0;
+
+int
+morse_ohmoto (struct sketch *sketch)
+{
+  do_compute_ohmoto = 1;
+  cumulative_invariant = 0;
+  morse_islands (sketch->regions->border->next);
+  return (cumulative_invariant);
+}
+
 void
 printmorse (struct sketch *sketch)
 {
   struct arc *arc;
 
+  do_compute_ohmoto = 0;
   if (debug) printf ("Entering in printmorse\n");
   printf ("morse {\n");
   morse_islands (sketch->regions->border->next);
@@ -87,6 +107,8 @@ enter_arc_event (struct border *b, struct morse *before)
   right = newmblock (left);
   right->left = bin;
   right->right = b;
+  if (do_compute_ohmoto)
+    cumulative_invariant += bin->orientation*bin->info->link_number;
   outrowp (TYPE_TOP, left, b, 0);
 
   enter_region (left, TYPE_TOP);
@@ -147,6 +169,11 @@ advance_morse_line (struct morse *minf)
     assert (bll->next == left->left);
     left->left = bll;
     outrowp (TYPE_CROSS, left, bll, brl);
+    if (do_compute_ohmoto)
+    {
+      cumulative_invariant += 
+        left->right->orientation * right->left->orientation;
+    }
     if (debug) printf ("Attraverso un nodo, questo e' un 'X'\n");
     if (debug) printf ("  nuovi archi: %d %d\n", left->left->info->tag,
                 right->right->info->tag);
@@ -361,6 +388,11 @@ void
 morse_close (struct morse *left, struct morse *right)
 {
   if (debug) printf ("closing a morse description (with an U).\n");
+  if (do_compute_ohmoto)
+  {
+    cumulative_invariant += 
+      left->right->orientation*left->right->info->link_number;
+  }
   outrow (TYPE_BOT, 0, 0);
   left->prev->next = right->next;
   right->next->prev = left->prev;
@@ -409,6 +441,7 @@ outrow (int type, struct border *bll, struct border *brl)
   int i;
 
   if (debug) printf ("ROW: ");
+  if (do_compute_ohmoto) return;
   for (i = 0; i < crbefore; i++) printf (" | ");
   if (bll && bll->info->tag < 0) bll = 0;
   switch (type)

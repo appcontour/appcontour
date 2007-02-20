@@ -18,7 +18,8 @@ void
 showinfo (struct sketch *sketch)
 {
   int numarcs, numsmallarcs, nums1s, numcusps, numregions, numcrossings;
-  int numarcsend1, numholes;
+  int numarcsend1, numholes, twiceohmotoinvariant;
+  double ohmotoinvariant;
   struct arc *arc;
   struct region *r;
   struct borderlist *bl;
@@ -43,6 +44,9 @@ showinfo (struct sketch *sketch)
     for (bl = r->border->next; bl; bl = bl->next) numholes++;
   }
 
+  twiceohmotoinvariant = compute_ohmoto (sketch);
+  ohmotoinvariant = twiceohmotoinvariant/2.0;
+
   if (! quiet) printf ("Properties of the 2D apparent contour:\n");
   printf ("Arcs:             %d\n", numsmallarcs);
   printf ("Extended arcs:    %d\n", numarcs);
@@ -53,7 +57,10 @@ showinfo (struct sketch *sketch)
   printf ("Regions:          %d\n", numregions);
   printf ("Connected comp.   %d\n", numholes);
 
-  if (! quiet) printf ("Properties of the 3D surface:\n");
+  if (! quiet) printf ("\nInvariants of the 2D apparent contour:\n");
+  printf ("Third Ohmoto-Aicardi invariant: %lf\n", ohmotoinvariant);
+
+  if (! quiet) printf ("\nProperties of the 3D surface:\n");
   printf ("Connected comp.   %d\n", count_connected_components (sketch));
   printf ("Total Euler ch.   %d\n", euler_characteristic (sketch));
 }
@@ -821,3 +828,41 @@ countcc_flood_step (struct region *r, int i)
   }
   return (goon);
 }
+
+int
+compute_ohmoto (struct sketch *sketch)
+{
+  struct arc *a;
+  int invariant;
+
+  compute_link_num_arcs (sketch);
+  invariant = morse_ohmoto (sketch);
+  invariant *= 2;
+  for (a = sketch->arcs; a; a = a->next)
+  {
+    if (a->cusps > 0)
+    {
+      //fprintf (stderr, "arc %d, cusps %d\n", a->tag, a->cusps);
+      invariant += a->cusps;
+      invariant -= 2*a->cusps*a->link_number;
+    }
+  }
+  return (invariant);
+}
+
+void
+compute_link_num_arcs (struct sketch *sketch)
+{
+  struct arc *a;
+  struct region *rl, *rr;
+
+  for (a = sketch->arcs; a; a = a->next)
+  {
+    rl = a->regionleft->border->region;
+    rr = a->regionright->border->region;
+    a->link_number = rl->f + rr->f;
+    a->link_number /= 2;
+    //fprintf (stderr, "arc %d, link number %d\n", a->tag, a->link_number);
+  }
+}
+
