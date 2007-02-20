@@ -558,7 +558,11 @@ insertcusps (struct polyline *contour)
 
   for (l = contour->line; l; l = l->next)
   {
-    if (l->earc->cusps == 0) l->d = l->earc->d[0];
+    if (l->earc->cusps == 0)
+    {
+      if (l->earc->d) l->d = l->earc->d[0];
+        else l->d = 0;    /* can happen if we don't have huffman labelling */
+    }
     assert (l->earc->cuspsinserted);
   }
 }
@@ -1069,7 +1073,8 @@ init_rarc (struct polyline *contour)
     }
     icus = 0;
     rarc = (struct rarc *) malloc (sizeof (struct rarc));
-    rarc->d = earc->d[icus];
+    if (earc->d) rarc->d = earc->d[icus];
+      else rarc->d = 0;
     rarc->first = line;
     rarc->loop = rarc->last = 0;
     rarc->numsegments = 0;

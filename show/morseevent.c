@@ -206,7 +206,7 @@ getoricusps (FILE *filein, int *oript, struct earc **arcpt)
   assert (*arcpt == 0);
   assert (*oript == 0);
   tok = gettokens (filein);
-  if (tok == ISNUMBER || tok == KEY_LEFT ||
+  if (tok == ISNUMBER || tok == KEY_LEFT || tok == KEY_CUSP ||
       tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
   {
     ungettoken (tok);
@@ -228,7 +228,7 @@ getoricusps (FILE *filein, int *oript, struct earc **arcpt)
                                       /* left/right restituisce +2 o -2 */
     tok = gettokens (filein);
   }
-  if (tok == TOK_COMMA || tok == ISNUMBER)
+  if (tok == TOK_COMMA || tok == ISNUMBER || tok == KEY_CUSP)
   {
     prevd = -1;
     if (tok == ISNUMBER)
@@ -236,14 +236,27 @@ getoricusps (FILE *filein, int *oript, struct earc **arcpt)
       prevd = gettokennumber ();
       ungettoken (tok);
     }
+    if (tok == KEY_CUSP)
+    {
+      prevd = -1;
+      ungettoken (tok);
+    }
     while ((tok = gettokens (filein)) == ISNUMBER ||
-            tok == TOK_PLUS || tok == TOK_MINUS)
+            tok == KEY_CUSP || tok == TOK_PLUS || tok == TOK_MINUS)
     {
       switch (tok)
       {
         case ISNUMBER:
         if (prevd < 0) prevd = gettokennumber ();
         dbuffer[depthind++] = prevd;
+        break;
+        case KEY_CUSP:
+        if (prevd < 0)
+        {
+          prevd = 0;
+          dbuffer[depthind++] = 0;
+        }
+        dbuffer[depthind++] = 0;
         break;
         case TOK_PLUS:
         ++prevd;
