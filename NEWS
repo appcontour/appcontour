@@ -1,13 +1,15 @@
-2007-02-20: now an apparent contour without Huffman labelling can be
-	entered.  In the morse description the presence of a cusp
-	is indicated by the letter 'c' following the orientation
-	indication; in a region description a series of 'c' are written
-	in the arc description, one for each cusp.
-
 2007-02-20: computation of the third local invariant of Aicardi-Ohmoto
 	(First order local invariants of apparent contours, Topology, 
 	45 (2006) 27--45).
 	It is printed with the "info" command for "contour".
+	For contours with huffman labelling (which represent oriented
+	surfaces), the number of positive cusps is also computed.
+
+	Now an apparent contour without Huffman labelling can be
+	entered.  In the morse description the presence of a cusp
+	is indicated by the letter 'c' following the orientation
+	indication; in a region description a series of 'c' are written
+	in the arc description, one for each cusp.
 
 2007-02-03: region numbering in morse description:
 	a "morse description" can now force a numbering for the

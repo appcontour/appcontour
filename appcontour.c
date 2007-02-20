@@ -18,13 +18,15 @@ void
 showinfo (struct sketch *sketch)
 {
   int numarcs, numsmallarcs, nums1s, numcusps, numregions, numcrossings;
-  int numarcsend1, numholes, twiceohmotoinvariant;
+  int numarcsend1, numholes, twiceohmotoinvariant, poscusps;
+  int i, d, dmin;
   double ohmotoinvariant;
   struct arc *arc;
   struct region *r;
   struct borderlist *bl;
 
   numarcs = numsmallarcs = numcusps = nums1s = numarcsend1 = 0;
+  poscusps = 0;
   for (arc = sketch->arcs; arc; arc = arc->next)
   {
     numarcs++;
@@ -33,6 +35,15 @@ showinfo (struct sketch *sketch)
     numcusps += arc->cusps;
     numsmallarcs += arc->cusps + 1;
     if (arc->endpoints == 0 && arc->cusps > 0) numsmallarcs--;
+    if (sketch->huffman_labelling && arc->cusps > 0)
+    {
+      for (i = 0; i < arc->cusps; i++)
+      {
+        dmin = arc->depths[i];
+        if ((d = arc->depths[i+1]) < dmin) dmin = d;
+        if ((dmin % 2) == 0) poscusps++;
+      }
+    }
   }
 
   numcrossings = (numarcs - nums1s)/2;
@@ -48,26 +59,31 @@ showinfo (struct sketch *sketch)
   ohmotoinvariant = twiceohmotoinvariant/2.0;
 
   if (! quiet)
-    printf ("This is an apparent contour %s Huffman labelling\n\n", 
+    printf ("This is an apparent contour %s Huffman labelling\n", 
       sketch->huffman_labelling?("with"):("without"));
-
-  if (! quiet) printf ("Properties of the 2D apparent contour:\n");
-  printf ("Arcs:             %d\n", numsmallarcs);
-  printf ("Extended arcs:    %d\n", numarcs);
-  printf ("Loops:            %d\n", nums1s);
-  printf ("Nodes:            %d\n", numcusps + numcrossings);
-  printf ("Cusps:            %d\n", numcusps);
-  printf ("Crossings:        %d\n", numcrossings);
-  printf ("Regions:          %d\n", numregions);
-  printf ("Connected comp.   %d\n", numholes);
-
-  if (! quiet) printf ("\nInvariants of the 2D apparent contour:\n");
-  printf ("Third Aicardi-Ohmoto invariant: %.1lf\n", ohmotoinvariant);
+    else printf ("Huffman labelling:  %d\n", 
+      sketch->huffman_labelling?1:0);
 
   if (! quiet) printf ("\nProperties of the 3D surface:\n");
   if (sketch->huffman_labelling)
-    printf ("Connected comp.   %d\n", count_connected_components (sketch));
-  printf ("Total Euler ch.   %d\n", euler_characteristic (sketch));
+    printf ("Connected comp.:    %d\n", count_connected_components (sketch));
+  printf ("Total Euler ch.:    %d\n", euler_characteristic (sketch));
+
+  if (! quiet) printf ("\nAicardi-Ohmoto invariants:\n");
+  printf ("Cusps:              %d\n", numcusps);
+  if (sketch->huffman_labelling)
+    printf ("Positive cusps:     %d\n", poscusps);
+  printf ("Crossings:          %d\n", numcrossings);
+  printf ("Bennequin:          %.1lf\n", ohmotoinvariant);
+
+  if (! quiet) printf ("\nProperties of the 2D apparent contour:\n");
+  printf ("Arcs:               %d\n", numsmallarcs);
+  printf ("Extended arcs:      %d\n", numarcs);
+  printf ("Loops:              %d\n", nums1s);
+  printf ("Nodes (cusps+cross):%d\n", numcusps + numcrossings);
+  printf ("Regions:            %d\n", numregions);
+  printf ("Connected comp.:    %d\n", numholes);
+
 }
 
 /*
