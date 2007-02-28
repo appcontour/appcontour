@@ -19,6 +19,7 @@ showinfo (struct sketch *sketch)
 {
   int numarcs, numsmallarcs, nums1s, numcusps, numregions, numcrossings;
   int numarcsend1, numholes, twiceohmotoinvariant, poscusps;
+  int numlcomponents;
   int i, d, dmin;
   double ohmotoinvariant;
   struct arc *arc;
@@ -58,6 +59,8 @@ showinfo (struct sketch *sketch)
   twiceohmotoinvariant = compute_ohmoto (sketch);
   ohmotoinvariant = twiceohmotoinvariant/2.0;
 
+  numlcomponents = count_link_components (sketch);
+
   if (! quiet)
     printf ("This is an apparent contour %s Huffman labelling\n", 
       sketch->huffman_labelling?("with"):("without"));
@@ -79,6 +82,7 @@ showinfo (struct sketch *sketch)
   if (! quiet) printf ("\nProperties of the 2D apparent contour:\n");
   printf ("Arcs:               %d\n", numsmallarcs);
   printf ("Extended arcs:      %d\n", numarcs);
+  printf ("Link components:    %d\n", numlcomponents);
   printf ("Loops:              %d\n", nums1s);
   printf ("Nodes (cusps+cross):%d\n", numcusps + numcrossings);
   printf ("Regions:            %d\n", numregions);
@@ -887,3 +891,50 @@ compute_link_num_arcs (struct sketch *sketch)
   }
 }
 
+int
+count_link_components (struct sketch *sketch)
+{
+  int *arcflags;
+  struct arc *a, *an;
+  struct border *b;
+  int i, tag, arcnum;
+  int count = 0;
+
+  arcnum = sketch->arccount;
+  arcnum++;
+  arcflags = (int *) malloc (arcnum * sizeof (int));
+
+  for (i = 0; i < arcnum; i++) arcflags[i] = 0;
+
+  for (a = sketch->arcs; a; a = a->next)
+  {
+    tag = a->tag;
+    assert (tag < arcnum);
+    if (arcflags[tag] != 0) continue;
+    count++;
+    arcflags[tag] = 1;
+    if (a->endpoints == 0) continue;  /* this is a loop, no nodes */
+                                      /* to cross                 */
+    /* devo seguire questo arco attraverso i nodi */
+    an = a;
+    do {
+      b = an->regionleft;
+      b = b->next;
+      b = gettransborder (b);
+      b = b->next;
+      an = b->info;
+      if (an != a)
+      {
+        if (arcflags[an->tag] != 0)
+        {
+          fprintf (stderr, "arc already tagged while traversing ");
+          fprintf (stderr, "a link component, should not happen\n");
+        }
+        arcflags[an->tag] = 2;
+      }
+    } while (an != a);
+  }
+
+  free (arcflags);
+  return (count);
+}

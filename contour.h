@@ -149,6 +149,8 @@ int leftright (struct sketch *s);
 int changeextregion (struct sketch *s, int tag);
 int compute_ohmoto (struct sketch *s);
 void compute_link_num_arcs (struct sketch *s);
+int count_link_components (struct sketch *s);
+
 
 void canonify (struct sketch *s);
 void canonifyarc (struct arc *arc);

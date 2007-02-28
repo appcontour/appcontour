@@ -1,3 +1,9 @@
+2007-02-28: a "link component" is the union of arcs that are traversed
+	when we follow an arc and continue across a node on the arc
+	right in front; in this way an apparent contour is a union of
+	components, each one being an immersed curve with cusps.
+	The "info" command prints the number of such components.
+
 2007-02-20: computation of the third local invariant of Aicardi-Ohmoto
 	(First order local invariants of apparent contours, Topology, 
 	45 (2006) 27--45).

@@ -1,3 +1,8 @@
+2007-02-28: counting number of link components in the apparent contour
+	(displayed with the "info" command).
+
+2007-02-20: see NEW for a list of changes related to the Oberwolfach workshop.
+
 2006-10-27: bump version to 0.8, preparing for a distribution.
 
 2006-10-23: nuovo programma per la visualizzazione grafica di un
