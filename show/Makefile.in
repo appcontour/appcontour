@@ -49,8 +49,8 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am__showcontour_SOURCES_DIST = showcontour.c grcommon.c grcommon.h \
 	doptimize.c doptimize.h morseevent.c morseevent.h energy.c \
-	xfigexport.c xfigexport.h showcontour.h energy.h "" \
-	glutcontour.c gtkcontour.c
+	xfigexport.c xfigexport.h showcontour.h energy.h glutcontour.c \
+	gtkcontour.c
 @ENABLE_GLUT_TRUE@am__objects_1 = glutcontour.$(OBJEXT)
 @ENABLE_GTK_TRUE@am__objects_2 = gtkcontour.$(OBJEXT)
 am_showcontour_OBJECTS = showcontour.$(OBJEXT) grcommon.$(OBJEXT) \
@@ -147,10 +147,10 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-@ENABLE_GLUT_FALSE@GLUTGRAPHSOURCE = ""
+@ENABLE_GLUT_FALSE@GLUTGRAPHSOURCE = 
 @ENABLE_GLUT_TRUE@GLUTGRAPHSOURCE = glutcontour.c
+@ENABLE_GTK_FALSE@GTKGRAPHSOURCE = 
 @ENABLE_GTK_TRUE@GTKGRAPHSOURCE = gtkcontour.c
-@ENABLE_GTK_FALSE@GTKgRAPHSOURCE = ""
 showcontour_SOURCES = showcontour.c grcommon.c grcommon.h doptimize.c doptimize.h morseevent.c morseevent.h energy.c xfigexport.c xfigexport.h showcontour.h energy.h $(GLUTGRAPHSOURCE) $(GTKGRAPHSOURCE)
 showcontour_LDADD = ../parser.o @GRAPHIC_LIB@
 AM_CFLAGS = -Wall

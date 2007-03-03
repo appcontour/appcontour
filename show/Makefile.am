@@ -3,13 +3,13 @@ bin_PROGRAMS = showcontour
 if ENABLE_GLUT
 GLUTGRAPHSOURCE = glutcontour.c
 else
-GLUTGRAPHSOURCE = ""
+GLUTGRAPHSOURCE = 
 endif
 
 if ENABLE_GTK
 GTKGRAPHSOURCE = gtkcontour.c
 else
-GTKgRAPHSOURCE = ""
+GTKGRAPHSOURCE = 
 endif
 
 showcontour_SOURCES = showcontour.c grcommon.c grcommon.h doptimize.c doptimize.h morseevent.c morseevent.h energy.c xfigexport.c xfigexport.h showcontour.h energy.h $(GLUTGRAPHSOURCE) $(GTKGRAPHSOURCE)

@@ -90,8 +90,11 @@ main (int argc, char *argv[])
       printf ("  removecc <int>: remove 3D connected component from contour\n");
       printf ("\n  possible options are:\n");
       printf ("  --help: this help\n");
-      printf ("  --transfer_islands <int_coded_flags>: information on island\n");
+      printf ("  --version: print program version\n");
+      printf ("  --nocanonify: do not canonify region description before printing\n");
+      printf ("  --transfer_islands|--ti <int_coded_flags>: information on island\n");
       printf ("      location in case of ambiguity (e.g. rule C2)\n");
+      printf ("  --finfinity|--fi <int>: value of f at infinity (default 0)\n");
       printf ("\n  if file is not given, description is taken from standard input\n");
       exit (0);
     }

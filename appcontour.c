@@ -215,6 +215,7 @@ euler_characteristic (struct sketch *sketch)
   int layers = 0;
   int halfarcweight, factor;
 
+  assert (sketch->regions->border->sponda == 0);
   for (arc = sketch->arcs; arc; arc = arc->next)
   {
     cusps += arc->cusps;
@@ -225,7 +226,8 @@ euler_characteristic (struct sketch *sketch)
   for (r = sketch->regions; r; r = r->next)
   {
     factor = 2;
-    for (bl = r->border; bl; bl = bl->next) factor--;
+    for (bl = r->border; bl; bl = bl->next)
+      if (bl->sponda) factor--;          /* regione esterna, escluso il bordo nullo */
                                          /* peso di uno strato: 1-buchi */
     layers += factor * r->f;
   }
@@ -724,6 +726,7 @@ tag_connected_components (struct sketch *sketch)
 {
   struct region *r;
   int i, ccid = 0, found;
+  int fneg = 0;
 
   if (debug) printf ("count_cc, fase 1: inizializzo i vettori\n");
 
@@ -731,6 +734,7 @@ tag_connected_components (struct sketch *sketch)
 
   for (r = sketch->regions; r; r = r->next)
   {
+    if (r->f < 0) fneg++;
     if (r->f > 0)
     {
       r->strati = (int *) malloc (r->f * sizeof(int));
@@ -762,6 +766,7 @@ tag_connected_components (struct sketch *sketch)
     countcc_flood (ccid++, sketch);
   }
   sketch->cc_tagged = 1;
+  if (fneg) return (-1);
   return (1);
 }
 
@@ -816,6 +821,7 @@ countcc_flood_step (struct region *r, int i)
   for (bl = r->border; bl; bl = bl->next)
   {
     bp = bl->sponda;
+    if (bp == 0) continue;     /* external region.  This is possible if --fi used */
     do {
       arc = bp->info;
       btrans = gettransborder (bp);
@@ -880,12 +886,16 @@ compute_link_num_arcs (struct sketch *sketch)
 {
   struct arc *a;
   struct region *rl, *rr;
+  int finf;
 
+  assert (sketch->regions->border->sponda == 0);
+  finf = sketch->regions->f;
+  if (finf) fprintf (stderr, "Warning: f is not zero at infinity (%d)\n", finf);
   for (a = sketch->arcs; a; a = a->next)
   {
     rl = a->regionleft->border->region;
     rr = a->regionright->border->region;
-    a->link_number = rl->f + rr->f;
+    a->link_number = rl->f + rr->f - 2*finf;
     a->link_number /= 2;
     //fprintf (stderr, "arc %d, link number %d\n", a->tag, a->link_number);
   }

@@ -1,3 +1,10 @@
+2007-03-02: fixed wrong computation of ohmoto invariant, 3D connected
+	components and euler characteristic when f is not zero at
+	infinity.  This can be forced by using option "--fi".
+	In this case the surface is thought as projected onto an
+	S^2 (compactified R^2 with the addition of the point at
+	infinity).
+
 2007-02-28: counting number of link components in the apparent contour
 	(displayed with the "info" command).
 
