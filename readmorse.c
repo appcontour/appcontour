@@ -485,7 +485,7 @@ getarcinfo (int key, FILE *file,
   /* setting arc information */
   if (debug)
   {
-    printf ("Arc orientation: %d, depths:", orientation);
+    printf ("Arc orientation: %d -> %d, depths:", bleft->orientation, orientation);
     for (i = 0; i < depthind; i++)
     {
       printf ("%d ", depths[i]);
@@ -498,7 +498,8 @@ getarcinfo (int key, FILE *file,
   if (arc->depths)
   {
     fprintf (stderr, 
-             "duplicate information for arc %d\n",
+             "%s information for arc %d\n",
+             (orientation*bleft->orientation < 0)?"INCOMPATIBLE":"duplicate",
              arc->tag);
     return (ORIENT_EMPTY);
   }

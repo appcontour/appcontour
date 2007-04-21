@@ -5,6 +5,7 @@
 #endif
 #include "contour.h"
 #include "parser.h"
+#include "hacon.h"
 
 #define ACTION_NONE 0
 #define ACTION_PRINTSKETCH 1
@@ -23,6 +24,7 @@
 #define ACTION_FRONTBACK 14
 #define ACTION_LEFTRIGHT 15
 #define ACTION_EVERT 16
+#define ACTION_HACON 17
 
 int debug = 0;
 int quiet = 0;
@@ -40,6 +42,7 @@ main (int argc, char *argv[])
   int newextregion = 0;
   char rule[10];
   FILE *infile = 0;
+  struct hacongraph *hacon;
 
   for (i = 1; i < argc; i++)
   {
@@ -88,6 +91,7 @@ main (int argc, char *argv[])
       printf ("  applyrule <rule>: apply indicated rule to contour\n");
       printf ("  extractcc <int>: extract 3D connected component\n");
       printf ("  removecc <int>: remove 3D connected component from contour\n");
+      printf ("  hacon: compute hacon et al. graph (not implemented)\n");
       printf ("\n  possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
@@ -145,6 +149,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"info") == 0) action = ACTION_INFO;
     if (strcmp(argv[i],"frontback") == 0) action = ACTION_FRONTBACK;
     if (strcmp(argv[i],"leftright") == 0) action = ACTION_LEFTRIGHT;
+    if (strcmp(argv[i],"hacon") == 0) action = ACTION_HACON;
     if (strcmp(argv[i],"evert") == 0)
     {
       action = ACTION_EVERT;
@@ -286,6 +291,13 @@ main (int argc, char *argv[])
     if (docanonify) postprocesssketch (sketch);
     if (docanonify) canonify (sketch);
     printsketch (sketch);
+    break;
+
+    case ACTION_HACON:
+    sketch = readcontour (infile);
+// WARNING: THIS IS WORK IN PROGRESS...
+    hacon = compute_hacon (sketch);
+    print_hacon (hacon);
     break;
 
     default:
