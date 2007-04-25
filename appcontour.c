@@ -933,6 +933,11 @@ count_link_components (struct sketch *sketch)
       b = gettransborder (b);
       b = b->next;
       an = b->info;
+      if (an->regionleft != b)
+      {
+        fprintf (stderr, "nonconstant link orientation, cannot count links\n");
+        return (-1);
+      }
       if (an != a)
       {
         if (arcflags[an->tag] != 0)

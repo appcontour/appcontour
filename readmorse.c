@@ -88,7 +88,7 @@ int
 readrow (FILE *file, struct sketch *sketch, 
          struct border *actregions[], int actregionsnum, int vecdim)
 {
-  int tok, actr = 0, i;
+  int tok, actr = 0, i, oriprod, r1nori;
   int freespace = vecdim - actregionsnum;
   struct region *newreg;
   struct arc *narc, *arcleft, *arcright;;
@@ -142,10 +142,10 @@ readrow (FILE *file, struct sketch *sketch,
       actborder->next = b1;
       // b1->region = actborder->region;
       b1->info = narc;
-      b1->orientation = -1;
+      b1->orientation = -1*2;
       // b2->region = newreg;
       b2->info = narc;
-      b2->orientation = 1;
+      b2->orientation = 1*2;
       newreg->border->sponda = b2;
 
       freespace -= 2;
@@ -195,14 +195,58 @@ readrow (FILE *file, struct sketch *sketch,
       {
         if (debug) printf ("identifico gli archi %d e %d\n",
                    arcleft->tag, arcright->tag);
+        /* prima mi occupo delle orientazioni */
+        oriprod = r2->orientation * r2->next->orientation;
+	assert (oriprod != 0);
+	if (oriprod == -1)
+        {
+          fprintf (stderr, "fatal: incompatible orientation\n");
+          exit (11);  /* comunque c'e' poi un brutto errore di memoria */
+        }
+        if (oriprod < 0)
+        {
+          /* must reverse orientation of one arc where
+           * the orientation is \pm 2 (not given by user)
+           */
+          if (abs(r2->orientation) == 2)
+          {
+            /* changing orientation on the left */
+            if (debug) printf ("cambio l'orientazione a sinistra\n");
+            r1->next->orientation *= -1;
+            r2->orientation *= -1;
+          } else {
+            /* changing orientation on the right */
+            assert (abs(r2->next->orientation) == 2);
+            if (debug) printf ("cambio l'orientazione a destra\n");
+            r2->next->orientation *= -1;
+            r3->orientation *= -1;
+          }
+          oriprod *= -1;
+        }
+        if (oriprod == 2)
+        {
+          /* this means that on exactly one arc the orientation
+           * is given by user; extend on the other arc
+           */
+          if (debug) printf ("propago l'orientazione\n");
+          if (abs(r2->orientation) == 2)
+          {
+            r1->next->orientation /= 2;
+            r2->orientation /= 2;
+          } else {
+            assert (abs(r2->next->orientation) == 2);
+            r2->next->orientation /= 2;
+            r3->orientation /= 2;
+          }
+        }
         if (arcleft->depths && arcright->depths)
         {
           fprintf (stderr, "warning: arc info given twice\n");
-          if (r2->orientation != r2->next->orientation)
-          {
-            fprintf (stderr, "fatal: incompatible orientation\n");
-            exit (11);  /* comunque c'e' poi un brutto errore di memoria */
-          }
+//          if (r2->orientation != r2->next->orientation)
+//          {
+//            fprintf (stderr, "fatal: incompatible orientation\n");
+//            exit (11);  /* comunque c'e' poi un brutto errore di memoria */
+//          }
           if (arcleft->cusps != arcright->cusps)
           {
             fprintf (stderr, "fatal: incompatible dup definition\n");
@@ -220,28 +264,28 @@ readrow (FILE *file, struct sketch *sketch,
           arcright->cusps = -1;
           arcright->depths = 0;
         }
-        assert (r2->orientation != 0 && r2->next->orientation != 0);
+//        assert (r2->orientation != 0 && r2->next->orientation != 0);
         if (arcleft->depths)        /* rimuovo l'arco di destra */
         {
           if (debug) printf ("rimuovo l'arco di destra\n");
           r2->next->info = r3->info = arcleft;
           removearc (arcright, sketch);
-          if (r2->orientation != r2->next->orientation)
-          {
-            if (debug) printf ("cambio l'orientazione a destra\n");
-            r2->next->orientation *= -1;
-            r3->orientation *= -1;
-          }
+//          if (r2->orientation != r2->next->orientation)
+//          {
+//            if (debug) printf ("cambio l'orientazione a destra\n");
+//            r2->next->orientation *= -1;
+//            r3->orientation *= -1;
+//          }
         } else {                    /* rimuovo l'arco di sinistra */
           if (debug) printf ("rimuovo l'arco di sinistra\n");
           r1->next->info = r2->info = arcright;
           removearc (arcleft, sketch);
-          if (r2->orientation != r2->next->orientation)
-          {
-            if (debug) printf ("cambio l'orientazione a sinistra\n");
-            r1->next->orientation *= -1;
-            r2->orientation *= -1;
-          }
+//          if (r2->orientation != r2->next->orientation)
+//          {
+//            if (debug) printf ("cambio l'orientazione a sinistra\n");
+//            r1->next->orientation *= -1;
+//            r2->orientation *= -1;
+//          }
         }
       }
 //printsketch(sketch);
@@ -350,7 +394,7 @@ readrow (FILE *file, struct sketch *sketch,
       newreg = newregion (sketch);
       newreg->border = newborderlist (newreg);
       r1 = actregions[actr++];
-      // r2 = actregions[actr++];
+      r2 = actregions[actr];
       //actregions[actr] = newreg->???;
       r3 = actregions[actr + 1];
 
@@ -358,10 +402,15 @@ readrow (FILE *file, struct sketch *sketch,
       b2 = newborder (newreg->border);
       narc = newarc (sketch);
       b1->next = r1->next;
+      r1nori = r1->next->orientation;
       r1->next = b1;
       b1->info = b2->info = narc;
-      b1->orientation = -1;
-      b2->orientation = 1;
+      /* inherit orientation from upper-right arc */
+      b1->orientation = r2->next->orientation;
+      b2->orientation = r3->orientation;
+      assert (b1->orientation*b2->orientation < 0);
+      // b1->orientation = -1*2;
+      // b2->orientation = 1*2;
       newreg->border->sponda = b2;
       actregions[actr++] = b2;
 //printborder(r1, r1->region); printf("\n");
@@ -375,8 +424,12 @@ readrow (FILE *file, struct sketch *sketch,
       b2->next = r3->next;
       r3->next = b2;
       b1->info = b2->info = narc;
-      b1->orientation = -1;
-      b2->orientation = 1;
+      /* inherit orientation from upper-left arc */
+      b1->orientation = r1nori;
+      b2->orientation = r2->orientation;
+      assert (b1->orientation*b2->orientation < 0);
+      // b1->orientation = -1*2;
+      // b2->orientation = 1*2;
       b1->next = newreg->border->sponda;
       newreg->border->sponda->next = b1;
 //printborder(r3, r3->region); printf("\n");
@@ -469,7 +522,9 @@ getarcinfo (int key, FILE *file,
   if (orientation == KEY_LEFT || orientation == KEY_DOWN)
   {
     orientation = ORIENT_LD;
-  } else {
+  }
+  if (orientation == KEY_RIGHT || orientation == KEY_UP)
+  {
     orientation = ORIENT_RU;
   }
   if (require_rbr == 0)
@@ -495,13 +550,15 @@ getarcinfo (int key, FILE *file,
   assert (bleft);
   arc = bleft->info;
   assert (arc);
-  if (arc->depths)
+  // if (arc->depths)
+  if (abs(orientation*bleft->orientation) == 1)
   {
     fprintf (stderr, 
-             "%s information for arc %d\n",
+             "%s orientation for arc %d\n",
              (orientation*bleft->orientation < 0)?"INCOMPATIBLE":"duplicate",
              arc->tag);
-    return (ORIENT_EMPTY);
+    orientation = bleft->orientation;
+    // return (ORIENT_EMPTY);
   }
   if (depthind > 0 && cusps_no_d > 0)
   {
@@ -534,9 +591,17 @@ getarcinfo (int key, FILE *file,
     assert (bleft->orientation * bright->orientation < 0);
     if (bleft->orientation == -orientation)
     {
-      bleft->orientation *= -1;
-      bright->orientation *= -1;
+      fprintf (stderr, "incompatible orientation\n");
     }
+//    if (bleft->orientation == -orientation)
+    assert (abs(orientation) == 1);
+    bleft->orientation = orientation;
+    bright->orientation = -orientation;
+//    if (bleft->orientation*orientation < 0)
+//    {
+//      bleft->orientation *= -1;
+//      bright->orientation *= -1;
+//    }
   }
   return (orientation);
 }

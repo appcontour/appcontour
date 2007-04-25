@@ -682,6 +682,18 @@ defineregionleftright (struct border *border)
   do
   {
     arc = b->info;
+    if (abs(b->orientation) == 2)
+    {
+      fprintf (stderr, "Implicitly orienting arc %d\n", arc->tag);
+      b->orientation /= 2;
+    }
+    if (arc->depths == 0)
+    {
+      fprintf (stderr, "Dummy definition of depth for arc %d\n", arc->tag);
+      arc->depths = (int *) malloc (0);
+      arc->depthsdim = 0;
+      arc->cusps = 0;
+    }
     if (b->orientation > 0) arc->regionleft = b;
       else arc->regionright = b;
     b = b->next;
@@ -771,6 +783,11 @@ printborder (struct border *b, struct region *r)
   {
     assert (bp->border->region == r);
     ori = bp->orientation;
+    if (abs(ori) == 2)
+    {
+      fprintf (stderr, "warning: implicit orientation\n");
+      ori /= 2;
+    }
     assert (ori == 1 || ori == -1);
     if (notfirst) printf (" ");
     notfirst = 1;
