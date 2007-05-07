@@ -1,3 +1,7 @@
+2007-05-07: commands "iscontour" and "ishuffman" check a given
+	morse (or region) description for consistency as an
+	apparent contour without/with huffman labelling.
+
 2007-04-25: allowing inheritance of arc orientation across nodes (in
 	morse definition).
 
