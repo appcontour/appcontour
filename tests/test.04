@@ -1,1 +1,2 @@
 ./contour ishuffman -q examples/two_rings.morse
+./contour iscontour -q examples/immersed/boysurface.morse
