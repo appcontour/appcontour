@@ -238,7 +238,7 @@ euler_characteristic (struct sketch *sketch)
 }
 
 int
-appcontourcheck (struct sketch *sketch, int verbose)
+appcontourcheck (struct sketch *sketch, int huffman, int verbose)
 {
   int fail, globfail, i, diff=0;
   struct region *region;
@@ -248,7 +248,12 @@ appcontourcheck (struct sketch *sketch, int verbose)
   struct borderlist *hole;
   int dd[4], res = 0;
 
-  if (verbose) printf ("Checking consistency as apparent contour...\n");
+  if (verbose)
+  {
+    printf ("Checking consistency as apparent contour");
+    if (huffman) printf (" with huffman labelling");
+    printf ("\n");
+  }
 
   globfail = 0;
   if (verbose) printf ("1. Checking arc orientation across nodes... ");
@@ -282,73 +287,76 @@ appcontourcheck (struct sketch *sketch, int verbose)
     if (verbose) printf ("FAILED for region %d (f = %d)\n", region->tag, region->f);
   } else if (verbose) printf ("OK\n");
 
-  if (verbose) printf ("3. d versus f consistency...                ");
-  fflush (stdout);
-
-  fail = 0;
-  for (arc = sketch->arcs; arc; arc = arc->next)
+  if (huffman)
   {
-    assert (arc->depths);
-    dmin = dmax = arc->depths[0];
-    for (i = 1; i < arc->dvalues; i++)
+    if (verbose) printf ("3. d versus f consistency...                ");
+    fflush (stdout);
+
+    fail = 0;
+    for (arc = sketch->arcs; arc; arc = arc->next)
     {
-      d = arc->depths[i];
-      if (d < dmin) dmin = d;
-      if (d > dmax) dmax = d;
-    }
-    fmin = arc->regionleft->border->region->f;
-    if (arc->regionright->border->region->f < fmin)
-      fmin = arc->regionright->border->region->f;
-    if (0 <= dmin && dmax <= fmin) continue;
-    fail = 1;
-    break;
-  }
-  if (fail)
-  {
-    globfail = 1;
-    if (verbose) printf ("FAILED for arc %d (dmin = %d, dmax = %d, fmin = %d)\n",
-      arc->tag, dmin, dmax, fmin);
-  } else if (verbose) printf ("OK\n");
-
-  if (verbose) printf ("4. variation of d across cusps...           ");
-  fflush (stdout);
-
-  fail = 0;
-  for (arc = sketch->arcs; arc; arc = arc->next)
-  {
-    if (arc->cusps < 0) {fail = 1; break;}
-    if (arc->cusps == 0) continue;
-    for (i = 0; i < arc->cusps; i++)
-    {
-      diff = arc->depths[i] - arc->depths[i+1];
-      if (diff == 1 || diff == -1) continue;
+      assert (arc->depths);
+      dmin = dmax = arc->depths[0];
+      for (i = 1; i < arc->dvalues; i++)
+      {
+        d = arc->depths[i];
+        if (d < dmin) dmin = d;
+        if (d > dmax) dmax = d;
+      }
+      fmin = arc->regionleft->border->region->f;
+      if (arc->regionright->border->region->f < fmin)
+        fmin = arc->regionright->border->region->f;
+      if (0 <= dmin && dmax <= fmin) continue;
       fail = 1;
       break;
     }
-    if (fail) break;
-  }
-  if (fail)
-  {
-    globfail = 1;
-    if (verbose) printf ("FAILED for arc %d (diff = %d)\n", arc->tag, diff);
-  } else if (verbose) printf ("OK\n");
-
-  if (verbose) printf ("5. values of d on nodes...                  ");
-  fflush (stdout);
-
-  fail = 0;
-  for (arc = sketch->arcs; arc; arc = arc->next)
-  {
-    if (arc->endpoints == 0) continue;
-    failb = arc->regionleft;
-    if ((res = checkdnodecons (arc->regionleft, dd)) == 1)
+    if (fail)
     {
-      if (arc->endpoints == 1) continue;
-      failb = arc->regionright;
-      if ((res = checkdnodecons (arc->regionright, dd)) == 1) continue;
+      globfail = 1;
+      if (verbose) printf ("FAILED for arc %d (dmin = %d, dmax = %d, fmin = %d)\n",
+        arc->tag, dmin, dmax, fmin);
+    } else if (verbose) printf ("OK\n");
+
+    if (verbose) printf ("4. variation of d across cusps...           ");
+    fflush (stdout);
+
+    fail = 0;
+    for (arc = sketch->arcs; arc; arc = arc->next)
+    {
+      if (arc->cusps < 0) {fail = 1; break;}
+      if (arc->cusps == 0) continue;
+      for (i = 0; i < arc->cusps; i++)
+      {
+        diff = arc->depths[i] - arc->depths[i+1];
+        if (diff == 1 || diff == -1) continue;
+        fail = 1;
+        break;
+      }
+      if (fail) break;
     }
-    fail = 1;
-    break;
+    if (fail)
+    {
+      globfail = 1;
+      if (verbose) printf ("FAILED for arc %d (diff = %d)\n", arc->tag, diff);
+    } else if (verbose) printf ("OK\n");
+
+    if (verbose) printf ("5. values of d on nodes...                  ");
+    fflush (stdout);
+
+    fail = 0;
+    for (arc = sketch->arcs; arc; arc = arc->next)
+    {
+      if (arc->endpoints == 0) continue;
+      failb = arc->regionleft;
+      if ((res = checkdnodecons (arc->regionleft, dd)) == 1)
+      {
+        if (arc->endpoints == 1) continue;
+        failb = arc->regionright;
+        if ((res = checkdnodecons (arc->regionright, dd)) == 1) continue;
+      }
+      fail = 1;
+      break;
+    }
   }
   if (fail)
   {
@@ -383,7 +391,9 @@ appcontourcheck (struct sketch *sketch, int verbose)
   } else if (verbose) printf ("OK\n");
 
 
-  if (globfail && verbose) printf ("This sketch is NOT an apparent contour\n");
+  if (globfail && verbose) printf ("This sketch is NOT an apparent contour");
+  if (globfail && verbose && huffman) printf (" with huffman labelling");
+  if (globfail && verbose) printf ("\n");
   return (globfail == 0);
 }
 

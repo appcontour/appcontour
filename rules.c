@@ -17,7 +17,7 @@ apply_rule (char *rule, struct sketch *sketch)
   extern int quiet;
 
   canonify (sketch);
-  if (appcontourcheck (sketch, 0) == 0)
+  if (appcontourcheck (sketch, 1, 0) == 0)
   {
     fprintf (stderr, "This sketch is NOT an apparent contour, ");
     fprintf (stderr, "cannot apply rules\n");

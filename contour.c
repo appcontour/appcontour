@@ -10,7 +10,7 @@
 #define ACTION_NONE 0
 #define ACTION_PRINTSKETCH 1
 #define ACTION_COMPARE 2
-#define ACTION_ISAPPCON 3
+#define ACTION_ISCONTOUR 3
 #define ACTION_CANONIFY 4
 #define ACTION_APPLYRULE 5
 #define ACTION_COUNTCC 6
@@ -25,6 +25,7 @@
 #define ACTION_LEFTRIGHT 15
 #define ACTION_EVERT 16
 #define ACTION_HACON 17
+#define ACTION_ISHUFFMAN 18
 
 int debug = 0;
 int quiet = 0;
@@ -140,7 +141,9 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"testallrules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"countcc") == 0) action = ACTION_COUNTCC;
     if (strcmp(argv[i],"print") == 0) action = ACTION_PRINTSKETCH;
-    if (strcmp(argv[i],"isappcon") == 0) action = ACTION_ISAPPCON;
+    if (strcmp(argv[i],"isappcon") == 0) action = ACTION_ISHUFFMAN;
+    if (strcmp(argv[i],"iscontour") == 0) action = ACTION_ISCONTOUR;
+    if (strcmp(argv[i],"ishuffman") == 0) action = ACTION_ISHUFFMAN;
     if (strcmp(argv[i],"compare") == 0) action = ACTION_COMPARE;
     if (strcmp(argv[i],"canonify") == 0) action = ACTION_CANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
@@ -217,10 +220,13 @@ main (int argc, char *argv[])
       else printf ("Connected components: %d\n", count);
     break;
 
-    case ACTION_ISAPPCON:
+    case ACTION_ISCONTOUR:
+    case ACTION_ISHUFFMAN:
     sketch = readcontour (infile);
     canonify (sketch);
-    res = appcontourcheck (sketch, 1);
+    res = appcontourcheck (sketch, 
+          (action == ACTION_ISHUFFMAN)?1:0, 
+          (quiet)?0:1);
     if (res == 0) exit (15);
     break;
 

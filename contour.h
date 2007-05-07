@@ -135,7 +135,7 @@ int arccmp (struct arc *a1, struct arc *a2);
 
 void showinfo (struct sketch *sketch);
 int euler_characteristic (struct sketch *sketch);
-int appcontourcheck (struct sketch *s, int verbose);
+int appcontourcheck (struct sketch *s, int huffman, int verbose);
 int checkorientationborder (struct border *b);
 int count_connected_components (struct sketch *sketch);
 int tag_connected_components (struct sketch *sketch);
