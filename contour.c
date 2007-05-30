@@ -171,14 +171,14 @@ main (int argc, char *argv[])
   switch (action)
   {
     case ACTION_PRINTSKETCH:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     // printsketch (sketch);
     if (docanonify) canonify (sketch);
     printsketch (sketch);
     break;
 
     case ACTION_APPLYRULE:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     res = apply_rule (rule, sketch);
     printsketch (sketch);
@@ -190,13 +190,13 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_TESTALLRULES:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     if (testallrules (sketch) == 0) exit(15);
     break;
 
     case ACTION_EXTRACTCC:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     res = extract_connected_component (ccid, sketch);
     printsketch (sketch);
@@ -204,7 +204,7 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_REMOVECC:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     count = count_connected_components (sketch);
     res = remove_connected_component (ccid, sketch);
@@ -213,7 +213,7 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_COUNTCC:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     count = count_connected_components (sketch);
     if (quiet) printf ("%d\n", count);
@@ -222,7 +222,7 @@ main (int argc, char *argv[])
 
     case ACTION_ISCONTOUR:
     case ACTION_ISHUFFMAN:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     res = appcontourcheck (sketch, 
           (action == ACTION_ISHUFFMAN)?1:0, 
@@ -231,7 +231,7 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_CANONIFY:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     printsketch (sketch);
     break;
@@ -260,38 +260,38 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_PRINTMORSE:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     if (docanonify) canonify (sketch);
     printmorse (sketch);
     break;
 
     case ACTION_CHARACTERISTIC:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     if (quiet) printf ("%d\n", euler_characteristic (sketch));
       else printf ("Euler characteristic: %d\n", euler_characteristic (sketch));
     break;
 
     case ACTION_INFO:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     showinfo (sketch);
     break;
 
     case ACTION_FRONTBACK:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     frontback (sketch);
     if (docanonify) canonify (sketch);
     printsketch (sketch);
     break;
 
     case ACTION_LEFTRIGHT:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     leftright (sketch);
     if (docanonify) canonify (sketch);
     printsketch (sketch);
     break;
 
     case ACTION_EVERT:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
     changeextregion (sketch, newextregion);
     dorecomputef = 0;
     if (docanonify) postprocesssketch (sketch);
@@ -300,7 +300,7 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_HACON:
-    sketch = readcontour (infile);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
 // WARNING: THIS IS WORK IN PROGRESS...
     hacon = compute_hacon (sketch);
     print_hacon (hacon);

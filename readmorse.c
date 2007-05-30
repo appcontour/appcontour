@@ -67,6 +67,12 @@ readmorse (FILE *file)
       return(0);
     }
   }
+  if (sketch->regions->next == 0)
+  {
+    fprintf(stderr, "Empty contour is not allowed\n");
+    freesketch(sketch);
+    return(0);
+  }
   assert (actregionsnum == 1);
   assert (infborder->next == infborder);
   assert (infborder->info == &infinity);
