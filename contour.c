@@ -85,7 +85,7 @@ main (int argc, char *argv[])
     {
       printf ("usage: %s [options] command [file]\n", argv[0]);
       printf ("  possible commands are:\n");
-      printf ("  print, printmorse, isappcon, canonify, countcc\n");
+      printf ("  print, printmorse, iscontour, ishuffman, canonify, countcc\n");
       printf ("  testallrules, info, characteristic, knot2morse\n");
       printf ("  compare: lessicographic comparison between two contours, in this\n");
       printf ("    case the stdin (or file) must contain two descriptions\n");
