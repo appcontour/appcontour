@@ -809,7 +809,7 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
         gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
                   GTK_SIGNAL_FUNC (menuitem_response5), widget);
         gtk_widget_show (menu_items);
-        sprintf(buf,"cancella orinamento");
+        sprintf(buf,"cancella orientamento");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
         gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
