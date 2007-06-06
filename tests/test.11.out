@@ -1,0 +1,6 @@
+Checking consistency as apparent contour with huffman labelling
+1. Checking arc orientation across nodes... OK
+2. Checking positivity of f...              OK
+3. d versus f consistency...                OK
+4. variation of d across cusps...           OK
+5. values of d on nodes...                  OK

@@ -168,12 +168,11 @@ struct sketch *readsketch (FILE *file);
 struct sketch *readmorse (FILE *file);
 int readrow (FILE *file, struct sketch *sketch, 
              struct border *actregions[], int num, int vecdim);
-int getcrossinfo (FILE *file, 
-                struct arc *arcleft,
-                struct arc *arcright);
+int getcrossinfo (FILE *file);
 int getarcinfo (int key, FILE *file, 
                 struct border *bleft,
                 struct border *bright);
+int adjustarcinfo (struct arc *narc, struct arc *upperarc, int incr, int oriup);
 
 int arcmult (struct arc *arc);
 void postprocesssketch (struct sketch *s);

@@ -96,8 +96,9 @@ readrow (FILE *file, struct sketch *sketch,
 {
   int tok, actr = 0, i, oriprod, r1nori;
   int freespace = vecdim - actregionsnum;
+  int dincrl, dincrr, orilup, orirup, havecrossinfo;
   struct region *newreg;
-  struct arc *narc, *arcleft, *arcright;;
+  struct arc *narc, *arcleft, *arcright, *ularc, *urarc;
   struct border *b1, *b2, *bleft, *bright, *actborder;
   struct border *r1, *r2, *r3, *rtemp;
   struct region *r3region, *r1region;
@@ -247,12 +248,7 @@ readrow (FILE *file, struct sketch *sketch,
         }
         if (arcleft->depths && arcright->depths)
         {
-          fprintf (stderr, "warning: arc info given twice\n");
-//          if (r2->orientation != r2->next->orientation)
-//          {
-//            fprintf (stderr, "fatal: incompatible orientation\n");
-//            exit (11);  /* comunque c'e' poi un brutto errore di memoria */
-//          }
+          // fprintf (stderr, "warning: arc info given twice\n");
           if (arcleft->cusps != arcright->cusps)
           {
             fprintf (stderr, "fatal: incompatible dup definition\n");
@@ -401,14 +397,35 @@ readrow (FILE *file, struct sketch *sketch,
       newreg->border = newborderlist (newreg);
       r1 = actregions[actr++];
       r2 = actregions[actr];
-      //actregions[actr] = newreg->???;
       r3 = actregions[actr + 1];
+      r1nori = r1->next->orientation;
+      ularc = r1->next->info;
+      urarc = r3->info;
+      orilup = orirup = 0;
+      if (r3->orientation < 0) orilup = 1;  /* the  left arc oriented up */
+      if (r1nori > 0) orirup = 1;           /* the right arc oriented up */
+
+      dincrl = dincrr = 0;
+      havecrossinfo = 1;
+      switch (getcrossinfo(file))
+      {
+        case KEY_NWSE:
+          dincrl = 2;
+          if (r1nori < 0) dincrl = -2;
+          break;
+        case KEY_NESW:
+          dincrr = 2;
+          if (r3->orientation < 0) dincrr = -2;
+          break;
+        default:
+          havecrossinfo = 0;
+          break;
+      }
 
       b1 = newborder (r1->border); /* nuovo bordo regione 1 */
       b2 = newborder (newreg->border);
       narc = newarc (sketch);
       b1->next = r1->next;
-      r1nori = r1->next->orientation;
       r1->next = b1;
       b1->info = b2->info = narc;
       /* inherit orientation from upper-right arc */
@@ -421,8 +438,8 @@ readrow (FILE *file, struct sketch *sketch,
       actregions[actr++] = b2;
 //printborder(r1, r1->region); printf("\n");
 
-      getcrossinfo(file, b1, b2);
       getarcinfo(tok, file, b1, b2);
+      if (havecrossinfo) adjustarcinfo (narc, urarc, dincrl, orilup);
 
       b1 = newborder (newreg->border);
       b2 = newborder (r3->border); /* nuovo bordo regione 1 */
@@ -442,6 +459,7 @@ readrow (FILE *file, struct sketch *sketch,
 //printborder(r3, r3->region); printf("\n");
 
       getarcinfo(tok, file, b1, b2);
+      if (havecrossinfo) adjustarcinfo (narc, ularc, dincrr, orirup);
       continue;
     }
     fprintf (stderr, "Error: invalid token %d\n", tok);
@@ -457,27 +475,16 @@ readrow (FILE *file, struct sketch *sketch,
 }
 
 int
-getcrossinfo (FILE *file, struct arc *arcleft, struct arc *arcright)
+getcrossinfo (FILE *file)
 {
   int tok;
 
   tok = gettokens (file);
   if (tok == KEY_NWSE || tok == KEY_NESW)
-  {
-    switch (tok)
-    {
-      case KEY_NWSE:
-      printf ("scavalcamento nw-se\n");
-      break;
-      case KEY_NESW:
-      printf ("scavalcamento ne-sw\n");
-      break;
-    }
-    printf ("NON GESTITO\n");
     return (tok);
-  }
+
   ungettoken (tok);
-  return (1);
+  return (0);
 }
 
 int
@@ -635,6 +642,57 @@ getarcinfo (int key, FILE *file,
 //    }
   }
   return (orientation);
+}
+
+/*
+ * adjust the d values on arc in such a way to have a given
+ * difference with respect to the previous/following arc
+ * oriup = 1 means that we have info between the last d
+ * value of arc and the first of prevarc (notation comes
+ * from the adjusting after a crossing).
+ */
+
+int
+adjustarcinfo (struct arc *arc, struct arc *prevarc, int dincr, int oriup)
+{
+  int refd, arefd, diff, k;
+
+  if (prevarc->depths == 0 || prevarc->depthsdim <= 0)
+  {
+    fprintf (stderr, 
+      "cannot adjust d value across node, info needed of adjacent arc\n");
+    return (0);
+  }
+  if (oriup)
+    refd = prevarc->depths[0];
+  else
+    refd = prevarc->depths[prevarc->cusps];
+
+  refd += dincr;
+  if (arc->depths == 0)
+  {
+    //fprintf (stderr, "arc with no cusps across node...\n");
+    arc->depths = (int *) malloc (sizeof (int));
+    arc->depthsdim = arc->dvalues = 1;
+    arc->cusps = 0;
+    arc->depths[0] = 0;
+  }
+  if (arc->depthsdim <= 0)
+  {
+    fprintf (stderr, "d value required in adjusting cross info\n");
+    return (0);
+  }
+  if (oriup)
+    arefd = arc->depths[arc->cusps];
+  else
+    arefd = arc->depths[0];
+
+  diff = refd - arefd;
+  for (k = 0; k <= arc->cusps; k++) arc->depths[k] += diff;
+  //printf ("adjusting: refd = %d, arefd = %d, dincr = %d, oriup = %d\n",
+  //       refd, arefd, dincr, oriup);
+
+  return (1);
 }
 
 void

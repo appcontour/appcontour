@@ -151,7 +151,7 @@ fi
 
 if [ -e $fatti ]
 then
-  echo "you must firse remove directory $fatti"
+  echo "you must first remove directory $fatti"
   basta="1"
 fi
 
