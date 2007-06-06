@@ -421,6 +421,7 @@ readrow (FILE *file, struct sketch *sketch,
       actregions[actr++] = b2;
 //printborder(r1, r1->region); printf("\n");
 
+      getcrossinfo(file, b1, b2);
       getarcinfo(tok, file, b1, b2);
 
       b1 = newborder (newreg->border);
@@ -453,6 +454,30 @@ readrow (FILE *file, struct sketch *sketch,
   if (debug) printsketch (sketch);
   if (debug) checkconsistency (sketch);
   return (actregionsnum);
+}
+
+int
+getcrossinfo (FILE *file, struct arc *arcleft, struct arc *arcright)
+{
+  int tok;
+
+  tok = gettokens (file);
+  if (tok == KEY_NWSE || tok == KEY_NESW)
+  {
+    switch (tok)
+    {
+      case KEY_NWSE:
+      printf ("scavalcamento nw-se\n");
+      break;
+      case KEY_NESW:
+      printf ("scavalcamento ne-sw\n");
+      break;
+    }
+    printf ("NON GESTITO\n");
+    return (tok);
+  }
+  ungettoken (tok);
+  return (1);
 }
 
 int

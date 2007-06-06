@@ -41,6 +41,8 @@
 #define TOK_KNOT 39
 #define TOK_TAG 40
 #define KEY_CUSP 41
+#define KEY_NWSE 42
+#define KEY_NESW 43
 
 #define TOK_ERROR  9999
 #define TOK_EOF    9990

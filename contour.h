@@ -168,6 +168,9 @@ struct sketch *readsketch (FILE *file);
 struct sketch *readmorse (FILE *file);
 int readrow (FILE *file, struct sketch *sketch, 
              struct border *actregions[], int num, int vecdim);
+int getcrossinfo (FILE *file, 
+                struct arc *arcleft,
+                struct arc *arcright);
 int getarcinfo (int key, FILE *file, 
                 struct border *bleft,
                 struct border *bright);
