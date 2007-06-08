@@ -235,6 +235,22 @@ static void enter_callback( GtkWidget *widget, GtkWidget *entry )
   gtk_widget_destroy(gtk_widget_get_toplevel (widget));
 }
 
+static void enter_callback2( GtkWidget *widget, struct entries *entry )
+{
+  gchar *entry_text, *entry_text1;
+  entry_text=(gchar *) malloc(12 * sizeof(gchar));
+  entry_text = gtk_editable_get_chars (GTK_EDITABLE (entry->entry),0,-1);
+  datoattivo->profondita = (gchar *) malloc((strlen(entry_text)+1)*sizeof(gchar));
+  sprintf(datoattivo->profondita,"%s",entry_text);
+  entry_text = gtk_editable_get_chars (GTK_EDITABLE (entry->entry1),0,-1);
+  if (strlen(entry_text) != 0 ) {
+    entry_text1 = datoattivo->profondita;
+    datoattivo->profondita = (gchar *) malloc((strlen(entry_text1)+strlen(entry_text)+1)*sizeof(gchar));
+    sprintf(datoattivo->profondita,"%s,%s",entry_text1,entry_text);
+  }
+  gtk_widget_destroy(gtk_widget_get_toplevel (widget));
+}
+
 void richiede_profondita()
 {
     GtkWidget *window;
@@ -268,6 +284,52 @@ void richiede_profondita()
     gtk_widget_show (window);
 }
 
+
+void richiede_profondita_2rami()
+{
+    GtkWidget *window;
+    GtkWidget *table;
+    GtkWidget *label;
+    struct entries *entries_local;
+
+    entries_local = (struct entries *) malloc (sizeof(struct entries));
+    /* create a new window */
+    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_decorated (GTK_WINDOW (window),FALSE);
+    gtk_window_set_position(GTK_WINDOW(window),GTK_WIN_POS_MOUSE);
+
+    table = gtk_table_new(2, 2, TRUE);
+    gtk_container_add (GTK_CONTAINER (window), table);
+    gtk_widget_show(table);
+    label=gtk_label_new("Inserisci profondita' ramo di destra");
+    gtk_widget_show(label);
+    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 0, 1,
+         (GtkAttachOptions) (GTK_EXPAND), (GtkAttachOptions) (0), 0, 0);
+    label=gtk_label_new("Inserisci profondita' ramo di sinistra");
+    gtk_widget_show(label);
+    gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
+         (GtkAttachOptions) (GTK_EXPAND), (GtkAttachOptions) (0), 0, 0);
+
+    entries_local->entry = gtk_entry_new ();
+    gtk_widget_show (entries_local->entry);
+    gtk_entry_set_max_length (GTK_ENTRY (entries_local->entry), 10);
+    gtk_table_attach(GTK_TABLE(table), entries_local->entry, 1, 2, 0, 1,
+         (GtkAttachOptions) (GTK_FILL), (GtkAttachOptions) (0), 5, 5);
+    entries_local->entry1 = gtk_entry_new ();
+    gtk_widget_show (entries_local->entry1);
+    gtk_entry_set_max_length (GTK_ENTRY (entries_local->entry1), 10);
+    gtk_table_attach(GTK_TABLE(table), entries_local->entry1, 1, 2, 1, 2,
+         (GtkAttachOptions) (GTK_FILL), (GtkAttachOptions) (0), 5, 5);
+    g_signal_connect (G_OBJECT (entries_local->entry), "activate",
+                      G_CALLBACK (enter_callback2),
+                      (gpointer) entries_local);
+    g_signal_connect (G_OBJECT (entries_local->entry1), "activate",
+                      G_CALLBACK (enter_callback2),
+                      (gpointer) entries_local);
+
+    gtk_widget_show (window);
+}
+
 void menuitem_cancellaorientamento(GtkWidget *wid, GtkWidget *widget)
 {
   gchar *xpm_filename;
@@ -280,7 +342,9 @@ void menuitem_cancellaorientamento(GtkWidget *wid, GtkWidget *widget)
   draw_brush(wid);
 
   datoattivo->orientamento=0;
-  datoattivo->profondita = "";
+  g_free(datoattivo->profondita);
+  datoattivo->profondita = NULL;
+//  datoattivo->profondita = "";
 }
 
 void menuitem_response(GtkWidget *wid, GtkWidget *widget)
@@ -369,6 +433,13 @@ void menuitem_response5( GtkWidget *wid, GtkWidget *widget)
   draw_brush(wid);
 
   datoattivo->orientamento=6;
+}
+
+void menuitem_response6( GtkWidget *wid, GtkWidget *widget)
+{
+
+  datoattivo->orientamento=6;
+  richiede_profondita_2rami();
 }
 
 void aggiorna_posizionex_su_righe_prec(int posizione, struct elemento *dato)
@@ -613,6 +684,7 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
       datoloc->datosotto1=NULL;
       datoloc->datosotto2=NULL;
       datoloc->orientamento=0;
+      datoloc->profondita = NULL;
       datoloc->posizionex = ix;
 
       switch (tipodatoattivo)
@@ -808,6 +880,12 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
         gtk_menu_append (GTK_MENU (menu), menu_items);
         gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
                   GTK_SIGNAL_FUNC (menuitem_response5), widget);
+        gtk_widget_show (menu_items);
+        sprintf(buf,"inserisci profondita' dei rami");
+        menu_items = gtk_menu_item_new_with_label (buf);
+        gtk_menu_append (GTK_MENU (menu), menu_items);
+        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (menuitem_response6), widget);
         gtk_widget_show (menu_items);
         sprintf(buf,"cancella orientamento");
         menu_items = gtk_menu_item_new_with_label (buf);
@@ -1038,9 +1116,10 @@ struct elemento * alloca_elemento( struct elemento *datoloc, int tipo, int archi
     datoloc = datoloc->datodopo;
   }
   datoloc->datodopo = NULL;
-  datoloc->datosotto1=NULL;
-  datoloc->datosotto2=NULL;
+  datoloc->datosotto1 = NULL;
+  datoloc->datosotto2 = NULL;
   datoloc->orientamento = 0;
+  datoloc->profondita = NULL;
   rigaattiva->archisup = rigaattiva->archisup + archiu;
   rigaattiva->archiinf = rigaattiva->archiinf + archid;
   datoloc->tipodato = tipo;
@@ -1048,7 +1127,7 @@ struct elemento * alloca_elemento( struct elemento *datoloc, int tipo, int archi
   datoloc->archiapertid = archid;
   ix = ix + 50;
   datoloc->posizionex  = ix;
-  return datoloc;
+  return datoloc; 
 } 
 
 void stampa(struct riga *riga) 
@@ -1232,6 +1311,14 @@ void salvadati(int fdes)
         break;
       case 2:
         write(fdes," X",2);
+        if (datoloc->orientamento == 6) 
+          write(fdes,"`",1);
+        if (datoloc->orientamento == 5)
+          write(fdes,"'",1);
+        if (datoloc->profondita != NULL) {
+          sprintf(buf,"%s",datoloc->profondita);
+          write(fdes,buf,strlen(buf));
+        }
         break;
       case 3:
         write(fdes," U",2);

@@ -19,6 +19,12 @@
 
 /* strutture locali */
 
+struct entries
+{
+  GtkWidget *entry;
+  GtkWidget *entry1;
+};
+
 struct file_gest
 {
   GtkWidget *filew;
@@ -75,7 +81,9 @@ void disegnatratti(GtkWidget *, struct elemento *, int);
 static void redraw_brush( GtkWidget *);
 static void draw_brush( GtkWidget *);
 static void enter_callback( GtkWidget *,GtkWidget *);
+static void enter_callback2( GtkWidget *,struct entries *);
 void richiede_profondita();
+void richiede_profondita_2rami();
 void menuitem_cancellaorientamento(GtkWidget *, GtkWidget *);
 void menuitem_response(GtkWidget *, GtkWidget *);
 void menuitem_response1(GtkWidget *, GtkWidget *);
@@ -83,6 +91,7 @@ void menuitem_response2(GtkWidget *, GtkWidget *);
 void menuitem_response3(GtkWidget *, GtkWidget *);
 void menuitem_response4(GtkWidget *, GtkWidget *);
 void menuitem_response5(GtkWidget *, GtkWidget *);
+void menuitem_response6(GtkWidget *, GtkWidget *);
 void aggiorna_posizionex_su_righe_prec(int, struct elemento *);
 void aggiorna_posizionex_su_righe_dopo(int, struct elemento *);
 void aggiorna_posizionex_su_riga(int, struct elemento *);
