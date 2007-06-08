@@ -14,8 +14,15 @@ int
 sketchcmp (struct sketch *s1, struct sketch *s2)
 {
   struct region *r1, *r2;
-  int res;
+  int diff, res;
 
+  /* set di criteri estetici */
+  /* primo: numero archi invisibili contati con la d */
+  diff = count_hidden_arcs(s1) - count_hidden_arcs(s2);
+  if (diff > 0) return (1);   /* s1 ha piu' archi nascosti */
+  if (diff < 0) return (-1);  /* s2 ha piu' archi nascosti */
+
+  /* set di criteri tecnici */
   /* primo criterio: numero di regioni */
   for (r1 = s1->regions, r2 = s2->regions;
        r1 && r2; r1 = r1->next, r2 = r2->next);
@@ -149,6 +156,23 @@ arccmp (struct arc *a1, struct arc *a2)
 
   /* altri criteri? */
   return (0);
+}
+
+int
+count_hidden_arcs (struct sketch *s)
+{
+  struct arc *a;
+  int k, count = 0;
+
+  for (a = s->arcs; a; a = a->next)
+  {
+    if (a->dvalues <= 0) return (1000);
+    for (k = 0; k < a->dvalues; k++)
+    {
+      count += a->depths[k];
+    }
+  }
+  return (count);
 }
 
 void

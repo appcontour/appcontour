@@ -130,6 +130,7 @@ int regioncmp (struct region *r1, struct region *r2);
 int bordercmp (struct border *b1, struct border *b2);
 int singlebordercmp (struct border *b1, struct border *b2);
 int arccmp (struct arc *a1, struct arc *a2);
+int count_hidden_arcs (struct sketch *s1);
 
 /* prototipi appcontour */
 
