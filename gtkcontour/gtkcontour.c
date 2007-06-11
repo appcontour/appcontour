@@ -230,8 +230,11 @@ static void enter_callback( GtkWidget *widget, GtkWidget *entry )
   gchar *entry_text;
   entry_text=(gchar *) malloc(12 * sizeof(gchar));
   entry_text = gtk_editable_get_chars (GTK_EDITABLE (entry),0,-1);
-  datoattivo->profondita = (gchar *) malloc((strlen(entry_text)+1)*sizeof(gchar));
-  sprintf(datoattivo->profondita,",%s",entry_text);
+  if (strlen(entry_text) != 0 ) {
+    datoattivo->profondita = (gchar *) malloc((strlen(entry_text)+1)*sizeof(gchar));
+    sprintf(datoattivo->profondita,",%s",entry_text);
+  }
+
   gtk_widget_destroy(gtk_widget_get_toplevel (widget));
 }
 
@@ -272,7 +275,7 @@ void richiede_profondita()
     g_signal_connect (G_OBJECT (entry), "activate",
                       G_CALLBACK (enter_callback),
                       (gpointer) entry);
-    gtk_entry_set_text (GTK_ENTRY (entry), "0");
+//    gtk_entry_set_text (GTK_ENTRY (entry), "0");
     gtk_box_pack_end (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
     gtk_widget_show (entry);
 
@@ -285,7 +288,7 @@ void richiede_profondita()
 }
 
 
-void richiede_profondita_2rami()
+void richiede_profondita_2rami(GtkWidget *wid)
 {
     GtkWidget *window;
     GtkWidget *table;
@@ -435,12 +438,10 @@ void menuitem_response5( GtkWidget *wid, GtkWidget *widget)
   datoattivo->orientamento=6;
 }
 
-void menuitem_response6( GtkWidget *wid, GtkWidget *widget)
-{
-
-  datoattivo->orientamento=6;
-  richiede_profondita_2rami();
-}
+//void menuitem_response6( GtkWidget *wid, GtkWidget *widget)
+//{
+//  richiede_profondita_2rami();
+//}
 
 void aggiorna_posizionex_su_righe_prec(int posizione, struct elemento *dato)
 {
@@ -885,7 +886,8 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
         gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (menuitem_response6), widget);
+                  GTK_SIGNAL_FUNC (richiede_profondita_2rami), NULL);
+//                  GTK_SIGNAL_FUNC (menuitem_response6), widget);
         gtk_widget_show (menu_items);
         sprintf(buf,"cancella orientamento");
         menu_items = gtk_menu_item_new_with_label (buf);
@@ -1276,7 +1278,7 @@ void salvadati(int fdes)
         if (datoloc->orientamento == 1)
         {
           write(fdes,"r",1);
-          if (*datoloc->profondita != 0) {
+          if (datoloc->profondita != NULL ) {
             sprintf(buf,"%s",datoloc->profondita);
             write(fdes,buf,strlen(buf));
           }
@@ -1284,7 +1286,7 @@ void salvadati(int fdes)
         else if (datoloc->orientamento == 2)
         {
           write(fdes,"l",1);
-          if (*datoloc->profondita != 0) {
+          if (datoloc->profondita != NULL) {
             sprintf(buf,"%s",datoloc->profondita);
             write(fdes,buf,strlen(buf));
           }
@@ -1295,7 +1297,7 @@ void salvadati(int fdes)
         if (datoloc->orientamento == 3)
         {
           write(fdes,"u",1);
-          if (*datoloc->profondita != 0) {
+          if (datoloc->profondita != NULL) {
             sprintf(buf,"%s",datoloc->profondita);
             write(fdes,buf,strlen(buf));
           }
@@ -1303,7 +1305,7 @@ void salvadati(int fdes)
         else if (datoloc->orientamento == 4)
         {
           write(fdes,"d",1);
-          if (*datoloc->profondita != 0) {
+          if (datoloc->profondita != NULL) {
             sprintf(buf,"%s",datoloc->profondita);
             write(fdes,buf,strlen(buf));
           }
@@ -1325,7 +1327,7 @@ void salvadati(int fdes)
         if (datoloc->orientamento == 1)
         {
           write(fdes,"r",1);
-          if (*datoloc->profondita != 0) {
+          if (datoloc->profondita != NULL) {
             sprintf(buf,"%s",datoloc->profondita);
             write(fdes,buf,strlen(buf));
           }
@@ -1333,7 +1335,7 @@ void salvadati(int fdes)
         else if (datoloc->orientamento == 2)
         {
           write(fdes,"l",1);
-          if (*datoloc->profondita != 0) {
+          if (datoloc->profondita != NULL) {
             sprintf(buf,"%s",datoloc->profondita);
             write(fdes,buf,strlen(buf));
           }
