@@ -207,7 +207,7 @@ gtk_graf_expose (GtkWidget *widget, GdkPixmap *pixmap, double time)
                      widget->allocation.height*(0.5-(a->y - ymed)*zoom) ,
                      widget->allocation.width*(0.5+(b->x - xmed)*zoom) ,
                      widget->allocation.height*(0.5-(b->y - ymed)*zoom) );
-      if (a->type == V_CUSP || a->type == V_CROSS)
+      if (a->type == V_CUSP || (a->type & V_CROSS))
       {
         gdk_gc_set_foreground(widget->style->fg_gc[widget->state],&color_point);
         gdk_draw_rectangle (pixmap,

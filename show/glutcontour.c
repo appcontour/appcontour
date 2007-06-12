@@ -96,7 +96,7 @@ display (void)
   glColor3f(1.0, 0.0, 0.0);  /* red */
   for (v = contour->vertex; v; v = v->next)
   {
-    switch (v->type)
+    switch (v->type & V_TYPES)
     {
       case V_CROSS:
       case V_CUSP:

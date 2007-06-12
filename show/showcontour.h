@@ -9,8 +9,15 @@
 
 #define V_REGULAR 1
 #define V_CUSP 2
-#define V_CROSS 3
 #define V_FIXED 4
+/* the following can coexist, check for crossing
+ * should be done with "xxx->type & V_CROSS"
+ * (bitwise and)
+ */
+#define V_CROSS 8
+#define V_TYPES 15         /* mask type information */
+#define V_CROSS_NWSE 16
+#define V_CROSS_NESW 32
 
 #define EVENT_REDISTRIBUTENODES 1
 #define EVENT_REPULSIVEENERGY 2

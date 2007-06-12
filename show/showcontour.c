@@ -56,6 +56,7 @@ int inherit_orientation (struct line *line);
 int inherit_earc (struct line *line);
 void setarcinfo (struct polyline *contour);
 int setarcinfo1 (struct line *l);
+int enforce_crossover_info (struct polyline *contour);
 struct earc *mergearcinfo (struct earc *arc1, struct earc *arc2);
 void check_contour (struct polyline *contour);
 void insertcusps (struct polyline *contour);
@@ -124,6 +125,7 @@ main (int argc, char *argv[])
 #endif
   discretizepolyline (contour);
   setarcinfo (contour);        /* initialize arc structure */
+  enforce_crossover_info (contour);
 
   check_contour (contour);
 
@@ -386,7 +388,7 @@ check_contour (struct polyline *contour)
       do {
         count++;
         assert (l->earc == arc);
-        assert (l->b->type != V_CROSS);
+        assert ((l->b->type & V_CROSS) == 0);
         if (l == line) found = 1;
       } while (l = l->b->line[1], l != first);
       assert (count == arc->numsegments);
@@ -396,8 +398,8 @@ check_contour (struct polyline *contour)
       last = arc->last;
       assert (first && last);
       assert (arc->loop == 0);
-      assert (first->a->type == V_CROSS);
-      assert (last->b->type == V_CROSS);
+      assert (first->a->type & V_CROSS);
+      assert (last->b->type & V_CROSS);
       found = 0;
       if (last == line) found = 1;
       count = 1;
@@ -405,7 +407,7 @@ check_contour (struct polyline *contour)
       {
         count++;
         assert (l->earc == arc);
-        assert (l->b->type != V_CROSS);
+        assert ((l->b->type & V_CROSS) == 0);
         if (l == line) found = 1;
       }
       assert (count == arc->numsegments);
@@ -425,7 +427,7 @@ setarcinfo (struct polyline *contour)
 
   for (p = contour->vertex; p; p = p->next)
   {
-    if (p->type != V_CROSS) continue;
+    if ((p->type & V_CROSS) == 0) continue;
     for (i = 0; i < 4; i++)
     {
       l = p->line[i];
@@ -444,7 +446,7 @@ if (l->earc->loop)
 
   for (p = contour->vertex; p; p = p->next)
   {
-    if (p->type == V_CROSS) continue;
+    if (p->type & V_CROSS) continue;
     l = p->line[1];
     if (l->earc->first) continue;
     iss1 = setarcinfo1 (l);
@@ -468,7 +470,7 @@ setarcinfo1 (struct line *l)
   int count;
 
   firstarc = l->earc;
-  if (l->a->type == V_CROSS)
+  if (l->a->type & V_CROSS)
     firstarc->first = l;
   else
     firstarc->loop = l;
@@ -485,10 +487,10 @@ setarcinfo1 (struct line *l)
       wl->earc = mergearcinfo (firstarc, wl->earc);
       if (wl->earc) wl->earc->refcount++;
     }
-    if ((p = wl->b)->type == V_CROSS) break;
+    if ((p = wl->b)->type & V_CROSS) break;
   } while (wl = p->line[1], wl != l);
 
-  if (p && p->type == V_CROSS) firstarc->last = wl;
+  if (p && p->type & V_CROSS) firstarc->last = wl;
 
   firstarc->numsegments = count;
   if (firstarc->loop) return (1);
@@ -516,6 +518,25 @@ mergearcinfo (struct earc *arc1, struct earc *arc2)
   return (arc1);
 }
 
+int
+enforce_crossover_info (struct polyline *contour)
+{
+  struct vertex *v;
+
+  for (v = contour->vertex; v; v = v->next)
+  {
+    if (v->type & V_CROSS)
+    {
+      if ((v->type & V_CROSS_NWSE) ||
+          (v->type & V_CROSS_NESW))
+      {
+        fprintf (stderr, "setting crossoverinfo not implemented\n");
+      }
+    }
+  }
+  return (1);
+}
+
 void
 insertcusps (struct polyline *contour)
 {
@@ -527,7 +548,7 @@ insertcusps (struct polyline *contour)
 
   for (p = contour->vertex; p; p = p->next)
   {
-    if (p->type != V_CROSS) continue;
+    if ((p->type & V_CROSS) == 0) continue;
     for (i = 0; i < 4; i++)
     {
       l = p->line[i];
@@ -544,7 +565,7 @@ insertcusps (struct polyline *contour)
 
   for (p = contour->vertex; p; p = p->next)
   {
-    if (p->type == V_CROSS) continue;
+    if (p->type & V_CROSS) continue;
     l = p->line[1];
     if (l->earc->cuspsinserted) continue;
     l->earc->cuspsinserted = 1;
@@ -577,7 +598,7 @@ insert_cusps_on_arc (struct line *l)
   int cusps, iss1, count, ccount, nnodes, nums;
 
   iss1 = 0;
-  if (l->a->type != V_CROSS) iss1 = 1;
+  if ((l->a->type & V_CROSS) == 0) iss1 = 1;
   arc = l->earc;
   cusps = arc->cusps;
   // nnodes = arc->numsegments/(cusps + 1) + 1;
@@ -589,7 +610,7 @@ insert_cusps_on_arc (struct line *l)
   do {
     count++;
     if (arc->d) wl->d = arc->d[ccount];
-    if ((p = wl->b)->type == V_CROSS) break;
+    if ((p = wl->b)->type & V_CROSS) break;
     if (count >= nnodes)
     {
       ccount++;
@@ -812,7 +833,7 @@ nextp (struct line *l, struct vertex *p)
 {
   int i;
 
-  if (p->type != V_CROSS) return (p->line[1]);
+  if ((p->type & V_CROSS) == 0) return (p->line[1]);
   for (i = 0; i < 4; i++)
   {
     if (p->line[i] == l) return (p->line[3-i]);
@@ -825,7 +846,7 @@ prevp (struct line *l, struct vertex *p)
 {
   int i;
 
-  if (p->type != V_CROSS) return (p->line[0]);
+  if ((p->type & V_CROSS) == 0) return (p->line[0]);
   for (i = 0; i < 4; i++)
   {
     if (p->line[i] == l) return (p->line[3-i]);
@@ -841,7 +862,7 @@ reorder_node_ptr (struct polyline *contour)
 
   for (v = contour->vertex; v; v = v->next)
   {
-    if (v->type == V_CROSS) continue;   /* non tocco l'ordine */
+    if (v->type & V_CROSS) continue;   /* non tocco l'ordine */
     if (v->line[0]->b != v)
     {
       ltemp = v->line[0];
@@ -956,7 +977,7 @@ redistributenodes (struct polyline *contour)
       if (forward) next = aline->b;
       assert (next != v);
       backidx = 1 - forward;
-      if (next->type == V_CROSS)
+      if (next->type & V_CROSS)
       {
         for (backidx = 0; backidx < 4; backidx++)
           if (next->line[backidx] == aline) break;
@@ -1036,7 +1057,7 @@ splitline (struct polyline *contour, struct line *line, double f)
   nline->a = p;
   nline->b = b;
   nl = 2;
-  if (b->type == V_CROSS) nl = 4;
+  if (b->type & V_CROSS) nl = 4;
   for (i = 0; i < nl; i++)
   {
     if (b->line[i] == line) b->line[i] = nline;
@@ -1145,7 +1166,7 @@ newvertex (struct polyline *contour, double x, double y, int type)
   int numarcs, i;
 
   numarcs = 2;
-  if (type == V_CROSS) numarcs = 4;
+  if (type & V_CROSS) numarcs = 4;
   v = (struct vertex *) malloc (sizeof (struct vertex) 
                          + numarcs*sizeof (struct line *));
   v->x = x;
@@ -1232,7 +1253,7 @@ buildpolyline (FILE *filein)
   struct polyline *contour;
   int goon, i, ii, k, prevdangnodes, dangind, prevdangind;
   int oriented, dangori;
-  int counttrans = 0, after;
+  int counttrans = 0, after, type;
 
   contour = (struct polyline *) malloc (sizeof (struct polyline));
   contour->vertex = 0;
@@ -1392,11 +1413,14 @@ buildpolyline (FILE *filein)
 
       case ME_CROSS_NWSE:
       case ME_CROSS_NESW:
-        fprintf (stderr, "warning: crossover modifier not implemented\n");
+        //fprintf (stderr, "warning: crossover modifier not implemented\n");
       case ME_CROSS:
+        type = V_CROSS;
+        if (morseevent.type == ME_CROSS_NWSE) type += V_CROSS_NWSE;
+        if (morseevent.type == ME_CROSS_NESW) type += V_CROSS_NESW;
         x += dx;
         y -= dy;
-        v1 = newvertex (contour, x, y + dy, V_CROSS);
+        v1 = newvertex (contour, x, y + dy, type);
         v4 = newvertex (contour, x, y + 2*dy, V_REGULAR);
         v5 = newvertex (contour, x + dx, y + dy, V_REGULAR);
         line = newline (contour, v1, v4);
@@ -1459,7 +1483,7 @@ buildpolyline (FILE *filein)
   {
     assert (v->line[0]);
     assert (v->line[1]);
-    if (v->type == V_CROSS) assert (v->line[2] && v->line[3]);
+    if (v->type & V_CROSS) assert (v->line[2] && v->line[3]);
   }
 
   /* orientazione degli archi */
@@ -1568,7 +1592,7 @@ inherit_orientation (struct line *line)
 
   goon = 0;
   v = line->a;  /* going back */
-  if (v->type != V_CROSS)
+  if ((v->type & V_CROSS) == 0)
   {
     wline = v->line[0];
     if (wline == line) wline = v->line[1];
@@ -1590,7 +1614,7 @@ inherit_orientation (struct line *line)
 
   v = line->b;  /* going forward */
 
-  if (v->type != V_CROSS)
+  if ((v->type & V_CROSS) == 0)
   {
     wline = v->line[0];
     if (wline == line) wline = v->line[1];
@@ -1625,7 +1649,7 @@ inherit_earc (struct line *line)
 
   goon = 0;
   v = line->a;  /* going back */
-  if (v->type != V_CROSS)
+  if ((v->type & V_CROSS) == 0)
   {
     wline = v->line[0];
     if (wline == line) wline = v->line[1];
@@ -1640,7 +1664,7 @@ inherit_earc (struct line *line)
 
   v = line->b;  /* going forward */
 
-  if (v->type != V_CROSS)
+  if ((v->type & V_CROSS) == 0)
   {
     wline = v->line[0];
     if (wline == line) wline = v->line[1];

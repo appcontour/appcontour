@@ -177,15 +177,15 @@ check_u_turn (struct polyline *contour, struct line *line)
   double vec1, vec2, vec3;
 
   a = line->a;
-  if (a->type == V_CROSS) return (0);
+  if (a->type & V_CROSS) return (0);
   b = line->b;
-  if (b->type == V_CROSS) return (0);
+  if (b->type & V_CROSS) return (0);
   linex = b->x - a->x;
   liney = b->y - a->y;
 
   l2 = b->line[1];
   c = l2->b;
-  if (c->type == V_CROSS) return (0);
+  if (c->type & V_CROSS) return (0);
   l2x = c->x - b->x;
   l2y = c->y - b->y;
 
@@ -193,7 +193,7 @@ check_u_turn (struct polyline *contour, struct line *line)
   if (abs (vec1) != 1.0) return (0);
   l3 = c->line[1];
   d = l3->b;
-  if (d->type == V_CROSS) return (0);
+  if (d->type & V_CROSS) return (0);
   l3x = d->x - c->x;
   l3y = d->y - c->y;
 
@@ -229,11 +229,11 @@ check_flip_left (struct polyline *contour, struct line *lab)
 
   a = lab->a;
   b = lab->b;
-  if (a->type == V_CROSS) return (0);
-  if (b->type == V_CROSS) return (0);
+  if (a->type & V_CROSS) return (0);
+  if (b->type & V_CROSS) return (0);
   lbc = b->line[1];
   c = lbc->b;
-  if (c->type == V_CROSS) return (0);
+  if (c->type & V_CROSS) return (0);
   ax = a->x;
   ay = a->y;
   abx = b->x - ax;
@@ -260,15 +260,15 @@ check_plateau (struct polyline *contour, struct line *line, int back)
   int vec1, vecgen, dimplateau, dx, dy, px, py;
 
   a = back ? line->b : line->a;
-  if (a->type == V_CROSS) return (0);
+  if (a->type & V_CROSS) return (0);
   b = back ? line->a : line->b;
-  if (b->type == V_CROSS) return (0);
+  if (b->type & V_CROSS) return (0);
   linex = b->x - a->x;
   liney = b->y - a->y;
 
   l2 = b->line[1 - back];
   c = back ? l2->a : l2->b;
-  if (c->type == V_CROSS) return (0);
+  if (c->type & V_CROSS) return (0);
   l2x = c->x - b->x;
   l2y = c->y - b->y;
   vec1 = - linex*l2y + liney*l2x;
@@ -284,7 +284,7 @@ check_plateau (struct polyline *contour, struct line *line, int back)
     lly = q->y - p->y;
     vecgen = - l2x*lly + l2y*llx;
     p = q;
-    if (q->type == V_CROSS) break;
+    if (q->type & V_CROSS) break;
     if (vecgen == vec1 || vecgen == - vec1) break;
   }
   dimplateau = i;
@@ -340,12 +340,12 @@ check_cross_turn (struct polyline *contour, struct line *line)
 
   lae = line;
   a = lae->a;
-  if (a->type != V_CROSS)
+  if ((a->type & V_CROSS) == 0)
   {
     backward4 = 1;
     a = lae->b;
   }
-  if (a->type != V_CROSS) return (0);
+  if ((a->type & V_CROSS) == 0) return (0);
   e = backward4 ? lae->a : lae->b;
   for (i4 = 0; i4 < 4; i4++)
   {
@@ -356,12 +356,12 @@ check_cross_turn (struct polyline *contour, struct line *line)
   lac1 = a->line[i2];
   c1 = lac1->b;
   if (c1 == a) {backward2 = 1; c1 = lac1->a;}
-  if (c1->type == V_CROSS) return (0);
+  if (c1->type & V_CROSS) return (0);
 
   lc1c2 = c1->line[1-backward2];
 
   c2 = backward2 ? lc1c2->a : lc1c2->b;
-  if (c2->type == V_CROSS) return (0);
+  if (c2->type & V_CROSS) return (0);
   lc2c3 = c2->line[1-backward2];
   c3 = backward2 ? lc2c3->a : lc2c3->b;
   TESTALIGNED (c1, c2, c3);
@@ -379,30 +379,30 @@ check_cross_turn (struct polyline *contour, struct line *line)
   lab1 = a->line[i1];
   b1 = lab1->b;
   if (b1 == a) {backward1 = 1; b1 = lab1->a;}
-  if (b1->type == V_CROSS) return (0);
+  if (b1->type & V_CROSS) return (0);
 
   lb1b2 = b1->line[1-backward1];
   b2 = backward1 ? lb1b2->a : lb1b2->b;
-  if (b2->type == V_CROSS) return (0);
+  if (b2->type & V_CROSS) return (0);
 
   lad = a->line[i3];
   d = lad->b;
   if (d == a) {backward3 = 1; d = lad->a;}
-  if (d->type == V_CROSS) return (0);
+  if (d->type & V_CROSS) return (0);
 
   TESTALIGNED (b2, c1, c2);
 
   lb2b3 = b2->line[1-backward1];
   b3 = backward1 ? lb2b3->a : lb2b3->b;
-  if (b3->type == V_CROSS) return (0);
+  if (b3->type & V_CROSS) return (0);
   TESTALIGNED (b1, b2, b3);
   lb3b4 = b3->line[1-backward1];
   b4 = backward1 ? lb3b4->a : lb3b4->b;
-  if (b4->type == V_CROSS) return (0);
+  if (b4->type & V_CROSS) return (0);
   TESTALIGNED (a, c1, b4);
   lb4b5 = b4->line[1-backward1];
   b5 = backward1 ? lb4b5->a : lb4b5->b;
-  if (b5->type == V_CROSS) return (0);
+  if (b5->type & V_CROSS) return (0);
   TESTALIGNED (b3, b4, b5);
 
   /* all conditions are satisfied! */
@@ -445,12 +445,12 @@ check_cross_slide (struct polyline *contour, struct line *line)
   double temp;
 
   a = line->a;
-  if (a->type != V_CROSS)
+  if ((a->type & V_CROSS) == 0)
   {
     backward1 = 1;
     a = line->b;
   }
-  if (a->type != V_CROSS) return (0);
+  if ((a->type & V_CROSS) == 0) return (0);
   for (i1 = 0; i1 < 4; i1++)
   {
     if (a->line[i1] == line) break;
@@ -468,9 +468,9 @@ check_cross_slide (struct polyline *contour, struct line *line)
   if (b1 == a) {backward3 = 1; b1 = lab1->a;}
   d1 = lad1->b;
   if (d1 == a) {backward4 = 1; d1 = lad1->a;}
-  if (b1->type == V_CROSS) return (0);
-  if (c1->type == V_CROSS) return (0);
-  if (d1->type == V_CROSS) return (0);
+  if (b1->type & V_CROSS) return (0);
+  if (c1->type & V_CROSS) return (0);
+  if (d1->type & V_CROSS) return (0);
 
   lc1c2 = c1->line[1-backward2];
   lb1b2 = b1->line[1-backward3];
@@ -523,12 +523,12 @@ check_cross_stairs (struct polyline *contour, struct line *line)
   int lab1x, lab1y, lb1b2x, lb1b2y, vec;
 
   a = line->a;
-  if (a->type != V_CROSS)
+  if ((a->type & V_CROSS) == 0)
   {
     backward1 = 1;
     a = line->b;
   }
-  if (a->type != V_CROSS) return (0);
+  if ((a->type & V_CROSS) == 0) return (0);
   for (i1 = 0; i1 < 4; i1++)
   {
     if (a->line[i1] == line) break;
@@ -537,10 +537,10 @@ check_cross_stairs (struct polyline *contour, struct line *line)
   lab1 = a->line[i3];
   b1 = lab1->b;
   if (b1 == a) {backward3 = 1; b1 = lab1->a;}
-  if (b1->type == V_CROSS) return (0);
+  if (b1->type & V_CROSS) return (0);
   lb1b2 = b1->line[1-backward3];
   b2 = backward3 ? lb1b2->a : lb1b2->b;
-  if (b2->type == V_CROSS) return (0);
+  if (b2->type & V_CROSS) return (0);
 
   lab1x = b1->x - a->x;
   lab1y = b1->y - a->y;
@@ -561,16 +561,16 @@ check_cross_stairs (struct polyline *contour, struct line *line)
   if (c1 == a) {backward2 = 1; c1 = lac1->a;}
   d1 = lad1->b;
   if (d1 == a) {backward4 = 1; d1 = lad1->a;}
-  if (c1->type == V_CROSS) return (0);
-  if (d1->type == V_CROSS) return (0);
+  if (c1->type & V_CROSS) return (0);
+  if (d1->type & V_CROSS) return (0);
 
   lc1c2 = c1->line[1-backward2];
   ld1d2 = d1->line[1-backward4];
 
   c2 = backward2 ? lc1c2->a : lc1c2->b;
   d2 = backward4 ? ld1d2->a : ld1d2->b;
-  if (c2->type == V_CROSS) return (0);
-  if (d2->type == V_CROSS) return (0);
+  if (c2->type & V_CROSS) return (0);
+  if (d2->type & V_CROSS) return (0);
   TESTALIGNED (b2, b1, c2);
   TESTALIGNED (a, d1, d2);
 
@@ -580,14 +580,14 @@ check_cross_stairs (struct polyline *contour, struct line *line)
 
   c3 = backward2 ? lc2c3->a : lc2c3->b;
   d3 = backward4 ? ld2d3->a : ld2d3->b;
-  if (c3->type == V_CROSS) return (0);
-  if (d3->type == V_CROSS) return (0);
+  if (c3->type & V_CROSS) return (0);
+  if (d3->type & V_CROSS) return (0);
   TESTALIGNED (c1, c2, c3);
   TESTALIGNED (b1, b2, d3);
 
   lc3c4 = c3->line[1-backward2];
   c4 = backward2 ? lc3c4->a : lc3c4->b;
-  if (c4->type == V_CROSS) return (0);
+  if (c4->type & V_CROSS) return (0);
   TESTALIGNED (a, b1, c4);
 
   //printf ("stairs found (%lf,%lf)\n", a->x, a->y);
@@ -641,9 +641,9 @@ check_lower_plateau (struct polyline *contour, struct line *line)
   int backward2, crossingfound = 0;
 
   a = line->a;
-  if (a->type == V_CROSS) return (0);
+  if (a->type & V_CROSS) return (0);
   b = line->b;
-  //if (b->type == V_CROSS) return (0);
+  //if (b->type & V_CROSS) return (0);
 
   abx = b->x - a->x;
   aby = b->y - a->y;
@@ -662,7 +662,7 @@ check_lower_plateau (struct polyline *contour, struct line *line)
   while (1)
   {
     count++;
-    if (b->type == V_CROSS)
+    if (b->type & V_CROSS)
     {
       for (i1 = 0; i1 < 4; i1++)
       {
@@ -677,7 +677,7 @@ check_lower_plateau (struct polyline *contour, struct line *line)
       bt = b->line[i2]->b;
       backward2 = 0;
       if (bt == b) {backward2 = 1; bt = b->line[i2]->a;}
-      if (bt->type == V_CROSS) return (0);
+      if (bt->type & V_CROSS) return (0);
       if (backward2)
       {
         btt = bt->line[0]->a;
@@ -697,10 +697,10 @@ check_lower_plateau (struct polyline *contour, struct line *line)
       qy = b->y - bprev->y;
       vecg = qx*aby - qy*abx;
       if (vecg == -vec) return (0);  /* not a plateau */
-      if (vecg == vec && bprev->type == V_CROSS) return (0);
+      if (vecg == vec && (bprev->type & V_CROSS)) return (0);
       if (vecg == vec)
       {
-        if (b->type == V_CROSS) return (0);
+        if (b->type & V_CROSS) return (0);
         break;        /* this IS a plateau */
       }
 
@@ -722,7 +722,7 @@ check_lower_plateau (struct polyline *contour, struct line *line)
   {
     b->x -= px;
     b->y -= py;
-    if (b->type == V_CROSS)
+    if (b->type & V_CROSS)
     {
       for (i1 = 0; i1 < 4; i1++)
       {
@@ -737,7 +737,7 @@ check_lower_plateau (struct polyline *contour, struct line *line)
       bt = l2->b;
       backward2 = 0;
       if (bt == b) {backward2 = 1; bt = b->line[i2]->a;}
-      assert (bt->type != V_CROSS);
+      assert ((bt->type & V_CROSS) == 0);
       bt->x += px;
       bt->y += py;
       l1 = b->line[i4];
@@ -801,17 +801,17 @@ check_unwind (struct polyline *contour, struct line *lb)
 
   e = lb->a;
   d = lb->b;
-  if (e->type != V_CROSS)
+  if ((e->type & V_CROSS) == 0)
   {
     backward1 = 1;
     e = lb->b;
     d = lb->a;
   }
-  if (e->type != V_CROSS) return (0);
-  if (d->type == V_CROSS) return (0);
+  if ((e->type & V_CROSS) == 0) return (0);
+  if (d->type & V_CROSS) return (0);
   la = d->line[1-backward1];
   g = backward1 ? la->a : la->b;
-  if (g->type == V_CROSS) return (0);
+  if (g->type & V_CROSS) return (0);
 
   dex = e->x - d->x;
   dey = e->y - d->y;
@@ -836,22 +836,22 @@ check_unwind (struct polyline *contour, struct line *lb)
 
   a = lc->b;
   if (a == e) {backward2 = 1; a = lc->a;}
-  if (a->type == V_CROSS) return (0);
+  if (a->type & V_CROSS) return (0);
   ld = a->line[1-backward2];
   b = backward2 ? ld->a : ld->b;
-  if (b->type == V_CROSS) return (0);
+  if (b->type & V_CROSS) return (0);
   TESTALIGNED (g, a, b);
   le = b->line[1-backward2];
   c = backward2 ? le->a : le->b;
-  if (c->type == V_CROSS) return (0);
+  if (c->type & V_CROSS) return (0);
   TESTALIGNED (a, b, c);
   lf = c->line[1-backward2];
   h = backward2 ? lf->a : lf->b;
-  if (h->type == V_CROSS) return (0);
+  if (h->type & V_CROSS) return (0);
 
   f = lg->b;
   if (f == e) {backward3 = 1; f = lg->a;}
-  if (f->type == V_CROSS) return (0);
+  if (f->type & V_CROSS) return (0);
   li = f->line[1-backward3];
 
   TESTALIGNED (e, f, h);

@@ -123,7 +123,7 @@ compute_energy (struct polyline *contour)
 
   for (p = contour->vertex; p; p = p->next)
   {
-    switch (p->type)
+    switch (p->type & V_TYPES)
     {
       case V_REGULAR:
       case V_CUSP:
@@ -196,7 +196,7 @@ compute_energy (struct polyline *contour)
 
   for (p = contour->vertex; p; p = p->next)
   {
-    switch (p->type)
+    switch (p->type & V_TYPES)
     {
       case V_REGULAR:
       case V_CUSP:
@@ -266,7 +266,7 @@ compute_gradient (struct polyline *contour)
 
   for (p = contour->vertex; p; p = p->next)
   {
-    switch (p->type)
+    switch (p->type & V_TYPES)
     {
       case V_REGULAR:
       case V_CUSP:
