@@ -23,6 +23,8 @@
 #define EVENT_REPULSIVEENERGY 2
 #define EVENT_KICKOUT 3
 
+#define MINF (-10000)
+
 //#define CHECK_GRADIENT 1
 
 extern char *xfigproblem;

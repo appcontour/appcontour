@@ -522,15 +522,56 @@ int
 enforce_crossover_info (struct polyline *contour)
 {
   struct vertex *v;
+  int incrnwse, incrnesw, goon;
+  int *d0, *d1, *d2, *d3;
 
-  for (v = contour->vertex; v; v = v->next)
+  goon = 1;
+  while (goon)
   {
-    if (v->type & V_CROSS)
+    goon = 0;
+    for (v = contour->vertex; v; v = v->next)
     {
-      if ((v->type & V_CROSS_NWSE) ||
-          (v->type & V_CROSS_NESW))
+      if (v->type & V_CROSS)
       {
-        fprintf (stderr, "setting crossoverinfo not implemented\n");
+        if ((v->type & V_CROSS_NWSE) ||
+            (v->type & V_CROSS_NESW))
+        {
+          incrnwse = incrnesw = 0;
+          if (v->type & V_CROSS_NWSE) incrnesw = 2;
+          if (v->type & V_CROSS_NESW) incrnwse = 2;
+          if (v->line[0]->b == v) incrnesw *= -1;
+          if (v->line[1]->a == v) incrnwse *= -1;
+          d0 = v->line[0]->earc->d;
+          d3 = v->line[3]->earc->d;
+          if (d0 && d0[0] > MINF && (d3 == 0 || d3[0] <= MINF))
+          {
+            goon = 1;
+            if (d3) fprintf (stderr, "caso non gestito ancora\n");
+            d3 = v->line[3]->earc->d = (int *) malloc (sizeof (int));
+            if (v->line[0]->a == v)  /* serve il primo valore */
+            {
+              d3[0] = d0[0] + incrnwse;
+            } else {
+              d3[0] = d0[v->line[0]->earc->cusps] + incrnwse;
+            }
+            //fprintf (stderr, "eredito nw->se (%d)\n", incrnwse);
+          }
+          d1 = v->line[1]->earc->d;
+          d2 = v->line[2]->earc->d;
+          if (d1 && d1[0] > MINF && (d2 == 0 || d2[0] <= MINF))
+          {
+            goon = 1;
+            if (d2) fprintf (stderr, "caso non gestito ancora\n");
+            d2 = v->line[2]->earc->d = (int *) malloc (sizeof (int));
+            if (v->line[1]->a == v)  /* serve il primo valore */
+            {
+              d2[0] = d1[0] + incrnesw;
+            } else {
+              d2[0] = d1[v->line[1]->earc->cusps] + incrnesw;
+            }
+            //fprintf (stderr, "eredito ne->sw (%d)\n", incrnesw);
+          }
+        }
       }
     }
   }
