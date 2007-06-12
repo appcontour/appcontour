@@ -67,6 +67,8 @@ getmorseevent (FILE *filein, struct morseevent *morseevent, int maxone)
     case ME_TOP:
     case ME_BOT:
     case ME_CROSS:
+    case ME_CROSS_NWSE:
+    case ME_CROSS_NESW:
 
     if (countspecial > 0)
     {
@@ -113,6 +115,8 @@ getmorseevent (FILE *filein, struct morseevent *morseevent, int maxone)
       break;
 
     case ME_CROSS:
+    case ME_CROSS_NWSE:
+    case ME_CROSS_NESW:
       countdanglingdown += 2;
       countdanglingup += 2;
       countspecial++;
@@ -174,6 +178,20 @@ getmorseeventl (FILE *filein, struct morseevent *morseevent)
 
     case KEY_X:
       morseevent->type = ME_CROSS;
+      /* look if there is a variant: ` or ' */
+      tok = gettokens (filein);
+      switch (tok)
+      {
+        case KEY_NWSE:
+          morseevent->type = ME_CROSS_NWSE;
+          break;
+        case KEY_NESW:
+          morseevent->type = ME_CROSS_NESW;
+          break;
+        default:
+          ungettoken (tok);
+          break;
+      }
       getarcinfo (filein, morseevent);
       break;
   }
@@ -186,7 +204,9 @@ getarcinfo (FILE *filein, struct morseevent *morseevent)
   getoricusps (filein, &morseevent->ori, &morseevent->arc);
   if (abs(morseevent->ori) == 2) morseevent->ori /= 2;
                                      /* significa speficicato left o right */
-  if (morseevent->type == ME_CROSS)
+  if (morseevent->type == ME_CROSS || 
+      morseevent->type == ME_CROSS_NWSE || 
+      morseevent->type == ME_CROSS_NESW)
   {
     getoricusps (filein, &morseevent->ori2, &morseevent->arc2);
     if (abs(morseevent->ori2) == 2) morseevent->ori2 /= -2;

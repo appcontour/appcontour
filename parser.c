@@ -118,8 +118,9 @@ gettoken (FILE *file)
   if (strcmp(tokenword,"d") == 0) return (KEY_DOWN);
   if (strcmp(tokenword,"f") == 0) return (KEY_F);
   if (strcmp(tokenword,"c") == 0) return (KEY_CUSP);
-  if (strcmp(tokenword,"`") == 0) return (KEY_NWSE);
-  if (strcmp(tokenword,"'") == 0) return (KEY_NESW);
+//  if (strcmp(tokenword,"`") == 0) return (KEY_NWSE);   /* INCONSISTENT */
+//  if (strcmp(tokenword,"'") == 0) return (KEY_NESW);   /* INCONSISTENT */
+  if (strcmp(tokenword,"'") == 0) return (KEY_QUOTE);
   if (strcmp(tokenword,"ne") == 0) return (KEY_NE);
   if (strcmp(tokenword,"nw") == 0) return (KEY_NW);
   if (strcmp(tokenword,"se") == 0) return (KEY_SE);

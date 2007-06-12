@@ -41,13 +41,15 @@
 #define TOK_KNOT 39
 #define TOK_TAG 40
 #define KEY_CUSP 41
-#define KEY_NWSE 42
-#define KEY_NESW 43
+#define KEY_QUOTE 42
 
 #define TOK_ERROR  9999
 #define TOK_EOF    9990
 #define TOK_CHAR   9991
 #define TOK_ID     9992
+
+#define KEY_NWSE KEY_BACKQUOTE
+#define KEY_NESW KEY_QUOTE
 
 /* prototypes for parser.c */
 

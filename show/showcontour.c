@@ -1265,6 +1265,8 @@ buildpolyline (FILE *filein)
         case ME_TOP:
         case ME_BOT:
         case ME_CROSS:
+        case ME_CROSS_NWSE:
+        case ME_CROSS_NESW:
           assert (after == 0);
           after = 1;
           break;
@@ -1282,6 +1284,8 @@ buildpolyline (FILE *filein)
           dy1 = dy12 = 0.0;
           break;
         case ME_CROSS:
+        case ME_CROSS_NWSE:
+        case ME_CROSS_NESW:
           dx1 = dx12 = dx;
           dy1 = 0.0;
           dy12 = dy;
@@ -1386,6 +1390,9 @@ buildpolyline (FILE *filein)
         v->line[1] = prevdanglingnodes[prevdangind++]->line[1] = line;
         break;
 
+      case ME_CROSS_NWSE:
+      case ME_CROSS_NESW:
+        fprintf (stderr, "warning: crossover modifier not implemented\n");
       case ME_CROSS:
         x += dx;
         y -= dy;
