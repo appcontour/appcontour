@@ -1,0 +1,14 @@
+#
+# apparent contour of a projective plane with one component
+# and one cusp, given by Kenneth C. Millet (Generic smooth maps of
+# surfaces, Topology and its Applications 18 (1984) 197--215
+#
+morse { 
+ ^l; 
+ | ^l ^l |; 
+ | | ^r X ^r | |; 
+ X | X X | X; 
+ | | U X[]c U | |; 
+ | U U |; 
+ U; 
+ } 
