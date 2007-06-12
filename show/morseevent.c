@@ -194,6 +194,11 @@ getarcinfo (FILE *filein, struct morseevent *morseevent)
   }
 }
 
+/*
+ * it is possible that only d is present (orientation should be
+ * inferred from arcs across noded)
+ */
+
 void
 getoricusps (FILE *filein, int *oript, struct earc **arcpt)
 {
@@ -274,7 +279,7 @@ getoricusps (FILE *filein, int *oript, struct earc **arcpt)
       }
     }
   }
-  if (*oript)
+  if (*oript || depthind > 0)
   {
     arc = *arcpt = (struct earc *) malloc (sizeof (struct earc));
     arc->cusps = arc->cuspsinserted = 0;

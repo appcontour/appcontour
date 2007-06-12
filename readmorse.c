@@ -519,8 +519,15 @@ getarcinfo (int key, FILE *file,
     orientation = tok;
     tok = gettokens (file);
   }
-  if (tok == TOK_COMMA || tok == ISNUMBER || tok == KEY_CUSP)
+  if (tok == TOK_COMMA || tok == ISNUMBER || tok == KEY_CUSP || 
+      tok == TOK_PLUS || tok == TOK_MINUS)
   {
+    if (tok == TOK_PLUS || tok == TOK_MINUS)
+    {
+      /* must simulate a 0 as a starting number */
+      prevd = depths[depthind++] = 0;
+      ungettoken (tok);
+    }
     if (tok == ISNUMBER || tok == KEY_CUSP) ungettoken (tok);
     prevd = 0;
     while ((tok = gettokens (file)) == ISNUMBER || 

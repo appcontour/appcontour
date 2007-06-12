@@ -53,6 +53,7 @@ struct line *newline (struct polyline *contour,
                       struct vertex *a, 
                       struct vertex *b);
 int inherit_orientation (struct line *line);
+int inherit_earc (struct line *line);
 void setarcinfo (struct polyline *contour);
 int setarcinfo1 (struct line *l);
 struct earc *mergearcinfo (struct earc *arc1, struct earc *arc2);
@@ -1476,6 +1477,35 @@ buildpolyline (FILE *filein)
     }
   }
 
+  /* inherit arc info */
+
+  goon = 1;
+  while (goon)
+  {
+    while (goon)
+    {
+      goon = 0;
+      for (line = contour->line; line; line = line->next)
+      {
+        if (line->earc != 0 && inherit_earc (line)) goon = 1;
+      }
+    }
+    for (line = contour->line; line; line = line->next)
+    {
+      if (line->earc == 0)
+      {
+        line->earc = (struct earc *) malloc (sizeof (struct earc));
+        line->earc->cusps = line->earc->cuspsinserted = 0;
+        line->earc->first = line->earc->last = line->earc->loop = 0;
+        line->earc->refcount = 1;
+        line->earc->d = 0;
+        goon = 1;
+        break;
+        // fprintf (stderr, "arc without earc info\n");
+      }
+    }
+  }
+
   if (oriented == 0) fprintf (stderr, "Cannot orient arc\n");
 
   return (contour);
@@ -1512,6 +1542,7 @@ renormalize (struct polyline *contour)
 }
 
 /* inherit orientation to directly adjacent arcs */
+/* also inherit across nodes! */
 
 int
 inherit_orientation (struct line *line)
@@ -1534,20 +1565,67 @@ inherit_orientation (struct line *line)
   {
     wline = v->line[0];
     if (wline == line) wline = v->line[1];
+  } else wline = prevp (line, v);
+  assert (wline && wline != line);
+  if (wline->a == v)
+  {
+    vtemp = wline->a;
+    wline->a = wline->b;
+    wline->b = vtemp;
+    wline->orientation *= -1;
+  }
+  if (wline->orientation < 0) fprintf (stderr, "Conflicting orientations\n");
+  if (wline->orientation == 0)
+  {
+    goon = 1;
+    wline->orientation = 1;
+  }
+
+  v = line->b;  /* going forward */
+
+  if (v->type != V_CROSS)
+  {
+    wline = v->line[0];
+    if (wline == line) wline = v->line[1];
+  } else wline = nextp (line, v);
+  assert (wline && wline != line);
+  if (wline->b == v)
+  {
+    vtemp = wline->a;
+    wline->a = wline->b;
+    wline->b = vtemp;
+    wline->orientation *= -1;
+  }
+  if (wline->orientation < 0) fprintf (stderr, "Conflicting orientations\n");
+  if (wline->orientation == 0)
+  {
+    goon = 1;
+    wline->orientation = 1;
+  }
+
+  return (goon);
+}
+
+/* inherit earc info to directly adjacent arcs */
+/* we can assume that arcs are all oriented (but not the nodes) */
+
+int
+inherit_earc (struct line *line)
+{
+  struct line *wline;
+  struct vertex *v;
+  int goon;
+
+  goon = 0;
+  v = line->a;  /* going back */
+  if (v->type != V_CROSS)
+  {
+    wline = v->line[0];
+    if (wline == line) wline = v->line[1];
     assert (wline && wline != line);
-    if (wline->a == v)
-    {
-      vtemp = wline->a;
-      wline->a = wline->b;
-      wline->b = vtemp;
-      wline->orientation *= -1;
-    }
-    if (wline->orientation < 0) fprintf (stderr, "Conflicting orientations\n");
-    if (wline->orientation == 0)
+    if (wline->earc == 0)
     {
       goon = 1;
-      wline->orientation = 1;
-      assert (wline->earc == 0);
       wline->earc = line->earc;
       wline->earc->refcount++;
     }
@@ -1559,19 +1637,10 @@ inherit_orientation (struct line *line)
   {
     wline = v->line[0];
     if (wline == line) wline = v->line[1];
-    if (wline->b == v)
-    {
-      vtemp = wline->a;
-      wline->a = wline->b;
-      wline->b = vtemp;
-      wline->orientation *= -1;
-    }
-    if (wline->orientation < 0) fprintf (stderr, "Conflicting orientations\n");
-    if (wline->orientation == 0)
+    assert (wline && wline != line);
+    if (wline->earc == 0)
     {
       goon = 1;
-      wline->orientation = 1;
-      assert (wline->earc == 0);
       wline->earc = line->earc;
       wline->earc->refcount++;
     }

@@ -45,6 +45,13 @@ struct polyline {
   int rgraddim;
 };
 
+/*
+ * please note, in case of CROSSING, we have 4 lines coming out from
+ * a node; they are numbered from 0 to 3 in such a way that
+ * 3 - i give the opposite line (the one that continues directly
+ * across the node)
+ */
+
 struct vertex {
   int tag;
   int type;
