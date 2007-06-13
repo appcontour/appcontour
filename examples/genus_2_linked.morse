@@ -1,3 +1,11 @@
+#
+# apparent contour of a surface with two holes
+# (genus 2) that are linked together
+# the interesting fact is that this surface
+# can be deformed isotopically into the unlinked
+# version
+#
+
 morse {
  ^l0 ^l0 ;
 | ^r0 X` ^r0 | ;
@@ -8,4 +16,4 @@ morse {
 | U X` U | ;
 | U | ;
   U ;
-};
+}
