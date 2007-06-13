@@ -108,7 +108,8 @@ which counts the number of arcs, extended arcs, nodes, cusps
 and other information regarding the 2D apparent contour; it also
 outpus the number of connected components and the total Euler 
 characteristic of the 3D scene corresponding to the contour.
-
+A recent addition is the computation of the three Aicardi-Ohmoto
+invariants.
 
 
 

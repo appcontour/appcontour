@@ -1,3 +1,11 @@
+2007-06-13: showcontour can now deal with most of the new
+	extensions for the morse description, specifically, inheritance
+	of orientation across arcs and recognition of the X' and X`
+	variants for bridged crossings.
+
+2007-06-06: added folder "gtkcontour" (Pasquarelli) holding the
+	project for a graphical frontend to contour.
+
 2007-05-07: commands "iscontour" and "ishuffman" check a given
 	morse (or region) description for consistency as an
 	apparent contour without/with huffman labelling.

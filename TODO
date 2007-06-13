@@ -1,2 +1,3 @@
-showcontour:
-	export in formato xfig e postscript
+showcontour: deal with e.g. " X'[++][-+] " i.e. crossing with
+information on crossover plus information on cusps
+

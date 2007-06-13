@@ -1,0 +1,13 @@
+#
+# milnor curve (apparent contour of a sphere)
+#
+
+morse {
+        ^l       ;
+ /   ^l    ^l  \ ;
+( /  ^r X  ^r \ );
+ X  (  X X  )  X ;
+( \  U  X  U  / );
+ \    U   U    / ;
+        U        ;
+}
