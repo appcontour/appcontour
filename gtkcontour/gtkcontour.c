@@ -1200,8 +1200,16 @@ int getarcinfo (FILE *file,gchar *buffer)
   buffpt = buffer;
 
   tok = gettokens (file);
+  if (tok == KEY_NWSE) {
+      orientamento = 6;
+      tok = gettokens (file);
+  }
+  if (tok == KEY_NESW) {
+      orientamento = 5;
+      tok = gettokens (file);
+  }
   if (tok == ISNUMBER || tok == KEY_CUSP || tok == KEY_LEFT ||
-      tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
+      tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN || tok == TOK_COMMA)
   {
     ungettoken (tok);
     tok = TOK_LBRACKET;
@@ -1214,28 +1222,23 @@ int getarcinfo (FILE *file,gchar *buffer)
   }
   tok = gettokens (file);
   if (tok == TOK_RBRACKET) {
-    tok = gettokens (file);
-    return(200);
+    return(200+orientamento);
   }
 
   switch (tok) {
     case KEY_LEFT:
-//      *buffpt++ ='l';
       orientamento = 2; 
       tok = gettokens (file);
       break;
     case KEY_RIGHT:
-//      *buffpt++ ='r';
       orientamento = 1; 
       tok = gettokens (file);
       break;
     case KEY_UP:
-//      *buffpt++ ='u';
       orientamento = 3; 
       tok = gettokens (file);
       break;
     case KEY_DOWN:
-//      *buffpt++ ='d';
       orientamento = 4; 
       tok = gettokens (file);
       break;
@@ -1348,10 +1351,13 @@ void leggidati(const gchar *nomefile)
             break;
           case KEY_X:
             datoloc = alloca_elemento(datoloc,2,2,2);
-            if ((getarcinfo (filein,buffer) == 200) || strlen(buffer) != 0) {
+            datoloc->orientamento=getarcinfo (filein,buffer);
+            if (datoloc->orientamento >= 200 || strlen(buffer) != 0) {
               datoloc->profondita = (gchar *) malloc((strlen(buffer)+2) * sizeof(gchar));
               sprintf(datoloc->profondita,"[%s]",buffer);
             }
+            if (datoloc->orientamento >= 200)
+              datoloc->orientamento = datoloc->orientamento - 200;  
             buffer[0] = '\0';
             getarcinfo (filein,buffer);
             if (strlen(buffer) != 0) {
