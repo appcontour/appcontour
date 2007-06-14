@@ -54,7 +54,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 gtkcontour_SOURCES = gtkcontour.c
 gtkcontour_OBJECTS = gtkcontour.$(OBJEXT)
-gtkcontour_LDADD = $(LDADD)
+gtkcontour_DEPENDENCIES = parser.o
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -159,8 +159,9 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = 
-gtkcontour = gtkcontour.c gtkcontour.h
+gtkcontour = gtkcontour.c gtkcontour.h parser.c parser.h
 EXTRA_DIST = 
+gtkcontour_LDADD = parser.o
 AM_CFLAGS = -Wall
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive

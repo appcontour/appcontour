@@ -1,5 +1,6 @@
 #include "gtkcontour.h"
-
+#include "parser.h"
+  
 static void gtk_add_column(GtkWidget *widget)
 {
   if ( ix+45 >= width_max)
@@ -199,6 +200,12 @@ static void redraw_brush( GtkWidget *widget)
       disegnatratti(widget,datoloc,y);
       gdk_draw_drawable (pixmap, widget->style->black_gc, pixmapp,
                    0,0, x , y, 40,40);
+      if (datoloc->profondita != NULL) {
+        sprintf(stampa,"%s",datoloc->profondita);
+        pangolayout=gtk_widget_create_pango_layout(widget,stampa);
+        gdk_draw_layout(pixmap,widget->style->black_gc,x+40,y+10,pangolayout);
+      }
+  
       gtk_widget_queue_draw_area (widget, 155,y-5, width_max,50);
 
       datoloc = datoloc->datodopo;
@@ -236,6 +243,7 @@ static void enter_callback( GtkWidget *widget, GtkWidget *entry )
   }
 
   gtk_widget_destroy(gtk_widget_get_toplevel (widget));
+  gtk_main_quit();
 }
 
 static void enter_callback2( GtkWidget *widget, struct entries *entry )
@@ -248,10 +256,11 @@ static void enter_callback2( GtkWidget *widget, struct entries *entry )
   entry_text = gtk_editable_get_chars (GTK_EDITABLE (entry->entry1),0,-1);
   if (strlen(entry_text) != 0 ) {
     entry_text1 = datoattivo->profondita;
-    datoattivo->profondita = (gchar *) malloc((strlen(entry_text1)+strlen(entry_text)+1)*sizeof(gchar));
-    sprintf(datoattivo->profondita,"%s,%s",entry_text1,entry_text);
+    datoattivo->profondita = (gchar *) malloc((strlen(entry_text1)+strlen(entry_text)+3)*sizeof(gchar));
+    sprintf(datoattivo->profondita,"[%s]%s",entry_text1,entry_text);
   }
   gtk_widget_destroy(gtk_widget_get_toplevel (widget));
+  gtk_main_quit();
 }
 
 void richiede_profondita()
@@ -285,6 +294,7 @@ void richiede_profondita()
     entry = gtk_entry_new ();
 
     gtk_widget_show (window);
+    gtk_main();
 }
 
 
@@ -331,6 +341,8 @@ void richiede_profondita_2rami(GtkWidget *wid)
                       (gpointer) entries_local);
 
     gtk_widget_show (window);
+    gtk_main();
+    redraw_brush(wid);
 }
 
 void menuitem_cancellaorientamento(GtkWidget *wid, GtkWidget *widget)
@@ -359,10 +371,10 @@ void menuitem_response(GtkWidget *wid, GtkWidget *widget)
   pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
-  draw_brush(wid);
 
   datoattivo->orientamento=1;
   richiede_profondita();
+  redraw_brush(wid);
 }
 
 void menuitem_response1(GtkWidget *wid, GtkWidget *widget)
@@ -374,10 +386,11 @@ void menuitem_response1(GtkWidget *wid, GtkWidget *widget)
   pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
-  draw_brush(wid);
+//  draw_brush(wid);
 
   datoattivo->orientamento=2;
   richiede_profondita();
+  redraw_brush(wid);
 }
 
 void menuitem_response2( GtkWidget *wid, GtkWidget *widget)
@@ -389,10 +402,10 @@ void menuitem_response2( GtkWidget *wid, GtkWidget *widget)
   pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
-  draw_brush(wid);
 
   datoattivo->orientamento=3;
   richiede_profondita();
+  redraw_brush(wid);
 }
 
 void menuitem_response3( GtkWidget *wid, GtkWidget *widget)
@@ -404,10 +417,10 @@ void menuitem_response3( GtkWidget *wid, GtkWidget *widget)
   pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
-  draw_brush(wid);
 
   datoattivo->orientamento=4;
   richiede_profondita();
+  redraw_brush(wid);
 }
 
 void menuitem_response4( GtkWidget *wid, GtkWidget *widget)
@@ -419,9 +432,10 @@ void menuitem_response4( GtkWidget *wid, GtkWidget *widget)
   pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
-  draw_brush(wid);
 
   datoattivo->orientamento=5;
+  redraw_brush(wid);
+
 }
 
 void menuitem_response5( GtkWidget *wid, GtkWidget *widget)
@@ -433,15 +447,10 @@ void menuitem_response5( GtkWidget *wid, GtkWidget *widget)
   pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
-  draw_brush(wid);
 
   datoattivo->orientamento=6;
+  redraw_brush(wid);
 }
-
-//void menuitem_response6( GtkWidget *wid, GtkWidget *widget)
-//{
-//  richiede_profondita_2rami();
-//}
 
 void aggiorna_posizionex_su_righe_prec(int posizione, struct elemento *dato)
 {
@@ -886,7 +895,7 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
         gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (richiede_profondita_2rami), NULL);
+                  GTK_SIGNAL_FUNC (richiede_profondita_2rami), widget);
 //                  GTK_SIGNAL_FUNC (menuitem_response6), widget);
         gtk_widget_show (menu_items);
         sprintf(buf,"cancella orientamento");
@@ -1129,7 +1138,7 @@ struct elemento * alloca_elemento( struct elemento *datoloc, int tipo, int archi
   datoloc->archiapertid = archid;
   ix = ix + 50;
   datoloc->posizionex  = ix;
-  return datoloc; 
+  return (datoloc); 
 } 
 
 void stampa(struct riga *riga) 
@@ -1181,27 +1190,118 @@ void sistemo_posizione(void)
   }
 }
 
+int getarcinfo (FILE *file,gchar *buffer)
+{
+  int tok, orientamento;
+  int require_rbr = 1;
+  gchar *buffpt;
+
+  orientamento = 0;
+  buffpt = buffer;
+
+  tok = gettokens (file);
+  if (tok == ISNUMBER || tok == KEY_CUSP || tok == KEY_LEFT ||
+      tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
+  {
+    ungettoken (tok);
+    tok = TOK_LBRACKET;
+    require_rbr = 0;
+  }
+  if (tok != TOK_LBRACKET)
+  {
+    ungettoken (tok);
+    return(0);
+  }
+  tok = gettokens (file);
+  if (tok == TOK_RBRACKET) {
+    tok = gettokens (file);
+    return(200);
+  }
+
+  switch (tok) {
+    case KEY_LEFT:
+//      *buffpt++ ='l';
+      orientamento = 2; 
+      tok = gettokens (file);
+      break;
+    case KEY_RIGHT:
+//      *buffpt++ ='r';
+      orientamento = 1; 
+      tok = gettokens (file);
+      break;
+    case KEY_UP:
+//      *buffpt++ ='u';
+      orientamento = 3; 
+      tok = gettokens (file);
+      break;
+    case KEY_DOWN:
+//      *buffpt++ ='d';
+      orientamento = 4; 
+      tok = gettokens (file);
+      break;
+  }
+   
+  if (tok == TOK_COMMA || tok == ISNUMBER || tok == KEY_CUSP)
+  {
+    if (tok == ISNUMBER || tok == KEY_CUSP) ungettoken (tok);
+    while ((tok = gettokens (file)) == ISNUMBER ||
+            tok == TOK_PLUS || tok == TOK_MINUS || tok == KEY_CUSP)
+    {
+      switch (tok) {
+        case ISNUMBER:
+          *buffpt++ = gettokenchar();
+        break;
+        case TOK_PLUS:
+          *buffpt++ = '+';
+        break;
+        case TOK_MINUS:
+          *buffpt++ = '-';
+        break;
+       case KEY_CUSP:
+          *buffpt++ = 'c';
+        break;
+      }
+    }
+  }
+  *buffpt = '\0';
+  if (require_rbr == 0)
+  {
+    ungettoken (tok);
+    tok = TOK_RBRACKET;
+  }
+  if (tok != TOK_RBRACKET)
+  {
+    fprintf (stderr, "Error: right paren expected: %d\n", tok);
+  }
+  return (orientamento);
+}
+
 void leggidati(const gchar *nomefile)
 {
   FILE *filein;
 //  struct riga *riga;
   struct elemento *datoloc;
-//  struct elemento *datodopo;
-  gchar valoreletto[80];
-//  gchar valorelavoro[5];
-  int indice;
-  char *err;
+  gchar *buffer, *supp;
+  int tok;
 
+  buffer = (gchar *) malloc( 100 * sizeof (gchar));
   filein=fopen(nomefile,"r");
-  err=fgets(valoreletto,80,filein);
-  
-  while (strncmp(valoreletto,"morse",5) && err != NULL)
-    err=fgets(valoreletto,80,filein);
-
-  if (err == NULL)
+  tok = gettoken(filein);
+ 
+  if ( tok != TOK_MORSE) { 
     g_print("il file selezionato non contiene una descrizione morse \n");
-  else
-  {
+    fclose(filein);
+    return;
+  }
+
+  tok = gettoken(filein);
+
+  if ( tok != TOK_LBRACE){
+    g_print("il file selezionato non contiene una descrizione morse \n");
+    fclose(filein);
+    return;
+  }
+  
     free(primariga);
 
     ix=155;
@@ -1215,10 +1315,9 @@ void leggidati(const gchar *nomefile)
     rigaattiva->posizione=iy;
     primariga=rigaattiva;
     datoloc = NULL;
-    while ((indice=getc(filein)) != '}' )
-    {
-      if ( indice == ';')
-      {
+    while ((tok=gettokens(filein)) != TOK_RBRACE ) {
+      buffer[0] = '\0';
+      if ( tok == TOK_SEMICOLON) {
         rigaattiva->rigadopo=(struct riga * ) malloc(sizeof(struct riga));
         rigaattiva->rigadopo->rigaprima = rigaattiva;
         rigaattiva = rigaattiva->rigadopo;
@@ -1231,19 +1330,59 @@ void leggidati(const gchar *nomefile)
         rigaattiva->posizione=iy;
         datoloc = NULL;
       }
-      else
-      {
-        if (indice == '(' || indice == ')' || indice =='\\' || indice == '|' || indice == '/')
-          datoloc = alloca_elemento(datoloc,1,1,1);
-        else if ( indice == 'X')
-          datoloc = alloca_elemento(datoloc,2,2,2);
-        else if ( indice == 'U')
-          datoloc = alloca_elemento(datoloc,3,2,0);
-        else if ( indice == '^')
-          datoloc = alloca_elemento(datoloc,0,0,2);
+      else {
+        switch (tok)
+        {
+          case TOK_LPAREN:
+          case TOK_RPAREN:
+          case KEY_I:
+          case KEY_SLASH:
+          case KEY_PIPE:
+          case KEY_BSLASH:
+            datoloc = alloca_elemento(datoloc,1,1,1);
+            datoloc->orientamento = getarcinfo (filein,buffer);
+            if (strlen(buffer) != 0){
+              datoloc->profondita = (gchar *) malloc(strlen(buffer) * sizeof(gchar));
+              sprintf(datoloc->profondita,"%s",buffer);
+            }
+            break;
+          case KEY_X:
+            datoloc = alloca_elemento(datoloc,2,2,2);
+            if ((getarcinfo (filein,buffer) == 200) || strlen(buffer) != 0) {
+              datoloc->profondita = (gchar *) malloc((strlen(buffer)+2) * sizeof(gchar));
+              sprintf(datoloc->profondita,"[%s]",buffer);
+            }
+            buffer[0] = '\0';
+            getarcinfo (filein,buffer);
+            if (strlen(buffer) != 0) {
+              supp = datoloc->profondita;
+              datoloc->profondita = (gchar *) malloc((strlen(buffer) + strlen(supp) +2) * sizeof(gchar));
+              sprintf(datoloc->profondita,"%s[%s]",supp,buffer);
+            }
+            break;
+          case KEY_U:
+          case KEY_V:
+            datoloc = alloca_elemento(datoloc,3,2,0);
+            datoloc->orientamento = getarcinfo (filein,buffer);
+            if (strlen(buffer) != 0){
+              datoloc->profondita = (gchar *) malloc(strlen(buffer) * sizeof(gchar));
+              sprintf(datoloc->profondita,"%s",buffer);
+            }
+            break;
+          case KEY_A:
+          case KEY_HAT:
+            datoloc = alloca_elemento(datoloc,0,0,2);
+            datoloc->orientamento = getarcinfo (filein,buffer);
+            if (strlen(buffer) != 0){
+              datoloc->profondita = (gchar *) malloc(strlen(buffer) * sizeof(gchar));
+              sprintf(datoloc->profondita,"%s",buffer);
+            }
+            break;
+          default:
+            printf("token ignorato %d \n", tok);
+         } 
       }
    }
-  }
   fclose(filein);
   if (rigaattiva->dato == NULL)
     rigaattiva->rigaprima->rigadopo = NULL;
@@ -1344,7 +1483,7 @@ void salvadati(int fdes)
       }
       datoloc=datoloc->datodopo;
     } 
-    write(fdes,"; \n",3);
+    write(fdes," ; \n",3);
     rigaloc=rigaloc->rigadopo;
   }
   write(fdes," } \n",4);

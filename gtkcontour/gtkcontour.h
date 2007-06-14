@@ -106,6 +106,7 @@ void file_ok_sel( struct file_gest *, GdkEventExpose *, GtkWidget *);
 struct elemento * alloca_elemento( struct elemento *, int , int , int );
 void stampa(struct riga *);
 void sistemo_posizione(void);
+int getarcinfo (FILE *,gchar *);
 void leggidati(const gchar *);
 void salvadati(int );
 char * trovacomando(void);
