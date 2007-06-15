@@ -1,8 +1,15 @@
 #include <assert.h>
 #include <string.h>
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+  #include <config.h>
 #endif
+
+#ifdef HAVE_UNISTD_H
+  #include <unistd.h>
+  #include <sys/types.h>
+  #include <sys/wait.h>
+#endif
+
 #include "contour.h"
 #include "parser.h"
 #include "hacon.h"
@@ -319,10 +326,55 @@ struct sketch *
 readcontour (FILE *file)
 {
   int tok;
+#ifdef HAVE_UNISTD_H
+  int retcode, status, cpid;
+  int pipedes[2];
+  struct sketch *s;
+  FILE *tomorsefile;
+#endif
+
   tok = gettoken (file);
 
   if (tok == TOK_MORSE) return (readmorse (file));
   if (tok == TOK_SKETCH) return (readsketch (file));
+#ifdef HAVE_UNISTD_H
+  if (tok == TOK_KNOT)
+  {
+    printf ("reading knot description\n");
+    retcode = pipe (pipedes);
+    cpid = fork ();
+    if (cpid < 0) exit (123);
+    if (cpid == 0)  /* this is the child */
+    {
+      /* the child only writes on pipe */
+      close (pipedes[0]);
+      /* function knot2morse writes on stdout, changing descriptor */
+      retcode = dup2 (pipedes[1], 1);
+      if (retcode < 0) {perror ("error in dup2"); exit (222);}
+      ungettoken (tok);
+      retcode = knot2morse (file);
+      close (pipedes[1]);
+      if (retcode) exit (0);
+      exit (333);
+    } else {        /* this is the parent */
+      /* the parent reads from the pipe */
+      close (pipedes[1]);
+      tomorsefile = fdopen (pipedes[0],"r");
+      tok = gettoken (tomorsefile);
+      if (tok != TOK_MORSE)
+      {
+        fprintf (stderr, "invalid token %d from knot2morse\n", tok);
+        fclose (tomorsefile);
+        return (0);
+      }
+      s = readmorse (tomorsefile);
+      fclose (tomorsefile);
+      waitpid (cpid, &status, 0);
+      retcode = WEXITSTATUS (status);
+      return (s);
+    }
+  }
+#endif
   fprintf (stderr, "Only 'morse'/'sketch' formats implemented\n");
   return (0);
 }

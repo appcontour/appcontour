@@ -1,3 +1,8 @@
+2007-06-15: now contour can directly operate on "knot" descriptions
+	(it was only possible to convert knot to morse).  This
+	is done by forking contour and using a pipe.  This only
+	works on a unix environment.
+
 2007-06-13: showcontour can now deal with most of the new
 	extensions for the morse description, specifically, inheritance
 	of orientation across arcs and recognition of the X' and X`
