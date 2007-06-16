@@ -36,10 +36,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 bin_PROGRAMS = gtkcontour$(EXEEXT)
 subdir = .
-DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL NEWS \
-	depcomp install-sh missing
+DIST_COMMON = README $(am__configure_deps) $(srcdir)/../depcomp \
+	$(srcdir)/../install-sh $(srcdir)/../missing \
+	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	$(srcdir)/config.h.in $(top_srcdir)/configure AUTHORS COPYING \
+	ChangeLog INSTALL NEWS
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -52,18 +53,18 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-gtkcontour_SOURCES = gtkcontour.c
-gtkcontour_OBJECTS = gtkcontour.$(OBJEXT)
+am_gtkcontour_OBJECTS = gtkcontour.$(OBJEXT) parser.$(OBJEXT)
+gtkcontour_OBJECTS = $(am_gtkcontour_OBJECTS)
 gtkcontour_DEPENDENCIES = parser.o
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
-depcomp = $(SHELL) $(top_srcdir)/depcomp
+depcomp = $(SHELL) $(top_srcdir)/../depcomp
 am__depfiles_maybe = depfiles
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = gtkcontour.c
-DIST_SOURCES = gtkcontour.c
+SOURCES = $(gtkcontour_SOURCES)
+DIST_SOURCES = $(gtkcontour_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -159,7 +160,7 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = 
-gtkcontour = gtkcontour.c gtkcontour.h parser.c parser.h
+gtkcontour_SOURCES = gtkcontour.c gtkcontour.h parser.c parser.h
 EXTRA_DIST = 
 gtkcontour_LDADD = parser.o
 AM_CFLAGS = -Wall
@@ -252,6 +253,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkcontour.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -403,6 +405,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
+	$(mkdir_p) $(distdir)/..
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
