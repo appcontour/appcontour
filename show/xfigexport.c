@@ -10,6 +10,8 @@
 
 //  #define conv(a) (int)((a->x - minx)*zoom) + XOFF,(int)((a->y - miny)*zoom) + YOFF
 #define conv(a) (int)((a->x - minx)*zoom) + XOFF,(int)((maxy - a->y)*zoom) + YOFF
+#define convx(ax) ((int)((ax - minx)*zoom) + XOFF)
+#define convy(ay) ((int)((ay - miny)*zoom) + YOFF)
 #define BUFLEN 200
 
 void
@@ -43,8 +45,9 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
   struct vertex *v, *a, *b;
   struct rarc *arc;
   double maxx, maxy, minx, miny, xmed, ymed, zoomx, zoomy, zoom;
-  int count, markcount, w, st;
-  double stv;
+  int count, markcount, w, st, cap_style;
+  double arrowwidth, arrowheight;
+  double stv, arrowthick;
 
   fprintf (file, "#FIG 3.2\n");
   fprintf (file, "Landscape\nCenter\nInches\nLetter\n100.00\nSingle\n");
@@ -90,9 +93,19 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
     if (st == 2) stv = grflags->dotspacing;
     a = line->a;
     if (arc->loop)
+    {
+      fprintf (file, "2 1 %d %d 0 7 50 -1 -1 %5.3f 0 1 -1 1 0 2\n", 
+                    st, w, stv);
+      arrowthick = w;
+      arrowheight = 600.0;
+      arrowwidth = 450.0;
+      fprintf (file, "    0 0 %5.2f %8.2f %8.2f\n",
+               arrowthick, arrowwidth, arrowheight);
+      fprintf (file, "  %d %d\n", conv(a));
+      fprintf (file, "  %d %d\n", conv(line->b));
       fprintf (file, "2 3 %d %d 0 7 50 -1 -1 %5.3f 0 1 -1 0 0 %d\n", 
                     st, w, stv, arc->numsegments + 1);
-    else {
+    } else {
       fprintf (file, "2 1 %d %d 0 7 50 -1 -1 %5.3f 0 1 -1 0 0 %d\n", 
                     st, w, stv, arc->numsegments + 1);
     }
@@ -122,6 +135,24 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
       if (grflags->xfigspecial) fprintf (file, "$");
       fprintf (file, "\\001\n");
       //printf ("depth = %d\n", arc->d);
+    }
+  }
+  // iradius = 100;   /* this should be computed somehow */
+  for (v = contour->vertex; v; v = v->next)
+  {
+    switch (v->type & V_TYPES)
+    {
+      case V_CROSS:
+      case V_CUSP:
+        st = 0;
+        w = grflags->pointsize;
+        stv = 0.0;
+        cap_style = 1;  /* round points */
+        //cap_style = 2;  /* square points */
+        fprintf (file, "2 1 %d %d 1 %d 30 -1 -1 %5.3f 0 %d -1 0 0 1\n", 
+                    st, w, XFIG_BLUE, stv, cap_style);
+        fprintf (file, "  %d %d\n", conv(v));
+        break;
     }
   }
   return;

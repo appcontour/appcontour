@@ -17,6 +17,7 @@ grparser (int *argcpt, char *argv[])
   grflags.onlyvisible = 0;
   grflags.visiblewidth = 5;
   grflags.invisiblewidth = 5;
+  grflags.pointsize = 10;
   grflags.dashlength = 14.0;
   grflags.dotspacing = 10.0;
 
