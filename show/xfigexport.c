@@ -42,10 +42,10 @@ void
 xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
 {
   struct line *line, *l, *last, *markline;
-  struct vertex *v, *a, *b;
+  struct vertex *v, *a, *b, *arrowa, *arrowb;
   struct rarc *arc;
   double maxx, maxy, minx, miny, xmed, ymed, zoomx, zoomy, zoom;
-  int count, markcount, w, st, cap_style;
+  int count, markcount, w, st, cap_style, plotarrow;
   double arrowwidth, arrowheight;
   double stv, arrowthick;
 
@@ -91,21 +91,16 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
     if (arc->d > 2) st = 2;
     if (st == 1) stv = grflags->dashlength;
     if (st == 2) stv = grflags->dotspacing;
-    a = line->a;
+    a = arrowa = line->a;
+    arrowb = line->b;
+    plotarrow = 1;
     if (arc->loop)
     {
-      fprintf (file, "2 1 %d %d 0 7 50 -1 -1 %5.3f 0 1 -1 1 0 2\n", 
-                    st, w, stv);
-      arrowthick = w;
-      arrowheight = 600.0;
-      arrowwidth = 450.0;
-      fprintf (file, "    0 0 %5.2f %8.2f %8.2f\n",
-               arrowthick, arrowwidth, arrowheight);
-      fprintf (file, "  %d %d\n", conv(a));
-      fprintf (file, "  %d %d\n", conv(line->b));
+      if ((a->type & V_TYPES) == V_CUSP) plotarrow = 0;
       fprintf (file, "2 3 %d %d 0 7 50 -1 -1 %5.3f 0 1 -1 0 0 %d\n", 
                     st, w, stv, arc->numsegments + 1);
     } else {
+      plotarrow = 0;
       fprintf (file, "2 1 %d %d 0 7 50 -1 -1 %5.3f 0 1 -1 0 0 %d\n", 
                     st, w, stv, arc->numsegments + 1);
     }
@@ -117,6 +112,7 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
     {
 //printf ("   another segment\n");
       b = l->b;
+      if ((b->type & V_TYPES) == V_CUSP) plotarrow = 0;
       fprintf (file, "  %d %d\n", conv(b));
       count++;
       if (count == markcount) markline = l;
@@ -124,6 +120,18 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
       l = b->line[1];
     }
     assert (count == arc->numsegments);
+    if (plotarrow)  /* draw an arrow (a segment with 2 points) */
+    {
+      fprintf (file, "2 1 %d %d 0 7 49 -1 -1 %5.3f 0 1 -1 1 0 2\n", 
+                    st, w, stv);
+      arrowthick = w;
+      arrowheight = 600.0;
+      arrowwidth = 450.0;
+      fprintf (file, "    0 0 %5.2f %8.2f %8.2f\n",
+               arrowthick, arrowwidth, arrowheight);
+      fprintf (file, "  %d %d\n", conv(arrowa));
+      fprintf (file, "  %d %d\n", conv(arrowb));
+    }
     /* print depth value */
     if (arc->d > st)
     {
@@ -137,7 +145,6 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
       //printf ("depth = %d\n", arc->d);
     }
   }
-  // iradius = 100;   /* this should be computed somehow */
   for (v = contour->vertex; v; v = v->next)
   {
     switch (v->type & V_TYPES)
@@ -149,8 +156,11 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
         stv = 0.0;
         cap_style = 1;  /* round points */
         //cap_style = 2;  /* square points */
-        fprintf (file, "2 1 %d %d 1 %d 30 -1 -1 %5.3f 0 %d -1 0 0 1\n", 
-                    st, w, XFIG_BLUE, stv, cap_style);
+        fprintf (file, "2 1 %d %d %d 0 30 -1 -1 %5.3f 0 %d -1 0 0 1\n", 
+                    st, w-4, XFIG_WHITE, stv, cap_style);
+        fprintf (file, "  %d %d\n", conv(v));
+        fprintf (file, "2 1 %d %d %d 0 31 -1 -1 %5.3f 0 %d -1 0 0 1\n", 
+                    st, w, XFIG_BLACK, stv, cap_style);
         fprintf (file, "  %d %d\n", conv(v));
         break;
     }
