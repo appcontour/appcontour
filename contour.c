@@ -340,7 +340,7 @@ readcontour (FILE *file)
 #ifdef HAVE_UNISTD_H
   if (tok == TOK_KNOT)
   {
-    printf ("reading knot description\n");
+    fprintf (stderr, "reading knot description\n");
     retcode = pipe (pipedes);
     cpid = fork ();
     if (cpid < 0) exit (123);
