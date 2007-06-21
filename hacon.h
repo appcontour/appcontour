@@ -13,6 +13,8 @@ struct hacongraph {
 
 struct haconnode {
     int flag;
+    int strato;
+    struct region *region;
   };
 
 struct haconarc {

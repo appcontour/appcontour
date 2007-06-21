@@ -13,7 +13,11 @@ compute_hacon (struct sketch *s)
   struct arc *a;
   struct haconnode **hn;
   struct haconarc **ha;
-  int arcf;
+  struct haconnode *hnpt;
+  int arcf, st;
+  int numhaconarcs;
+
+  numhaconarcs = count_link_components (s);
 
   hg = (struct hacongraph *) malloc (sizeof (struct hacongraph));
   hg->node = 0;
@@ -32,7 +36,12 @@ compute_hacon (struct sketch *s)
     hn[r->tag] = 0;
     if (r->f > 0)
     {
-      hn[r->tag] = (struct haconnode *) malloc (r->f * sizeof (struct haconnode));
+      hnpt = hn[r->tag] = (struct haconnode *) malloc (r->f * sizeof (struct haconnode));
+      for (st = 0; st < r->f; st++, hnpt++)
+      {
+        hnpt->strato = st;
+        hnpt->region = r;
+      }
     }
   }
   for (a = s->arcs; a; a = a->next)
