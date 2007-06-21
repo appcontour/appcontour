@@ -36,6 +36,7 @@
 
 int debug = 0;
 int quiet = 0;
+int verbose = 0;
 int heisemberg = -1;
 int docanonify = 1;
 int dorecomputef = 1;
@@ -62,6 +63,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"-q") == 0)
     {
       quiet = 1;
+      continue;
+    }
+    if (strcmp(argv[i],"-v") == 0 || strcmp(argv[i],"--verbose") == 0)
+    {
+      verbose = 1;
       continue;
     }
     if (strcmp(argv[i],"--debug") == 0)
@@ -99,10 +105,14 @@ main (int argc, char *argv[])
       printf ("  applyrule <rule>: apply indicated rule to contour\n");
       printf ("  extractcc <int>: extract 3D connected component\n");
       printf ("  removecc <int>: remove 3D connected component from contour\n");
+      printf ("  leftright: left-right reflection\n");
+      printf ("  frontback: front-back reflection\n");
       printf ("  hacon: compute hacon et al. graph (not implemented)\n");
       printf ("\n  possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
+      printf ("  -q: be quiet\n");
+      printf ("  -v|--verbose: be more verbose\n");
       printf ("  --nocanonify: do not canonify region description before printing\n");
       printf ("  --transfer_islands|--ti <int_coded_flags>: information on island\n");
       printf ("      location in case of ambiguity (e.g. rule C2)\n");

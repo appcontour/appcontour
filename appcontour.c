@@ -238,7 +238,7 @@ euler_characteristic (struct sketch *sketch)
 }
 
 int
-appcontourcheck (struct sketch *sketch, int huffman, int verbose)
+appcontourcheck (struct sketch *sketch, int huffman, int notquiet)
 {
   int fail, globfail, i, diff=0;
   struct region *region;
@@ -248,7 +248,7 @@ appcontourcheck (struct sketch *sketch, int huffman, int verbose)
   struct borderlist *hole;
   int dd[4], res = 0;
 
-  if (verbose)
+  if (notquiet)
   {
     printf ("Checking consistency as apparent contour");
     if (huffman) printf (" with huffman labelling");
@@ -256,7 +256,7 @@ appcontourcheck (struct sketch *sketch, int huffman, int verbose)
   }
 
   globfail = 0;
-  if (verbose) printf ("1. Checking arc orientation across nodes... ");
+  if (notquiet) printf ("1. Checking arc orientation across nodes... ");
   fflush (stdout);
   fail = 0;
   for (region = sketch->regions; region; region = region->next)
@@ -271,10 +271,10 @@ appcontourcheck (struct sketch *sketch, int huffman, int verbose)
   if (fail)
   {
     globfail = 1;
-    if (verbose) printf ("FAILED while checking region %d\n", region->tag);
-  } else if (verbose) printf ("OK\n");
+    if (notquiet) printf ("FAILED while checking region %d\n", region->tag);
+  } else if (notquiet) printf ("OK\n");
 
-  if (verbose) printf ("2. Checking positivity of f...              ");
+  if (notquiet) printf ("2. Checking positivity of f...              ");
   fflush (stdout);
   fail = 0;
   for (region = sketch->regions; region; region = region->next)
@@ -284,12 +284,12 @@ appcontourcheck (struct sketch *sketch, int huffman, int verbose)
   if (fail)
   {
     globfail = 1;
-    if (verbose) printf ("FAILED for region %d (f = %d)\n", region->tag, region->f);
-  } else if (verbose) printf ("OK\n");
+    if (notquiet) printf ("FAILED for region %d (f = %d)\n", region->tag, region->f);
+  } else if (notquiet) printf ("OK\n");
 
   if (huffman)
   {
-    if (verbose) printf ("3. d versus f consistency...                ");
+    if (notquiet) printf ("3. d versus f consistency...                ");
     fflush (stdout);
 
     fail = 0;
@@ -313,11 +313,11 @@ appcontourcheck (struct sketch *sketch, int huffman, int verbose)
     if (fail)
     {
       globfail = 1;
-      if (verbose) printf ("FAILED for arc %d (dmin = %d, dmax = %d, fmin = %d)\n",
+      if (notquiet) printf ("FAILED for arc %d (dmin = %d, dmax = %d, fmin = %d)\n",
         arc->tag, dmin, dmax, fmin);
-    } else if (verbose) printf ("OK\n");
+    } else if (notquiet) printf ("OK\n");
 
-    if (verbose) printf ("4. variation of d across cusps...           ");
+    if (notquiet) printf ("4. variation of d across cusps...           ");
     fflush (stdout);
 
     fail = 0;
@@ -337,10 +337,10 @@ appcontourcheck (struct sketch *sketch, int huffman, int verbose)
     if (fail)
     {
       globfail = 1;
-      if (verbose) printf ("FAILED for arc %d (diff = %d)\n", arc->tag, diff);
-    } else if (verbose) printf ("OK\n");
+      if (notquiet) printf ("FAILED for arc %d (diff = %d)\n", arc->tag, diff);
+    } else if (notquiet) printf ("OK\n");
 
-    if (verbose) printf ("5. values of d on nodes...                  ");
+    if (notquiet) printf ("5. values of d on nodes...                  ");
     fflush (stdout);
 
     fail = 0;
@@ -361,7 +361,7 @@ appcontourcheck (struct sketch *sketch, int huffman, int verbose)
   if (fail)
   {
     globfail = 1;
-    if (verbose)
+    if (notquiet)
     {
       printf ("FAILED ");
       if (res == 2)
@@ -388,12 +388,12 @@ appcontourcheck (struct sketch *sketch, int huffman, int verbose)
         else failb = arc->regionleft;
       printf ("a%d (d=%d)\n", failb->info->tag, dd[3]);
     }
-  } else if (verbose) printf ("OK\n");
+  } else if (notquiet) printf ("OK\n");
 
 
-  if (globfail && verbose) printf ("This sketch is NOT an apparent contour");
-  if (globfail && verbose && huffman) printf (" with huffman labelling");
-  if (globfail && verbose) printf ("\n");
+  if (globfail && notquiet) printf ("This sketch is NOT an apparent contour");
+  if (globfail && notquiet && huffman) printf (" with huffman labelling");
+  if (globfail && notquiet) printf ("\n");
   return (globfail == 0);
 }
 
