@@ -11,7 +11,7 @@ compute_hacon (struct sketch *s)
   struct hacongraph *hg;
   extern int verbose;
   int numhaconarcs, numhaconnodes;
-  struct hacon_strata **data;
+  int **data;
 
   data = init_hacon_strata (s);
   numhaconnodes = tag_hacon_strata (data, s);
@@ -36,10 +36,10 @@ compute_hacon (struct sketch *s)
  */
 
 int
-tag_hacon_strata (struct hacon_strata **data, struct sketch *s)
+tag_hacon_strata (int **data, struct sketch *s)
 {
   int k, hacon_tag;
-  struct hacon_strata *rstrata;
+  int *rstrata;
   struct region *r;
 
   /* reset all tags to -1 */
@@ -48,7 +48,7 @@ tag_hacon_strata (struct hacon_strata **data, struct sketch *s)
     for (k = 0; k < r->f; k++)
     {
       rstrata = data[r->tag];
-      rstrata[k].hacontag = -1;
+      rstrata[k] = -1;
     }
   }
 
@@ -59,11 +59,11 @@ tag_hacon_strata (struct hacon_strata **data, struct sketch *s)
 }
 
 int
-single_tag_hacon_strata (int tag, struct hacon_strata **data, struct sketch *s)
+single_tag_hacon_strata (int tag, int **data, struct sketch *s)
 {
   struct region *r;
   int i, k, c, count, found;
-  struct hacon_strata *rstrata;
+  int *rstrata;
 
   found = 0;
   for (r = s->regions; r; r = r->next)
@@ -72,7 +72,7 @@ single_tag_hacon_strata (int tag, struct hacon_strata **data, struct sketch *s)
     rstrata = data[i];
     for (k = 0; k < r->f; k++)
     {
-      if (rstrata[k].hacontag < 0)
+      if (rstrata[k] < 0)
       {
         found = 1;
         break;
@@ -84,7 +84,7 @@ single_tag_hacon_strata (int tag, struct hacon_strata **data, struct sketch *s)
   if (found == 0) return (0);  /* non ho trovato strati non etichettati */
   /* trovata una regione (r) con una strato (k) non etichettata */
   rstrata = data[r->tag];
-  rstrata[k].hacontag = tag;
+  rstrata[k] = tag;
 
   count = 1;
   while ((c = hacon_try_expand_node (tag, data, s)))
@@ -95,7 +95,7 @@ single_tag_hacon_strata (int tag, struct hacon_strata **data, struct sketch *s)
 }
 
 int
-hacon_try_expand_node (int tag, struct hacon_strata **data, 
+hacon_try_expand_node (int tag, int **data, 
   struct sketch *s)
 {
   int count = 0;
@@ -103,14 +103,14 @@ hacon_try_expand_node (int tag, struct hacon_strata **data,
   struct region *r;
   struct border *bp, *bpstart;
   struct borderlist *bl;
-  struct hacon_strata *rstrata;
+  int *rstrata;
 
   for (r = s->regions; r; r = r->next)
   {
     rstrata = data[r->tag];
     for (k = 0; k < r->f; k++)
     {
-      if (rstrata[k].hacontag != tag) continue;
+      if (rstrata[k] != tag) continue;
       for (bl = r->border; bl; bl = bl->next)
       {
         bpstart = bl->sponda;
@@ -126,14 +126,14 @@ hacon_try_expand_node (int tag, struct hacon_strata **data,
 }
 
 int
-local_hacon_try_expand_node (struct hacon_strata **data, 
+local_hacon_try_expand_node (int **data, 
   struct border *bp, int k)
 {
   int count, d, i, dmin, dmax, ori;
   int htag, rtag, stag;
   struct arc *a;
   struct border *btrans;
-  struct hacon_strata *rdata, *sdata, *r1data, *s1data;
+  int *rdata, *sdata, *r1data, *s1data;
 
   a = bp->info;
   btrans = gettransborder (bp);
@@ -142,7 +142,7 @@ local_hacon_try_expand_node (struct hacon_strata **data,
   assert (stag != rtag);
   rdata = data[rtag];
   sdata = data[stag];
-  htag = rdata[k].hacontag;
+  htag = rdata[k];
   assert (htag >= 0);
   ori = bp->orientation;
   /* find dmin and dmax */
@@ -155,34 +155,34 @@ local_hacon_try_expand_node (struct hacon_strata **data,
 
   if (k < dmin)
   {
-    if (sdata[k].hacontag < 0)
+    if (sdata[k] < 0)
     {
-      sdata[k].hacontag = htag;
+      sdata[k] = htag;
       return (1);
     }
-    assert (sdata[k].hacontag == htag);
+    assert (sdata[k] == htag);
     return (0);
   }
 
   if (ori > 0 && k >= dmax + 2)
   {
-    if (sdata[k-2].hacontag < 0)
+    if (sdata[k-2] < 0)
     {
-      sdata[k-2].hacontag = htag;
+      sdata[k-2] = htag;
       return (1);
     }
-    assert (sdata[k-2].hacontag == htag);
+    assert (sdata[k-2] == htag);
     return (0);
   }
 
   if (ori < 0 && k >= dmax)
   {
-    if (sdata[k+2].hacontag < 0)
+    if (sdata[k+2] < 0)
     {
-      sdata[k+2].hacontag = htag;
+      sdata[k+2] = htag;
       return (1);
     }
-    assert (sdata[k+2].hacontag == htag);
+    assert (sdata[k+2] == htag);
     return (0);
   }
 
@@ -193,53 +193,53 @@ local_hacon_try_expand_node (struct hacon_strata **data,
   count = 0;
   for (d = dmin; d < dmax; d += 2)
   {
-    if (s1data[d].hacontag < 0)
+    if (s1data[d] < 0)
     {
-      s1data[d].hacontag = htag;
+      s1data[d] = htag;
       count++;
-    } else assert (s1data[d].hacontag == htag);
+    } else assert (s1data[d] == htag);
   }
   for (d = dmin; d < dmax + 2; d += 2)
   {
-    if (r1data[d].hacontag < 0)
+    if (r1data[d] < 0)
     {
-      r1data[d].hacontag = htag;
+      r1data[d] = htag;
       count++;
-    } else assert (r1data[d].hacontag == htag);
+    } else assert (r1data[d] == htag);
   }
 
   return (count);
 }
 
-struct hacon_strata **
+int **
 init_hacon_strata (struct sketch *s)
 {
   int rnum, i, rtag;
   struct region *r;
-  struct hacon_strata **data;
+  int **data;
 
   rnum = s->regioncount;
-  data = (struct hacon_strata **) 
-         malloc (rnum*sizeof(struct hacon_strata *));
+  data = (int **) 
+         malloc (rnum*sizeof(int *));
 
   for (i = 0; i < rnum; i++) data[i] = 0;
   for (r = s->regions; r; r = r->next)
   {
     rtag = r->tag;
     if (r->f > 0) 
-      data[rtag] = (struct hacon_strata *)
-            malloc (r->f*sizeof(struct hacon_strata));
+      data[rtag] = (int *)
+            malloc (r->f*sizeof(int));
   }
   return (data);
 }
 
 void
-describe_hacon_nodes (int numhaconnodes, struct hacon_strata **data, 
+describe_hacon_nodes (int numhaconnodes, int **data, 
   struct sketch *s)
 {
   int htag, k;
   struct region *r;
-  struct hacon_strata *rstrata;
+  int *rstrata;
 
   for (htag = 0; htag < numhaconnodes; htag++)
   {
@@ -249,7 +249,7 @@ describe_hacon_nodes (int numhaconnodes, struct hacon_strata **data,
       rstrata = data[r->tag];
       for (k = 0; k < r->f; k++)
       {
-        if (rstrata[k].hacontag == htag)
+        if (rstrata[k] == htag)
         {
           printf ("  region %d stratum %d\n", r->tag, k);
         }
