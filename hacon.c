@@ -13,6 +13,10 @@ compute_hacon (struct sketch *s)
   int numhaconarcs, numhaconnodes;
   int **data;
   int *arcdata;
+  int *rstrata;
+  int ia, d, dplus, dminus, nodeplus, nodeminus;
+  struct arc *a;
+  struct region *r;
 
   data = init_hacon_strata (s);
   numhaconnodes = tag_hacon_strata (data, s);
@@ -27,6 +31,38 @@ compute_hacon (struct sketch *s)
   if (verbose) printf ("\n");
 
   hg = (struct hacongraph *) malloc (sizeof (struct hacongraph));
+  hg->numhaconnodes = numhaconnodes;
+  hg->numhaconarcs = numhaconarcs;
+  hg->nodesdata = data;
+  hg->arcsdata = arcdata;
+  hg->sketch = s;
+
+  hg->arcincplus = (int *) malloc (numhaconarcs*sizeof(int));
+  hg->arcincminus = (int *) malloc (numhaconarcs*sizeof(int));
+
+  for (ia = 0; ia < numhaconarcs; ia++)
+  {
+    for (a = s->arcs; a; a = a->next)
+    {
+      if (arcdata[a->tag] != ia) continue;
+      d = a->depths[0];
+      r = a->regionleft->border->region;
+      dplus = d;
+      dminus = d+1;
+      if (dplus % 2 != 0)
+      {
+        dplus = d+1;
+        dminus = d;
+      }
+      rstrata = data[r->tag];
+      nodeplus = rstrata[dplus];
+      nodeminus = rstrata[dminus];
+      hg->arcincplus[ia] = nodeplus;
+      hg->arcincminus[ia] = nodeminus;
+      break;
+    }
+  }
+
   return (hg);
 }
 
@@ -292,7 +328,6 @@ int
 tag_hacon_arcs (int *arcdata, struct sketch *s)
 {
   int k, hacon_tag;
-  struct arc *a;
 
   /* reset all tags to -1 */
   for (k = 0; k <= s->arccount; k++) arcdata[k] = -1;
@@ -367,5 +402,19 @@ hacon_try_expand_arc (int tag, int *arcdata, struct sketch *s)
 void
 print_hacon (struct hacongraph *h)
 {
-  printf ("not implemented\n");
+  int **data;
+  int *arcdata;
+  struct sketch *s;
+  int ia;
+
+  data = h->nodesdata;
+  arcdata = h->arcsdata;
+  s = h->sketch;
+
+  for (ia = 0; ia < h->numhaconarcs; ia++)
+  {
+    printf ("Arc %d connects positive node %d with negative node %d\n",
+      ia, h->arcincplus[ia], h->arcincminus[ia]);
+  }
+  printf ("only partially implemented\n");
 }

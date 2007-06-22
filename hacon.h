@@ -3,26 +3,14 @@
  * used whenever the surface is not connected.
  */
 
-//struct hacon_strata {
-//    int hacontag;
-//  };
-
 struct hacongraph {
-    struct haconnode *node;
-    struct haconarc *arc;
-    struct haconnode **nodealloc;
-    struct haconarc **arcalloc;
-    struct hacongraph *next;
-  };
-
-struct haconnode {
-    int flag;
-    int strato;
-    struct region *region;
-  };
-
-struct haconarc {
-    int flag;
+    int numhaconnodes;
+    int numhaconarcs;
+    int **nodesdata;
+    int *arcsdata;
+    int *arcincplus;
+    int *arcincminus;
+    struct sketch *sketch;
   };
 
 /*
