@@ -12,13 +12,19 @@ compute_hacon (struct sketch *s)
   extern int verbose;
   int numhaconarcs, numhaconnodes;
   int **data;
+  int *arcdata;
 
   data = init_hacon_strata (s);
   numhaconnodes = tag_hacon_strata (data, s);
-  printf ("Number of hacon graph nodes: %d\n", numhaconnodes);
+  printf ("Number of hacon nodes: %d\n", numhaconnodes);
   if (verbose) describe_hacon_nodes (numhaconnodes, data, s);
-  numhaconarcs = count_link_components (s);
+  if (verbose) printf ("\n");
+
+  arcdata = (int *) malloc ((s->arccount + 1) * sizeof(int));
+  numhaconarcs = tag_hacon_arcs (arcdata, s);
   printf ("Number of hacon graph arcs: %d\n", numhaconarcs);
+  if (verbose) describe_hacon_arcs (numhaconarcs, arcdata, s);
+  if (verbose) printf ("\n");
 
   hg = (struct hacongraph *) malloc (sizeof (struct hacongraph));
   return (hg);
@@ -256,6 +262,102 @@ describe_hacon_nodes (int numhaconnodes, int **data,
       }
     }
   }
+}
+
+/*
+ * this data structure is an integer vector dimensioned
+ * as the number of extended arcs, and will contain the
+ * corresponding tag as hacon arc (these are components
+ * of the apparent contour).
+ */
+
+void
+describe_hacon_arcs (int numhaconarcs, int *arcdata, struct sketch *s)
+{
+  int htag;
+  struct arc *a;
+
+  for (htag = 0; htag < numhaconarcs; htag++)
+  {
+    printf ("Hacon arc: %d:\n", htag);
+    for (a = s->arcs; a; a = a->next)
+    {
+      if (arcdata[a->tag] == htag)
+        printf ("  extended arc %d\n", a->tag);
+    }
+  }
+}
+
+int
+tag_hacon_arcs (int *arcdata, struct sketch *s)
+{
+  int k, hacon_tag;
+  struct arc *a;
+
+  /* reset all tags to -1 */
+  for (k = 0; k <= s->arccount; k++) arcdata[k] = -1;
+
+  hacon_tag = 0;
+  while (single_tag_hacon_arc(hacon_tag, arcdata, s)) hacon_tag++;
+
+  return (hacon_tag);
+}
+
+int
+single_tag_hacon_arc (int tag, int *arcdata, struct sketch *s)
+{
+  struct arc *a;
+  int i, c, count, found;
+
+  found = 0;
+  for (a = s->arcs; a; a = a->next)
+  {
+    i = a->tag;   /* tags start from one */
+    if (arcdata[i] < 0)
+    {
+      found = 1;
+      break;
+    }
+  }
+
+  if (found == 0) return (0);  /* non ho trovato archi non etichettati */
+  /* trovato un arco (a) non etichettato */
+  arcdata[a->tag] = tag;
+
+  count = 1;
+  while ((c = hacon_try_expand_arc (tag, arcdata, s))) count += c;
+  return (count);
+}
+
+int
+hacon_try_expand_arc (int tag, int *arcdata, struct sketch *s)
+{
+  int count = 0;
+  struct arc *a, *an;
+  struct border *b;
+
+  for (a = s->arcs; a; a = a->next)
+  {
+    if (arcdata[a->tag] != tag) continue;
+    if (a->endpoints == 0) continue;
+
+    an = a;
+    do {
+      b = an->regionleft;
+      b = b->next;
+      b = gettransborder (b);
+      b = b->next;
+      an = b->info;
+      assert (an->regionleft == b);
+      if (arcdata[an->tag] < 0)
+      {
+        count++;
+        arcdata[an->tag] = tag;
+      } else assert (arcdata[an->tag] == tag);
+    } while (an != a);
+  }
+
+  return (count);
 }
 
 /*
