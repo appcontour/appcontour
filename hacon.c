@@ -16,17 +16,18 @@ compute_hacon (struct sketch *s)
   int *rstrata;
   int ia, d, dplus, dminus, nodeplus, nodeminus;
   struct arc *a;
-  struct region *r;
+  struct region *r, *regright;
+  int k, in, epc, epc2, epc1, epc0, epcdisks, lepc;
+  struct borderlist *bl;
+  extern int debug;
 
   data = init_hacon_strata (s);
   numhaconnodes = tag_hacon_strata (data, s);
-  printf ("Number of hacon nodes: %d\n", numhaconnodes);
   if (verbose) describe_hacon_nodes (numhaconnodes, data, s);
   if (verbose) printf ("\n");
 
   arcdata = (int *) malloc ((s->arccount + 1) * sizeof(int));
   numhaconarcs = tag_hacon_arcs (arcdata, s);
-  printf ("Number of hacon graph arcs: %d\n", numhaconarcs);
   if (verbose) describe_hacon_arcs (numhaconarcs, arcdata, s);
   if (verbose) printf ("\n");
 
@@ -39,6 +40,22 @@ compute_hacon (struct sketch *s)
 
   hg->arcincplus = (int *) malloc (numhaconarcs*sizeof(int));
   hg->arcincminus = (int *) malloc (numhaconarcs*sizeof(int));
+  hg->nodessign = (int *) malloc (numhaconnodes*sizeof(int));
+  hg->nodesgenus = (int *) malloc (numhaconnodes*sizeof(int));
+
+  /*
+   * We compute the incidence information of arcs of the
+   * Hacon graph (arcincplus and arcincminus);
+   * specifically, arcincplus is used if the depth "d" of
+   * the corresponding region is an even number, arcinfminus
+   * is used otherwise.
+   * We also compute the sign of nodes. Since we start with an
+   * apparent contour with Huffman labelling, this gives an
+   * embedding of the manifold M in R^3, hence it is orientable
+   * and the Hacon graph is bipartite. 
+   * The orientation of each hacon node is already defined 
+   * when filling the arcincplus and arcincminus vectors.
+   */
 
   for (ia = 0; ia < numhaconarcs; ia++)
   {
@@ -59,10 +76,74 @@ compute_hacon (struct sketch *s)
       nodeminus = rstrata[dminus];
       hg->arcincplus[ia] = nodeplus;
       hg->arcincminus[ia] = nodeminus;
+      hg->nodessign[nodeplus] = +1;
+      hg->nodessign[nodeminus] = -1;
       break;
     }
   }
 
+  /*
+   * Now we compute the Euler-Poincare' characteristic
+   * of each Hacon node.
+   */
+
+  for (in = 0; in < hg->numhaconnodes; in++)
+  {
+    hg->nodesgenus[in] = -1;    /* means it is unknown */
+    epcdisks = epc2 = epc1 = epc0 = 0;
+                                /* cumulative characteristic
+                                 * of elements of dimension
+                                 * 2, 1 and 0 respectively
+                                 */
+    if (debug) printf ("Computing epc for node %d\n", in);
+    for (ia = 0; ia < hg->numhaconarcs; ia++)
+    {
+      if (hg->arcincplus[ia] == in) epcdisks++;
+      if (hg->arcincminus[ia] == in) epcdisks++;
+    }
+    for (r = s->regions; r; r = r->next)
+    {
+      rstrata = hg->nodesdata[r->tag];
+      for (k = 0; k < r->f; k++)
+      {
+        if (rstrata[k] != in) continue;
+        lepc = 2;
+        for (bl = r->border; bl; bl = bl->next) lepc -= 1;
+        epc2 += lepc;
+        if (debug) printf ("region %d, stratum %d, epc = %d\n",
+                      r->tag, k, lepc);
+      }
+    }
+
+    for (a = s->arcs; a; a = a->next)
+    {
+      if (a->cusps > 0)
+        fprintf (stderr, "Cusps present, incorrect result\n");
+      if (a->endpoints == 0) continue;      /* no contribution */
+      regright = a->regionright->border->region;
+      rstrata = hg->nodesdata[regright->tag];
+      /* first we deal with horizontal connections */
+      for (k = 0; k < regright->f; k++)
+      {
+        if (rstrata[k] != in) continue;
+        epc1 -= 1;   /* arc contributes negatively */
+      }
+    }
+
+    fprintf (stderr, "Partial computation of epc1 non implemented\n");
+    fprintf (stderr, "Computation of epc0 non implemented\n");
+
+    epc = epcdisks + epc2 + epc1 + epc0;
+    if (debug) printf ("epcdisks = %d, epc2 = %d, epc1 = %d, epc0 = %d, epc = %d\n",
+                     epcdisks, epc2, epc1, epc0, epc);
+    if ((epc % 2) != 0)
+    {
+      fprintf (stderr, "Warning: Euler characteristic of node %d (%d) ",
+                       in, epc);
+      fprintf (stderr, "should be even!\n");
+    }
+    hg->nodesgenus[in] = 1 - epc/2;
+  }
   return (hg);
 }
 
@@ -405,16 +486,53 @@ print_hacon (struct hacongraph *h)
   int **data;
   int *arcdata;
   struct sketch *s;
-  int ia;
+  int ia, in;
+  extern int haconge;
 
   data = h->nodesdata;
   arcdata = h->arcsdata;
   s = h->sketch;
 
-  for (ia = 0; ia < h->numhaconarcs; ia++)
+  switch (haconge)
   {
-    printf ("Arc %d connects positive node %d with negative node %d\n",
-      ia, h->arcincplus[ia], h->arcincminus[ia]);
-  }
-  printf ("only partially implemented\n");
+    case HGE_TEXT:
+    printf ("Number of hacon nodes: %d\n", h->numhaconnodes);
+    for (in = 0; in < h->numhaconnodes; in++)
+    {
+      printf ("node %d (%c), genus %d\n",
+        in, (h->nodessign[in] < 0)?'-':'+', h->nodesgenus[in]);
+    }
+    printf ("Number of hacon graph arcs: %d\n", h->numhaconarcs);
+    for (ia = 0; ia < h->numhaconarcs; ia++)
+    {
+      printf ("Arc %d connects positive node %d with negative node %d\n",
+        ia, h->arcincplus[ia], h->arcincminus[ia]);
+    }
+    printf ("only partially implemented\n");
+    break;
+
+    case HGE_PYKIG:
+    printf ("from random import Random\n");
+    printf ("g = Random()\n");
+    for (in = 0; in < h->numhaconnodes; in++)
+    {
+      printf ("N%d = Point (g.random(), g.random(), name=\"N%d\"",
+        in, in);
+      if (h->nodessign[in] < 0)
+        printf (", pointstyle=\"RoundEmpty\")\n");
+      else
+        printf (")\n");
+    }
+    for (ia = 0; ia < h->numhaconarcs; ia++)
+    {
+      printf ("a%d = Segment(N%d, N%d)\n", ia, 
+        h->arcincplus[ia], h->arcincminus[ia]);
+    }
+    break;
+
+    default:
+    printf ("Invalid Hacon graphic engine.\n");
+    exit (1);
+    break;
+  }  
 }

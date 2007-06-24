@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+
+#
+# this is a utility script allowing to use pykig.py
+# as a filter (useful e.g. to print the hacon graph)
+#
+
+if ! cmdname=`which pykig.py`
+then
+  echo "Cannot find pykig.py"
+  exit 1
+fi
+
+pykigversion=`$cmdname --version | cut -f2 -d' '`
+#echo pykig version: $pykigversion
+
+pname="/tmp/pykig.filter.$$.pipe"
+#mkfifo $pname
+
+if [ -f $pname ]
+then
+  rm $pname
+fi
+
+cat >$pname
+$cmdname $pname
+
+rm $pname

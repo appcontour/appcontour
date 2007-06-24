@@ -3,6 +3,11 @@
  * used whenever the surface is not connected.
  */
 
+extern int haconge;
+
+#define HGE_TEXT 0
+#define HGE_PYKIG 1
+
 struct hacongraph {
     int numhaconnodes;
     int numhaconarcs;
@@ -10,6 +15,8 @@ struct hacongraph {
     int *arcsdata;
     int *arcincplus;
     int *arcincminus;
+    int *nodessign;
+    int *nodesgenus;
     struct sketch *sketch;
   };
 

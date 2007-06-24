@@ -42,6 +42,7 @@ int docanonify = 1;
 int dorecomputef = 1;
 int doretagregions = 1;
 int finfinity = 0;
+int haconge = HGE_TEXT;
 
 int
 main (int argc, char *argv[])
@@ -92,6 +93,21 @@ main (int argc, char *argv[])
         strcmp(argv[i],"--fi") == 0)
     {
       finfinity = atoi (argv[++i]);
+      continue;
+    }
+    if (strcmp(argv[i],"--hacon_ge") == 0 ||
+        strcmp(argv[i],"--hge") == 0)
+    {
+      i++;
+      if (strcmp(argv[i],"text") == 0) haconge = HGE_TEXT;
+      else if (strcmp(argv[i],"pykig") == 0) haconge = HGE_PYKIG;
+      else
+      {
+        printf ("Invalid hacon graphic engine selection: %s\n",
+                    argv[i]);
+        printf ("Valid choices are: text(default), pykig\n");
+        exit (111);
+      }
       continue;
     }
     if (strcmp(argv[i],"--help") == 0)
