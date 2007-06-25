@@ -58,6 +58,9 @@
 /* path di contour */
 #undef PATH_CONTOUR
 
+/* path di contour huffman */
+#undef PATH_CONTOUR_1
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 

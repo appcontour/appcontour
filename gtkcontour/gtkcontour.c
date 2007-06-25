@@ -130,19 +130,25 @@ static void redraw_brush( GtkWidget *widget)
 {
   struct elemento *datoloc;
   struct riga *riga;
-  int x,y,tipodato,i,xm;
+  int x,y,tipodato,i,xm,sommaarchiaperti=0,code=1;
   PangoLayout * pangolayout;
   gchar *stampa;
   GdkPixmap *pixmaploc;
 
   stampa=(gchar *) malloc(3 *sizeof(gchar));
-  gdk_draw_rectangle (pixmap, widget->style->white_gc, TRUE, 100,0,
-                      widget->allocation.width-100,widget->allocation.height);
+  gdk_draw_rectangle (pixmap, widget->style->white_gc, TRUE, 0,0,
+                      widget->allocation.width,widget->allocation.height);
+  for (i=50;i<widget->allocation.height;i=i+50)
+    gdk_draw_line(pixmap,widget->style->black_gc,0,i,50,i);
+
+  gdk_draw_line(pixmap,widget->style->black_gc,50,0,50,widget->allocation.height);
+
   riga = primariga;
 
   tipodato=tipodatoattivo;
   while (riga != NULL)
   {
+    sommaarchiaperti = sommaarchiaperti + riga->archiinf;
     datoloc = riga->dato;
     y = riga->posizione;
     
@@ -213,6 +219,36 @@ static void redraw_brush( GtkWidget *widget)
     riga = riga->rigadopo;
   }
   tipodatoattivo=tipodato;
+
+#ifdef HAVE_CONTOUR
+  if (sommaarchiaperti != 0)
+    pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,&style->bg[GTK_STATE_NORMAL],
+                                         "sem_rosso.png");
+  else {
+    code = verifica(0);
+    if (code == 0)
+      pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,&style->bg[GTK_STATE_NORMAL],
+                                         "sem_verde.png");
+    else
+      pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,&style->bg[GTK_STATE_NORMAL],
+                                         "sem_giallo.png");
+  }
+    
+  gdk_draw_drawable (pixmap, widget->style->black_gc, pixmapp,0,0,0,0,50,50);
+  
+  if (code == 0) {
+    code = verifica(1);
+    if (code == 0)
+      pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,&style->bg[GTK_STATE_NORMAL],
+                                         "sem_verde.png");
+    else
+      pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,&style->bg[GTK_STATE_NORMAL],
+                                         "sem_giallo.png");
+
+    gdk_draw_drawable (pixmap, widget->style->black_gc, pixmapp,0,0,53,0,50,50);
+  }
+#endif
+
   gdk_draw_drawable (widget->window,widget->style->black_gc,pixmap,0,0,0,0,-1,-1);
 }
 
@@ -1359,8 +1395,6 @@ void leggidati(const gchar *nomefile)
               datoloc->profondita = (gchar *) malloc((strlen(buffer)+2) * sizeof(gchar));
               sprintf(datoloc->profondita,"[%s]",buffer);
             }
-    //        if (datoloc->orientamento >= 200)
-    //          datoloc->orientamento = datoloc->orientamento - 200;  
             buffer[0] = '\0';
             getarcinfo (filein,buffer);
             if (strlen(buffer) != 0) {
@@ -1505,7 +1539,7 @@ static void verify( GtkWidget *wid, GdkEventExpose *event, GtkWidget *button)
   GtkWidget *menu_items;
   char buf[128];
 
-  code = verifica();
+  code = verifica(0);
   if ( code == 0)
     sprintf(buf,"il grafico rappresenta un contorno apparente");
   else
@@ -1520,7 +1554,7 @@ static void verify( GtkWidget *wid, GdkEventExpose *event, GtkWidget *button)
                    0,0);
 }
 
-int verifica( void )
+int verifica( int scelta )
 {
   pid_t cpid;
   int retcode;
@@ -1532,7 +1566,10 @@ int verifica( void )
   extern int errno;
 //  int i=0;
 
-  comando = PATH_CONTOUR;
+  if ( scelta == 0 )
+    comando = PATH_CONTOUR;
+  else
+    comando = PATH_CONTOUR_1;
 
   retcode = pipe (fdes);
   cpid = fork ();
@@ -1699,15 +1736,15 @@ int main( int argc, char *argv[] )
 			     GTK_OBJECT (drawing_area));
   gtk_widget_show (button);
 
-#ifdef HAVE_CONTOUR
-  button = gtk_button_new_with_label ("Verify");
-  gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);
-
-  gtk_signal_connect_object(GTK_OBJECT (button), "clicked",
-			     GTK_SIGNAL_FUNC (verify),
-			     NULL);
-  gtk_widget_show (button);
-#endif
+//#ifdef HAVE_CONTOUR
+//  button = gtk_button_new_with_label ("Verify");
+//  gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);
+//
+//  gtk_signal_connect_object(GTK_OBJECT (button), "clicked",
+//			     GTK_SIGNAL_FUNC (verify),
+//			     NULL);
+//  gtk_widget_show (button);
+//#endif
 
   button = gtk_button_new_with_label ("Quit");
   gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);

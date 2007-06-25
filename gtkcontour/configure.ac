@@ -15,7 +15,8 @@ if (test "$CONTOUR" = "trovato"); then
   dnl ho trovato contour.
   AC_PATH_PROG(PATH_CONTOUR,contour,no)
   AC_DEFINE(HAVE_CONTOUR, 1,[Ho trovato contour])
-  AC_DEFINE_UNQUOTED(PATH_CONTOUR,"${PATH_CONTOUR} -q iscontour",[path di contour])
+  AC_DEFINE_UNQUOTED(PATH_CONTOUR,"${PATH_CONTOUR} -q iscontour",[path di contour ])
+  AC_DEFINE_UNQUOTED(PATH_CONTOUR_1,"${PATH_CONTOUR} -q ishuffman",[path di contour huffman])
 fi
 
 # Checks for libraries.

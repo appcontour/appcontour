@@ -111,7 +111,7 @@ void leggidati(const gchar *);
 void salvadati(int );
 char * trovacomando(void);
 static void verify( GtkWidget *, GdkEventExpose *, GtkWidget *);
-int verifica( void);
+int verifica( int);
 static void saveload( GtkWidget *, GdkEventExpose *, GtkWidget *);
 void quit ();
 

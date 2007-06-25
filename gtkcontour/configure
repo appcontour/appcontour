@@ -2944,6 +2944,11 @@ cat >>confdefs.h <<_ACEOF
 #define PATH_CONTOUR "${PATH_CONTOUR} -q iscontour"
 _ACEOF
 
+
+cat >>confdefs.h <<_ACEOF
+#define PATH_CONTOUR_1 "${PATH_CONTOUR} -q ishuffman"
+_ACEOF
+
 fi
 
 # Checks for libraries.
