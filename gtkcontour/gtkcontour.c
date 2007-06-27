@@ -395,7 +395,6 @@ void menuitem_cancellaorientamento(GtkWidget *wid, GtkWidget *widget)
   datoattivo->orientamento=0;
   g_free(datoattivo->profondita);
   datoattivo->profondita = NULL;
-//  datoattivo->profondita = "";
 }
 
 void menuitem_response(GtkWidget *wid, GtkWidget *widget)
@@ -422,7 +421,6 @@ void menuitem_response1(GtkWidget *wid, GtkWidget *widget)
   pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
-//  draw_brush(wid);
 
   datoattivo->orientamento=2;
   richiede_profondita();
@@ -1085,7 +1083,8 @@ static void ricavo_posizione(GtkWidget *widget, GdkEventButton *event)
   }
   else
   {
-    nuovariga->rigadopo=rigaattiva->rigadopo;
+    nuovariga->rigadopo = rigaattiva->rigadopo;
+    rigaattiva->rigadopo->rigaprima = nuovariga;
     rigaattiva->rigadopo = nuovariga;
     dato=rigaattiva->dato;
     while (dato != NULL)
@@ -1108,7 +1107,6 @@ static void ricavo_posizione(GtkWidget *widget, GdkEventButton *event)
       dato = dato->datodopo;
     }
   }
-  rigaattiva->rigadopo->rigaprima=rigaattiva;
   rigaattiva=rigaattiva->rigadopo;
   rigaattiva->archisup=0;
   rigaattiva->archiinf=0;
