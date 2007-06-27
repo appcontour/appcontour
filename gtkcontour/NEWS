@@ -1,0 +1,6 @@
+2007-06-27: possibilita' di costruire contorni apparenti e verifica se il grafico
+e' o no un contorno apparente mediante un semaforo (semaforo rosso il grafico presenta
+degli archi aperti, semaforo giallo la descrizione morse non e' completa o non e'
+corretta, primo semaforo verde e secondo giallo la descrizione morse e' corretta
+ma non e' di huffman, due semafori verdi si tratta di un contorno apparente
+con descrizione di huffman).

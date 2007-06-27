@@ -1,0 +1,13 @@
+   INTRODUCTION
+
+'gtkcontour' is a graphical frontend that allow to construct a so-called apparent
+contours; moreover it use the 'contour' program to verify if the graphic
+obtained is or not a apparent contour. Refer to the 'contour' program
+description for further informations.
+
+   INSTALLATION
+
+Compilation and installation are quite standard on a unix system,
+with the usual chain of commands "./configure", "make", "make install";
+we refer to the file INSTALL for details.
+
