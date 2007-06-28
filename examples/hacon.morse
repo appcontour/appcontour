@@ -1,0 +1,18 @@
+#
+# this is the example in the paper by
+# C. Romero Fuster, D. Hacon, C Mendes
+#
+morse{
+                         ^l0                            ;
+/  ^l0                   ^l2                 ^l2   \    ;
+|/ ^r1\      /           ^r1         \    /  ^r2  \ \   ;
+|\ U  /     //   ^l2     ^l0     ^l2 \\  //  ^l2 \ \ \  ;
+|  U       // /  ^r1X'   ^r1  X` ^r1\ \\ |U  ^r2X` / |  ;
+ \         || | |  X'X'  ^r0 X`X` | | || |  (  X`X`  |  ;
+  \        || | |  X`X`  U   X'X' | | || |^r1U  X` \ |  ;
+   \       \\ \  U  X`   U    X' U  / // \U    U   / /  ;
+    \       \\   U       U       U   //       U     /   ;
+     \       \           U           /             /    ;
+      \                  U                        /     ;
+                         U                              ;
+}
