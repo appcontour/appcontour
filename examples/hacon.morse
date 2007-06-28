@@ -1,6 +1,8 @@
 #
 # this is the example in the paper by
-# C. Romero Fuster, D. Hacon, C Mendes
+# D. Hacon, C. Mendes de Jesus, and M.C. Romero Fuster,
+# Stable maps from surfaces to the plane with prescribed
+# branching data, Topology and its Applications, 154 (2007) 166-175
 #
 morse{
                          ^l0                            ;
