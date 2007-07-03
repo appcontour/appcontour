@@ -1,6 +1,7 @@
 #include "gtkcontour.h"
 #include "parser.h"
   
+/*
 static void gtk_add_column(GtkWidget *widget)
 {
   if ( ix+45 >= width_max)
@@ -9,7 +10,7 @@ static void gtk_add_column(GtkWidget *widget)
     width_max=ix+50;
   }
 }
-
+*/
 
 void set_pixmapp_iniz (GtkWidget *widget, int * xpm)
 {
@@ -126,7 +127,7 @@ void disegnatratti(GtkWidget *widget, struct elemento *datoloc, int y)
 }
 
 /* ReDraw */
-static void redraw_brush( GtkWidget *widget)
+static void redraw_brush( GtkWidget *widget, GtkWidget *widget1)
 {
   struct elemento *datoloc;
   struct riga *riga;
@@ -220,39 +221,48 @@ static void redraw_brush( GtkWidget *widget)
   }
   tipodatoattivo=tipodato;
 
+  gdk_draw_drawable (widget->window,widget->style->black_gc,pixmap,0,0,0,0,-1,-1);
+
 #ifdef HAVE_CONTOUR
+  if ( pixmapsem == NULL)
+    pixmapsem = gdk_pixmap_new(widget1->window, widget1->allocation.width,
+                          widget1->allocation.height, -1);
+
+  gdk_draw_rectangle (pixmapsem, widget1->style->bg_gc[4], TRUE, 0,0,
+                      widget1->allocation.width,widget1->allocation.height);
   if (sommaarchiaperti != 0)
-    pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,&style->bg[GTK_STATE_NORMAL],
+    pixmapp = gdk_pixmap_create_from_xpm( widget1->window, &mask,&style->bg[GTK_STATE_NORMAL],
                                          "sem_rosso.png");
   else {
     code = verifica(0);
     if (code == 0)
-      pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,&style->bg[GTK_STATE_NORMAL],
+      pixmapp = gdk_pixmap_create_from_xpm( widget1->window, &mask,&style->bg[GTK_STATE_NORMAL],
                                          "sem_verde.png");
     else
-      pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,&style->bg[GTK_STATE_NORMAL],
+      pixmapp = gdk_pixmap_create_from_xpm( widget1->window, &mask,&style->bg[GTK_STATE_NORMAL],
                                          "sem_giallo.png");
   }
     
-  gdk_draw_drawable (pixmap, widget->style->black_gc, pixmapp,0,0,0,0,50,50);
+  gdk_draw_drawable (pixmapsem, widget1->style->black_gc, pixmapp,0,0,0,0,50,50);
   
   if (code == 0) {
     code = verifica(1);
     if (code == 0)
-      pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,&style->bg[GTK_STATE_NORMAL],
+      pixmapp = gdk_pixmap_create_from_xpm( widget1->window, &mask,&style->bg[GTK_STATE_NORMAL],
                                          "sem_verde.png");
     else
-      pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,&style->bg[GTK_STATE_NORMAL],
+      pixmapp = gdk_pixmap_create_from_xpm( widget1->window, &mask,&style->bg[GTK_STATE_NORMAL],
                                          "sem_giallo.png");
 
-    gdk_draw_drawable (pixmap, widget->style->black_gc, pixmapp,0,0,53,0,50,50);
+    gdk_draw_drawable (pixmapsem, widget1->style->black_gc, pixmapp,0,0,0,53,50,50);
   }
+  gdk_draw_drawable (widget1->window,widget1->style->black_gc,pixmapsem,0,0,0,0,-1,-1);
 #endif
 
-  gdk_draw_drawable (widget->window,widget->style->black_gc,pixmap,0,0,0,0,-1,-1);
 }
 
 /* Draw a icon on the screen */
+/*
 static void draw_brush( GtkWidget *widget)
 {
   int i=0;
@@ -267,6 +277,7 @@ static void draw_brush( GtkWidget *widget)
   gtk_add_column(widget);
   ix=ix+50;
 }
+*/
 
 static void enter_callback( GtkWidget *widget, GtkWidget *entry )
 {
@@ -277,6 +288,8 @@ static void enter_callback( GtkWidget *widget, GtkWidget *entry )
     datoattivo->profondita = (gchar *) malloc((strlen(entry_text)+1)*sizeof(gchar));
     sprintf(datoattivo->profondita,",%s",entry_text);
   }
+  else
+    datoattivo->profondita = NULL;
 
   gtk_widget_destroy(gtk_widget_get_toplevel (widget));
   gtk_main_quit();
@@ -334,7 +347,7 @@ void richiede_profondita()
 }
 
 
-void richiede_profondita_2rami(GtkWidget *wid)
+void richiede_profondita_2rami(struct entries *wid)
 {
     GtkWidget *window;
     GtkWidget *table;
@@ -378,10 +391,10 @@ void richiede_profondita_2rami(GtkWidget *wid)
 
     gtk_widget_show (window);
     gtk_main();
-    redraw_brush(wid);
+    redraw_brush(wid->entry,wid->entry1);
 }
 
-void menuitem_cancellaorientamento(GtkWidget *wid, GtkWidget *widget)
+void menuitem_cancellaorientamento(GtkWidget *widget, struct entries *wid)
 {
   gchar *xpm_filename;
   xpm_filename=(gchar *) malloc(10 * sizeof(gchar));
@@ -390,100 +403,99 @@ void menuitem_cancellaorientamento(GtkWidget *wid, GtkWidget *widget)
   pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
-  draw_brush(wid);
-
+//  draw_brush(wid);
   datoattivo->orientamento=0;
   g_free(datoattivo->profondita);
   datoattivo->profondita = NULL;
+  redraw_brush(wid->entry,wid->entry1);
 }
 
-void menuitem_response(GtkWidget *wid, GtkWidget *widget)
+void menuitem_response(struct entries  *widget)
 {
   gchar *xpm_filename;
   xpm_filename=(gchar *) malloc(10 * sizeof(gchar));
   sprintf(xpm_filename,"tasto%ir.xpm",datoattivo->tipodato);
 
-  pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
+  pixmapp = gdk_pixmap_create_from_xpm( widget->entry->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
-
   datoattivo->orientamento=1;
   richiede_profondita();
-  redraw_brush(wid);
+  redraw_brush(widget->entry,widget->entry1);
 }
 
-void menuitem_response1(GtkWidget *wid, GtkWidget *widget)
+void menuitem_response1(struct entries  *widget)
 {
   gchar *xpm_filename;
   xpm_filename=(gchar *) malloc(10 * sizeof(gchar));
   sprintf(xpm_filename,"tasto%il.xpm",datoattivo->tipodato);
 
-  pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
+  pixmapp = gdk_pixmap_create_from_xpm( widget->entry->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
 
   datoattivo->orientamento=2;
   richiede_profondita();
-  redraw_brush(wid);
+  redraw_brush(widget->entry,widget->entry1);
 }
 
-void menuitem_response2( GtkWidget *wid, GtkWidget *widget)
+void menuitem_response2(struct entries *widget)
 {
   gchar *xpm_filename;
   xpm_filename=(gchar *) malloc(10 * sizeof(gchar));
   sprintf(xpm_filename,"tasto1u.xpm");
 
-  pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
+  pixmapp = gdk_pixmap_create_from_xpm( widget->entry->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
 
   datoattivo->orientamento=3;
   richiede_profondita();
-  redraw_brush(wid);
+  redraw_brush(widget->entry,widget->entry1);
 }
 
-void menuitem_response3( GtkWidget *wid, GtkWidget *widget)
+void menuitem_response3( struct entries *widget)
 {
   gchar *xpm_filename;
   xpm_filename=(gchar *) malloc(10 * sizeof(gchar));
   sprintf(xpm_filename,"tasto1d.xpm");
 
-  pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
+  pixmapp = gdk_pixmap_create_from_xpm( widget->entry->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
 
   datoattivo->orientamento=4;
   richiede_profondita();
-  redraw_brush(wid);
+  redraw_brush(widget->entry,widget->entry1);
 }
 
-void menuitem_response4( GtkWidget *wid, GtkWidget *widget)
+void menuitem_response4(struct entries *widget)
 {
   gchar *xpm_filename;
   xpm_filename=(gchar *) malloc(10 * sizeof(gchar));
   sprintf(xpm_filename,"tasto2-2.xpm");
 
-  pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
+  pixmapp = gdk_pixmap_create_from_xpm( widget->entry->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
 
   datoattivo->orientamento=5;
-  redraw_brush(wid);
+  redraw_brush(widget->entry,widget->entry1);
 
 }
 
-void menuitem_response5( GtkWidget *wid, GtkWidget *widget)
+void menuitem_response5( struct entries *widget)
 {
   gchar *xpm_filename;
   xpm_filename=(gchar *) malloc(10 * sizeof(gchar));
   sprintf(xpm_filename,"tasto2-1.xpm");
 
-  pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
+  pixmapp = gdk_pixmap_create_from_xpm( widget->entry->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
 
   datoattivo->orientamento=6;
-  redraw_brush(wid);
+  redraw_brush(widget->entry,widget->entry1);
 }
 
 void aggiorna_posizionex_su_righe_prec(int posizione, struct elemento *dato)
@@ -611,19 +623,25 @@ int cerco_dati_dopo(struct elemento *datodopo, struct elemento *datoloc, int tip
 }
 
 
-static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
+static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWidget *drawing_area)
 {
   struct elemento *datoloc;
   struct elemento *datoprima;
 //  struct elemento *datodopo;
 //  struct elemento *datoprimaprima;
+  struct entries *draw;
   GtkWidget *menu;
   GtkWidget *menu_items;
   char buf[128];
   int x,y;
 //  int datidopotrovati;
   struct riga *cercoriga;
-    
+  draw = (struct entries *) malloc (sizeof(struct entries));
+
+  draw->entry = widget;
+  draw->entry1 = drawing_area;
+
+
   x=(int) event->x;
   y=(int) event->y;
     
@@ -761,7 +779,7 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
       sistemo_posizione();
       rigaattiva = cercoriga;
  
-      redraw_brush (widget);
+      redraw_brush (widget,drawing_area);
     }
   }
   else if (event->button ==3 || tipodatoattivo == -1)
@@ -858,7 +876,7 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
         break;
       }
 
-     redraw_brush(widget);
+     redraw_brush(widget,drawing_area);
      }
      else
      {
@@ -868,20 +886,20 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
         sprintf(buf,"orientamento verso destra");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
-        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (menuitem_response), widget);
+        g_signal_connect_swapped (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (menuitem_response), draw);
         gtk_widget_show (menu_items);
         sprintf(buf,"orientamento verso sinistra");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
-        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (menuitem_response1), widget);
+        g_signal_connect_swapped (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (menuitem_response1), draw);
         gtk_widget_show (menu_items);
         sprintf(buf,"cancella orientamento");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
-        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (menuitem_cancellaorientamento), widget);
+        g_signal_connect (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (menuitem_cancellaorientamento), draw);
         gtk_widget_show (menu_items);
         gtk_widget_show (menu);
         gtk_menu_popup( GTK_MENU(menu), NULL, NULL, NULL, NULL,
@@ -892,20 +910,20 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
         sprintf(buf,"orientamento verso l'alto");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
-        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (menuitem_response2), widget);
+        g_signal_connect_swapped (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (menuitem_response2), draw);
         gtk_widget_show (menu_items);
         sprintf(buf,"orientamento verso il basso");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
-        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (menuitem_response3), widget);
+        g_signal_connect_swapped (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (menuitem_response3), draw);
         gtk_widget_show (menu_items);
         sprintf(buf,"cancella orientamento");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
-        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (menuitem_cancellaorientamento), widget);
+        g_signal_connect (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (menuitem_cancellaorientamento), draw);
         gtk_widget_show (menu_items);
         gtk_widget_show (menu);
         gtk_menu_popup( GTK_MENU(menu), NULL, NULL, NULL, NULL,
@@ -916,27 +934,27 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event )
         sprintf(buf,"sopra ramo basso-sinistra verso alto-destra");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
-        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (menuitem_response4),widget);
+        g_signal_connect_swapped (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (menuitem_response4),draw);
         gtk_widget_show (menu_items);
         sprintf(buf,"sopra ramo alto-sinistra verso basso-destra");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
-        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (menuitem_response5), widget);
+        g_signal_connect_swapped (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (menuitem_response5), draw);
         gtk_widget_show (menu_items);
         sprintf(buf,"inserisci profondita' dei rami");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
-        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (richiede_profondita_2rami), widget);
+        g_signal_connect_swapped (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (richiede_profondita_2rami), draw);
 //                  GTK_SIGNAL_FUNC (menuitem_response6), widget);
         gtk_widget_show (menu_items);
         sprintf(buf,"cancella orientamento");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
-        gtk_signal_connect_object (GTK_OBJECT (menu_items), "activate",
-                  GTK_SIGNAL_FUNC (menuitem_cancellaorientamento), widget);
+        g_signal_connect (GTK_OBJECT (menu_items), "activate",
+                  GTK_SIGNAL_FUNC (menuitem_cancellaorientamento), draw);
         gtk_widget_show (menu_items);
         gtk_widget_show (menu);
         gtk_menu_popup( GTK_MENU(menu), NULL, NULL, NULL, NULL,
@@ -1012,7 +1030,7 @@ static gint configure_event( GtkWidget         *widget, GdkEventConfigure *event
 }
 
 /* Redraw the screen from the backing pixmap */
-static gint expose_event( GtkWidget      *widget, GdkEventExpose *event )
+static gint expose_event( GtkWidget *widget, GdkEventExpose *event)
 {
   gdk_draw_drawable(widget->window,
 		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
@@ -1023,9 +1041,22 @@ static gint expose_event( GtkWidget      *widget, GdkEventExpose *event )
 
   return FALSE;
 }
-
-static void gtk_add_drawing_line( GtkWidget *widget, GdkEventExpose *event, GtkWidget *button)
+static gint expose_event1( GtkWidget *widget, GdkEventExpose *event)
 {
+  if (pixmapsem != NULL )
+    gdk_draw_drawable(widget->window,
+		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
+		  pixmapsem,
+		  event->area.x, event->area.y,
+		  event->area.x, event->area.y,
+		  event->area.width, event->area.height);
+
+  return FALSE;
+}
+
+//static void gtk_add_drawing_line( GtkWidget *widget, GdkEventExpose *event, GtkWidget *button, struct entries *draw)
+static void gtk_add_drawing_line( GtkWidget *button, struct entries *draw)
+{ 
 //  GtkWidget *menu;
 //  menu = gtk_menu_new ();
 //  GtkWidget *menu_items;
@@ -1039,12 +1070,11 @@ static void gtk_add_drawing_line( GtkWidget *widget, GdkEventExpose *event, GtkW
 //  gtk_widget_show (menu);
 //  gtk_menu_popup( GTK_MENU(menu), NULL, NULL, NULL, NULL,
 //                       1,0);
-  
-  id=g_signal_connect(G_OBJECT(widget),"button_press_event",
-                      G_CALLBACK(ricavo_posizione),NULL);
+  id = g_signal_connect(G_OBJECT(draw->entry),"button_press_event",
+                      G_CALLBACK(ricavo_posizione),draw);
 }
 
-static void ricavo_posizione(GtkWidget *widget, GdkEventButton *event)
+static void ricavo_posizione( GtkWidget *widget, GdkEventButton *event, struct entries *draw)
 {
   int x,y;
   struct riga *nuovariga;
@@ -1118,7 +1148,7 @@ static void ricavo_posizione(GtkWidget *widget, GdkEventButton *event)
     nuovariga = nuovariga->rigadopo;
   }
   
-  redraw_brush(widget);
+  redraw_brush(draw->entry,draw->entry1);
   g_signal_handler_disconnect(G_OBJECT(widget),id);
 }
 
@@ -1143,7 +1173,7 @@ void file_ok_sel( struct file_gest *file, GdkEventExpose *event, GtkWidget *w)
   else
   {
     leggidati(nomefile);
-    redraw_brush (file->salvalegge);
+    redraw_brush (file->salvalegge->entry,file->salvalegge->entry1);
   }
 }
 
@@ -1524,12 +1554,12 @@ void salvadati(int fdes)
       }
       datoloc=datoloc->datodopo;
     } 
-    write(fdes," ; \n",3);
+    write(fdes," ; \n",4);
     rigaloc=rigaloc->rigadopo;
   }
   write(fdes," } \n",4);
 }
-
+/*
 static void verify( GtkWidget *wid, GdkEventExpose *event, GtkWidget *button)
 {
   int code;
@@ -1551,6 +1581,7 @@ static void verify( GtkWidget *wid, GdkEventExpose *event, GtkWidget *button)
   gtk_menu_popup( GTK_MENU(menu), NULL, NULL, NULL, NULL,
                    0,0);
 }
+*/
 
 int verifica( int scelta )
 {
@@ -1589,7 +1620,7 @@ int verifica( int scelta )
 return (code);
 }
 
-static void saveload( GtkWidget *wid, GdkEventExpose *event, GtkWidget *button)
+static void saveload( GtkWidget *button, struct entries *wid)
 {
 //  GtkWidget *text;
   GtkWidget *filew;
@@ -1633,6 +1664,7 @@ int main( int argc, char *argv[] )
   GtkWidget *window;
   GtkWidget *window_scrol;
   GtkWidget *drawing_area;
+  GtkWidget *drawing1_area;
   GtkWidget *separator;
   GtkWidget *vbox,*hbox;
 //  GtkObject *adjustment;
@@ -1644,12 +1676,14 @@ int main( int argc, char *argv[] )
   int tipodato2;
   int tipodato3;
   int tipodato4;
+  struct entries *draw;
 
   struct riga *riga;
 //  struct elemento *elemento;
 
   gtk_init (&argc, &argv);
 
+  draw = (struct entries *) malloc (sizeof(struct entries));
   riga=(struct riga * ) malloc(sizeof(struct riga));
   riga->archisup=0;
   riga->archiinf=0;
@@ -1669,7 +1703,8 @@ int main( int argc, char *argv[] )
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(window),900,300);
   gtk_window_set_position(GTK_WINDOW(window),GTK_WIN_POS_CENTER);
-
+  gtk_signal_connect (GTK_OBJECT (window), "destroy",
+		      GTK_SIGNAL_FUNC (quit), NULL);
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (window), hbox);
@@ -1679,13 +1714,25 @@ int main( int argc, char *argv[] )
   gtk_box_pack_start (GTK_BOX (hbox), vbox,TRUE, TRUE, 0);
   gtk_widget_show (vbox);
 
-  gtk_signal_connect (GTK_OBJECT (window), "destroy",
-		      GTK_SIGNAL_FUNC (quit), NULL);
+  /* Create the drawing areas */
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox),hbox, TRUE, TRUE, 0);
+  gtk_widget_show (hbox);
 
-  /* Create the drawing area */
+  drawing1_area = gtk_drawing_area_new ();
+  gtk_widget_set_size_request (drawing1_area, 50,  150);
+  gtk_widget_show (drawing1_area);
+  /* Signals used to handle backing pixmap */
+  g_signal_connect (GTK_OBJECT (drawing1_area), "expose_event",
+    		      (GtkSignalFunc) expose_event1, NULL);
+
+  gtk_box_pack_start (GTK_BOX (hbox), drawing1_area, FALSE, FALSE, 0);
+
   window_scrol = gtk_scrolled_window_new (NULL,NULL);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (window_scrol),
                                     GTK_POLICY_ALWAYS, GTK_POLICY_ALWAYS);
+
+  draw->entry1 = drawing1_area;
 
   drawing_area = gtk_drawing_area_new ();
   gtk_widget_set_size_request (drawing_area, 300, 150);
@@ -1693,35 +1740,38 @@ int main( int argc, char *argv[] )
 
   gtk_scrolled_window_add_with_viewport (
                    GTK_SCROLLED_WINDOW (window_scrol), drawing_area);
-  gtk_box_pack_start (GTK_BOX (vbox), window_scrol, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), window_scrol, TRUE, TRUE, 0);
+//  gtk_box_pack_start (GTK_BOX (vbox), window_scrol, TRUE, TRUE, 0);
   gtk_widget_show (window_scrol);
 
   /* Signals used to handle backing pixmap */
-  gtk_signal_connect (GTK_OBJECT (drawing_area), "expose_event",
+  g_signal_connect (GTK_OBJECT (drawing_area), "expose_event",
     		      (GtkSignalFunc) expose_event, NULL);
-  gtk_signal_connect (GTK_OBJECT(drawing_area),"configure_event",
+  g_signal_connect (GTK_OBJECT(drawing_area),"configure_event",
   		      (GtkSignalFunc) configure_event, NULL);
 
   /* Event signals */
-  gtk_signal_connect_after (GTK_OBJECT (drawing_area), "button_press_event",
-		      (GtkSignalFunc) button_press_event, NULL);
+  g_signal_connect_after (GTK_OBJECT (drawing_area), "button_press_event",
+		      (GtkSignalFunc) button_press_event, drawing1_area );
 
   gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK
 			 | GDK_LEAVE_NOTIFY_MASK
   			 | GDK_BUTTON_PRESS_MASK);
+ 
+  draw->entry = drawing_area;
 
   button = gtk_button_new_with_label ("Aggiungi una riga");
   gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);
 
-  gtk_signal_connect_object (GTK_OBJECT (button), "clicked",
+  g_signal_connect (G_OBJECT (button), "clicked",
 			     GTK_SIGNAL_FUNC (gtk_add_drawing_line),
-			     GTK_OBJECT (drawing_area));
+			     draw);
   gtk_widget_show (button);
 
   button = gtk_button_new_with_label ("Save");
   gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);
 
-  gtk_signal_connect_object(GTK_OBJECT (button), "clicked",
+  g_signal_connect(G_OBJECT (button), "clicked",
 			     GTK_SIGNAL_FUNC (saveload),
 			     NULL);
   gtk_widget_show (button);
@@ -1729,9 +1779,9 @@ int main( int argc, char *argv[] )
   button = gtk_button_new_with_label ("Load");
   gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);
 
-  gtk_signal_connect_object(GTK_OBJECT (button), "clicked",
+  g_signal_connect(G_OBJECT (button), "clicked",
 			     GTK_SIGNAL_FUNC (saveload),
-			     GTK_OBJECT (drawing_area));
+			     draw);
   gtk_widget_show (button);
 
 //#ifdef HAVE_CONTOUR
@@ -1766,7 +1816,7 @@ int main( int argc, char *argv[] )
   button = gtk_button_new();
   gtk_container_add (GTK_CONTAINER (bbox), button);
   box1 = xpm_label_box("tasto0.xpm", "punto di massimo");
-  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+  g_signal_connect (GTK_OBJECT (button), "clicked",
                         GTK_SIGNAL_FUNC (set_pixmapp_iniz), &tipodato1);
   gtk_widget_show(box1);
   gtk_container_add (GTK_CONTAINER (button), box1);
@@ -1775,7 +1825,7 @@ int main( int argc, char *argv[] )
   button = gtk_button_new();
   gtk_container_add (GTK_CONTAINER (bbox), button);
   box1 = xpm_label_box("tasto1.xpm", "punto di attraversamento");
-  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+  g_signal_connect (GTK_OBJECT (button), "clicked",
                         GTK_SIGNAL_FUNC (set_pixmapp_iniz), &tipodato2);
   gtk_widget_show(box1);
   gtk_container_add (GTK_CONTAINER (button), box1);
@@ -1784,7 +1834,7 @@ int main( int argc, char *argv[] )
   button = gtk_button_new();
   gtk_container_add (GTK_CONTAINER (bbox), button);
   box1 = xpm_label_box("tasto2.xpm", "punto di incrocio");
-  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+  g_signal_connect (GTK_OBJECT (button), "clicked",
                         GTK_SIGNAL_FUNC (set_pixmapp_iniz), &tipodato3);
   gtk_widget_show(box1);
   gtk_container_add (GTK_CONTAINER (button), box1);
@@ -1793,7 +1843,7 @@ int main( int argc, char *argv[] )
   button = gtk_button_new();
   gtk_container_add (GTK_CONTAINER (bbox), button);
   box1 = xpm_label_box("tasto3.xpm", "punto di minimo");
-  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+  g_signal_connect (GTK_OBJECT (button), "clicked",
                         GTK_SIGNAL_FUNC (set_pixmapp_iniz), &tipodato4);
   gtk_widget_show(box1);
   gtk_container_add (GTK_CONTAINER (button), box1);
@@ -1802,7 +1852,7 @@ int main( int argc, char *argv[] )
   button = gtk_button_new();
   gtk_container_add (GTK_CONTAINER (bbox), button);
   box1 = xpm_label_box("tasto-1.xpm", "cancella elemento");
-  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+  g_signal_connect (GTK_OBJECT (button), "clicked",
                         GTK_SIGNAL_FUNC (set_pixmapp_iniz), &tipodato);
   gtk_widget_show(box1);
   gtk_container_add (GTK_CONTAINER (button), box1);

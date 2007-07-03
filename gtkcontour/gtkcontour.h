@@ -28,7 +28,7 @@ struct entries
 struct file_gest
 {
   GtkWidget *filew;
-  GtkWidget *salvalegge;
+  struct entries *salvalegge;
 };
 
 struct elemento
@@ -60,6 +60,7 @@ struct riga
 gulong id;
 static GdkPixmap *pixmap = NULL;
 static GdkPixmap *pixmapp = NULL;
+static GdkPixmap *pixmapsem = NULL;
 static GdkBitmap *mask;
 static GtkStyle *style;
 static GtkWidget *pixmapwid;
@@ -73,35 +74,36 @@ static struct elemento *datoattivo;
 
 /* strutture di funzioni */
 
-static void gtk_add_column(GtkWidget *);
+//static void gtk_add_column(GtkWidget *);
 //static gint set_pixmapp (GtkWidget *, int *);
 void set_pixmapp_iniz (GtkWidget *, int *);
 void set_pixmapp (GtkWidget *, int *, int *);
 void disegnatratti(GtkWidget *, struct elemento *, int);
-static void redraw_brush( GtkWidget *);
-static void draw_brush( GtkWidget *);
+static void redraw_brush( GtkWidget *, GtkWidget *);
+//static void draw_brush( GtkWidget *);
 static void enter_callback( GtkWidget *,GtkWidget *);
 static void enter_callback2( GtkWidget *,struct entries *);
 void richiede_profondita();
-void richiede_profondita_2rami(GtkWidget *);
-void menuitem_cancellaorientamento(GtkWidget *, GtkWidget *);
-void menuitem_response(GtkWidget *, GtkWidget *);
-void menuitem_response1(GtkWidget *, GtkWidget *);
-void menuitem_response2(GtkWidget *, GtkWidget *);
-void menuitem_response3(GtkWidget *, GtkWidget *);
-void menuitem_response4(GtkWidget *, GtkWidget *);
-void menuitem_response5(GtkWidget *, GtkWidget *);
+void richiede_profondita_2rami(struct entries *);
+void menuitem_cancellaorientamento(GtkWidget *, struct entries *);
+void menuitem_response(struct entries *);
+void menuitem_response1(struct entries *);
+void menuitem_response2(struct entries *);
+void menuitem_response3(struct entries *);
+void menuitem_response4(struct entries *);
+void menuitem_response5(struct entries *);
 //void menuitem_response6(GtkWidget *, GtkWidget *);
 void aggiorna_posizionex_su_righe_prec(int, struct elemento *);
 void aggiorna_posizionex_su_righe_dopo(int, struct elemento *);
 void aggiorna_posizionex_su_riga(int, struct elemento *);
 int cerco_dati_dopo(struct elemento *, struct elemento *, int);
-static gint button_press_event( GtkWidget *, GdkEventButton *);
+static gint button_press_event( GtkWidget *, GdkEventButton *, GtkWidget * );
 GtkWidget *xpm_label_box (gchar *, gchar *);
 static gint configure_event( GtkWidget *, GdkEventConfigure *);
 static gint expose_event( GtkWidget *, GdkEventExpose *);
-static void gtk_add_drawing_line(GtkWidget *, GdkEventExpose *, GtkWidget *);
-static void ricavo_posizione(GtkWidget *, GdkEventButton *);
+static void gtk_add_drawing_line(GtkWidget *, struct entries *);
+//static void gtk_add_drawing_line(GtkWidget *, GdkEventExpose *, GtkWidget *, struct entries *);
+static void ricavo_posizione( GtkWidget *, GdkEventButton *, struct entries *);
 void file_ok_sel( struct file_gest *, GdkEventExpose *, GtkWidget *);
 struct elemento * alloca_elemento( struct elemento *, int , int , int );
 void stampa(struct riga *);
@@ -110,9 +112,9 @@ int getarcinfo (FILE *,gchar *);
 void leggidati(const gchar *);
 void salvadati(int );
 char * trovacomando(void);
-static void verify( GtkWidget *, GdkEventExpose *, GtkWidget *);
+//static void verify( GtkWidget *, GdkEventExpose *, GtkWidget *);
 int verifica( int);
-static void saveload( GtkWidget *, GdkEventExpose *, GtkWidget *);
+static void saveload( GtkWidget *, struct entries *);
 void quit ();
 
 static inline int max(int a, int b) {
