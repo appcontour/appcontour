@@ -116,7 +116,3 @@ char * trovacomando(void);
 int verifica( int);
 static void saveload( GtkWidget *, struct entries *);
 void quit ();
-
-static inline int max(int a, int b) {
-  return a > b ? a : b;
-}

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(gtkmorse, 0.1.1, pasqui@dmf.unicatt.it)
+AC_INIT(gtkcontour, 0.1.1, pasqui@dmf.unicatt.it)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([gtkcontour.c])
 AC_CONFIG_HEADER([config.h])

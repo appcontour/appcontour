@@ -12,6 +12,10 @@ static void gtk_add_column(GtkWidget *widget)
 }
 */
 
+static inline int max(int a, int b) {
+  return a > b ? a : b;
+}
+
 void set_pixmapp_iniz (GtkWidget *widget, int * xpm)
 {
    int i = 0;
@@ -838,41 +842,52 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
         {
           datoprima->datosotto1 = NULL;
           datoprima->archiapertid = datoprima->archiapertid + 1;
-        }
+	}
         
         if (datoprima->datosotto2 == datoloc)
         {
           datoprima->datosotto2 = NULL;
           datoprima->archiapertid = datoprima->archiapertid + 1;
-        }
+	}
 
         datoprima = datoprima->datodopo;
       }
   
-      if (datoloc->datosotto1 != NULL)
+      int archiusatid = 0;
+      if (datoloc->datosotto1 != NULL){
         datoloc->datosotto1->archiapertiu = datoloc->datosotto1->archiapertiu +1;
+        archiusatid++;  
+      }
  
-      if (datoloc->datosotto2 != NULL)
+      if (datoloc->datosotto2 != NULL){
         datoloc->datosotto2->archiapertiu = datoloc->datosotto2->archiapertiu +1;
+        archiusatid++;  
+      }
  
       switch (datoloc->tipodato)
       {
         case 0:
-          cercoriga->archiinf=max(cercoriga->archiinf-2,0);
+//          cercoriga->archiinf=max(cercoriga->archiinf-2,0);
+          cercoriga->archiinf=max(cercoriga->archiinf-2+archiusatid,0);
           break;
         case 1:
-          cercoriga->archisup=max(cercoriga->archisup-1,0);  
-          cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+1;  
-          cercoriga->archiinf=max(cercoriga->archiinf-1,0);  
+//          cercoriga->archisup=max(cercoriga->archisup-1,0);  
+          cercoriga->archisup=cercoriga->archisup-1;  
+//          cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+1;  
+          cercoriga->archiinf=max(cercoriga->archiinf-1+archiusatid,0);  
+          //cercoriga->archiinf=max(cercoriga->archiinf-1,0);  
           break;
         case 2:
-          cercoriga->archisup=max(cercoriga->archisup-2,0);  
-          cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
-          cercoriga->archiinf=max(cercoriga->archiinf-2,0);  
+          cercoriga->archisup=cercoriga->archisup-2;  
+          //cercoriga->archisup=max(cercoriga->archisup-2,0);  
+//          cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
+          cercoriga->archiinf=max(cercoriga->archiinf-2+archiusatid,0);  
+          //cercoriga->archiinf=max(cercoriga->archiinf-2,0);  
         break;
       case 3:
-        cercoriga->archisup=max(cercoriga->archisup-2,0);  
-        cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
+        cercoriga->archisup=cercoriga->archisup-2;  
+        //cercoriga->archisup=max(cercoriga->archisup-2,0);  
+//        cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
         break;
       }
 
@@ -1229,7 +1244,8 @@ void sistemo_posizione(void)
 {
   struct elemento * datoloc;
   struct elemento * datodopo;
-
+//  int archichiusi;
+  
   rigaattiva = primariga;
   while (rigaattiva != NULL)
   {
