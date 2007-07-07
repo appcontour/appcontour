@@ -1,3 +1,10 @@
+2007-07-04: the computation of the mendes graph is now finally working.
+	The name of the graph was changed from "hacon" to "mendes"
+	as for suggestion of the authors.
+	(see NEWS file for command-line description).
+	We still need to improve the graphical presentation
+	in formats like "kig" or "xfig".
+
 2007-06-15: now contour can directly operate on "knot" descriptions
 	(it was only possible to convert knot to morse).  This
 	is done by forking contour and using a pipe.  This only

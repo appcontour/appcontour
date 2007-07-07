@@ -1,3 +1,28 @@
+2007-07-04: the "mendes graph" of a map of a 2-dimensional manifold
+	in R^2 is defined in D. Hacon, C. Mendes de Jesus, and 
+        M.C. Romero Fuster, Stable maps from surfaces to the plane 
+	with prescribed branching data, Topology and its Applications, 
+	154 (2007) 166-175.
+	It is now possible to compute this graph for contour with
+	Huffman labelling (for which we are able to reconstruct
+	the embedding in a canonical way).
+	The command is "contour mendes <example>"
+	meaning of command switched:
+	"--quiet" inhibits the output of some comments
+	"--verbose" also prints the description of each mendes node
+	by listing the regions+stratum of which it is composed and
+	the description of mendes arcs by listing the "extended"
+	arcs of the apparent contour
+	"--mge [text|pykig|kig]" which king of output to produce:
+	  text: default textual description
+	  pykig: produces a pykig program that can be processed
+	         by pykig.py (kig python interface); the new filter
+	         pykig.filter can be used to filter the output
+	  kig: produces a kig file that can be used as input by kig
+	"--seed <int>" random number generator seed.  It is used
+	when initializing the coordinates of the nodes of the graph
+	for its graphic representation.
+
 2007-02-28: a "link component" is the union of arcs that are traversed
 	when we follow an arc and continue across a node on the arc
 	right in front; in this way an apparent contour is a union of

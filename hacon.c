@@ -1,66 +1,71 @@
 /*
+ * computation of the mendes graph, see paper
+ * D. Hacon, C. Mendes de Jesus, and M.C. Romero Fuster,
+ * Stable maps from surfaces to the plane with prescribed
+ * branching data, Topology and its Applications, 154 (2007) 166-175
+ * and example/hacon.morse
  */
 
 #include <assert.h>
 #include "contour.h"
 #include "hacon.h"
 
-struct hacongraph *
-compute_hacon (struct sketch *s)
+struct mendesgraph *
+compute_mendes (struct sketch *s)
 {
-  struct hacongraph *hg;
-  extern int verbose;
-  int numhaconarcs, numhaconnodes;
-  int **data;
+  struct mendesgraph *hg;
+  int nummendesarcs, nummendesnodes;
+  int **nodedata;
   int *arcdata;
-  int *rstrata;
-  int ia, d, dplus, dminus, nodeplus, nodeminus;
+  int *rstrata, *lstrata, dmin, dmax;
+  int ia, dplus, dminus, nodeplus, nodeminus;
   struct arc *a;
-  struct region *r, *regright;
-  int k, in, epc, epc2, epc1, epc0, epcdisks, lepc;
+  struct region *r, *regright, *regleft;
+  int k, in, epc, epc2, epc1, epc0n, epc0c, epcdisks, lepc;
+  int narcs, ncusps, necusps, nocusps;
+  int evencontributes, oddcontributes;
+  int nodes_x_4, dfirst;
   struct borderlist *bl;
   extern int debug;
 
-  data = init_hacon_strata (s);
-  numhaconnodes = tag_hacon_strata (data, s);
-  if (verbose) describe_hacon_nodes (numhaconnodes, data, s);
-  if (verbose) printf ("\n");
-
-  arcdata = (int *) malloc ((s->arccount + 1) * sizeof(int));
-  numhaconarcs = tag_hacon_arcs (arcdata, s);
-  if (verbose) describe_hacon_arcs (numhaconarcs, arcdata, s);
-  if (verbose) printf ("\n");
-
-  hg = (struct hacongraph *) malloc (sizeof (struct hacongraph));
-  hg->numhaconnodes = numhaconnodes;
-  hg->numhaconarcs = numhaconarcs;
-  hg->nodesdata = data;
-  hg->arcsdata = arcdata;
+  hg = (struct mendesgraph *) malloc (sizeof (struct mendesgraph));
   hg->sketch = s;
+  hg->count_strata = 0;
+  hg->x = 0;
+  hg->y = 0;
+  hg->nodesdata = nodedata = init_mendes_strata (s);
+  hg->nummendesnodes = nummendesnodes = tag_mendes_strata (nodedata, s);
 
-  hg->arcincplus = (int *) malloc (numhaconarcs*sizeof(int));
-  hg->arcincminus = (int *) malloc (numhaconarcs*sizeof(int));
-  hg->nodessign = (int *) malloc (numhaconnodes*sizeof(int));
-  hg->nodesgenus = (int *) malloc (numhaconnodes*sizeof(int));
+  mendes_node_canonify (hg);
+
+  hg->arcsdata = arcdata = (int *) malloc ((s->arccount + 1) * sizeof(int));
+  hg->nummendesarcs = nummendesarcs = tag_mendes_arcs (arcdata, s);
+
+  hg->arcincplus = (int *) malloc (nummendesarcs*sizeof(int));
+  hg->arcincminus = (int *) malloc (nummendesarcs*sizeof(int));
+  hg->nodessign = (int *) malloc (nummendesnodes*sizeof(int));
+  hg->nodesgenus = (int *) malloc (nummendesnodes*sizeof(int));
 
   /*
    * We compute the incidence information of arcs of the
-   * Hacon graph (arcincplus and arcincminus);
+   * Mendes graph (arcincplus and arcincminus);
    * specifically, arcincplus is used if the depth "d" of
    * the corresponding region is an even number, arcinfminus
    * is used otherwise.
    * We also compute the sign of nodes. Since we start with an
    * apparent contour with Huffman labelling, this gives an
    * embedding of the manifold M in R^3, hence it is orientable
-   * and the Hacon graph is bipartite. 
-   * The orientation of each hacon node is already defined 
+   * and the Mendes graph is bipartite. 
+   * The orientation of each mendes node is already defined 
    * when filling the arcincplus and arcincminus vectors.
    */
 
-  for (ia = 0; ia < numhaconarcs; ia++)
+  for (ia = 0; ia < nummendesarcs; ia++)
   {
     for (a = s->arcs; a; a = a->next)
     {
+      int d;
+
       if (arcdata[a->tag] != ia) continue;
       d = a->depths[0];
       r = a->regionleft->border->region;
@@ -71,7 +76,7 @@ compute_hacon (struct sketch *s)
         dplus = d+1;
         dminus = d;
       }
-      rstrata = data[r->tag];
+      rstrata = nodedata[r->tag];
       nodeplus = rstrata[dplus];
       nodeminus = rstrata[dminus];
       hg->arcincplus[ia] = nodeplus;
@@ -82,21 +87,27 @@ compute_hacon (struct sketch *s)
     }
   }
 
+  mendes_arc_canonify (hg);
+
   /*
    * Now we compute the Euler-Poincare' characteristic
-   * of each Hacon node.
+   * of each Mendes node.
    */
 
-  for (in = 0; in < hg->numhaconnodes; in++)
+  for (in = 0; in < hg->nummendesnodes; in++)
   {
     hg->nodesgenus[in] = -1;    /* means it is unknown */
-    epcdisks = epc2 = epc1 = epc0 = 0;
-                                /* cumulative characteristic
-                                 * of elements of dimension
-                                 * 2, 1 and 0 respectively
+    epcdisks = epc2 = epc1 = epc0n = epc0c = 0;
+                                /* epcdisks = number of disks to be added:
+                                 * number of connected components of
+                                 * the boundary of the region associated
+                                 * to the node;
+                                 * epc2, epc1, epc0: cumulative 
+                                 * characteristic of elements of dimension
+                                 * 2, 1 and 0 (nodes+cusps) respectively
                                  */
     if (debug) printf ("Computing epc for node %d\n", in);
-    for (ia = 0; ia < hg->numhaconarcs; ia++)
+    for (ia = 0; ia < hg->nummendesarcs; ia++)
     {
       if (hg->arcincplus[ia] == in) epcdisks++;
       if (hg->arcincminus[ia] == in) epcdisks++;
@@ -115,27 +126,81 @@ compute_hacon (struct sketch *s)
       }
     }
 
+    nodes_x_4 = 0;
     for (a = s->arcs; a; a = a->next)
     {
-      if (a->cusps > 0)
-        fprintf (stderr, "Cusps present, incorrect result\n");
-      if (a->endpoints == 0) continue;      /* no contribution */
+      mendes_compute_cusps_data (a, &dmin, &dmax, &necusps);
       regright = a->regionright->border->region;
       rstrata = hg->nodesdata[regright->tag];
-      /* first we deal with horizontal connections */
-      for (k = 0; k < regright->f; k++)
+      regleft = a->regionleft->border->region;
+      lstrata = hg->nodesdata[regleft->tag];
+      /* first we deal with the trivial strata before dmin and
+       * after dmax (horizontal connections)
+       */
+      if (a->endpoints != 0)
       {
-        if (rstrata[k] != in) continue;
-        epc1 -= 1;   /* arc contributes negatively */
+        for (k = 0; k < dmin; k++)
+        {
+          if (rstrata[k] == in) epc1 -= 1;   /* arc contributes negatively */
+        }
+        for (k = dmax; k < regright->f; k++)
+        {
+          if (rstrata[k] == in) epc1 -= 1;
+        }
+        /*
+         * contribution from crossings.  For internal arcs (horiz.
+         * connection) we account for both starting and ending nodes
+         * so we don't have problems with changing d values due to
+         * cusps.  In this way all internal crossings are counted four
+         * times
+         */
+        for (k = 0; k < regright->f; k++)
+        {
+          if (rstrata[k] == in) nodes_x_4 += 2;
+        }
+        dfirst = a->depths[0];
+        if (lstrata[dfirst] == in || lstrata[dfirst+1] == in)
+        {
+          /* this stratum is a boundary arc for this mendes node */
+          /* we count this 3 times in order to reach 4 (together
+           * with the arc that enter the region
+           */
+          nodes_x_4 += 3;
+        }
       }
+      oddcontributes = evencontributes = 0;
+      if (lstrata[dmin] == in) evencontributes = 1;
+      if (lstrata[dmin+1] == in) oddcontributes = 1;
+      if (evencontributes == 0 && oddcontributes == 0) continue;
+      assert (evencontributes == 0 || oddcontributes == 0);
+      ncusps = a->cusps;
+      epc0c += ncusps;      /* cusps contribute to the number of vertices */
+      nocusps = ncusps - necusps;
+      narcs = 1;           /* initial contribution to number of arcs */
+      if (a->endpoints == 0) narcs = 0;
+      narcs += ncusps;     /* contribution from boundary arcs */
+      if (ncusps > 0)      /* contribution from internal arcs */
+      {
+        if (a->endpoints > 0) narcs ++;
+        if (evencontributes) narcs += necusps;
+          else narcs += nocusps;
+      }
+      epc1 -= narcs;
     }
 
-    fprintf (stderr, "Partial computation of epc1 non implemented\n");
-    fprintf (stderr, "Computation of epc0 non implemented\n");
+    /*
+     * accounting for crossings
+     */
 
-    epc = epcdisks + epc2 + epc1 + epc0;
-    if (debug) printf ("epcdisks = %d, epc2 = %d, epc1 = %d, epc0 = %d, epc = %d\n",
-                     epcdisks, epc2, epc1, epc0, epc);
+    assert ((nodes_x_4 % 4) == 0);
+    epc0n = nodes_x_4/4;
+    //fprintf (stderr, "Computation of epc0n (nodes) missing\n");
+
+    epc = epcdisks + epc2 + epc1 + epc0n + epc0c;
+    if (debug) printf ("epcdisks = %d, epc2 = %d, epc1 = %d, ",
+                     epcdisks, epc2, epc1);
+    if (debug) printf ("epc0n = %d, epc0c = %d, epc = %d\n",
+                     epc0n, epc0c, epc);
     if ((epc % 2) != 0)
     {
       fprintf (stderr, "Warning: Euler characteristic of node %d (%d) ",
@@ -149,19 +214,19 @@ compute_hacon (struct sketch *s)
 
 /*
  * we want to tag each stratum according to
- * the hacon node to which they belong
+ * the mendes node to which they belong
  * we do this by first tagging all with a negative
  * dummy integer, then 0 is the tag of the first
- * hacon node.
+ * mendes node.
  * in a cicle we look for an untagged stratum and give it
- * a *new* hacon tag, then we loop on all strata and try to
- * locally extend the hacon node by local adjacency
+ * a *new* mendes tag, then we loop on all strata and try to
+ * locally extend the mendes node by local adjacency
  */
 
 int
-tag_hacon_strata (int **data, struct sketch *s)
+tag_mendes_strata (int **data, struct sketch *s)
 {
-  int k, hacon_tag;
+  int k, mendes_tag;
   int *rstrata;
   struct region *r;
 
@@ -175,14 +240,14 @@ tag_hacon_strata (int **data, struct sketch *s)
     }
   }
 
-  hacon_tag = 0;
-  while (single_tag_hacon_strata(hacon_tag, data, s)) hacon_tag++;
+  mendes_tag = 0;
+  while (single_tag_mendes_strata(mendes_tag, data, s)) mendes_tag++;
 
-  return (hacon_tag);
+  return (mendes_tag);
 }
 
 int
-single_tag_hacon_strata (int tag, int **data, struct sketch *s)
+single_tag_mendes_strata (int tag, int **data, struct sketch *s)
 {
   struct region *r;
   int i, k, c, count, found;
@@ -210,7 +275,7 @@ single_tag_hacon_strata (int tag, int **data, struct sketch *s)
   rstrata[k] = tag;
 
   count = 1;
-  while ((c = hacon_try_expand_node (tag, data, s)))
+  while ((c = mendes_try_expand_node (tag, data, s)))
   {
     count += c;
   }
@@ -218,7 +283,7 @@ single_tag_hacon_strata (int tag, int **data, struct sketch *s)
 }
 
 int
-hacon_try_expand_node (int tag, int **data, 
+mendes_try_expand_node (int tag, int **data, 
   struct sketch *s)
 {
   int count = 0;
@@ -240,7 +305,7 @@ hacon_try_expand_node (int tag, int **data,
         if (bpstart == 0) continue;
         bp = bpstart;
         do {
-          count += local_hacon_try_expand_node (data, bp, k);
+          count += local_mendes_try_expand_node (data, bp, k);
         } while (bp = bp->next, bp != bpstart);
       }
     }
@@ -249,7 +314,7 @@ hacon_try_expand_node (int tag, int **data,
 }
 
 int
-local_hacon_try_expand_node (int **data, 
+local_mendes_try_expand_node (int **data, 
   struct border *bp, int k)
 {
   int count, d, i, dmin, dmax, ori;
@@ -335,7 +400,7 @@ local_hacon_try_expand_node (int **data,
 }
 
 int **
-init_hacon_strata (struct sketch *s)
+init_mendes_strata (struct sketch *s)
 {
   int rnum, i, rtag;
   struct region *r;
@@ -357,16 +422,42 @@ init_hacon_strata (struct sketch *s)
 }
 
 void
-describe_hacon_nodes (int numhaconnodes, int **data, 
+mendes_compute_cusps_data (struct arc *a, 
+  int *dmin, int *dmax, int *necusps)
+{
+  int k, ne, no, dsum, minval;
+
+  *dmin = *dmax = a->depths[0];
+  *necusps = 0;
+  if (a->cusps == 0) return;
+  ne = no = 0;
+  for (k = 1; k <= a->cusps; k++)
+  {
+    if (a->depths[k] < *dmin) *dmin = a->depths[k];
+    if (a->depths[k] > *dmax) *dmax = a->depths[k];
+    dsum = a->depths[k] + a->depths[k-1];
+    minval = (dsum - 1)/2;
+    assert (2*minval + 1 == dsum);
+    if ((minval % 2) == 0) ne++;
+      else no++;
+  }
+  if ((*dmin % 2) == 0) *necusps = ne;
+    else *necusps = no;
+
+  return;
+}
+
+void
+describe_mendes_nodes (int nummendesnodes, int **data, 
   struct sketch *s)
 {
   int htag, k;
   struct region *r;
   int *rstrata;
 
-  for (htag = 0; htag < numhaconnodes; htag++)
+  for (htag = 0; htag < nummendesnodes; htag++)
   {
-    printf ("Hacon node %d:\n", htag);
+    printf ("Node %d:", htag);
     for (r = s->regions; r; r = r->next)
     {
       rstrata = data[r->tag];
@@ -374,53 +465,55 @@ describe_hacon_nodes (int numhaconnodes, int **data,
       {
         if (rstrata[k] == htag)
         {
-          printf ("  region %d stratum %d\n", r->tag, k);
+          printf (" (%d,%d)", r->tag, k);
         }
       }
     }
+    printf (";\n");
   }
 }
 
 /*
  * this data structure is an integer vector dimensioned
  * as the number of extended arcs, and will contain the
- * corresponding tag as hacon arc (these are components
+ * corresponding tag as mendes arc (these are components
  * of the apparent contour).
  */
 
 void
-describe_hacon_arcs (int numhaconarcs, int *arcdata, struct sketch *s)
+describe_mendes_arcs (int nummendesarcs, int *arcdata, struct sketch *s)
 {
   int htag;
   struct arc *a;
 
-  for (htag = 0; htag < numhaconarcs; htag++)
+  for (htag = 0; htag < nummendesarcs; htag++)
   {
-    printf ("Hacon arc: %d:\n", htag);
+    printf ("Arc %d:", htag);
     for (a = s->arcs; a; a = a->next)
     {
       if (arcdata[a->tag] == htag)
-        printf ("  extended arc %d\n", a->tag);
+        printf (" %d", a->tag);
     }
+    printf (";\n");
   }
 }
 
 int
-tag_hacon_arcs (int *arcdata, struct sketch *s)
+tag_mendes_arcs (int *arcdata, struct sketch *s)
 {
-  int k, hacon_tag;
+  int k, mendes_tag;
 
   /* reset all tags to -1 */
   for (k = 0; k <= s->arccount; k++) arcdata[k] = -1;
 
-  hacon_tag = 0;
-  while (single_tag_hacon_arc(hacon_tag, arcdata, s)) hacon_tag++;
+  mendes_tag = 0;
+  while (single_tag_mendes_arc(mendes_tag, arcdata, s)) mendes_tag++;
 
-  return (hacon_tag);
+  return (mendes_tag);
 }
 
 int
-single_tag_hacon_arc (int tag, int *arcdata, struct sketch *s)
+single_tag_mendes_arc (int tag, int *arcdata, struct sketch *s)
 {
   struct arc *a;
   int i, c, count, found;
@@ -441,12 +534,12 @@ single_tag_hacon_arc (int tag, int *arcdata, struct sketch *s)
   arcdata[a->tag] = tag;
 
   count = 1;
-  while ((c = hacon_try_expand_arc (tag, arcdata, s))) count += c;
+  while ((c = mendes_try_expand_arc (tag, arcdata, s))) count += c;
   return (count);
 }
 
 int
-hacon_try_expand_arc (int tag, int *arcdata, struct sketch *s)
+mendes_try_expand_arc (int tag, int *arcdata, struct sketch *s)
 {
   int count = 0;
   struct arc *a, *an;
@@ -477,44 +570,151 @@ hacon_try_expand_arc (int tag, int *arcdata, struct sketch *s)
 }
 
 /*
- * display hacon graph
+ * display mendes graph
  */
 
 void
-print_hacon (struct hacongraph *h)
+print_mendes (struct mendesgraph *h)
 {
   int **data;
   int *arcdata;
   struct sketch *s;
-  int ia, in;
-  extern int haconge;
+  int ia, in, kigobj, kigobjfa, kigobjflab;
+  extern int mendesge, quiet, verbose;
+  char *kigpointstyle[] = {"Round", "RoundEmpty" };
+  int ptstyleid;
 
   data = h->nodesdata;
   arcdata = h->arcsdata;
   s = h->sketch;
 
-  switch (haconge)
+  switch (mendesge)
   {
     case HGE_TEXT:
-    printf ("Number of hacon nodes: %d\n", h->numhaconnodes);
-    for (in = 0; in < h->numhaconnodes; in++)
+    if (quiet == 0)
     {
-      printf ("node %d (%c), genus %d\n",
+      printf ("#\n# Mendes graph definition:\n");
+      printf ("# Mendes graph with %d nodes and %d arcs.\n",
+            h->nummendesnodes, h->nummendesarcs);
+      printf ("#\n");
+    }
+    printf ("mendes {\n");
+    if (quiet == 0)
+    {
+      printf ("# Mendes nodes information follows:\n");
+      printf ("# Node id: sign genus;\n");
+    }
+    for (in = 0; in < h->nummendesnodes; in++)
+    {
+      printf ("Node %d:%c %d;\n",
         in, (h->nodessign[in] < 0)?'-':'+', h->nodesgenus[in]);
     }
-    printf ("Number of hacon graph arcs: %d\n", h->numhaconarcs);
-    for (ia = 0; ia < h->numhaconarcs; ia++)
+    if (quiet == 0)
     {
-      printf ("Arc %d connects positive node %d with negative node %d\n",
+      printf ("#\n# Mendes arcs information follows:\n");
+      printf ("# Arc id: pos.-node-id neg.-node-id;\n");
+    }
+    for (ia = 0; ia < h->nummendesarcs; ia++)
+    {
+      printf ("Arc %d: %d %d;\n",
         ia, h->arcincplus[ia], h->arcincminus[ia]);
     }
-    printf ("only partially implemented\n");
+    printf ("}\n");
+    if (verbose)
+    {
+      if (quiet == 0)
+      {
+        printf ("\n#\n");
+        printf ("# Relation between Mendes graph and Apparent contour\n");
+        printf ("#\n");
+      }
+      printf ("mendes_contour {\n");
+      if (quiet == 0)
+        printf ("# Node id: (region,stratum) ... ;\n");
+      describe_mendes_nodes (h->nummendesnodes, h->nodesdata, h->sketch);
+      if (quiet == 0)
+        printf ("# Arc id: extended_arc ...;\n");
+      describe_mendes_arcs (h->nummendesarcs, h->arcsdata, h->sketch);
+      printf ("}\n");
+    }
+    break;
+
+    case HGE_KIG:
+    mendes_xy_alloc (h);
+    mendes_xy_randomize (h);
+    printf ("<!DOCTYPE KigDocument>\n");
+    printf ("<KigDocument axes=\"1\" grid=\"1\" CompatibilityVersion=\"0.7.0\" Version=\"0.9.1\" >\n");
+    printf (" <CoordinateSystem>Euclidean</CoordinateSystem>\n");
+    printf (" <Hierarchy>\n");
+    kigobj = 1;
+    for (in = 0; in < h->nummendesnodes; in++)
+    {
+      printf ("  <Data type=\"double\" id=\"%d\">%lf</Data>\n",
+        kigobj++, h->x[in]);
+      printf ("  <Data type=\"double\" id=\"%d\">%lf</Data>\n",
+        kigobj++, h->y[in]);
+      printf ("  <Object type=\"FixedPoint\" id=\"%d\">\n", kigobj++);
+      printf ("   <Parent id=\"%d\"/>\n", kigobj-3);
+      printf ("   <Parent id=\"%d\"/>\n", kigobj-2);
+      printf ("  </Object>\n");
+    }
+    /*
+     * in this way the object id as kig object is given by
+     * 3*(in + 1)
+     */
+    kigobjflab = kigobj;
+    for (in = 0; in < h->nummendesnodes; in++)
+    {
+      printf ("  <Data type=\"string\" id=\"%d\">N%d</Data>\n",
+        kigobj++, in);
+      printf ("  <Data type=\"int\" id=\"%d\">0</Data>\n", kigobj++);
+      printf ("  <Data type=\"double\" id=\"%d\">0</Data>\n", kigobj++);
+      printf ("  <Data type=\"double\" id=\"%d\">0</Data>\n", kigobj++);
+      printf ("  <Object type=\"RelativePoint\" id=\"%d\">\n", kigobj++);
+      printf ("   <Parent id=\"%d\"/>\n", kigobj - 3);
+      printf ("   <Parent id=\"%d\"/>\n", kigobj - 2);
+      printf ("   <Parent id=\"%d\"/>\n", 3*(in+1));
+      printf ("  </Object>\n");
+      printf ("  <Object type=\"Label\" id=\"%d\">\n", kigobj++);
+      printf ("   <Parent id=\"%d\"/>\n", kigobj - 5);
+      printf ("   <Parent id=\"%d\"/>\n", kigobj - 2);
+      printf ("   <Parent id=\"%d\"/>\n", kigobj - 6);
+      printf ("  </Object>\n");
+    }
+    kigobjfa = kigobj;
+    for (ia = 0; ia < h->nummendesarcs; ia++)
+    {
+      printf ("  <Object type=\"SegmentAB\" id=\"%d\">\n", kigobj++);
+      in = h->arcincplus[ia];
+      printf ("   <Parent id=\"%d\"/>\n", 3*(in+1));
+      in = h->arcincminus[ia];
+      printf ("   <Parent id=\"%d\"/>\n", 3*(in+1));
+      printf ("  </Object>\n");
+    }
+    printf (" </Hierarchy>\n");
+    printf (" <View>\n");
+    for (in = 0; in < h->nummendesnodes; in++)
+    {
+      ptstyleid = 0;
+      if (h->nodessign[in] < 0) ptstyleid = 1;
+      printf ("  <Draw width=\"-1\" point-style=\"%s\" namecalcer=\"none\" style=\"SolidLine\" shown=\"true\" color=\"#0000ff\" object=\"%d\"/>\n",
+        kigpointstyle[ptstyleid], kigobjflab + 6*in + 5);
+      printf ("  <Draw width=\"-1\" point-style=\"%s\" namecalcer=\"%d\" style=\"SolidLine\" shown=\"true\" color=\"#0000ff\" object=\"%d\"/>\n",
+        kigpointstyle[ptstyleid], 6*in + kigobjflab, 3*in + 3);
+    }
+    for (ia = 0; ia < h->nummendesarcs; ia++)
+    {
+      printf ("  <Draw width=\"-1\" point-style=\"Round\" namecalcer=\"none\" style=\"SolidLine\" shown=\"true\" color=\"#0000ff\" object=\"%d\"/>\n",
+        kigobjfa + ia);
+    }
+    printf (" </View>\n");
+    printf ("</KigDocument>\n");
     break;
 
     case HGE_PYKIG:
     printf ("from random import Random\n");
     printf ("g = Random()\n");
-    for (in = 0; in < h->numhaconnodes; in++)
+    for (in = 0; in < h->nummendesnodes; in++)
     {
       printf ("N%d = Point (g.random(), g.random(), name=\"N%d\"",
         in, in);
@@ -523,7 +723,7 @@ print_hacon (struct hacongraph *h)
       else
         printf (")\n");
     }
-    for (ia = 0; ia < h->numhaconarcs; ia++)
+    for (ia = 0; ia < h->nummendesarcs; ia++)
     {
       printf ("a%d = Segment(N%d, N%d)\n", ia, 
         h->arcincplus[ia], h->arcincminus[ia]);
@@ -531,8 +731,273 @@ print_hacon (struct hacongraph *h)
     break;
 
     default:
-    printf ("Invalid Hacon graphic engine.\n");
+    printf ("Invalid Mendes graphic engine.\n");
     exit (1);
     break;
   }  
+}
+
+/*
+ * reorder all nodes based on their ordering
+ */
+
+void
+mendes_node_canonify (struct mendesgraph *h)
+{
+  int *nodesvec, *nodesvecinv;
+  int i, s, oldtag;
+  int *rstrata;
+  struct region *r;
+
+  assert (h->arcsdata == 0);
+
+  nodesvec = (int *) malloc (h->nummendesnodes*sizeof (int));
+  for (i = 0; i < h->nummendesnodes; i++) nodesvec[i] = i;
+
+  l_mendes_reorder_n (nodesvec, h->nummendesnodes, h);
+
+  nodesvecinv = (int *) malloc (h->nummendesnodes*sizeof (int));
+
+  for (i = 0; i < h->nummendesnodes; i++) nodesvecinv[i] = -1;
+  for (i = 0; i < h->nummendesnodes; i++) nodesvecinv[nodesvec[i]] = i;
+  for (i = 0; i < h->nummendesnodes; i++) assert (nodesvecinv[i] >= 0);
+
+  /* now the actual renumbering */
+  free (h->count_strata);
+  h->count_strata = 0;
+
+  for (r = h->sketch->regions; r; r = r->next)
+  {
+    rstrata = h->nodesdata[r->tag];
+    for (s = 0; s < r->f; s++)
+    {
+      oldtag = rstrata[s];
+      rstrata[s] = nodesvecinv[oldtag];
+    }
+  }
+  free (nodesvec);
+  free (nodesvecinv);
+  return;
+}
+
+void
+l_mendes_reorder_n (int *start, int num, struct mendesgraph *h)
+{
+  /*
+   * divide and conquer reordering strategy
+   */
+  int numhalf, i, j, k;
+  int *vcopy;
+
+  if (num <= 1) return;
+
+  numhalf = num/2;
+
+  l_mendes_reorder_n (start, numhalf, h);
+  l_mendes_reorder_n (start+numhalf, num - numhalf, h);
+
+  /* now we have to merge the two ordered halves */
+  vcopy = (int *) malloc (num*sizeof(int));
+  for (i = 0; i < num; i++) vcopy[i] = start[i];
+
+  for (i = 0, j = numhalf, k = 0; k < num; k++)
+  {
+    /* fill up start[k] by taking the minimum between vcopy[i] and vcopy[j] */
+    if (i < numhalf)
+    {
+      if (j < num)
+      {
+        if (h_node_compare (vcopy[i], vcopy[j], h) <= 0)
+            start[k] = vcopy[i++];
+          else
+            start[k] = vcopy[j++];
+      } else start[k] = vcopy[i++];
+    } else start[k] = vcopy[j++];
+  }
+
+  free (vcopy);
+  return;
+}
+
+/*
+ * the first ordering key is the number of couples (region,stratum)
+ * compose each mendes node, otherwise the ordering is lessicographical
+ */
+
+int
+h_node_compare (int tag1, int tag2, struct mendesgraph *h)
+{
+  int c1, c2;
+  int *rstrata, s;
+  struct region *r;
+
+  c1 = h_count_strata (tag1, h);
+  c2 = h_count_strata (tag2, h);
+
+  if (c1 != c2) return ((c1 < c2)?(-1):1);
+
+  for (r = h->sketch->regions; r; r = r->next)
+  {
+    rstrata = h->nodesdata[r->tag];
+    for (s = 0; s < r->f; s++)
+    {
+      if (rstrata[s] == tag1 && rstrata[s] != tag2) return (-1);
+      if (rstrata[s] == tag2 && rstrata[s] != tag1) return (1);
+    }
+  }
+  return (0);
+}
+
+/*
+ * count in how many couples (region,strata) a mendes node is
+ * divided
+ */
+
+int
+h_count_strata (int tag, struct mendesgraph *h)
+{
+  int *cstrata, in, s, *rstrata;
+  struct region *r;
+
+  if ((cstrata = h->count_strata) == 0)
+  {
+    cstrata = h->count_strata = (int *) malloc (h->nummendesnodes*sizeof (int));
+    for (in = 0; in < h->nummendesnodes; in++) cstrata[in] = 0;
+    for (r = h->sketch->regions; r; r = r->next)
+    {
+      rstrata = h->nodesdata[r->tag];
+      for (s = 0; s < r->f; s++)
+      {
+        cstrata[rstrata[s]]++;
+      }
+    }
+  }
+
+  return (cstrata[tag]);
+}
+
+/*
+ * reorder all arcs based on their ordering
+ */
+
+void
+mendes_arc_canonify (struct mendesgraph *h)
+{
+  int *arcsvec, *arcsvecinv;
+  int *oldarcincplus, *oldarcincminus;
+  int i, oldtag;
+  struct arc *a;
+
+  arcsvec = (int *) malloc (h->nummendesarcs*sizeof (int));
+  for (i = 0; i < h->nummendesarcs; i++) arcsvec[i] = i;
+
+  l_mendes_reorder_a (arcsvec, h->nummendesarcs, h);
+
+  arcsvecinv = (int *) malloc (h->nummendesarcs*sizeof (int));
+
+  for (i = 0; i < h->nummendesarcs; i++) arcsvecinv[i] = -1;
+  for (i = 0; i < h->nummendesarcs; i++) arcsvecinv[arcsvec[i]] = i;
+  for (i = 0; i < h->nummendesarcs; i++) assert (arcsvecinv[i] >= 0);
+
+  /* now the actual renumbering */
+
+  oldarcincplus = h->arcincplus;
+  oldarcincminus = h->arcincminus;
+  h->arcincplus = (int *) malloc(h->nummendesarcs*sizeof(int));
+  h->arcincminus = (int *) malloc(h->nummendesarcs*sizeof(int));
+  for (i = 0; i < h->nummendesarcs; i++)
+  {
+    h->arcincplus[i] = oldarcincplus[arcsvec[i]];
+    h->arcincminus[i] = oldarcincminus[arcsvec[i]];
+  }
+  free (oldarcincplus);
+  free (oldarcincminus);
+
+  for (a = h->sketch->arcs; a; a = a->next)
+  {
+    oldtag = h->arcsdata[a->tag];
+    h->arcsdata[a->tag] = arcsvecinv[oldtag];
+  }
+  free (arcsvec);
+  free (arcsvecinv);
+  return;
+}
+
+void
+l_mendes_reorder_a (int *start, int num, struct mendesgraph *h)
+{
+  /*
+   * divide and conquer reordering strategy
+   */
+  int numhalf, i, j, k;
+  int *vcopy;
+
+  if (num <= 1) return;
+
+  numhalf = num/2;
+
+  l_mendes_reorder_a (start, numhalf, h);
+  l_mendes_reorder_a (start+numhalf, num - numhalf, h);
+
+  /* now we have to merge the two ordered halves */
+  vcopy = (int *) malloc (num*sizeof(int));
+  for (i = 0; i < num; i++) vcopy[i] = start[i];
+
+  for (i = 0, j = numhalf, k = 0; k < num; k++)
+  {
+    /* fill up start[k] by taking the minimum between vcopy[i] and vcopy[j] */
+    if (i < numhalf)
+    {
+      if (j < num)
+      {
+        if (h_arc_compare (vcopy[i], vcopy[j], h) <= 0)
+            start[k] = vcopy[i++];
+          else
+            start[k] = vcopy[j++];
+      } else start[k] = vcopy[i++];
+    } else start[k] = vcopy[j++];
+  }
+
+  free (vcopy);
+  return;
+}
+
+/*
+ * arcs are ordered in by comparing first the positive node
+ * then the negative one
+ */
+
+int
+h_arc_compare (int tag1, int tag2, struct mendesgraph *h)
+{
+  if (h->arcincplus[tag1] != h->arcincplus[tag2])
+    return ((h->arcincplus[tag1] < h->arcincplus[tag2])?(-1):1);
+
+  if (h->arcincminus[tag1] != h->arcincminus[tag2])
+    return ((h->arcincminus[tag1] < h->arcincminus[tag2])?(-1):1);
+
+  return (0);
+}
+
+void
+mendes_xy_alloc (struct mendesgraph *h)
+{
+  if (h->x) free (h->x);
+  if (h->y) free (h->y);
+  h->x = (double *) malloc (h->nummendesnodes*sizeof(double));
+  h->y = (double *) malloc (h->nummendesnodes*sizeof(double));
+}
+
+void
+mendes_xy_randomize (struct mendesgraph *h)
+{
+  int i;
+
+  assert (h->x && h->y);
+
+  for (i = 0; i < h->nummendesnodes; i++)
+  {
+    h->x[i] = (double)random()/(double)RAND_MAX;
+    h->y[i] = (double)random()/(double)RAND_MAX;
+  }
 }

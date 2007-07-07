@@ -31,7 +31,7 @@
 #define ACTION_FRONTBACK 14
 #define ACTION_LEFTRIGHT 15
 #define ACTION_EVERT 16
-#define ACTION_HACON 17
+#define ACTION_MENDES 17
 #define ACTION_ISHUFFMAN 18
 
 int debug = 0;
@@ -42,17 +42,18 @@ int docanonify = 1;
 int dorecomputef = 1;
 int doretagregions = 1;
 int finfinity = 0;
-int haconge = HGE_TEXT;
+int mendesge = HGE_TEXT;
 
 int
 main (int argc, char *argv[])
 {
   struct sketch *sketch, *s1, *s2;
   int i, count, action=ACTION_NONE, res, ccid = 0;
+  unsigned int rndseed = 0;
   int newextregion = 0;
   char rule[10];
   FILE *infile = 0;
-  struct hacongraph *hacon;
+  struct mendesgraph *mendes;
 
   for (i = 1; i < argc; i++)
   {
@@ -81,6 +82,11 @@ main (int argc, char *argv[])
       docanonify = 0;
       continue;
     }
+    if (strcmp(argv[i],"--seed") == 0)
+    {
+      rndseed = atoi (argv[++i]);
+      continue;
+    }
     if (strcmp(argv[i],"--heisemberg") == 0 ||
         strcmp(argv[i],"--ti") == 0 ||
         strcmp(argv[i],"--transfer_islands") == 0)
@@ -95,15 +101,16 @@ main (int argc, char *argv[])
       finfinity = atoi (argv[++i]);
       continue;
     }
-    if (strcmp(argv[i],"--hacon_ge") == 0 ||
-        strcmp(argv[i],"--hge") == 0)
+    if (strcmp(argv[i],"--mendes_ge") == 0 ||
+        strcmp(argv[i],"--mge") == 0)
     {
       i++;
-      if (strcmp(argv[i],"text") == 0) haconge = HGE_TEXT;
-      else if (strcmp(argv[i],"pykig") == 0) haconge = HGE_PYKIG;
+      if (strcmp(argv[i],"text") == 0) mendesge = HGE_TEXT;
+      else if (strcmp(argv[i],"pykig") == 0) mendesge = HGE_PYKIG;
+      else if (strcmp(argv[i],"kig") == 0) mendesge = HGE_KIG;
       else
       {
-        printf ("Invalid hacon graphic engine selection: %s\n",
+        printf ("Invalid mendes graphic engine selection: %s\n",
                     argv[i]);
         printf ("Valid choices are: text(default), pykig\n");
         exit (111);
@@ -123,7 +130,7 @@ main (int argc, char *argv[])
       printf ("  removecc <int>: remove 3D connected component from contour\n");
       printf ("  leftright: left-right reflection\n");
       printf ("  frontback: front-back reflection\n");
-      printf ("  hacon: compute hacon et al. graph (not implemented)\n");
+      printf ("  mendes: compute Mendes graph (see Hacon-Mendes-Romero Fuster)\n");
       printf ("\n  possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
@@ -133,6 +140,8 @@ main (int argc, char *argv[])
       printf ("  --transfer_islands|--ti <int_coded_flags>: information on island\n");
       printf ("      location in case of ambiguity (e.g. rule C2)\n");
       printf ("  --finfinity|--fi <int>: value of f at infinity (default 0)\n");
+      printf ("  --seed <int>: initialize random number generator\n");
+      printf ("      e.g. for Hacon graph graphic presentation\n");
       printf ("\n  if file is not given, description is taken from standard input\n");
       exit (0);
     }
@@ -185,7 +194,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"info") == 0) action = ACTION_INFO;
     if (strcmp(argv[i],"frontback") == 0) action = ACTION_FRONTBACK;
     if (strcmp(argv[i],"leftright") == 0) action = ACTION_LEFTRIGHT;
-    if (strcmp(argv[i],"hacon") == 0) action = ACTION_HACON;
+    if (strcmp(argv[i],"mendes") == 0) action = ACTION_MENDES;
     if (strcmp(argv[i],"evert") == 0)
     {
       action = ACTION_EVERT;
@@ -201,6 +210,7 @@ main (int argc, char *argv[])
   }
   if (action == ACTION_NONE) action = ACTION_PRINTSKETCH;
   if (infile == 0) infile = stdin;
+  srandom (rndseed);
   switch (action)
   {
     case ACTION_PRINTSKETCH:
@@ -332,11 +342,11 @@ main (int argc, char *argv[])
     printsketch (sketch);
     break;
 
-    case ACTION_HACON:
+    case ACTION_MENDES:
     if ((sketch = readcontour (infile)) == 0) exit (14);
-// WARNING: THIS IS WORK IN PROGRESS...
-    hacon = compute_hacon (sketch);
-    print_hacon (hacon);
+    if (docanonify) canonify (sketch);
+    mendes = compute_mendes (sketch);
+    print_mendes (mendes);
     break;
 
     default:
