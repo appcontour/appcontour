@@ -3,12 +3,12 @@
  * D. Hacon, C. Mendes de Jesus, and M.C. Romero Fuster,
  * Stable maps from surfaces to the plane with prescribed
  * branching data, Topology and its Applications, 154 (2007) 166-175
- * and example/hacon.morse
+ * and example/mendes.morse
  */
 
 #include <assert.h>
 #include "contour.h"
-#include "hacon.h"
+#include "mendes.h"
 
 struct mendesgraph *
 compute_mendes (struct sketch *s)

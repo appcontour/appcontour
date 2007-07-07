@@ -1,1 +1,1 @@
-./contour -q --verbose mendes examples/hacon.morse
+./contour -q --verbose mendes examples/mendes.morse

@@ -12,7 +12,7 @@
 
 #include "contour.h"
 #include "parser.h"
-#include "hacon.h"
+#include "mendes.h"
 
 #define ACTION_NONE 0
 #define ACTION_PRINTSKETCH 1
