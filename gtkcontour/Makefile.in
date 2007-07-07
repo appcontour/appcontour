@@ -152,6 +152,7 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 gtkcontour_SOURCES = gtkcontour.c parser.c gtkcontour.h parser.h
+EXTRA_DIST = *.xpm *.png
 AM_CFLAGS = -Wall
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
