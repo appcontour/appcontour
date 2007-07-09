@@ -643,7 +643,7 @@ print_mendes (struct mendesgraph *h)
     case HGE_KIG:
     mendes_xy_alloc (h);
     mendes_xy_compute (h);
-fprintf (stderr, "graph energy = %lf\n", mendes_energy (h));
+//fprintf (stderr, "graph energy = %lf\n", mendes_energy (h));
     printf ("<!DOCTYPE KigDocument>\n");
     printf ("<KigDocument axes=\"1\" grid=\"1\" CompatibilityVersion=\"0.7.0\" Version=\"0.9.1\" >\n");
     printf (" <CoordinateSystem>Euclidean</CoordinateSystem>\n");
@@ -1019,7 +1019,7 @@ mendes_xy_compute (struct mendesgraph *h)
   srandom (optseed);
   mendes_xy_randomize (h);
   e = mendes_energy (h);
-fprintf (stderr, "opt energy: %lf\n", e);
+//fprintf (stderr, "opt energy: %lf\n", e);
   return;
 }
 
