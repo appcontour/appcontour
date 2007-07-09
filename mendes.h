@@ -56,4 +56,6 @@ void l_mendes_reorder_a (int *start, int num, struct mendesgraph *h);
 int h_arc_compare (int tag1, int tag2, struct mendesgraph *h);
 
 void mendes_xy_alloc (struct mendesgraph *h);
+void mendes_xy_compute (struct mendesgraph *h);
 void mendes_xy_randomize (struct mendesgraph *h);
+double mendes_energy (struct mendesgraph *h);

@@ -3,7 +3,7 @@
 
 #
 # this is a utility script allowing to use pykig.py
-# as a filter (useful e.g. to print the hacon graph)
+# as a filter (useful e.g. to print the mendes graph)
 #
 
 if ! cmdname=`which pykig.py`

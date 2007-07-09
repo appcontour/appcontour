@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+
+#
+# this is a utility script allowing to use kig
+# as a filter (useful e.g. to print the mendes graph)
+#
+
+if ! cmdname=`which kig`
+then
+  echo "Cannot find kig"
+  exit 1
+fi
+
+kigversion=`$cmdname --version | grep "^Kig" | cut -f2 -d' '`
+#echo kig version: $kigversion
+
+pname="/tmp/kig.filter.$$.pipe.kig"
+#mkfifo $pname
+
+if [ -f $pname ]
+then
+  rm $pname
+fi
+
+cat >$pname
+$cmdname $pname
+
+rm $pname

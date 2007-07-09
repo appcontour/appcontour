@@ -166,7 +166,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = show utils
 contour_SOURCES = contour.c readsketch.c readmorse.c rules.c sketch.c parser.c appcontour.c printmorse.c knot2morse.c mendes.c contour.h parser.h mendes.h
-EXTRA_DIST = examples/*.morse examples/*.knot examples/*.sketch examples/failing_examples/*.morse tests/test.* test BUGS utils/*.sh TODO
+EXTRA_DIST = examples/*.morse examples/*.knot examples/*.sketch examples/immersed/*.morse examples/failing_examples/*.morse tests/test.* test BUGS utils/*.sh TODO
 AM_CFLAGS = -Wall
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -417,7 +417,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/examples $(distdir)/examples/failing_examples $(distdir)/tests $(distdir)/utils
+	$(mkdir_p) $(distdir)/examples $(distdir)/examples/failing_examples $(distdir)/examples/immersed $(distdir)/tests $(distdir)/utils
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

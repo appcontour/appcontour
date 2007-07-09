@@ -7,6 +7,7 @@
  */
 
 #include <assert.h>
+#include <float.h>
 #include "contour.h"
 #include "mendes.h"
 
@@ -641,7 +642,8 @@ print_mendes (struct mendesgraph *h)
 
     case HGE_KIG:
     mendes_xy_alloc (h);
-    mendes_xy_randomize (h);
+    mendes_xy_compute (h);
+fprintf (stderr, "graph energy = %lf\n", mendes_energy (h));
     printf ("<!DOCTYPE KigDocument>\n");
     printf ("<KigDocument axes=\"1\" grid=\"1\" CompatibilityVersion=\"0.7.0\" Version=\"0.9.1\" >\n");
     printf (" <CoordinateSystem>Euclidean</CoordinateSystem>\n");
@@ -988,6 +990,39 @@ mendes_xy_alloc (struct mendesgraph *h)
   h->y = (double *) malloc (h->nummendesnodes*sizeof(double));
 }
 
+/*
+ * this is only a very rought starting point...
+ */
+
+void
+mendes_xy_compute (struct mendesgraph *h)
+{
+  uint seed, optseed;
+  int i;
+  double e, eopt;
+
+  optseed = 0;
+  eopt = DBL_MAX;
+  for (i = 0; i < 1000; i++)
+  {
+    seed = random ();
+    srandom (seed);
+    mendes_xy_randomize (h);
+    e = mendes_energy (h);
+    if (e < eopt)
+    {
+      eopt = e;
+      optseed = seed;
+    }
+  }
+
+  srandom (optseed);
+  mendes_xy_randomize (h);
+  e = mendes_energy (h);
+fprintf (stderr, "opt energy: %lf\n", e);
+  return;
+}
+
 void
 mendes_xy_randomize (struct mendesgraph *h)
 {
@@ -1000,4 +1035,42 @@ mendes_xy_randomize (struct mendesgraph *h)
     h->x[i] = (double)random()/(double)RAND_MAX;
     h->y[i] = (double)random()/(double)RAND_MAX;
   }
+}
+
+double
+mendes_energy (struct mendesgraph *h)
+{
+  double e1, e2;
+  int in1, in2, ia;
+  double dx, dy;
+
+  e1 = e2 = 0.0;
+  /*
+   * e1 is the repulsive energy among all nodes
+   */
+
+  for (in1 = 0; in1 < h->nummendesnodes; in1++)
+  {
+    for (in2 = in1+1; in2 < h->nummendesnodes; in2++)
+    {
+      dx = h->x[in1] - h->x[in2];
+      dy = h->y[in1] - h->y[in2];
+      e1 += 1.0/(dx*dx + dy*dy);
+    }
+  }
+
+  /*
+   * e2 is the attractive energy of arcs
+   */
+
+  for (ia = 0; ia < h->nummendesarcs; ia++)
+  {
+    in1 = h->arcincplus[ia];
+    in2 = h->arcincminus[ia];
+    dx = h->x[in1] - h->x[in2];
+    dy = h->y[in1] - h->y[in2];
+    e2 += dx*dx + dy*dy;
+  }
+
+  return (e1*e2);
 }
