@@ -51,7 +51,7 @@ void set_pixmapp (GtkWidget *widget, int * xpm, int *orientamento)
   }
  
   style = gtk_widget_get_style( widget );
-  pixmapwid = gtk_pixmap_new( pixmap, mask );
+  pixmapwid = gtk_image_new_from_pixmap( pixmap, mask );
   gtk_widget_show( pixmapwid );
   pixmapp = gdk_pixmap_create_from_xpm( widget->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
@@ -243,7 +243,8 @@ static void redraw_brush( GtkWidget *widget, GtkWidget *widget1)
       pixmapp = gdk_pixmap_create_from_xpm( widget1->window, &mask,&style->bg[GTK_STATE_NORMAL],
                                          "sem_verde.png");
     else
-      pixmapp = gdk_pixmap_create_from_xpm( widget1->window, &mask,&style->bg[GTK_STATE_NORMAL],
+      //pixmapp = gdk_pixmap_create_from_xpm( widget1->window, &mask,&style->bg[GTK_STATE_NORMAL],
+      pixmapp = gdk_pixmap_create_from_xpm( widget1->window, &mask,&style->bg[0],
                                          "sem_giallo.png");
   }
     
@@ -873,21 +874,21 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
         case 1:
 //          cercoriga->archisup=max(cercoriga->archisup-1,0);  
           cercoriga->archisup=cercoriga->archisup-1;  
-//          cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+1;  
+          cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+1;  
           cercoriga->archiinf=max(cercoriga->archiinf-1+archiusatid,0);  
           //cercoriga->archiinf=max(cercoriga->archiinf-1,0);  
           break;
         case 2:
           cercoriga->archisup=cercoriga->archisup-2;  
           //cercoriga->archisup=max(cercoriga->archisup-2,0);  
-//          cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
+          cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
           cercoriga->archiinf=max(cercoriga->archiinf-2+archiusatid,0);  
           //cercoriga->archiinf=max(cercoriga->archiinf-2,0);  
         break;
       case 3:
         cercoriga->archisup=cercoriga->archisup-2;  
         //cercoriga->archisup=max(cercoriga->archisup-2,0);  
-//        cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
+        cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
         break;
       }
 
@@ -1721,6 +1722,8 @@ int main( int argc, char *argv[] )
   gtk_window_set_position(GTK_WINDOW(window),GTK_WIN_POS_CENTER);
   gtk_signal_connect (GTK_OBJECT (window), "destroy",
 		      GTK_SIGNAL_FUNC (quit), NULL);
+
+  style = gtk_widget_get_style( window );
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (window), hbox);
