@@ -560,10 +560,14 @@ void aggiorna_posizionex_su_riga(int posizione, struct elemento *dato)
    int incremento;
 
    incremento = posizione + 50 - dato->posizionex;
+ 
+   if (dato->posizionex_old != 0) 
+     dato->posizionex_old = dato->posizionex;
 
    dato->posizionex = dato->posizionex + incremento;
    while (dato->datodopo != NULL)
    {
+     dato->datodopo->posizionex_old = dato->datodopo->posizionex;
      dato->datodopo->posizionex = dato->datodopo->posizionex + incremento;
      dato = dato->datodopo;
    }
@@ -627,25 +631,42 @@ int cerco_dati_dopo(struct elemento *datodopo, struct elemento *datoloc, int tip
   return (datidopotrovati);
 }
 
-
+void resetta_posizione_old(void)
+{
+  struct riga *riga;
+  struct elemento *dato;
+  
+  riga = primariga;
+  while (riga != NULL) {
+    dato = riga->dato;
+    while ( dato != NULL) {
+      dato->posizionex_old = dato->posizionex;
+      dato = dato->datodopo;
+    }
+    riga = riga->rigadopo;
+  }
+}
 static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWidget *drawing_area)
 {
   struct elemento *datoloc;
   struct elemento *datoprima;
-//  struct elemento *datodopo;
-//  struct elemento *datoprimaprima;
   struct entries *draw;
   GtkWidget *menu;
   GtkWidget *menu_items;
   char buf[128];
   int x,y;
-//  int datidopotrovati;
   struct riga *cercoriga;
   draw = (struct entries *) malloc (sizeof(struct entries));
 
   draw->entry = widget;
   draw->entry1 = drawing_area;
 
+  if (riga_canc_punt != NULL) {
+    cancella_puntatori();
+    riga_canc_punt = NULL;
+  }
+
+  resetta_posizione_old();
 
   x=(int) event->x;
   y=(int) event->y;
@@ -659,34 +680,27 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
       cercoriga=cercoriga->rigadopo;
   }
  
-  if (cercoriga != NULL)
-    datoloc=cercoriga->dato;
-  else
+  if (cercoriga == NULL) {
     datoloc = NULL;
-
-  if (cercoriga == NULL)
-  {
-      menu = gtk_menu_new ();
-      sprintf(buf,"attenzione posizionarsi su una riga");
-      menu_items = gtk_menu_item_new_with_label (buf);
-      gtk_menu_append (GTK_MENU (menu), menu_items);
-      gtk_widget_show (menu_items);
-      gtk_widget_show (menu);
-      gtk_menu_popup( GTK_MENU(menu), NULL, NULL, NULL, NULL,
+    menu = gtk_menu_new ();
+    sprintf(buf,"attenzione posizionarsi su una riga");
+    menu_items = gtk_menu_item_new_with_label (buf);
+    gtk_menu_append (GTK_MENU (menu), menu_items);
+    gtk_widget_show (menu_items);
+    gtk_widget_show (menu);
+    gtk_menu_popup( GTK_MENU(menu), NULL, NULL, NULL, NULL,
                        event->button, event->time);
   }
-  else
-  {
-  rigaattiva = cercoriga;
-  iy=rigaattiva->posizione;
+  else {
+    datoloc=cercoriga->dato;
+    rigaattiva = cercoriga;
+    iy=rigaattiva->posizione;
 
-  if (event->button == 1 && tipodatoattivo >= 0)
-  { 
+    if (event->button == 1 && tipodatoattivo >= 0) { 
     if ( ( tipodatoattivo > 0 &&
       (rigaattiva->rigaprima == NULL || 
       (rigaattiva->rigaprima != NULL && rigaattiva->rigaprima->archiinf == 0) ||
-      (rigaattiva->rigaprima != NULL && rigaattiva->rigaprima->archiinf == 1 && tipodatoattivo > 1))) )
-    {
+      (rigaattiva->rigaprima != NULL && rigaattiva->rigaprima->archiinf == 1 && tipodatoattivo > 1))) ) {
       menu = gtk_menu_new ();
       sprintf(buf,"attenzione non ci sono abbastanza archi aperti nella riga precedente");
       menu_items = gtk_menu_item_new_with_label (buf);
@@ -706,8 +720,7 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
                       TRUE, 15,iy+50, 16,44);
       gtk_widget_queue_draw_area (widget,15,iy-50, 25,iy+95);
 
-      if (datoloc == NULL)
-      {
+      if (datoloc == NULL) {
         datoloc=(struct elemento *) malloc(sizeof(struct elemento));
         datoloc->datodopo = NULL;
         rigaattiva->dato=datoloc;
@@ -715,21 +728,35 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
         datoloc->datosotto1 = NULL;
         datoloc->datosotto2 = NULL;
       }
-      else
-      {
-        while (datoloc->datodopo != NULL && !(x > datoloc->posizionex && x < datoloc->datodopo->posizionex ))
-          datoloc=datoloc->datodopo;
+      else {
+        if ( x < datoloc->posizionex ) {
+// inserisco il dato all'inizio 
+          datoprima = (struct elemento *) malloc(sizeof(struct elemento));
+          datoprima->datodopo = datoloc;
+          datoloc = datoprima;
+          cercoriga->dato = datoloc;
+          ix = 155;
+          if (ix == datoloc->datodopo->posizionex) {
+            datoprima = datoloc->datodopo;
+            while ( datoprima != NULL) {
+              datoprima->posizionex_old = datoprima->posizionex;
+              datoprima->posizionex = datoprima->posizionex +50;
+              datoprima = datoprima->datodopo;
+            }
+          }
+        }
+        else {
+          while (datoloc->datodopo != NULL && !(x > datoloc->posizionex && x < datoloc->datodopo->posizionex ))
+            datoloc=datoloc->datodopo;
         
-        if (datoloc->datodopo == NULL) 
-        {
+          if (datoloc->datodopo == NULL) {
 // inserisco il dato alla fine
             datoloc->datodopo=(struct elemento *) malloc(sizeof(struct elemento));
             ix = datoloc->posizionex + 50;
             datoloc=datoloc->datodopo;
             datoloc->datodopo=NULL;
-        }
-        else
-        {
+          }
+          else {
 // inserisco il nuovo dato nella fila
             datoprima = (struct elemento *) malloc(sizeof(struct elemento));
             datoprima->datodopo = datoloc->datodopo;
@@ -739,11 +766,12 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
             if (ix == datoloc->datodopo->posizionex) {
               datoprima = datoloc->datodopo;
               while ( datoprima != NULL) {
+                datoprima->posizionex_old = datoprima->posizionex;
                 datoprima->posizionex = datoprima->posizionex +50;
                 datoprima = datoprima->datodopo;
               }
             }
-
+          }
         }
       }
 
@@ -753,6 +781,7 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
       datoloc->orientamento=0;
       datoloc->profondita = NULL;
       datoloc->posizionex = ix;
+      datoloc->posizionex_old = 0;
 
       switch (tipodatoattivo)
       {
@@ -816,89 +845,21 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
      iy=cercoriga->posizione;
      ix=datoloc->posizionex;
      
-     if (tipodatoattivo == -1)
-     {
-
-        gdk_draw_rectangle (pixmap, widget->style->white_gc,
+     if (tipodatoattivo == -1) {
+       gdk_draw_rectangle (pixmap, widget->style->white_gc,
                       TRUE, 15,iy-50, 16,44);
-        gdk_draw_rectangle (pixmap, widget->style->white_gc,
+       gdk_draw_rectangle (pixmap, widget->style->white_gc,
                       TRUE, 15,iy+1, 16,44);
-        gdk_draw_rectangle (pixmap, widget->style->white_gc,
+       gdk_draw_rectangle (pixmap, widget->style->white_gc,
                       TRUE, 15,iy+50, 16,44);
-        gtk_widget_queue_draw_area (widget, 15,iy-50, 25,iy+95);
+       gtk_widget_queue_draw_area (widget, 15,iy-50, 25,iy+95);
   
-      if (datoprima != NULL)
-        datoprima->datodopo = datoloc->datodopo;
-      else
-        cercoriga->dato = datoloc->datodopo;
-
-      if (cercoriga->rigaprima != NULL)
-        datoprima = cercoriga->rigaprima->dato;
-      else
-        datoprima = NULL;
-
-      while (datoprima != NULL)
-      {
-        if (datoprima->datosotto1 == datoloc)
-        {
-          datoprima->datosotto1 = NULL;
-          datoprima->archiapertid = datoprima->archiapertid + 1;
-	}
-        
-        if (datoprima->datosotto2 == datoloc)
-        {
-          datoprima->datosotto2 = NULL;
-          datoprima->archiapertid = datoprima->archiapertid + 1;
-	}
-
-        datoprima = datoprima->datodopo;
-      }
-  
-      int archiusatid = 0;
-      if (datoloc->datosotto1 != NULL){
-        datoloc->datosotto1->archiapertiu = datoloc->datosotto1->archiapertiu +1;
-        archiusatid++;  
-      }
- 
-      if (datoloc->datosotto2 != NULL){
-        datoloc->datosotto2->archiapertiu = datoloc->datosotto2->archiapertiu +1;
-        archiusatid++;  
-      }
- 
-      switch (datoloc->tipodato)
-      {
-        case 0:
-//          cercoriga->archiinf=max(cercoriga->archiinf-2,0);
-          cercoriga->archiinf=max(cercoriga->archiinf-2+archiusatid,0);
-          break;
-        case 1:
-//          cercoriga->archisup=max(cercoriga->archisup-1,0);  
-          cercoriga->archisup=cercoriga->archisup-1;  
-          cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+1;  
-          cercoriga->archiinf=max(cercoriga->archiinf-1+archiusatid,0);  
-          //cercoriga->archiinf=max(cercoriga->archiinf-1,0);  
-          break;
-        case 2:
-          cercoriga->archisup=cercoriga->archisup-2;  
-          //cercoriga->archisup=max(cercoriga->archisup-2,0);  
-          cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
-          cercoriga->archiinf=max(cercoriga->archiinf-2+archiusatid,0);  
-          //cercoriga->archiinf=max(cercoriga->archiinf-2,0);  
-        break;
-      case 3:
-        cercoriga->archisup=cercoriga->archisup-2;  
-        //cercoriga->archisup=max(cercoriga->archisup-2,0);  
-        cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
-        break;
-      }
-
-     redraw_brush(widget,drawing_area);
+       cancello_elemento(datoloc,datoprima,cercoriga);
+       redraw_brush(widget,drawing_area);
      }
-     else
-     {
+     else {
       menu = gtk_menu_new ();
-      if (datoloc->tipodato == 0 || datoloc->tipodato == 3)
-      {
+      if (datoloc->tipodato == 0 || datoloc->tipodato == 3) {
         sprintf(buf,"orientamento verso destra");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
@@ -920,9 +881,8 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
         gtk_widget_show (menu);
         gtk_menu_popup( GTK_MENU(menu), NULL, NULL, NULL, NULL,
                           event->button, event->time);
-      }
-      else if (datoloc->tipodato == 1)
-      {
+      } 
+      else if (datoloc->tipodato == 1) {
         sprintf(buf,"orientamento verso l'alto");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
@@ -945,8 +905,7 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
         gtk_menu_popup( GTK_MENU(menu), NULL, NULL, NULL, NULL,
                           event->button, event->time);
       }
-      else
-      {
+      else {
         sprintf(buf,"sopra ramo basso-sinistra verso alto-destra");
         menu_items = gtk_menu_item_new_with_label (buf);
         gtk_menu_append (GTK_MENU (menu), menu_items);
@@ -982,6 +941,64 @@ static gint button_press_event( GtkWidget *widget, GdkEventButton *event , GtkWi
   }
   return TRUE;
 
+}
+
+void cancello_elemento(struct elemento *datoloc, struct elemento *datoprima, struct riga *cercoriga)
+{
+  if (datoprima != NULL)
+    datoprima->datodopo = datoloc->datodopo;
+  else
+    cercoriga->dato = datoloc->datodopo;
+
+  if (cercoriga->rigaprima != NULL)
+    datoprima = cercoriga->rigaprima->dato;
+  else
+    datoprima = NULL;
+
+  while (datoprima != NULL) {
+    if (datoprima->datosotto1 == datoloc) {
+          datoprima->datosotto1 = NULL;
+          datoprima->archiapertid = datoprima->archiapertid + 1;
+    }
+        
+    if (datoprima->datosotto2 == datoloc) {
+          datoprima->datosotto2 = NULL;
+          datoprima->archiapertid = datoprima->archiapertid + 1;
+    }
+
+    datoprima = datoprima->datodopo;
+  }
+  
+  int archiusatid = 0;
+  if (datoloc->datosotto1 != NULL){
+    datoloc->datosotto1->archiapertiu = datoloc->datosotto1->archiapertiu +1;
+    archiusatid++;  
+  }
+ 
+  if (datoloc->datosotto2 != NULL){
+    datoloc->datosotto2->archiapertiu = datoloc->datosotto2->archiapertiu +1;
+    archiusatid++;  
+  }
+ 
+  switch (datoloc->tipodato) {
+    case 0:
+      cercoriga->archiinf=max(cercoriga->archiinf-2+archiusatid,0);
+      break;
+    case 1:
+      cercoriga->archisup=cercoriga->archisup-1;  
+      cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+1;  
+      cercoriga->archiinf=max(cercoriga->archiinf-1+archiusatid,0);  
+      break;
+    case 2:
+      cercoriga->archisup=cercoriga->archisup-2;  
+      cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
+      cercoriga->archiinf=max(cercoriga->archiinf-2+archiusatid,0);  
+      break;
+    case 3:
+      cercoriga->archisup=cercoriga->archisup-2;  
+      cercoriga->rigaprima->archiinf=cercoriga->rigaprima->archiinf+2;  
+      break;
+  }
 }
 
 GtkWidget *xpm_label_box (gchar *xpm_filename, gchar *label_text)
@@ -1071,7 +1088,7 @@ static gint expose_event1( GtkWidget *widget, GdkEventExpose *event)
 }
 
 //static void gtk_add_drawing_line( GtkWidget *widget, GdkEventExpose *event, GtkWidget *button, struct entries *draw)
-static void gtk_add_drawing_line( GtkWidget *button, struct entries *draw)
+static void add_line( GtkWidget *button, struct entries *draw)
 { 
 //  GtkWidget *menu;
 //  menu = gtk_menu_new ();
@@ -1090,6 +1107,72 @@ static void gtk_add_drawing_line( GtkWidget *button, struct entries *draw)
                       G_CALLBACK(ricavo_posizione),draw);
 }
 
+static void del_last_element(void)
+{
+  struct riga *riga;
+  struct elemento *dato,*datoprima;
+
+  riga = primariga;
+  while (riga != NULL) {
+    dato = riga->dato;
+    datoprima = NULL;
+    while ( dato != NULL) {
+      if (dato->posizionex_old == 0 )
+        cancello_elemento(dato,datoprima,riga);
+       
+      dato->posizionex = dato->posizionex_old;
+      datoprima = dato;
+      dato = dato->datodopo;
+    }
+    riga = riga->rigadopo;
+  }
+}
+
+static void del_last_op(GtkWidget *button, struct entries *draw)
+{
+  struct riga *riga;
+  struct elemento *dato;
+
+  if (riga_canc_punt != NULL || (riga_canc_punt == NULL && primariga->dato == NULL)) {
+
+    riga = primariga;
+    while (riga != NULL) {
+      dato = riga->dato;
+      while ( dato != NULL) {
+        dato->posizionex_old = dato->posizionex;
+        dato = dato->datodopo;
+      }
+      riga = riga->rigadopo;
+    }
+    del_add_line();
+  }
+  else
+    del_last_element();
+  redraw_brush(draw->entry,draw->entry1);
+}
+static void del_add_line(void)
+{
+  if (riga_canc_punt == NULL) { 
+//    if (primariga->dato == NULL) {
+      riga_canc_punt = primariga;
+      riga_canc_punt->posizione = riga_canc_punt->posizione -50;
+      primariga = primariga->rigadopo;
+    }
+//    else
+//      return;
+//  }
+  else {
+  riga_canc_punt->rigadopo = riga_canc_punt->rigadopo->rigadopo;
+  }
+
+  rigaattiva = riga_canc_punt->rigadopo;
+  while (riga_canc_punt->rigadopo != NULL) {
+    riga_canc_punt = riga_canc_punt->rigadopo;
+    riga_canc_punt->posizione = riga_canc_punt->posizione -50;
+  }
+  riga_canc_punt = NULL;
+}
+
 static void ricavo_posizione( GtkWidget *widget, GdkEventButton *event, struct entries *draw)
 {
   int x,y;
@@ -1101,17 +1184,16 @@ static void ricavo_posizione( GtkWidget *widget, GdkEventButton *event, struct e
  
   ix=155;
   iy=rigaattiva->posizione+50;
-  if (y > iy)
-  {
-    while (rigaattiva->rigadopo != NULL && y >= iy+50)
-    {
+  if (y > iy) {
+    while (rigaattiva->rigadopo != NULL && y >= iy+50) {
       rigaattiva=rigaattiva->rigadopo;
       iy=iy+50;
     }
   }
-  else
-  {
-    rigaattiva=rigaattiva->rigaprima;
+  else {
+    if (rigaattiva->rigaprima != NULL)
+      rigaattiva=rigaattiva->rigaprima;
+
     while (rigaattiva->rigaprima != NULL && y <= iy-50)
     {
       rigaattiva=rigaattiva->rigaprima;
@@ -1121,39 +1203,33 @@ static void ricavo_posizione( GtkWidget *widget, GdkEventButton *event, struct e
   }
   nuovariga=(struct riga *) malloc(sizeof(struct riga));
   nuovariga->dato = NULL;
-  nuovariga->rigaprima = rigaattiva;
-  if (rigaattiva->rigadopo == NULL)
-  {
-    rigaattiva->rigadopo = nuovariga;
-    rigaattiva->rigadopo->rigadopo = NULL;
+  if (primariga == NULL) {
+    primariga = nuovariga;
+    iy = 55;
+    primariga->rigaprima = NULL;
+    rigaattiva = primariga;
   }
-  else
-  {
-    nuovariga->rigadopo = rigaattiva->rigadopo;
-    rigaattiva->rigadopo->rigaprima = nuovariga;
-    rigaattiva->rigadopo = nuovariga;
-    dato=rigaattiva->dato;
-    while (dato != NULL)
-    {
-      if (dato->datosotto1 != NULL)
-      {
-        dato->archiapertid = dato->archiapertid +1;
-        dato->datosotto1->archiapertiu = dato->datosotto1->archiapertiu +1;
-        rigaattiva->archiinf = rigaattiva->archiinf +1;
+  else if (primariga->posizione +50 >= y){
+    nuovariga->rigadopo = primariga;
+    primariga->rigaprima = nuovariga;
+    primariga = nuovariga;
+    rigaattiva = primariga;
+    primariga->rigaprima = NULL;
+    iy = 55;
+    }else {
+      nuovariga->rigaprima = rigaattiva;
+      if (rigaattiva->rigadopo == NULL){
+        rigaattiva->rigadopo = nuovariga;
+        rigaattiva->rigadopo->rigadopo = NULL;
       }
-      if (dato->datosotto2 != NULL)
-      {  
-        dato->archiapertid = dato->archiapertid +1;
-        dato->datosotto2->archiapertiu = dato->datosotto2->archiapertiu +1;
-        rigaattiva->archiinf = rigaattiva->archiinf +1;
-      }
-
-      dato->datosotto1 = NULL;
-      dato->datosotto2 = NULL;
-      dato = dato->datodopo;
-    }
+      else{
+        nuovariga->rigadopo = rigaattiva->rigadopo;
+        rigaattiva->rigadopo->rigaprima = nuovariga;
+        rigaattiva->rigadopo = nuovariga;
+        riga_canc_punt = rigaattiva;
+    } 
+    rigaattiva=rigaattiva->rigadopo;
   }
-  rigaattiva=rigaattiva->rigadopo;
   rigaattiva->archisup=0;
   rigaattiva->archiinf=0;
   rigaattiva->posizione=iy;
@@ -1168,8 +1244,34 @@ static void ricavo_posizione( GtkWidget *widget, GdkEventButton *event, struct e
   g_signal_handler_disconnect(G_OBJECT(widget),id);
 }
 
-//void file_ok_sel (GtkWidget *w, struct file_gest *file)
-void file_ok_sel( struct file_gest *file, GdkEventExpose *event, GtkWidget *w)
+//
+// cancella tutti i puntatori della riga indicata
+//
+void cancella_puntatori()
+{ 
+  struct elemento *dato;
+
+  dato=riga_canc_punt->dato;
+  while (dato != NULL) {
+    if (dato->datosotto1 != NULL) {
+      dato->archiapertid = dato->archiapertid +1;
+      dato->datosotto1->archiapertiu = dato->datosotto1->archiapertiu +1;
+      riga_canc_punt->archiinf = riga_canc_punt->archiinf +1;
+    }
+    if (dato->datosotto2 != NULL) {  
+      dato->archiapertid = dato->archiapertid +1;
+      dato->datosotto2->archiapertiu = dato->datosotto2->archiapertiu +1;
+      riga_canc_punt->archiinf = riga_canc_punt->archiinf +1;
+    }
+
+    dato->datosotto1 = NULL;
+    dato->datosotto2 = NULL;
+    dato = dato->datodopo;
+  } 
+}
+
+void file_ok_sel (GtkWidget *w, struct file_gest *file)
+//void file_ok_sel( struct file_gest *file, GdkEventExpose *event, GtkWidget *w)
 {
   const gchar *nomefile;
   GtkWidget *fs;
@@ -1218,6 +1320,7 @@ struct elemento * alloca_elemento( struct elemento *datoloc, int tipo, int archi
   datoloc->archiapertid = archid;
   ix = ix + 50;
   datoloc->posizionex  = ix;
+  datoloc->posizionex_old  = 0;
   return (datoloc); 
 } 
 
@@ -1248,16 +1351,12 @@ void sistemo_posizione(void)
 //  int archichiusi;
   
   rigaattiva = primariga;
-  while (rigaattiva != NULL)
-  {
+  while (rigaattiva != NULL) {
     datoloc = rigaattiva->dato;
-    while (datoloc != NULL )
-    {
-     if (datoloc->archiapertid != 0 ) 
-     {
+    while (datoloc != NULL ) {
+     if (datoloc->archiapertid != 0 ) {
       datodopo=NULL;
-      if ( rigaattiva->rigadopo != NULL && datoloc->tipodato != 3)
-      {
+      if ( rigaattiva->rigadopo != NULL && datoloc->tipodato != 3) {
         datodopo=rigaattiva->rigadopo->dato;
         while (datodopo != NULL && datodopo->archiapertiu == 0)
           datodopo = datodopo->datodopo;
@@ -1650,19 +1749,18 @@ static void saveload( GtkWidget *button, struct entries *wid)
   filew = gtk_file_selection_new ("File selection");
   file->filew = filew;
 
-  gtk_signal_connect (GTK_OBJECT (filew), "destroy",
-                      (GtkSignalFunc) gtk_widget_destroy, &filew);
+  g_signal_connect (G_OBJECT (filew), "destroy",
+                    G_CALLBACK (gtk_widget_destroy), G_OBJECT (filew));
   /* Connette ok_button alla funzione file_ok_sel */
-  gtk_signal_connect_object(GTK_OBJECT (GTK_FILE_SELECTION (filew)->ok_button),
-                      "clicked", (GtkSignalFunc) file_ok_sel, file);
-  gtk_signal_connect_object (GTK_OBJECT (GTK_FILE_SELECTION (filew)->ok_button),
-                             "clicked", (GtkSignalFunc) gtk_widget_destroy,
-                             GTK_OBJECT (filew));
+  g_signal_connect(G_OBJECT (GTK_FILE_SELECTION (filew)->ok_button),
+                      "clicked", G_CALLBACK(file_ok_sel), (gpointer) file);
+  g_signal_connect_swapped(G_OBJECT (GTK_FILE_SELECTION (filew)->ok_button),
+                    "clicked", G_CALLBACK(gtk_widget_destroy), G_OBJECT (filew));
 
   /* Connette cancel_button alla funzione di distruzione del widget */
-  gtk_signal_connect_object (GTK_OBJECT (GTK_FILE_SELECTION (filew)->cancel_button),
-                             "clicked", (GtkSignalFunc) gtk_widget_destroy,
-                             GTK_OBJECT (filew));
+  g_signal_connect_swapped (G_OBJECT (GTK_FILE_SELECTION (filew)->cancel_button),
+                             "clicked", G_CALLBACK(gtk_widget_destroy),
+                             G_OBJECT (filew));
 
   /* Preassegnamo un nome di file, come se stessimo dando un valore per difetto in
   dialogo di tipo `` salva con nome '' */
@@ -1783,7 +1881,15 @@ int main( int argc, char *argv[] )
   gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);
 
   g_signal_connect (G_OBJECT (button), "clicked",
-			     GTK_SIGNAL_FUNC (gtk_add_drawing_line),
+			     GTK_SIGNAL_FUNC (add_line),
+			     draw);
+  gtk_widget_show (button);
+
+  button = gtk_button_new_with_label ("Annulla ultimo inserimento");
+  gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);
+
+  g_signal_connect (G_OBJECT (button), "clicked",
+			     GTK_SIGNAL_FUNC (del_last_op),
 			     draw);
   gtk_widget_show (button);
 

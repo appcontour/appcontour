@@ -43,6 +43,7 @@ struct elemento
   int orientamento;
   gchar *profondita;
   int posizionex;
+  int posizionex_old;
 };
 
 struct riga
@@ -69,11 +70,18 @@ static gint ix=155;
 static gint iy=55;
 static gint tipodatoattivo;
 static struct riga *rigaattiva;
+static struct riga *riga_canc_punt = NULL;
 static struct riga *primariga;
 static struct elemento *datoattivo;
 
 /* strutture di funzioni */
 
+void cancello_elemento(struct elemento *, struct elemento *, struct riga *);
+static void del_add_line(void);
+static void del_last_element(void);
+static void del_last_op(GtkWidget *, struct entries *);
+void resetta_posizione_old(void);
+void cancella_puntatori(void);
 //static void gtk_add_column(GtkWidget *);
 //static gint set_pixmapp (GtkWidget *, int *);
 void set_pixmapp_iniz (GtkWidget *, int *);
@@ -101,10 +109,11 @@ static gint button_press_event( GtkWidget *, GdkEventButton *, GtkWidget * );
 GtkWidget *xpm_label_box (gchar *, gchar *);
 static gint configure_event( GtkWidget *, GdkEventConfigure *);
 static gint expose_event( GtkWidget *, GdkEventExpose *);
-static void gtk_add_drawing_line(GtkWidget *, struct entries *);
+static void add_line(GtkWidget *, struct entries *);
 //static void gtk_add_drawing_line(GtkWidget *, GdkEventExpose *, GtkWidget *, struct entries *);
 static void ricavo_posizione( GtkWidget *, GdkEventButton *, struct entries *);
-void file_ok_sel( struct file_gest *, GdkEventExpose *, GtkWidget *);
+void file_ok_sel( GtkWidget *, struct file_gest *);
+//void file_ok_sel( struct file_gest *, GdkEventExpose *, GtkWidget *);
 struct elemento * alloca_elemento( struct elemento *, int , int , int );
 void stampa(struct riga *);
 void sistemo_posizione(void);
