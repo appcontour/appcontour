@@ -131,6 +131,7 @@ main (int argc, char *argv[])
       printf ("  leftright: left-right reflection\n");
       printf ("  frontback: front-back reflection\n");
       printf ("  mendes: compute Mendes graph (see Hacon-Mendes-Romero Fuster)\n");
+      printf ("  evert <int>: make region <int> become the unbounded region\n");
       printf ("\n  possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
