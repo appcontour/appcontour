@@ -1,0 +1,11 @@
+#
+# Haefliger example of a sphere that
+# cannot be immersed in R^3
+#
+morse {
+   ^l    ^l   ;
+ |    X    |  ;
+ |  |c  |c |  ;
+ |    X    |  ;
+   U     U    ;
+}
