@@ -1,0 +1,13 @@
+#
+# this is an external S^1 that contains
+# a component with 3 cusps (the shape of
+# a deltoid).
+# This seems to have two possible interpretations
+# in terms of apparent contour of some 2D manifold
+#
+morse {
+      ^l       ;
+  |   ^lccc |  ;
+  |   U     |  ;
+      U        ;
+}
