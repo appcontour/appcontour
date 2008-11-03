@@ -881,8 +881,11 @@ rule_cr4lr (struct sketch *sketch, int rcount, int isleft, int isback)
           ip3 = i + 3;
           if (ip3 > arc->cusps) ip3 -= arc->cusps;
           if (arc->depths[ip3] != db - ori) continue;
-          /* trovata sequenza di cuspidi, devo vedere se c'e' un arco
-           * catalizzante (con d = db - 1)
+          /* 
+	   * trovata sequenza di cuspidi, si tratta in sostanza
+	   * di applicare una regola C2 che creera' una isola S^1
+	   * cui posso far attraversare l'arco oltre la cuspide
+	   * non coinvolta: CR4R = C2 N4^{-1} N3.
            */
           if (rcount-- <= 1)
           {

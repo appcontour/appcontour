@@ -90,6 +90,13 @@
 	verticali di lunghezza unitaria; solo in seguito viene effettuata una rapida
 	ottimizzazione a livello continuo con l'introduzione delle cuspidi.
 
+2006-10-05(?): rule CR4 (variants: CR4L CR4R CR4LB CR4RB) is appliable when
+	a sequence of 3 consecutive cusps is found which the value of d like
+	in d++-, d--+, d+--, d-++.  In the case of CR4R this rule corresponds
+	to the sequence C2 (N4)^{-1} N3.
+	The first rule creates an S^1, which is then transferred to the
+	adjacent region through the arc across the unused cusp.
+
 --- from here news are listed in forward cronological order ---
 
 2006-09-21: completata la rule N1
