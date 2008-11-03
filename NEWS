@@ -97,6 +97,18 @@
 	The first rule creates an S^1, which is then transferred to the
 	adjacent region through the arc across the unused cusp.
 
+2006-10-05(?): rule T1 (transfer isles).  This corresponds to a sequence
+	C2^{-1} C2, the last applied to the two newly formed cusps.
+	Although this seems to be the identity, when we apply C2 we have
+	a region that gets splitted in two regions.  If there are "islands"
+	in the region we can choose in which of the two new regions this
+	should be positioned.  In the end we have the possibility to transfer
+	entire islands between two regions.
+	The option "--transfer_islands" (or "--ti") allows to specify which
+	islands should be transferred.  The value of the option is interpreted
+	as a bit mask, each bit corresponds to an island, and if it is equal
+	to one the corresponding island must be transferred.
+
 --- from here news are listed in forward cronological order ---
 
 2006-09-21: completata la rule N1
