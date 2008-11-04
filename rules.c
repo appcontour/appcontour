@@ -1030,12 +1030,29 @@ apply_mergearcs (struct sketch *s, struct region *r,
   struct border *bp;
   struct border *bp1 = 0;
   struct border *bp2 = 0;
+  int d1 = -1000;
+  int d2 = -1000;
+  int deltad;
+  extern int verbose;
 
-  fprintf (stderr, "UNDER CONSTRUCTION...\n");
+  assert (s && r && a1 && a2 && a1l >= 0 && a2l >= 0);
 
-  /* first check if given arcs bound the given region */
+  /* consistency check about the number of dvalues */
+  if (a1l >= 0 && a1l < a1->dvalues) d1 = a1->depths[a1l];
+  if (a2l >= 0 && a2l < a2->dvalues) d2 = a2->depths[a2l];
+
+  if (d1 < 0) fprintf (stderr, "invalid subarc (%d) for first arc\n", a1l);
+  if (d2 < 0) fprintf (stderr, "invalid subarc (%d) for second arc\n", a2l);
+  if (d1 > d2) { /* ensure d1 <= d2 */
+    fprintf (stderr, 
+	"d value of first arc cannot exceed d value of the second\n");
+    return (0);
+  }
+
+  /* check if given arcs bound the given region */
   for (bl = r->border; bl; bl = bl->next)
   {
+    if (bl->sponda == 0) continue;
     bp = bl->sponda;
     do {
       if (bp->info == a1) bp1 = bp;
@@ -1046,19 +1063,104 @@ apply_mergearcs (struct sketch *s, struct region *r,
     fprintf (stderr, "Arc %d does not bound given region\n", a1->tag);
   if (bp2 == 0) 
     fprintf (stderr, "Arc %d does not bound given region\n", a2->tag);
-  if (! (bp1 && bp2)) return (0);
 
-  if (bp1->border == bp2->border) {
-    fprintf (stderr, 
+  if (! (bp1 && bp2 && d1 >= 0 && d2 >= d1)) return (0);
+
+  if (verbose) {
+    if (bp1->border == bp2->border) {
+      fprintf (stderr, 
 	"Arcs belong to the same c.c. of the boundary of region.\n");
-    fprintf (stderr, "The region will be splitted in two\n");
-  } else {
-    fprintf (stderr,
+      fprintf (stderr, "The region will be splitted in two\n");
+    } else {
+      fprintf (stderr,
 	"Arcs belong to different c.c. of the boundary of region.\n");
-    fprintf (stderr, "The number of c.c. will decrease by one\n");
+      fprintf (stderr, "The number of c.c. will decrease by one\n");
+    }
   }
 
-  return (0); /* per ora no si fa nulla */
+  assert (d1 <= d2);
+  deltad = d2 - d1;
+  if (bp1->orientation < 0 && bp2->orientation < 0)
+  {
+    if (verbose) {
+      fprintf (stderr, "Negative orientations: can apply inv N1\n");
+      fprintf (stderr, "with first arc above second arc\n");
+    }
+
+    fprintf (stderr, "NOT IMPLEMENTED\n");
+    return (0);
+  }
+
+  if (bp1->orientation > 0 && bp2->orientation > 0 && deltad >= 2)
+  {
+    if (verbose) {
+      fprintf (stderr, "Positive orientations, delta d >= 2,\n");
+      fprintf (stderr, "can apply inv N4\n");
+    }
+
+    fprintf (stderr, "NOT IMPLEMENTED\n");
+    return (0);
+  }
+
+  if (bp1->orientation > 0 && bp2->orientation > 0 && deltad == 1)
+  {
+    if (verbose) {
+      fprintf (stderr, "Positive orientations, delta d = 1,\n");
+      fprintf (stderr, "can apply inv C2\n");
+    }
+
+    fprintf (stderr, "NOT IMPLEMENTED\n");
+    return (0);
+  }
+
+  if (bp1->orientation > 0 && bp2->orientation > 0 && deltad == 0)
+  {
+    fprintf (stderr, "Positive orientations with delta d = 0\n");
+    fprintf (stderr, "   Cannot merge arcs\n");
+    return (0);
+  }
+
+  if (bp1->orientation > 0 && bp2->orientation < 0 && deltad == 0)
+  {
+    if (verbose) {
+      fprintf (stderr, "Orientations positive, negative with delta d=0\n");
+      fprintf (stderr, "can apply inv N3\n");
+    }
+
+    fprintf (stderr, "NOT IMPLEMENTED\n");
+    return (0);
+  }
+
+  if (bp1->orientation > 0 && bp2->orientation < 0 && deltad == 1)
+  {
+    fprintf (stderr, "Orientations positive, negative with delta d = 1\n");
+    fprintf (stderr, "   Cannot merge arcs\n");
+    return (0);
+  }
+
+  if (bp1->orientation > 0 && bp2->orientation < 0 && deltad >= 2)
+  {
+    if (verbose) {
+      fprintf (stderr, "Orientations positive, negative with delta d=0\n");
+      fprintf (stderr, "can apply inv N2\n");
+    }
+
+    fprintf (stderr, "NOT IMPLEMENTED\n");
+    return (0);
+  }
+
+  if (bp1->orientation < 0 && bp2->orientation > 0)
+  {
+    if (verbose) {
+      fprintf (stderr, "Orientations negative, positive\n");
+      fprintf (stderr, "can apply inv N3\n");
+    }
+
+    fprintf (stderr, "NOT IMPLEMENTED\n");
+    return (0);
+  }
+
+  return (0);
 }
 
 /*
