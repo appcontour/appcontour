@@ -1022,6 +1022,45 @@ rule_cr3lr (struct sketch *sketch, int rcount, int ori)
   return (0);
 }
 
+int
+apply_mergearcs (struct sketch *s, struct region *r,
+	struct arc *a1, struct arc *a2, int a1l, int a2l)
+{
+  struct borderlist *bl;
+  struct border *bp;
+  struct border *bp1 = 0;
+  struct border *bp2 = 0;
+
+  fprintf (stderr, "UNDER CONSTRUCTION...\n");
+
+  /* first check if given arcs bound the given region */
+  for (bl = r->border; bl; bl = bl->next)
+  {
+    bp = bl->sponda;
+    do {
+      if (bp->info == a1) bp1 = bp;
+      if (bp->info == a2) bp2 = bp;
+    } while (bp != bl->sponda);
+  }
+  if (bp1 == 0) 
+    fprintf (stderr, "Arc %d does not bound given region\n", a1->tag);
+  if (bp2 == 0) 
+    fprintf (stderr, "Arc %d does not bound given region\n", a2->tag);
+  if (! (bp1 && bp2)) return (0);
+
+  if (bp1->border == bp2->border) {
+    fprintf (stderr, 
+	"Arcs belong to the same c.c. of the boundary of region.\n");
+    fprintf (stderr, "The region will be splitted in two\n");
+  } else {
+    fprintf (stderr,
+	"Arcs belong to different c.c. of the boundary of region.\n");
+    fprintf (stderr, "The number of c.c. will decrease by one\n");
+  }
+
+  return (0); /* per ora no si fa nulla */
+}
+
 /*
  * auxiliary functions used by rules
  */

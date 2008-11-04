@@ -33,6 +33,10 @@
 #define ACTION_EVERT 16
 #define ACTION_MENDES 17
 #define ACTION_ISHUFFMAN 18
+#define ACTION_MERGEARCS 19
+
+#define MRPTMAX 4
+#define MAPTMAX 4
 
 int debug = 0;
 int quiet = 0;
@@ -51,12 +55,47 @@ main (int argc, char *argv[])
   int i, count, action=ACTION_NONE, res, ccid = 0;
   unsigned int rndseed = 0;
   int newextregion = 0;
-  char rule[10];
+  char rule[10], *endch;
   FILE *infile = 0;
   struct mendesgraph *mendes;
+  int markedregion[MRPTMAX];
+  int markedarc[MAPTMAX];
+  int markedarcl[MAPTMAX];
+  int mrpt = 0;
+  int mapt = 0;
+  struct region *r;
+  struct arc *a, *a2;
 
   for (i = 1; i < argc; i++)
   {
+    if (strcmp(argv[i],"-r") == 0 || strcmp(argv[i],"--region") == 0)
+    {
+      markedregion[mrpt++] = atoi (argv[++i]);
+      if (mrpt > MRPTMAX)
+      {
+        fprintf (stderr, "Too many tagged regions (%d)\n", mrpt);
+        exit (1);
+      }
+      continue;
+    }
+    if (strcmp(argv[i],"-a") == 0 || strcmp(argv[i],"--arc") == 0)
+    {
+      markedarc[mapt] = strtol (argv[++i], &endch, 10);
+      markedarcl[mapt] = 0;
+      if (*endch == ':' && *(++endch)) 
+	markedarcl[mapt] = strtol (endch, &endch, 10);
+      if (*endch != '\0') {
+        fprintf (stderr, "Conversion error in %s, %x\n", argv[i], (int)*endch);
+	exit (1);
+      }
+      mapt++;
+      if (mapt > MAPTMAX)
+      {
+        fprintf (stderr, "Too many tagged arcs (%d)\n", mapt);
+        exit (1);
+      }
+      continue;
+    }
     if (strcmp(argv[i],"--version") == 0)
     {
       printf ("%s version %s\n", argv[0], PACKAGE_VERSION);
@@ -143,6 +182,8 @@ main (int argc, char *argv[])
       printf ("  --finfinity|--fi <int>: value of f at infinity (default 0)\n");
       printf ("  --seed <int>: initialize random number generator\n");
       printf ("      e.g. for Hacon graph graphic presentation\n");
+      printf ("  -r|--region <int>: mark region for specific action\n");
+      printf ("  -a|--arc <int>: mark arc for specific action\n");
       printf ("\n  if file is not given, description is taken from standard input\n");
       exit (0);
     }
@@ -181,6 +222,7 @@ main (int argc, char *argv[])
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
       ccid = atoi (argv[i]) - 1;
     }
+    if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
     if (strcmp(argv[i],"testallrules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"countcc") == 0) action = ACTION_COUNTCC;
     if (strcmp(argv[i],"print") == 0) action = ACTION_PRINTSKETCH;
@@ -225,6 +267,32 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     res = apply_rule (rule, sketch);
+    printsketch (sketch);
+    if (res == 0)
+    {
+      fprintf (stderr, "Non trovo alcun match!\n");
+      exit(14);
+    }
+    break;
+
+    case ACTION_MERGEARCS:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    if (mrpt < 1 || mapt < 2) {
+      fprintf (stderr, "You must specify a region and two arcs\n");
+      fprintf (stderr, "   using options -r and -a\n");
+      exit(15);
+    }
+    r = findregion (sketch, markedregion[0]);
+    a = findarc (sketch, markedarc[0]);
+    a2 = findarc (sketch, markedarc[1]);
+    if (r == 0) fprintf (stderr, "Cannot find region %d\n", 
+			markedregion[0]);
+    if (a == 0) fprintf (stderr, "Cannot find arc %d\n", markedarc[0]);
+    if (a2 == 0) fprintf (stderr, "Cannot find arc %d\n", markedarc[1]);
+    if (! (r && a && a2)) exit(15);
+    res = apply_mergearcs (sketch, r, a, a2, 
+	markedarcl[0], markedarcl[1]);
     printsketch (sketch);
     if (res == 0)
     {
@@ -318,6 +386,26 @@ main (int argc, char *argv[])
     case ACTION_INFO:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     showinfo (sketch);
+    if (mrpt > 0) {
+      for (i = 0; i < mrpt; i++) {
+	r = findregion (sketch, markedregion[i]);
+	if (r)
+          printf ("Marked region: %d\n", r->tag);
+	else
+          printf ("Cannot find region with tag %d\n",
+	      markedregion[i]);
+      }
+    }
+    if (mapt > 0) {
+      for (i = 0; i < mapt; i++) {
+	a = findarc (sketch, markedarc[i]);
+	if (a)
+          printf ("Marked arc: %d:%d\n", a->tag, markedarcl[i]);
+	else
+          printf ("Cannot find arc with tag %d\n", 
+	      markedarc[i]);
+      }
+    }
     break;
 
     case ACTION_FRONTBACK:

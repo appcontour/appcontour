@@ -11,6 +11,38 @@ struct border *reverse_border (struct border *);
 /* fine prototipi */
 
 /*
+ * find region data from tag
+ */
+
+struct region *
+findregion (struct sketch *sketch, int tag)
+{
+  struct region *r;
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    if (r->tag == tag) return (r);
+  }
+  return (0);
+}
+
+/*
+ * find arc data from tag
+ */
+
+struct arc *
+findarc (struct sketch *sketch, int tag)
+{
+  struct arc *a;
+
+  for (a = sketch->arcs; a; a = a->next)
+  {
+    if (a->tag == tag) return (a);
+  }
+  return (0);
+}
+
+/*
  * show various information about the apparent contour
  */
 
