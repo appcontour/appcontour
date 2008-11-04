@@ -1485,13 +1485,13 @@ join_cusps (struct border *cusp1, int cusp1pos,
   struct borderlist *bl1, *bl2;
   struct border *btemp;
 
-  spezza_bordo (cusp1, cusp1pos, sketch);
-  if (debug) printf ("dopo il primo spezza_bordo\n");
+  spezza_bordo_c (cusp1, cusp1pos, sketch);
+  if (debug) printf ("dopo il primo spezza_bordo_c\n");
   if (debug) printsketch (sketch);
   if (cusp1 == cusp2)
   {
     /* devo ricalcolare cusp2 e cusp2pos tenendo conto
-     * di quanto fatto da 'spezza_bordo'
+     * di quanto fatto da 'spezza_bordo_c'
      */
     if (cusp1->info->endpoints == 1)
     {
@@ -1511,9 +1511,9 @@ join_cusps (struct border *cusp1, int cusp1pos,
   {
     printf ("cusp2pos = %d\n", cusp2pos);
   }
-  spezza_bordo (cusp2, cusp2pos, sketch);
+  spezza_bordo_c (cusp2, cusp2pos, sketch);
   if (cusp1 == cusp2) cusp1 = cusp2->next;
-  if (debug) printf ("dopo il secondo spezza_bordo\n");
+  if (debug) printf ("dopo il secondo spezza_bordo_c\n");
   if (debug) printsketch (sketch);
 
   bl1 = cusp1->border;
@@ -1557,7 +1557,7 @@ join_cusps (struct border *cusp1, int cusp1pos,
  */
 
 void
-spezza_bordo (struct border *cusp, int cusppos, struct sketch *sketch)
+spezza_bordo_c (struct border *cusp, int cusppos, struct sketch *sketch)
 {
   int *newdepths, i, j;
   struct arc *arc, *arcnew;

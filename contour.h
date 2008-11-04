@@ -116,7 +116,7 @@ void taglia_nodo (struct border *b1n, struct sketch *sketch,
                   struct border **bleft, struct border **bright);
 void triple_switch (struct border *b1);
 void remove_s1 (struct border *b, struct sketch *sketch);
-void spezza_bordo (struct border *cusp, int cpos, struct sketch *sketch);
+void spezza_bordo_c (struct border *cusp, int cpos, struct sketch *sketch);
 void join_cusps (struct border *cusp1, int cusp1pos,
                  struct border *cusp2, int cusp2pos,
                  struct sketch *sketch);
