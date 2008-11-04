@@ -270,7 +270,7 @@ main (int argc, char *argv[])
     printsketch (sketch);
     if (res == 0)
     {
-      fprintf (stderr, "Non trovo alcun match!\n");
+      fprintf (stderr, "Rule does not match!\n");
       exit(14);
     }
     break;
@@ -296,7 +296,7 @@ main (int argc, char *argv[])
     printsketch (sketch);
     if (res == 0)
     {
-      fprintf (stderr, "Non trovo alcun match!\n");
+      fprintf (stderr, "Cannot merge arcs!\n");
       exit(14);
     }
     break;
