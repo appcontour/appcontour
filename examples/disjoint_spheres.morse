@@ -1,0 +1,9 @@
+#
+# two disjonint spheres, the apparent contour
+# consists of two disjoint circles
+# (used to test the "mergearcs" action)
+#
+morse {
+ ^l0 ^l0;
+ U   U;
+}
