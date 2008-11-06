@@ -1369,7 +1369,7 @@ newregion (struct sketch *s)
   } else {
     s->regions = r;
   }
-  r->tag = ++s->regioncount;
+  r->tag = s->regioncount++;  /* perche' sono numerate da zero */
   return (r);
 }
 
@@ -1415,7 +1415,7 @@ newarc (struct sketch *s)
   a->depths = 0;
   a->cusps = a->depthsdim = a->dvalues = -1;
   a->endpoints = -1;
-  a->tag = ++s->arccount;
+  a->tag = ++s->arccount;  /* sono numerati a partire da 1 */
   a->transparent = 0;
   a->regionleft = a->regionright = 0;
   a->link_number = F_UNDEF;
