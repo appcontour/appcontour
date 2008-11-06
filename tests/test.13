@@ -1,1 +1,6 @@
+#
+#
 ./contour mergearcs examples/disjoint_spheres.morse -r 0 -a 1 -a 2
+#
+#
+./contour applyrule cr1 examples/torus3.morse | ./contour mergearcs -r 2 -a 2:0 -a 2:1 --ti 1
