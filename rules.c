@@ -1036,13 +1036,15 @@ int common_work_mergearcs (struct sketch *s,
 #define INV_N1 1
 #define INV_N2 2
 #define INV_N3 3
-#define INV_N4 4
-#define INV_C2 5
+#define INV_N3bis 4
+#define INV_N4 5
+#define INV_C2 6
 static char *invmergerules[] = {
   "",
   "INV N1",
   "INV N2",
   "INV N3",
+  "INV N3bis",
   "INV N4",
   "INV C2",
   0};
@@ -1152,7 +1154,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
 
   if (! (bp1 && bp2 && d1 >= 0 && d2 >= d1)) return (0);
 
-  if (verbose) {
+  if (debug) {
     if (bp1->border == bp2->border) {
       fprintf (stderr, 
 	"Arcs belong to the same c.c. of the boundary of region.\n");
@@ -1184,9 +1186,8 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "can apply inv N4\n");
     }
     if (test) return (INV_N4);
-
-    fprintf (stderr, "NOT IMPLEMENTED\n");
-    return (0);
+    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l);
+    return (res);
   }
 
   if (bp1->orientation > 0 && bp2->orientation > 0 && deltad == 1)
@@ -1216,10 +1217,11 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "Pos-neg orientations with delta d = 0\n");
       fprintf (stderr, "can apply inv N3\n");
     }
-    if (test) return (INV_N3);
-
-    fprintf (stderr, "NOT IMPLEMENTED\n");
-    return (0);
+    /* if (test) return (INV_N3bis);
+     */
+    if (test) return (0); /* do not report a duplicate of INV_N3 */
+    res = common_work_mergearcs (s, bp2, bp1, a2l, a1l);
+    return (res);
   }
 
   if (bp1->orientation > 0 && bp2->orientation < 0 && deltad == 1)
@@ -1238,9 +1240,8 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "can apply inv N2\n");
     }
     if (test) return (INV_N2);
-
-    fprintf (stderr, "NOT IMPLEMENTED\n");
-    return (0);
+    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l);
+    return (res);
   }
 
   if (bp1->orientation < 0 && bp2->orientation > 0)
@@ -1250,9 +1251,8 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "can apply inv N3\n");
     }
     if (test) return (INV_N3);
-
-    fprintf (stderr, "NOT IMPLEMENTED\n");
-    return (0);
+    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l);
+    return (res);
   }
 
   return (0);
@@ -1714,6 +1714,7 @@ pinch_arcs (struct border **bp1pt, int cusp1pos,
 {
   struct borderlist *bl1, *bl2;
   struct border *bp1, *bp2;
+  int ori;
 
   assert (removecusps == 0 || removecusps == 1);
   bp1 = *bp1pt; bp2 = *bp2pt;
@@ -1725,6 +1726,7 @@ pinch_arcs (struct border **bp1pt, int cusp1pos,
     /* devo ricalcolare bp2 e cusp2pos tenendo conto
      * di quanto fatto da 'spezza_bordo'
      */
+    ori = bp1->orientation;
     if (bp1->info->endpoints == 1)
     {
       if (debug) printf ("era un S1\n");
@@ -1733,9 +1735,10 @@ pinch_arcs (struct border **bp1pt, int cusp1pos,
     } else {
       if (cusp2pos > cusp1pos)
       {
-        cusp2pos -= cusp1pos + removecusps; /* cambiera' bp1 */
+        cusp2pos -= cusp1pos + removecusps;
+        if (ori > 0) bp2 = bp2->next;   /* cambiera' bp1 se ori < 0 */
       } else {
-        bp2 = bp2->next;
+        if (ori < 0) bp2 = bp2->next;   /* cambiera' bp1 se ori > 0 */
       }
     }
   }
@@ -1791,24 +1794,28 @@ spezza_bordo (struct border *cusp, int cusppos, struct sketch *sketch,
 
   assert (removecusp == 0 || removecusp == 1);
   arc = cusp->info;
-  assert (cusp->orientation < 0);
+  if (removecusp == 1) assert (cusp->orientation < 0);
   if (arc->endpoints == 0)  /* questo e' un s1 */
   {
-    /* in questo caso non si creano altri archi e bordi
-     * anche il numero di valori di d rimane uguale, ma non
-     * serve ripetere il primo valore
+    /* in questo caso non si creano altri archi e bordi.
+     * l'apertura di un S1 aumenta di uno il numero di
+     * valori di d, anche se il dimensionamento rimane
+     * uguale perche' per gli S1 i valori estremi si
+     * ripetono uguali.
+     * se si rimuove una cuspide il numero di valori di 
+     * d rimane uguale, ma non serve ripetere il primo valore
      * TODO: Mmm, probabilmente non conviene riallocare,
      * ma si puo' continuare ad usare lo spazio vecchio
      */
-    if (removecusp) {
-      arc->cusps--;
-      arc->depthsdim--;
-    }
+    arc->cusps -= removecusp;
+    arc->depthsdim -= removecusp;
+    arc->dvalues += 1 - removecusp;
+    //assert (arc->dvalues <= arc->depthsdim);  // dvalues non affidabile 
     newdepths = (int *) malloc (arc->depthsdim * sizeof (int));
     for (i = 0; i < arc->depthsdim; i++)
     {
       j = i + cusppos + removecusp;
-      if (j >= arc->depthsdim) j -= arc->depthsdim;
+      if (j >= arc->depthsdim) j -= arc->depthsdim - 1 + removecusp;
       newdepths[i] = arc->depths[j];
     }
     free (arc->depths);
@@ -1821,18 +1828,28 @@ spezza_bordo (struct border *cusp, int cusppos, struct sketch *sketch,
     btnew = newborder (bt->border);
     btnew->next = bt->next;
     bt->next = btnew;
-    btnew->info = arcnew;
-    arcnew->regionleft = btnew;
     btnew->orientation = bt->orientation;
-
     cuspnew = newborder (cusp->border);
     cuspnew->next = cusp->next;
     cusp->next = cuspnew;
-    cusp->info = arcnew;
-    arcnew->regionright = cusp;
-    cuspnew->info = arc;
-    arc->regionright = cuspnew;
     cuspnew->orientation = cusp->orientation;
+
+    if (cusp->orientation < 0) {
+      cusp->info = arcnew;
+      btnew->info = arcnew;
+      arcnew->regionleft = btnew;
+      arcnew->regionright = cusp;
+      cuspnew->info = arc;
+      arc->regionright = cuspnew;
+    } else {
+      bt->info = arcnew;
+      btnew->info = arc;
+      arcnew->regionleft = cuspnew;
+      arcnew->regionright = bt;
+      cuspnew->info = arcnew;
+      arc->regionright = btnew;
+    }
+
     arcnew->cusps = arc->cusps - cusppos - removecusp;
     arcnew->depthsdim = arcnew->cusps + 1;
     arcnew->dvalues = arcnew->depthsdim;
