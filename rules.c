@@ -1033,9 +1033,84 @@ int common_work_mergearcs (struct sketch *s,
 			   struct border *bp1, struct border *bp2, 
                            int a1pos, int a2pos);
 
+#define INV_N1 1
+#define INV_N2 2
+#define INV_N3 3
+#define INV_N4 4
+#define INV_C2 5
+static char *invmergerules[] = {
+  "",
+  "INV N1",
+  "INV N2",
+  "INV N3",
+  "INV N4",
+  "INV C2",
+  0};
+
+int
+list_mergearcs (struct sketch *s, struct region *r,
+	struct arc *a1, struct arc *a2, int a1l, int a2l)
+{
+  struct borderlist *bl;
+  struct border *bp;
+  int imax, i, res;
+
+  int count = 0;
+  if (r == 0) {
+    for (r = s->regions; r; r = r->next) {
+      printf ("Region %d:\n", r->tag);
+      count += list_mergearcs (s, r, 0, 0, -1, -1);
+    }
+    return (count);
+  }
+
+  if (a1 == 0 || (a1l >= 0 && a2 == 0)) {
+    for (bl = r->border; bl; bl = bl->next)
+    {
+      if (bl->sponda == 0) continue;
+      bp = bl->sponda;
+      do {
+        count += list_mergearcs (s, r, 
+		(a1)?a1:bp->info, (a1)?bp->info:0, a1l, -1);
+      } while (bp != bl->sponda);
+    }
+    return (count);
+  }
+
+  assert (s && r && a1);
+  if (a1l < 0) {
+    imax = a1->dvalues;
+    if (a1->endpoints == 0 && imax > 1) imax--;
+    for (i = 0; i < imax; i++) {
+      count += list_mergearcs (s, r, a1, 0, i, -1);
+    }
+    return (count);
+  }
+
+  assert (a2 && a1l >= 0);
+  if (a2l < 0) {
+    imax = a2->dvalues;
+    if (a2->endpoints == 0 && imax > 1) imax--;
+    for (i = 0; i < imax; i++) {
+      count += list_mergearcs (s, r, a1, a2, a1l, i);
+    }
+    return (count);
+  }
+
+  assert (a2l >= 0);
+  res = apply_mergearcs (s, r, a1, a2, a1l, a2l, 1);
+  if (res) {
+    printf ("-r %d -a %d:%d -a %d:%d (%s)\n", 
+      r->tag, a1->tag, a1l, a2->tag, a2l, invmergerules[res]);
+    return (1);
+  }
+
+  return (0);
+}
+
 int
 apply_mergearcs (struct sketch *s, struct region *r,
-	struct arc *a1, struct arc *a2, int a1l, int a2l)
+	struct arc *a1, struct arc *a2, int a1l, int a2l, int test)
 {
   struct borderlist *bl;
   struct border *bp;
@@ -1055,7 +1130,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
   if (d1 < 0) fprintf (stderr, "invalid subarc (%d) for first arc\n", a1l);
   if (d2 < 0) fprintf (stderr, "invalid subarc (%d) for second arc\n", a2l);
   if (d1 > d2) { /* ensure d1 <= d2 */
-    fprintf (stderr, 
+    if (test == 0) fprintf (stderr, 
 	"d value of first arc cannot exceed d value of the second\n");
     return (0);
   }
@@ -1097,6 +1172,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "Negative orientations: can apply inv N1\n");
       fprintf (stderr, "with first arc above second arc\n");
     }
+    if (test) return (INV_N1);
     res = common_work_mergearcs (s, bp1, bp2, a1l, a2l);
     return (res);
   }
@@ -1107,6 +1183,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "Positive orientations, delta d >= 2,\n");
       fprintf (stderr, "can apply inv N4\n");
     }
+    if (test) return (INV_N4);
 
     fprintf (stderr, "NOT IMPLEMENTED\n");
     return (0);
@@ -1118,6 +1195,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "Positive orientations, delta d = 1,\n");
       fprintf (stderr, "can apply inv C2\n");
     }
+    if (test) return (INV_C2);
 
     fprintf (stderr, "NOT IMPLEMENTED\n");
     return (0);
@@ -1125,17 +1203,20 @@ apply_mergearcs (struct sketch *s, struct region *r,
 
   if (bp1->orientation > 0 && bp2->orientation > 0 && deltad == 0)
   {
-    fprintf (stderr, "Positive orientations with delta d = 0\n");
-    fprintf (stderr, "   Cannot merge arcs\n");
+    if (test == 0) {
+      fprintf (stderr, "Positive orientations with delta d = 0\n");
+      fprintf (stderr, "   Cannot merge arcs\n");
+    }
     return (0);
   }
 
   if (bp1->orientation > 0 && bp2->orientation < 0 && deltad == 0)
   {
     if (verbose) {
-      fprintf (stderr, "Orientations positive, negative with delta d=0\n");
+      fprintf (stderr, "Pos-neg orientations with delta d = 0\n");
       fprintf (stderr, "can apply inv N3\n");
     }
+    if (test) return (INV_N3);
 
     fprintf (stderr, "NOT IMPLEMENTED\n");
     return (0);
@@ -1143,17 +1224,20 @@ apply_mergearcs (struct sketch *s, struct region *r,
 
   if (bp1->orientation > 0 && bp2->orientation < 0 && deltad == 1)
   {
-    fprintf (stderr, "Orientations positive, negative with delta d = 1\n");
-    fprintf (stderr, "   Cannot merge arcs\n");
+    if (test == 0) {
+      fprintf (stderr, "Pos-neg orientations with delta d = 1\n");
+      fprintf (stderr, "   Cannot merge arcs\n");
+    }
     return (0);
   }
 
   if (bp1->orientation > 0 && bp2->orientation < 0 && deltad >= 2)
   {
     if (verbose) {
-      fprintf (stderr, "Orientations positive, negative with delta d=0\n");
+      fprintf (stderr, "Pos-neg orientations with delta d >= 2\n");
       fprintf (stderr, "can apply inv N2\n");
     }
+    if (test) return (INV_N2);
 
     fprintf (stderr, "NOT IMPLEMENTED\n");
     return (0);
@@ -1162,9 +1246,10 @@ apply_mergearcs (struct sketch *s, struct region *r,
   if (bp1->orientation < 0 && bp2->orientation > 0)
   {
     if (verbose) {
-      fprintf (stderr, "Orientations negative, positive\n");
+      fprintf (stderr, "Neg-pos orientations\n");
       fprintf (stderr, "can apply inv N3\n");
     }
+    if (test) return (INV_N3);
 
     fprintf (stderr, "NOT IMPLEMENTED\n");
     return (0);

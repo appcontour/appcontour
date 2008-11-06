@@ -79,9 +79,12 @@ int testallrules (struct sketch *sketch);
 int testsinglerule (char *rname, int (*rulefunc)(struct sketch *s, int rc), 
                     int exitcode, struct sketch *sketch);
 int apply_rule (char *rule, struct sketch *s);
-int apply_mergearcs (struct sketch *s, struct region *r,
+int list_mergearcs (struct sketch *s, struct region *r,
 		     struct arc *a1, struct arc *a2,
 		     int a1l, int a2l);
+int apply_mergearcs (struct sketch *s, struct region *r,
+		     struct arc *a1, struct arc *a2,
+		     int a1l, int a2l, int test);
 int rule_n14 (struct sketch *s, int rule, int count);
 int rule_n5 (struct sketch *s, int count);
 int rule_cr2 (struct sketch *s, int count);

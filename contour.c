@@ -158,13 +158,14 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--help") == 0)
     {
-      printf ("usage: %s [options] command [file]\n", argv[0]);
+      printf ("Usage: %s [options] command [file]\n", argv[0]);
       printf ("  possible commands are:\n");
       printf ("  print, printmorse, iscontour, ishuffman, canonify, countcc\n");
       printf ("  testallrules, info, characteristic, knot2morse\n");
       printf ("  compare: lessicographic comparison between two contours, in this\n");
       printf ("    case the stdin (or file) must contain two descriptions\n");
       printf ("  applyrule <rule>: apply indicated rule to contour\n");
+      printf ("  mergearcs: apply an inverse rule that merges two arcs\n");
       printf ("  extractcc <int>: extract 3D connected component\n");
       printf ("  removecc <int>: remove 3D connected component from contour\n");
       printf ("  leftright: left-right reflection\n");
@@ -281,6 +282,7 @@ main (int argc, char *argv[])
     if (mrpt < 1 || mapt < 2) {
       fprintf (stderr, "You must specify a region and two arcs\n");
       fprintf (stderr, "   using options -r and -a\n");
+      list_mergearcs (sketch, 0, 0, 0, -1, -1);
       exit(15);
     }
     r = findregion (sketch, markedregion[0]);
@@ -292,7 +294,7 @@ main (int argc, char *argv[])
     if (a2 == 0) fprintf (stderr, "Cannot find arc %d\n", markedarc[1]);
     if (! (r && a && a2)) exit(15);
     res = apply_mergearcs (sketch, r, a, a2, 
-	markedarcl[0], markedarcl[1]);
+	markedarcl[0], markedarcl[1], 0);
     printsketch (sketch);
     if (res == 0)
     {

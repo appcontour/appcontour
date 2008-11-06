@@ -1,6 +1,12 @@
 #
+# test sulle regole inverse invN1-invN4 e invC2
 #
+# questo provoca la scrittura di una lista di tutte le
+# possibili applicazioni di mergearcs:
+./contour applyrule cr1 examples/torus3.morse | ./contour mergearcs
+#
+# un semplice esempio di invN1 su due S1 disgiunti:
 ./contour mergearcs examples/disjoint_spheres.morse -r 0 -a 1 -a 2
 #
-#
+# un esempio piu' complessi di invN1
 ./contour applyrule cr1 examples/torus3.morse | ./contour mergearcs -r 2 -a 2:0 -a 2:1 --ti 1
