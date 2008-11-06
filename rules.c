@@ -358,7 +358,8 @@ rule_c2 (struct sketch *sketch, int rcount)
                            r->tag, i, j);
           if (debug) printf ("prima di chiamare join_cusps\n");
           if (debug) printsketch (sketch);
-          join_cusps (cusp1, cusp1pos, cusp2, cusp2pos, sketch);
+          /* OLD join_cusps (cusp1, cusp1pos, cusp2, cusp2pos, sketch); */
+          pinch_arcs (&cusp1, cusp1pos, &cusp2, cusp2pos, sketch, 1);
           if (debug) checkconsistency (sketch);
           taglia_nodo (cusp1->next, sketch, 0, 0);
           return (1);
@@ -1022,6 +1023,16 @@ rule_cr3lr (struct sketch *sketch, int rcount, int ori)
   return (0);
 }
 
+/*
+ * Questa funzione serve ad applicare una mossa inversa
+ * per il merge di due archi (inversa di N1-N4 oppure C2)
+ */
+
+/* local prototype */
+int common_work_mergearcs (struct sketch *s, 
+			   struct border *bp1, struct border *bp2, 
+                           int a1pos, int a2pos);
+
 int
 apply_mergearcs (struct sketch *s, struct region *r,
 	struct arc *a1, struct arc *a2, int a1l, int a2l)
@@ -1032,7 +1043,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
   struct border *bp2 = 0;
   int d1 = -1000;
   int d2 = -1000;
-  int deltad;
+  int deltad, res;
   extern int verbose;
 
   assert (s && r && a1 && a2 && a1l >= 0 && a2l >= 0);
@@ -1086,9 +1097,8 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "Negative orientations: can apply inv N1\n");
       fprintf (stderr, "with first arc above second arc\n");
     }
-
-    fprintf (stderr, "NOT IMPLEMENTED\n");
-    return (0);
+    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l);
+    return (res);
   }
 
   if (bp1->orientation > 0 && bp2->orientation > 0 && deltad >= 2)
@@ -1161,6 +1171,35 @@ apply_mergearcs (struct sketch *s, struct region *r,
   }
 
   return (0);
+}
+
+int
+common_work_mergearcs (struct sketch *s, 
+		struct border *bp1, struct border *bp2, 
+		int a1l, int a2l)
+{
+  int res, changes;
+
+  pinch_arcs (&bp1, a1l, &bp2, a2l, s, 0);
+
+  if (debug) printf ("dopo topo_change\n");
+  if (debug) printsketch (s);
+
+  assert (bp1 != bp2);
+
+  res = aggiungi_losanga (bp1, bp2, s);
+  changes = adjust_isexternalinfo (s);
+  if (debug && changes) 
+    printf ("%d changes in adjust_isexternalinfo\n", changes);
+  if (debug) printf ("dopo aggiungi_losanga\n");
+  if (debug) printsketch (s);
+  if (res)
+  {
+    checkconsistency (s);
+    postprocesssketch (s);
+    canonify (s);
+  }
+  return (res);
 }
 
 /*
@@ -1239,6 +1278,101 @@ rimuovi_losanga (struct region *r, struct sketch *sketch)
   removeborder (b1trans);
   removeborder (b2trans);
   return (b1transn);
+}
+
+/*
+ * contrario di rimuovi_losanga:
+ *
+ * \bp2  /    \   /
+ *  \   /      \ /
+ *   \ /        X
+ *    X   ==>  / \
+ *   / \       \ /
+ *  /   \       X
+ * /  bp1\     / \
+ *
+ * si conviene che il valore piu' basso di d
+ * venga assegnato alla parte indicata da bp1
+ */
+
+int
+aggiungi_losanga (struct border *bp1, struct border *bp2,
+		struct sketch *s)
+{
+  struct region *newr;
+  struct borderlist *newbl;
+  struct border *bp1nt, *bp2nt, *newbp1, *newbp2;
+  struct border *newbpt1, *newbpt2;
+  struct arc *newa1, *newa2;
+  int o1, o2, d1, d2;
+
+  o1 = bp1->orientation;
+  assert (o1 == 1 || o1 == -1);
+  o2 = bp2->orientation;
+  assert (bp2->next->orientation == o1);
+  assert (bp1->next->orientation == o2);
+
+  /*
+   * la creazione della losanga richiede numerose
+   * nuove strutture dati: due archi, una regione
+   * e 4 nuove sponde.
+   */
+
+  newa1 = newarc (s);
+  newa2 = newarc (s);
+  newa1->depths = (int *) malloc (sizeof (int));
+  newa2->depths = (int *) malloc (sizeof (int));
+  newa1->depthsdim = newa2->depthsdim = 1;  /* niente cuspidi */
+  newa1->cusps = newa2->cusps = 0;
+  newa1->dvalues = newa2->dvalues = 1;
+  newa1->endpoints = newa2->endpoints = 2;
+  if (o1 > 0) d1 = bp1->info->depths[bp1->info->dvalues - 1];
+    else d1 = bp1->info->depths[0];
+  if (o2 > 0) d2 = bp2->info->depths[bp2->info->dvalues - 1];
+    else d2 = bp2->info->depths[0];
+  /* calcolo i due valori di d. Arco 1 passa davanti */
+  newa1->depths[0] = d1;   /* questo e' giusto perche' passa davanti */
+  newa2->depths[0] = d2 - 2*o1;  /* varia di 2 con segno che dipende */
+
+  newr = newregion (s);
+  newbl = newborderlist (newr);
+  newbp1 = newborder (newbl);
+  newbl->sponda = newbp1;
+  newbp2 = newborder (newbl);
+  newbp2->next = newbp1;  /* o anche = newbp1->next */
+  newbp1->next = newbp2;
+
+  bp1nt = gettransborder (bp1->next);  /* sponda opposta al next */
+  bp2nt = gettransborder (bp2->next);
+  newbpt1 = newborder (bp1nt->border); /* e' la sponda opposta a bpn1 */
+  newbpt1->next = bp1nt->next;  /* da inserire dopo bp1nt */
+  bp1nt->next = newbpt1;
+  newbp1->info = newbpt1->info = newa1;
+  newbp1->orientation = -o1;
+  newbpt1->orientation = o1;
+  newbpt2 = newborder (bp2nt->border); /* e' la sponda opposta a bpn1 */
+  newbpt2->next = bp2nt->next;
+  bp2nt->next = newbpt2;
+  newbp2->info = newbpt2->info = newa2;
+  newbp2->orientation = -o2;
+  newbpt2->orientation = o2;
+
+  /* infine sistemo i puntatori alle regioni right/left */
+  if (o1 > 0) {
+    newa1->regionright = newbp1;
+    newa1->regionleft = newbpt1;
+  } else {
+    newa1->regionleft = newbp1;
+    newa1->regionright = newbpt1;
+  }
+  if (o2 > 0) {
+    newa2->regionright = newbp2;
+    newa2->regionleft = newbpt2;
+  } else {
+    newa2->regionleft = newbp2;
+    newa2->regionright = newbpt2;
+  }
+  return (1);
 }
 
 /*
@@ -1474,96 +1608,103 @@ remove_s1 (struct border *b, struct sketch *sketch)
 }
 
 /*
- * unisci una coppia di cuspidi in un nuovo nodo
+ * unisci una coppia di archi in un nuovo nodo.
+ * viene chiamata per unire due cuspidi (rule C2)
+ * (con "removecusps = 1")
+ * e come fase intermedia per l'inverso delle regole
+ * Nx (con "removecusps = 0") [era "join_cusps"]
+ *
+ * NOTA IMPORTANTE: alla fine, i valori cusp?pos non hanno
+ * piu' alcun significato (sostanzialmente il nuovo valore e' 0)
+ * i puntatori bp1 e bp2 POSSONO richiedere una modifica,
+ * in particolare quando in ingresso sono uguali!
+ *
+ * per ora e' fatta solo per il caso di orientazione negativa
  */
 
 void
-join_cusps (struct border *cusp1, int cusp1pos, 
-            struct border *cusp2, int cusp2pos, 
-            struct sketch *sketch)
+pinch_arcs (struct border **bp1pt, int cusp1pos, 
+            struct border **bp2pt, int cusp2pos, 
+            struct sketch *sketch, int removecusps)
 {
   struct borderlist *bl1, *bl2;
-  struct border *btemp;
+  struct border *bp1, *bp2;
 
-  spezza_bordo_c (cusp1, cusp1pos, sketch);
-  if (debug) printf ("dopo il primo spezza_bordo_c\n");
+  assert (removecusps == 0 || removecusps == 1);
+  bp1 = *bp1pt; bp2 = *bp2pt;
+  spezza_bordo (bp1, cusp1pos, sketch, removecusps);
+  if (debug) printf ("dopo il primo spezza_bordo\n");
   if (debug) printsketch (sketch);
-  if (cusp1 == cusp2)
+  if (bp1 == bp2)
   {
-    /* devo ricalcolare cusp2 e cusp2pos tenendo conto
-     * di quanto fatto da 'spezza_bordo_c'
+    /* devo ricalcolare bp2 e cusp2pos tenendo conto
+     * di quanto fatto da 'spezza_bordo'
      */
-    if (cusp1->info->endpoints == 1)
+    if (bp1->info->endpoints == 1)
     {
       if (debug) printf ("era un S1\n");
-      if (cusp2pos > cusp1pos) cusp2pos -= cusp1pos + 1;
-        else cusp2pos += cusp1->info->cusps - cusp1pos;
+      if (cusp2pos > cusp1pos) cusp2pos -= cusp1pos + removecusps;
+        else cusp2pos += bp1->info->cusps - cusp1pos;
     } else {
       if (cusp2pos > cusp1pos)
       {
-        cusp2pos -= cusp1pos + 1;
+        cusp2pos -= cusp1pos + removecusps; /* cambiera' bp1 */
       } else {
-        cusp2 = cusp2->next;
+        bp2 = bp2->next;
       }
     }
   }
-  if (debug)
-  {
-    printf ("cusp2pos = %d\n", cusp2pos);
-  }
-  spezza_bordo_c (cusp2, cusp2pos, sketch);
-  if (cusp1 == cusp2) cusp1 = cusp2->next;
-  if (debug) printf ("dopo il secondo spezza_bordo_c\n");
+  spezza_bordo (bp2, cusp2pos, sketch, removecusps);
+  if (bp1 == bp2) bp1 = bp2->next;
+  if (debug) printf ("dopo il secondo spezza_bordo\n");
   if (debug) printsketch (sketch);
 
-  bl1 = cusp1->border;
-  bl2 = cusp2->border;
+  bl1 = bp1->border;
+  bl2 = bp2->border;
   if (bl1 == bl2)         /* la regione si spezza in due */
   {
     if (debug) printf ("la regione si spezza in due\n");
 
-    topo_change_g (cusp1, cusp2, TC_EROSION, sketch);
+    topo_change_g (bp1, bp2, TC_EROSION, sketch);
+    /* attenzione, si puo' perdere l'informazione isexternalinfo */
 
-    if (cusp1->next == cusp1) cusp1->info->endpoints = 1;
-    if (cusp2->next == cusp2) cusp2->info->endpoints = 1;
-    if (debug)
-    {
-      printf ("arco di cusp2: %d\n", cusp2->info->tag);
-      btemp = gettransborder (cusp2);
-      printf ("arco di futuro b2p: %d\n", btemp->info->tag);
-      btemp = gettransborder (cusp2->next);
-      printf ("arco di futuro b3p: %d\n", btemp->info->tag);
-    }
+    if (bp1->next == bp1) bp1->info->endpoints = 1;
+    if (bp2->next == bp2) bp2->info->endpoints = 1;
   } else {                /* rimane una sola regione */
     if (bl2 != bl2->region->border)   /* e' un buco */
     {
-      redefineborder (cusp2, bl1);
+      redefineborder (bp2, bl1);
       bl1 = bl2;
     } else {
-      redefineborder (cusp1, bl2);
+      redefineborder (bp1, bl2);
     }
-    topo_change_l (cusp1, cusp2);
-    if (cusp1->next == cusp1) cusp1->info->endpoints = 1;
-    if (cusp2->next == cusp2) cusp2->info->endpoints = 1;
+    topo_change_l (bp1, bp2);
+    if (bp1->next == bp1) bp1->info->endpoints = 1;
+    if (bp2->next == bp2) bp2->info->endpoints = 1;
     extractborderlist (bl1);
     bl1->sponda = 0;
     freeborderlist (bl1);
   }
+  *bp1pt = bp1; *bp2pt = bp2;
 }
 
 /*
  * suddivido un arco in corrispondenza di una cuspide,
+ * (se "removecusp" = 1)
  * eventualmente creo i border necessari
+ * se removecusp = 0 l'arco viene tagliato tra due cuspidi
  */
 
 void
-spezza_bordo_c (struct border *cusp, int cusppos, struct sketch *sketch)
+spezza_bordo (struct border *cusp, int cusppos, struct sketch *sketch,
+		int removecusp)
 {
   int *newdepths, i, j;
   struct arc *arc, *arcnew;
   struct border *bt, *btnew;
   struct border *cuspnew;
 
+  assert (removecusp == 0 || removecusp == 1);
   arc = cusp->info;
   assert (cusp->orientation < 0);
   if (arc->endpoints == 0)  /* questo e' un s1 */
@@ -1574,12 +1715,14 @@ spezza_bordo_c (struct border *cusp, int cusppos, struct sketch *sketch)
      * TODO: Mmm, probabilmente non conviene riallocare,
      * ma si puo' continuare ad usare lo spazio vecchio
      */
-    arc->cusps--;
-    arc->depthsdim--;
+    if (removecusp) {
+      arc->cusps--;
+      arc->depthsdim--;
+    }
     newdepths = (int *) malloc (arc->depthsdim * sizeof (int));
     for (i = 0; i < arc->depthsdim; i++)
     {
-      j = i + cusppos + 1;
+      j = i + cusppos + removecusp;
       if (j >= arc->depthsdim) j -= arc->depthsdim;
       newdepths[i] = arc->depths[j];
     }
@@ -1605,8 +1748,8 @@ spezza_bordo_c (struct border *cusp, int cusppos, struct sketch *sketch)
     cuspnew->info = arc;
     arc->regionright = cuspnew;
     cuspnew->orientation = cusp->orientation;
-    arcnew->depthsdim = arc->cusps - cusppos;
-    arcnew->cusps = arc->cusps - cusppos - 1;
+    arcnew->cusps = arc->cusps - cusppos - removecusp;
+    arcnew->depthsdim = arcnew->cusps + 1;
     arcnew->dvalues = arcnew->depthsdim;
     newdepths = (int *) malloc (arcnew->depthsdim * sizeof (int));
     arcnew->depths = newdepths;
@@ -1614,7 +1757,7 @@ spezza_bordo_c (struct border *cusp, int cusppos, struct sketch *sketch)
     arc->endpoints = arcnew->endpoints = 2;
     for (i = 0; i <= arcnew->cusps; i++)
     {
-      newdepths[i] = arc->depths[i + cusppos + 1];
+      newdepths[i] = arc->depths[i + cusppos + removecusp];
     }
     arc->cusps = cusppos;
     arc->dvalues = cusppos + 1;

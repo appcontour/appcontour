@@ -1,0 +1,1 @@
+./contour mergearcs examples/disjoint_spheres.morse -r 0 -a 1 -a 2

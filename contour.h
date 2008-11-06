@@ -112,14 +112,24 @@ int rule_cr4rb (struct sketch *s, int count);
 int rule_cr4lr (struct sketch *s, int count, int isleft, int isback);
 struct border *get_ith_cusp (struct region *r, int i, int *cp);
 struct border *rimuovi_losanga (struct region *r, struct sketch *sketch);
+int aggiungi_losanga (struct border *bp1, struct border *bp2, 
+		struct sketch *s);
 void taglia_nodo (struct border *b1n, struct sketch *sketch,
                   struct border **bleft, struct border **bright);
 void triple_switch (struct border *b1);
 void remove_s1 (struct border *b, struct sketch *sketch);
-void spezza_bordo_c (struct border *cusp, int cpos, struct sketch *sketch);
+void spezza_bordo (struct border *cusp, int cpos, struct sketch *sketch,
+		 int removecusp);
+void pinch_arcs (struct border **bp1pt, int cusp1pos,
+                 struct border **bp2pt, int cusp2pos,
+                 struct sketch *sketch, int removecusps);
+/*
+ * ora sostituita con la precedente con "removecusps = 1"
+ *
 void join_cusps (struct border *cusp1, int cusp1pos,
                  struct border *cusp2, int cusp2pos,
                  struct sketch *sketch);
+ */
 void remove_annulus (struct region *r, struct sketch *sketch);
 void remove_ear (struct region *r, struct sketch *sketch);
 void applyrulecn2 (struct border *b1n, struct arc *arc,
