@@ -182,7 +182,7 @@ main (int argc, char *argv[])
       printf ("      location in case of ambiguity (e.g. rule C2)\n");
       printf ("  --finfinity|--fi <int>: value of f at infinity (default 0)\n");
       printf ("  --seed <int>: initialize random number generator\n");
-      printf ("      e.g. for Hacon graph graphic presentation\n");
+      printf ("      e.g. for Mendes graph graphic presentation\n");
       printf ("  -r|--region <int>: mark region for specific action\n");
       printf ("  -a|--arc <int>: mark arc for specific action\n");
       printf ("\n  if file is not given, description is taken from standard input\n");
