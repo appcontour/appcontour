@@ -1031,7 +1031,7 @@ rule_cr3lr (struct sketch *sketch, int rcount, int ori)
 /* local prototype */
 int common_work_mergearcs (struct sketch *s, 
 			   struct border *bp1, struct border *bp2, 
-                           int a1pos, int a2pos);
+                           int a1pos, int a2pos, int rule);
 
 #define INV_N1 1
 #define INV_N2 2
@@ -1074,6 +1074,7 @@ list_mergearcs (struct sketch *s, struct region *r,
       do {
         count += list_mergearcs (s, r, 
 		(a1)?a1:bp->info, (a1)?bp->info:0, a1l, -1);
+	bp = bp->next;
       } while (bp != bl->sponda);
     }
     return (count);
@@ -1082,7 +1083,6 @@ list_mergearcs (struct sketch *s, struct region *r,
   assert (s && r && a1);
   if (a1l < 0) {
     imax = a1->dvalues;
-    if (a1->endpoints == 0 && imax > 1) imax--;
     for (i = 0; i < imax; i++) {
       count += list_mergearcs (s, r, a1, 0, i, -1);
     }
@@ -1092,7 +1092,6 @@ list_mergearcs (struct sketch *s, struct region *r,
   assert (a2 && a1l >= 0);
   if (a2l < 0) {
     imax = a2->dvalues;
-    if (a2->endpoints == 0 && imax > 1) imax--;
     for (i = 0; i < imax; i++) {
       count += list_mergearcs (s, r, a1, a2, a1l, i);
     }
@@ -1145,6 +1144,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
     do {
       if (bp->info == a1) bp1 = bp;
       if (bp->info == a2) bp2 = bp;
+      bp = bp->next;
     } while (bp != bl->sponda);
   }
   if (bp1 == 0) 
@@ -1175,7 +1175,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "with first arc above second arc\n");
     }
     if (test) return (INV_N1);
-    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l);
+    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l, INV_N1);
     return (res);
   }
 
@@ -1186,7 +1186,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "can apply inv N4\n");
     }
     if (test) return (INV_N4);
-    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l);
+    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l, INV_N4);
     return (res);
   }
 
@@ -1197,9 +1197,8 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "can apply inv C2\n");
     }
     if (test) return (INV_C2);
-
-    fprintf (stderr, "NOT IMPLEMENTED\n");
-    return (0);
+    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l, INV_C2);
+    return (res);
   }
 
   if (bp1->orientation > 0 && bp2->orientation > 0 && deltad == 0)
@@ -1220,7 +1219,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
     /* if (test) return (INV_N3bis);
      */
     if (test) return (0); /* do not report a duplicate of INV_N3 */
-    res = common_work_mergearcs (s, bp2, bp1, a2l, a1l);
+    res = common_work_mergearcs (s, bp2, bp1, a2l, a1l, INV_N3);
     return (res);
   }
 
@@ -1240,7 +1239,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "can apply inv N2\n");
     }
     if (test) return (INV_N2);
-    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l);
+    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l, INV_N2);
     return (res);
   }
 
@@ -1251,7 +1250,7 @@ apply_mergearcs (struct sketch *s, struct region *r,
       fprintf (stderr, "can apply inv N3\n");
     }
     if (test) return (INV_N3);
-    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l);
+    res = common_work_mergearcs (s, bp1, bp2, a1l, a2l, INV_N3);
     return (res);
   }
 
@@ -1261,23 +1260,28 @@ apply_mergearcs (struct sketch *s, struct region *r,
 int
 common_work_mergearcs (struct sketch *s, 
 		struct border *bp1, struct border *bp2, 
-		int a1l, int a2l)
+		int a1l, int a2l, int rule)
 {
   int res, changes;
 
-  pinch_arcs (&bp1, a1l, &bp2, a2l, s, 0);
+  pinch_arcs (&bp1, a1l, &bp2, a2l, s, (rule == INV_C2)?(-1):0);
 
   if (debug) printf ("dopo topo_change\n");
   if (debug) printsketch (s);
 
   assert (bp1 != bp2);
 
-  res = aggiungi_losanga (bp1, bp2, s);
-  changes = adjust_isexternalinfo (s);
-  if (debug && changes) 
-    printf ("%d changes in adjust_isexternalinfo\n", changes);
-  if (debug) printf ("dopo aggiungi_losanga\n");
-  if (debug) printsketch (s);
+  if (rule == INV_C2) {
+    taglia_nodo (bp1->next, s, 0, 0);
+    res = 1;
+  } else {
+    res = aggiungi_losanga (bp1, bp2, s);
+    changes = adjust_isexternalinfo (s);
+    if (debug && changes) 
+      printf ("%d changes in adjust_isexternalinfo\n", changes);
+    if (debug) printf ("dopo aggiungi_losanga\n");
+    if (debug) printsketch (s);
+  }
   if (res)
   {
     checkconsistency (s);
@@ -1784,17 +1788,17 @@ pinch_arcs (struct border **bp1pt, int cusp1pos,
  */
 
 void
-spezza_bordo (struct border *cusp, int cusppos, struct sketch *sketch,
+spezza_bordo (struct border *bp, int cusppos, struct sketch *sketch,
 		int removecusp)
 {
   int *newdepths, i, j;
   struct arc *arc, *arcnew;
   struct border *bt, *btnew;
-  struct border *cuspnew;
+  struct border *bpnew;
 
   assert (removecusp == 0 || removecusp == 1);
-  arc = cusp->info;
-  if (removecusp == 1) assert (cusp->orientation < 0);
+  arc = bp->info;
+  if (removecusp == 1) assert (bp->orientation < 0);
   if (arc->endpoints == 0)  /* questo e' un s1 */
   {
     /* in questo caso non si creano altri archi e bordi.
@@ -1824,29 +1828,29 @@ spezza_bordo (struct border *cusp, int cusppos, struct sketch *sketch,
   } else {
     /* in questo caso si crea un nuovo arco e due nuove sponde */
     arcnew = newarc (sketch);
-    bt = gettransborder (cusp);
+    bt = gettransborder (bp);
     btnew = newborder (bt->border);
     btnew->next = bt->next;
     bt->next = btnew;
     btnew->orientation = bt->orientation;
-    cuspnew = newborder (cusp->border);
-    cuspnew->next = cusp->next;
-    cusp->next = cuspnew;
-    cuspnew->orientation = cusp->orientation;
+    bpnew = newborder (bp->border);
+    bpnew->next = bp->next;
+    bp->next = bpnew;
+    bpnew->orientation = bp->orientation;
 
-    if (cusp->orientation < 0) {
-      cusp->info = arcnew;
+    if (bp->orientation < 0) {
+      bp->info = arcnew;
       btnew->info = arcnew;
       arcnew->regionleft = btnew;
-      arcnew->regionright = cusp;
-      cuspnew->info = arc;
-      arc->regionright = cuspnew;
+      arcnew->regionright = bp;
+      bpnew->info = arc;
+      arc->regionright = bpnew;
     } else {
       bt->info = arcnew;
       btnew->info = arc;
-      arcnew->regionleft = cuspnew;
+      arcnew->regionleft = bpnew;
       arcnew->regionright = bt;
-      cuspnew->info = arcnew;
+      bpnew->info = arcnew;
       arc->regionright = btnew;
     }
 
