@@ -79,12 +79,6 @@ int testallrules (struct sketch *sketch);
 int testsinglerule (char *rname, int (*rulefunc)(struct sketch *s, int rc), 
                     int exitcode, struct sketch *sketch);
 int apply_rule (char *rule, struct sketch *s);
-int list_mergearcs (struct sketch *s, struct region *r,
-		     struct arc *a1, struct arc *a2,
-		     int a1l, int a2l);
-int apply_mergearcs (struct sketch *s, struct region *r,
-		     struct arc *a1, struct arc *a2,
-		     int a1l, int a2l, int test);
 int rule_n14 (struct sketch *s, int rule, int count);
 int rule_n5 (struct sketch *s, int count);
 int rule_cr2 (struct sketch *s, int count);
@@ -115,8 +109,6 @@ int rule_cr4rb (struct sketch *s, int count);
 int rule_cr4lr (struct sketch *s, int count, int isleft, int isback);
 struct border *get_ith_cusp (struct region *r, int i, int *cp);
 struct border *rimuovi_losanga (struct region *r, struct sketch *sketch);
-int aggiungi_losanga (struct border *bp1, struct border *bp2, 
-		struct sketch *s);
 void taglia_nodo (struct border *b1n, struct sketch *sketch,
                   struct border **bleft, struct border **bright);
 void triple_switch (struct border *b1);
@@ -140,6 +132,17 @@ void applyrulecn2 (struct border *b1n, struct arc *arc,
 void remove_cusp (struct region *r, struct sketch *sketch);
 void applyrulecr3 (struct border *b1, struct border *b2, int dindex,
                                               struct sketch *sketch);
+
+/* invrules.c */
+
+int list_mergearcs (struct sketch *s, struct region *r,
+		     struct arc *a1, struct arc *a2,
+		     int a1l, int a2l);
+int apply_mergearcs (struct sketch *s, struct region *r,
+		     struct arc *a1, struct arc *a2,
+		     int a1l, int a2l, int test);
+int aggiungi_losanga (struct border *bp1, struct border *bp2, 
+		struct sketch *s);
 
 int sketchcmp (struct sketch *s1, struct sketch *s2);
 int regioncmp (struct region *r1, struct region *r2);
