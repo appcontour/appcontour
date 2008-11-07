@@ -161,10 +161,10 @@ main (int argc, char *argv[])
       printf ("Usage: %s [options] command [file]\n", argv[0]);
       printf ("  possible commands are:\n");
       printf ("  print, printmorse, iscontour, ishuffman, canonify, countcc\n");
-      printf ("  testallrules, info, characteristic, knot2morse\n");
+      printf ("  rules, info, characteristic, knot2morse\n");
       printf ("  compare: lessicographic comparison between two contours, in this\n");
       printf ("    case the stdin (or file) must contain two descriptions\n");
-      printf ("  applyrule <rule>: apply indicated rule to contour\n");
+      printf ("  rule <rule>: apply indicated rule to contour\n");
       printf ("  mergearcs: apply an inverse rule that merges two arcs\n");
       printf ("  extractcc <int>: extract 3D connected component\n");
       printf ("  removecc <int>: remove 3D connected component from contour\n");
@@ -201,7 +201,7 @@ main (int argc, char *argv[])
         exit (10);
       }
     }
-    if (strcmp(argv[i],"applyrule") == 0)
+    if (strcmp(argv[i],"applyrule") == 0 || strcmp(argv[i],"rule") == 0)
     {
       action = ACTION_APPLYRULE;
       i++;
@@ -224,7 +224,8 @@ main (int argc, char *argv[])
       ccid = atoi (argv[i]) - 1;
     }
     if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
-    if (strcmp(argv[i],"testallrules") == 0) action = ACTION_TESTALLRULES;
+    if (strcmp(argv[i],"testallrules") == 0 ||
+        strcmp(argv[i],"rules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"countcc") == 0) action = ACTION_COUNTCC;
     if (strcmp(argv[i],"print") == 0) action = ACTION_PRINTSKETCH;
     if (strcmp(argv[i],"isappcon") == 0) action = ACTION_ISHUFFMAN;
