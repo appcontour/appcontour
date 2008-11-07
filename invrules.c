@@ -8,15 +8,17 @@ extern int debug;
  * definizione regole di trasformazione inverse per superfici isotope
  */
 
+/* local prototypes */
+int c_mergearcs (struct sketch *s, struct region *r,
+	struct arc *a1, struct arc *a2, int a1l, int a2l);
+int common_work_mergearcs (struct sketch *s, 
+			   struct border *bp1, struct border *bp2, 
+                           int a1pos, int a2pos, int rule);
+
 /*
  * Questa funzione serve ad applicare una mossa inversa
  * per il merge di due archi (inversa di N1-N4 oppure C2)
  */
-
-/* local prototype */
-int common_work_mergearcs (struct sketch *s, 
-			   struct border *bp1, struct border *bp2, 
-                           int a1pos, int a2pos, int rule);
 
 #define INV_N1 1
 #define INV_N2 2
@@ -24,31 +26,79 @@ int common_work_mergearcs (struct sketch *s,
 #define INV_N3bis 4
 #define INV_N4 5
 #define INV_C2 6
+
+#define NUM_INVNC 7
+
 static char *invmergerules[] = {
   "",
-  "INV N1",
-  "INV N2",
-  "INV N3",
-  "INV N3bis",
-  "INV N4",
-  "INV C2",
+  "INVN1",
+  "INVN2",
+  "INVN3",
+  "INVN3bis",
+  "INVN4",
+  "INVC2",
   0};
+
+static int countmarules[NUM_INVNC];
+static int applyma = 0;
+static int applymac = 0;
+
+int
+lookup_mergearcs (char *rule)
+{
+  int i;
+
+  for (i = 1; invmergerules[i]; i++)
+  {
+    if (strcasecmp (rule, invmergerules[i]) == 0) return (i);
+  }
+  return (0);
+}
+
+int
+rule_mergearcs (struct sketch *s, int rule, int rcount)
+{
+  int res;
+
+  if (debug) printf ("Chiamato rule_mergearcs con rule: %s rcount %d\n",
+    invmergerules[rule], rcount);
+
+  applyma = rule;
+  applymac = rcount;
+  res = c_mergearcs (s, 0, 0, 0, 0, 0);
+  return (res);
+}
 
 int
 list_mergearcs (struct sketch *s, struct region *r,
 	struct arc *a1, struct arc *a2, int a1l, int a2l)
 {
+  int i, res;
+  extern int quiet;
+
+  for (i = 1; i < NUM_INVNC; i++) countmarules[i] = 0;
+  applyma = applymac = 0;
+  res = c_mergearcs (s, r, a1, a2, a1l, a2l);
+  if (quiet) printf ("\n");
+  return (res);
+}
+
+int
+c_mergearcs (struct sketch *s, struct region *r,
+	struct arc *a1, struct arc *a2, int a1l, int a2l)
+{
   struct borderlist *bl;
   struct border *bp;
-  int imax, i, res;
+  int imax, i, res, rule;
+  extern int quiet;
 
-  int count = 0;
   if (r == 0) {
     for (r = s->regions; r; r = r->next) {
-      printf ("Region %d:\n", r->tag);
-      count += list_mergearcs (s, r, 0, 0, -1, -1);
+      if (quiet == 0 && applyma == 0) printf ("Region %d:\n", r->tag);
+      res = c_mergearcs (s, r, 0, 0, -1, -1);
+      if (res) return (res);
     }
-    return (count);
+    return (0);
   }
 
   if (a1 == 0 || (a1l >= 0 && a2 == 0)) {
@@ -57,38 +107,53 @@ list_mergearcs (struct sketch *s, struct region *r,
       if (bl->sponda == 0) continue;
       bp = bl->sponda;
       do {
-        count += list_mergearcs (s, r, 
+        res = c_mergearcs (s, r, 
 		(a1)?a1:bp->info, (a1)?bp->info:0, a1l, -1);
+	if (res) return (res);
 	bp = bp->next;
       } while (bp != bl->sponda);
     }
-    return (count);
+    return (0);
   }
 
   assert (s && r && a1);
   if (a1l < 0) {
     imax = a1->dvalues;
     for (i = 0; i < imax; i++) {
-      count += list_mergearcs (s, r, a1, 0, i, -1);
+      res = c_mergearcs (s, r, a1, 0, i, -1);
+      if (res) return (res);
     }
-    return (count);
+    return (0);
   }
 
   assert (a2 && a1l >= 0);
   if (a2l < 0) {
     imax = a2->dvalues;
     for (i = 0; i < imax; i++) {
-      count += list_mergearcs (s, r, a1, a2, a1l, i);
+      res = c_mergearcs (s, r, a1, a2, a1l, i);
+      if (res) return (res);
     }
-    return (count);
+    return (0);
   }
 
   assert (a2l >= 0);
-  res = apply_mergearcs (s, r, a1, a2, a1l, a2l, 1);
-  if (res) {
-    printf ("-r %d -a %d:%d -a %d:%d (%s)\n", 
-      r->tag, a1->tag, a1l, a2->tag, a2l, invmergerules[res]);
-    return (1);
+  rule = apply_mergearcs (s, r, a1, a2, a1l, a2l, 1);
+  if (rule) {
+    countmarules[rule]++;
+    if (applyma == 0) {
+      if (quiet == 0)
+        printf ("-r %d -a %d:%d -a %d:%d (", 
+          r->tag, a1->tag, a1l, a2->tag, a2l);
+      printf ("%s:%d", invmergerules[rule], countmarules[rule]);
+      if (quiet == 0) printf (")\n");
+        else printf (" ");
+    }
+    if (rule == applyma && countmarules[rule] == applymac) {
+      res = apply_mergearcs (s, r, a1, a2, a1l, a2l, 0);
+      return (res);
+    } else {
+      return (0);
+    }
   }
 
   return (0);

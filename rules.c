@@ -11,7 +11,7 @@ extern int debug;
 int
 apply_rule (char *rule, struct sketch *sketch)
 {
-  int res, rcount = 1;
+  int res, code, rcount = 1;
   char *chpt, *endrule;
   extern int heisemberg;
   extern int quiet;
@@ -66,6 +66,8 @@ apply_rule (char *rule, struct sketch *sketch)
   else if (strcasecmp (rule, "cr4lb") == 0) res = rule_cr4lb (sketch, rcount);
   else if (strcasecmp (rule, "cr4rb") == 0) res = rule_cr4rb (sketch, rcount);
   else if (strcasecmp (rule, "t1") == 0) res = rule_t1 (sketch, rcount);
+  else if ((code = lookup_mergearcs (rule))) 
+       res = rule_mergearcs (sketch, code, rcount);
   else printf ("Invalid rule %s\n", rule);
 
   if (debug) printf ("res = %d\n", res);

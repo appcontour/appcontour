@@ -135,6 +135,8 @@ void applyrulecr3 (struct border *b1, struct border *b2, int dindex,
 
 /* invrules.c */
 
+int lookup_mergearcs (char *rule);
+int rule_mergearcs (struct sketch *s, int code, int rcount);
 int list_mergearcs (struct sketch *s, struct region *r,
 		     struct arc *a1, struct arc *a2,
 		     int a1l, int a2l);
