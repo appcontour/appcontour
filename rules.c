@@ -565,10 +565,10 @@ rule_cn1_cr2 (struct sketch *sketch, int rcount, int iscr2)
     } else {
       if (arc->cusps != 2) continue;        /* devono esserci due cuspidi */
       diff = arc->depths[2] - arc->depths[0];
-      if (diff != 2 && diff != -2) continue;  /* d crescente o decrescente */
+      if (diff != 2 && diff != -2) continue; /* d crescente o decrescente */
       if (get_d_increase_across_node (arc, -1) != 
           diff + get_d_increase_across_node (arc, 1)) continue;
-                                            /* incosistent d values at node */
+                                        /* incosistent d values at node */
     }
 
     if (rcount-- <= 1)
@@ -1266,12 +1266,14 @@ common_work_mergearcs (struct sketch *s,
 
   pinch_arcs (&bp1, a1l, &bp2, a2l, s, (rule == INV_C2)?(-1):0);
 
-  if (debug) printf ("dopo topo_change\n");
+  if (debug) printf ("dopo pinch_arcs\n");
   if (debug) printsketch (s);
 
   assert (bp1 != bp2);
 
   if (rule == INV_C2) {
+    bp1->next->info->depths[0] = bp2->next->info->depths[1];
+    bp2->next->info->depths[0] = bp1->next->info->depths[1];
     taglia_nodo (bp1->next, s, 0, 0);
     res = 1;
   } else {
@@ -1707,8 +1709,6 @@ remove_s1 (struct border *b, struct sketch *sketch)
  * piu' alcun significato (sostanzialmente il nuovo valore e' 0)
  * i puntatori bp1 e bp2 POSSONO richiedere una modifica,
  * in particolare quando in ingresso sono uguali!
- *
- * per ora e' fatta solo per il caso di orientazione negativa
  */
 
 void
@@ -1720,7 +1720,7 @@ pinch_arcs (struct border **bp1pt, int cusp1pos,
   struct border *bp1, *bp2;
   int ori;
 
-  assert (removecusps == 0 || removecusps == 1);
+  assert (removecusps == 0 || removecusps == 1 || removecusps == -1);
   bp1 = *bp1pt; bp2 = *bp2pt;
   spezza_bordo (bp1, cusp1pos, sketch, removecusps);
   if (debug) printf ("dopo il primo spezza_bordo\n");
@@ -1785,6 +1785,10 @@ pinch_arcs (struct border **bp1pt, int cusp1pos,
  * (se "removecusp" = 1)
  * eventualmente creo i border necessari
  * se removecusp = 0 l'arco viene tagliato tra due cuspidi
+ * se removecusp = -1 viene aggiunta una cuspide all'inizio
+ * della seconda meta'.  Questo serve per costrure INV-C2.
+ * il valore di d viene messo a -9999 convenzionalmente,
+ * dovra' essere sistemato dal chiamante!
  */
 
 void
@@ -1796,9 +1800,10 @@ spezza_bordo (struct border *bp, int cusppos, struct sketch *sketch,
   struct border *bt, *btnew;
   struct border *bpnew;
 
-  assert (removecusp == 0 || removecusp == 1);
+  assert (removecusp == 0 || removecusp == 1 || removecusp == -1);
   arc = bp->info;
   if (removecusp == 1) assert (bp->orientation < 0);
+  if (removecusp == -1) assert (bp->orientation > 0);
   if (arc->endpoints == 0)  /* questo e' un s1 */
   {
     /* in questo caso non si creano altri archi e bordi.
@@ -1814,10 +1819,11 @@ spezza_bordo (struct border *bp, int cusppos, struct sketch *sketch,
     arc->cusps -= removecusp;
     arc->depthsdim -= removecusp;
     arc->dvalues += 1 - removecusp;
-    //assert (arc->dvalues <= arc->depthsdim);  // dvalues non affidabile 
     newdepths = (int *) malloc (arc->depthsdim * sizeof (int));
+    if (removecusp < 0) newdepths[0] = -9999;
     for (i = 0; i < arc->depthsdim; i++)
     {
+      if (i + removecusp < 0) continue;
       j = i + cusppos + removecusp;
       if (j >= arc->depthsdim) j -= arc->depthsdim - 1 + removecusp;
       newdepths[i] = arc->depths[j];
@@ -1861,8 +1867,10 @@ spezza_bordo (struct border *bp, int cusppos, struct sketch *sketch,
     arcnew->depths = newdepths;
     /* devo definire endpoints, che ora e' 2 */
     arc->endpoints = arcnew->endpoints = 2;
+    if (removecusp < 0) newdepths[0] = -9999;
     for (i = 0; i <= arcnew->cusps; i++)
     {
+      if (i + removecusp < 0) continue;
       newdepths[i] = arc->depths[i + cusppos + removecusp];
     }
     arc->cusps = cusppos;
