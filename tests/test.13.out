@@ -3,16 +3,23 @@ Region 0:
 Region 1:
 -r 1 -a 2:0 -a 2:1 (INV C2)
 -r 1 -a 2:0 -a 2:2 (INV N4)
+-r 1 -a 2:0 -a 2:3 (INV C2)
 -r 1 -a 2:1 -a 2:2 (INV C2)
+-r 1 -a 2:3 -a 2:2 (INV C2)
 Region 2:
 -r 2 -a 1:0 -a 2:2 (INV N2)
 -r 2 -a 2:0 -a 1:0 (INV N3)
 -r 2 -a 2:0 -a 2:0 (INV N1)
 -r 2 -a 2:0 -a 2:1 (INV N1)
 -r 2 -a 2:0 -a 2:2 (INV N1)
+-r 2 -a 2:0 -a 2:3 (INV N1)
 -r 2 -a 2:1 -a 2:1 (INV N1)
 -r 2 -a 2:1 -a 2:2 (INV N1)
+-r 2 -a 2:1 -a 2:3 (INV N1)
 -r 2 -a 2:2 -a 2:2 (INV N1)
+-r 2 -a 2:3 -a 2:1 (INV N1)
+-r 2 -a 2:3 -a 2:2 (INV N1)
+-r 2 -a 2:3 -a 2:3 (INV N1)
 sketch {
 Arc 1: [0];
 Arc 2: [0];
