@@ -4,6 +4,11 @@ example=$1
 
 showcontouroptions="--steps 4"
 
+function mergearcs ()
+{
+  eval $commandchain | contour mergearcs 2>/dev/null
+}
+
 function displayinfo ()
 {
   eval $commandchain | contour info 2>/dev/null
@@ -106,9 +111,11 @@ do
     echo "Applied rules: $rules"
   fi
   buildcommandchain
-  applicable=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
-  echo "Applicable rules: $applicable"
-  applicable=" $applicable "
+  applicablesimple=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
+  applicablema=`eval $commandchain | contour mergearcs -q 2>/dev/null | tail -1`
+  echo "Applicable rules: $applicablesimple"
+  #echo "Applicable mergearcs rules: $applicablema"
+  applicable=" $applicablesimple $applicablema "
   set -o history
   read -e -p "Contour> " command arg
   if [ "$?" != "0" ]
@@ -123,6 +130,9 @@ do
   history -s $command $arg
 
   case $command in
+    mergearcs)
+      mergearcs
+      ;;
     info)
       displayinfo
       ;;
@@ -165,7 +175,7 @@ do
       ;;
     help)
       echo "Valid commands are:"
-      echo -n "help, quit, print, info, morse, back"
+      echo -n "help, quit, print, info, morse, back, mergearcs"
       if [ -n "$showcontour" ]
       then
         echo ", show [rule]"

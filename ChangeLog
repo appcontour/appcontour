@@ -1,3 +1,13 @@
+2008-11-08: the first set of inverse rules is now implemented.
+	command "mergearcs" lists all applicable rules inverse
+	of N1, N2, N3, N4, C2 (they are all a kind of merge of
+	two arcs of the boundary of some region.
+	command "rule" (which is now an abbreviation of "applyrule")
+	can be used to apply such rules.
+	Command "mergearcs" can also be used, by specifying the
+	region (option -r) and the two arcs (option -a, twice)
+	where the rule should be applied.
+
 2007-07-04: the computation of the mendes graph is now finally working.
 	The name of the graph was changed from "hacon" to "mendes"
 	as for suggestion of the authors.
