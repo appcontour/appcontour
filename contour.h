@@ -1,6 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MRPTMAX 4
+#define MAPTMAX 4
+
+struct tagged_data {
+  int mrnum;
+  int region[MRPTMAX];
+  int manum;
+  int arc[MAPTMAX];
+  int arcl[MAPTMAX];
+};
+  
 /*
  * definizioni per la descrizione tramite regioni
  */
@@ -137,9 +148,7 @@ void applyrulecr3 (struct border *b1, struct border *b2, int dindex,
 
 int lookup_mergearcs (char *rule);
 int rule_mergearcs (struct sketch *s, int code, int rcount);
-int list_mergearcs (struct sketch *s, struct region *r,
-		     struct arc *a1, struct arc *a2,
-		     int a1l, int a2l);
+int list_mergearcs (struct sketch *s);
 int apply_mergearcs (struct sketch *s, struct region *r,
 		     struct arc *a1, struct arc *a2,
 		     int a1l, int a2l, int test);

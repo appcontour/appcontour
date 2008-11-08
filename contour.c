@@ -34,9 +34,7 @@
 #define ACTION_MENDES 17
 #define ACTION_ISHUFFMAN 18
 #define ACTION_MERGEARCS 19
-
-#define MRPTMAX 4
-#define MAPTMAX 4
+#define ACTION_LISTMA 20
 
 int debug = 0;
 int quiet = 0;
@@ -48,6 +46,8 @@ int doretagregions = 1;
 int finfinity = 0;
 int mendesge = HGE_TEXT;
 
+struct tagged_data user_data;
+
 int
 main (int argc, char *argv[])
 {
@@ -58,40 +58,36 @@ main (int argc, char *argv[])
   char rule[10], *endch;
   FILE *infile = 0;
   struct mendesgraph *mendes;
-  int markedregion[MRPTMAX];
-  int markedarc[MAPTMAX];
-  int markedarcl[MAPTMAX];
-  int mrpt = 0;
-  int mapt = 0;
   struct region *r;
   struct arc *a, *a2;
 
+  user_data.mrnum = user_data.manum = 0;
   for (i = 1; i < argc; i++)
   {
     if (strcmp(argv[i],"-r") == 0 || strcmp(argv[i],"--region") == 0)
     {
-      markedregion[mrpt++] = atoi (argv[++i]);
-      if (mrpt > MRPTMAX)
+      user_data.region[user_data.mrnum++] = atoi (argv[++i]);
+      if (user_data.mrnum > MRPTMAX)
       {
-        fprintf (stderr, "Too many tagged regions (%d)\n", mrpt);
+        fprintf (stderr, "Too many tagged regions (%d)\n", user_data.mrnum);
         exit (1);
       }
       continue;
     }
     if (strcmp(argv[i],"-a") == 0 || strcmp(argv[i],"--arc") == 0)
     {
-      markedarc[mapt] = strtol (argv[++i], &endch, 10);
-      markedarcl[mapt] = 0;
+      user_data.arc[user_data.manum] = strtol (argv[++i], &endch, 10);
+      user_data.arcl[user_data.manum] = 0;
       if (*endch == ':' && *(++endch)) 
-	markedarcl[mapt] = strtol (endch, &endch, 10);
+	user_data.arcl[user_data.manum] = strtol (endch, &endch, 10);
       if (*endch != '\0') {
         fprintf (stderr, "Conversion error in %s, %x\n", argv[i], (int)*endch);
 	exit (1);
       }
-      mapt++;
-      if (mapt > MAPTMAX)
+      user_data.manum++;
+      if (user_data.manum > MAPTMAX)
       {
-        fprintf (stderr, "Too many tagged arcs (%d)\n", mapt);
+        fprintf (stderr, "Too many tagged arcs (%d)\n", user_data.manum);
         exit (1);
       }
       continue;
@@ -224,13 +220,15 @@ main (int argc, char *argv[])
       ccid = atoi (argv[i]) - 1;
     }
     if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
-    if (strcmp(argv[i],"testallrules") == 0 ||
-        strcmp(argv[i],"rules") == 0) action = ACTION_TESTALLRULES;
+    if (strcmp(argv[i],"listma") == 0) action = ACTION_LISTMA;
+    if (strcmp(argv[i],"listmergearcs") == 0) action = ACTION_LISTMA;
+    if (strcmp(argv[i],"testallrules") == 0) action = ACTION_TESTALLRULES;
+    if (strcmp(argv[i],"rules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"countcc") == 0) action = ACTION_COUNTCC;
     if (strcmp(argv[i],"print") == 0) action = ACTION_PRINTSKETCH;
+    if (strcmp(argv[i],"ishuffman") == 0) action = ACTION_ISHUFFMAN;
     if (strcmp(argv[i],"isappcon") == 0) action = ACTION_ISHUFFMAN;
     if (strcmp(argv[i],"iscontour") == 0) action = ACTION_ISCONTOUR;
-    if (strcmp(argv[i],"ishuffman") == 0) action = ACTION_ISHUFFMAN;
     if (strcmp(argv[i],"compare") == 0) action = ACTION_COMPARE;
     if (strcmp(argv[i],"canonify") == 0) action = ACTION_CANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
@@ -277,25 +275,31 @@ main (int argc, char *argv[])
     }
     break;
 
+    case ACTION_LISTMA:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    list_mergearcs (sketch);
+    break;
+
     case ACTION_MERGEARCS:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
-    if (mrpt < 1 || mapt < 2) {
+    if (user_data.mrnum < 1 || user_data.manum < 2) {
       fprintf (stderr, "You must specify a region and two arcs\n");
       fprintf (stderr, "   using options -r and -a\n");
-      list_mergearcs (sketch, 0, 0, 0, -1, -1);
+      list_mergearcs (sketch);
       exit(15);
     }
-    r = findregion (sketch, markedregion[0]);
-    a = findarc (sketch, markedarc[0]);
-    a2 = findarc (sketch, markedarc[1]);
+    r = findregion (sketch, user_data.region[0]);
+    a = findarc (sketch, user_data.arc[0]);
+    a2 = findarc (sketch, user_data.arc[1]);
     if (r == 0) fprintf (stderr, "Cannot find region %d\n", 
-			markedregion[0]);
-    if (a == 0) fprintf (stderr, "Cannot find arc %d\n", markedarc[0]);
-    if (a2 == 0) fprintf (stderr, "Cannot find arc %d\n", markedarc[1]);
+			user_data.region[0]);
+    if (a == 0) fprintf (stderr, "Cannot find arc %d\n", user_data.arc[0]);
+    if (a2 == 0) fprintf (stderr, "Cannot find arc %d\n", user_data.arc[1]);
     if (! (r && a && a2)) exit(15);
     res = apply_mergearcs (sketch, r, a, a2, 
-	markedarcl[0], markedarcl[1], 0);
+	user_data.arcl[0], user_data.arcl[1], 0);
     printsketch (sketch);
     if (res == 0)
     {
@@ -389,24 +393,24 @@ main (int argc, char *argv[])
     case ACTION_INFO:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     showinfo (sketch);
-    if (mrpt > 0) {
-      for (i = 0; i < mrpt; i++) {
-	r = findregion (sketch, markedregion[i]);
+    if (user_data.mrnum > 0) {
+      for (i = 0; i < user_data.mrnum; i++) {
+	r = findregion (sketch, user_data.region[i]);
 	if (r)
           printf ("Marked region: %d\n", r->tag);
 	else
           printf ("Cannot find region with tag %d\n",
-	      markedregion[i]);
+	      user_data.region[i]);
       }
     }
-    if (mapt > 0) {
-      for (i = 0; i < mapt; i++) {
-	a = findarc (sketch, markedarc[i]);
+    if (user_data.manum > 0) {
+      for (i = 0; i < user_data.manum; i++) {
+	a = findarc (sketch, user_data.arc[i]);
 	if (a)
-          printf ("Marked arc: %d:%d\n", a->tag, markedarcl[i]);
+          printf ("Marked arc: %d:%d\n", a->tag, user_data.arcl[i]);
 	else
           printf ("Cannot find arc with tag %d\n", 
-	      markedarc[i]);
+	      user_data.arc[i]);
       }
     }
     break;

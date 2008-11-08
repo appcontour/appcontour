@@ -58,24 +58,45 @@ lookup_mergearcs (char *rule)
 int
 rule_mergearcs (struct sketch *s, int rule, int rcount)
 {
-  int res;
+  int i, res;
+  struct region *r = 0;
+  extern struct tagged_data user_data;
 
   if (debug) printf ("Chiamato rule_mergearcs con rule: %s rcount %d\n",
     invmergerules[rule], rcount);
 
+  if (user_data.mrnum > 0) {
+    r = findregion (s, user_data.region[0]);
+    if (r == 0) {fprintf (stderr, "Cannot find region %d\n",
+      user_data.region[0]); return (0);}
+  }
+
+  for (i = 1; i < NUM_INVNC; i++) countmarules[i] = 0;
   applyma = rule;
   applymac = rcount;
-  res = c_mergearcs (s, 0, 0, 0, 0, 0);
+  res = c_mergearcs (s, r, 0, 0, -1, -1);
   return (res);
 }
 
 int
-list_mergearcs (struct sketch *s, struct region *r,
-	struct arc *a1, struct arc *a2, int a1l, int a2l)
+list_mergearcs (struct sketch *s)
 {
   int i, res;
+  struct region *r = 0;
+  struct arc *a1 = 0;
+  struct arc *a2 = 0;
+  int a1l = -1;
+  int a2l = -1;
   extern int quiet;
+  extern struct tagged_data user_data;
 
+  if (user_data.mrnum > 0) {
+    r = findregion (s, user_data.region[0]);
+    if (r == 0) {fprintf (stderr, "Cannot find region %d\n",
+      user_data.region[0]); return (0);}
+  }
+
+  if (r && quiet == 0) printf ("Restricted to region %d\n", r->tag);
   for (i = 1; i < NUM_INVNC; i++) countmarules[i] = 0;
   applyma = applymac = 0;
   res = c_mergearcs (s, r, a1, a2, a1l, a2l);

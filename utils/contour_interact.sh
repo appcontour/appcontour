@@ -4,9 +4,9 @@ example=$1
 
 showcontouroptions="--steps 4"
 
-function mergearcs ()
+function listma ()
 {
-  eval $commandchain | contour mergearcs 2>/dev/null
+  eval $commandchain | contour listma 2>/dev/null
 }
 
 function displayinfo ()
@@ -112,7 +112,7 @@ do
   fi
   buildcommandchain
   applicablesimple=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
-  applicablema=`eval $commandchain | contour mergearcs -q 2>/dev/null | tail -1`
+  applicablema=`eval $commandchain | contour listma -q 2>/dev/null | tail -1`
   echo "Applicable rules: $applicablesimple"
   #echo "Applicable mergearcs rules: $applicablema"
   applicable=" $applicablesimple $applicablema "
@@ -130,8 +130,8 @@ do
   history -s $command $arg
 
   case $command in
-    mergearcs)
-      mergearcs
+    listma|mergearcs)
+      listma
       ;;
     info)
       displayinfo
