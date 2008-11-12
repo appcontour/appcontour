@@ -1,3 +1,15 @@
+2008-11-12: rule invcn1 (creation of a swallowtail) and rule
+	invcn3 (puncture).
+	command "listinvcn1" ("listswallatails") or command
+	"listinvcn3" ("listpunctures") show all applicable
+	instances.  Rules can be applied with commands
+	"swallowtail" or "puncture" and passing arc (arcs)
+	information with option -a.
+	Alternatively "rule invcn1:n" or "rule invcn3:n" applies
+	the n-th instance.
+	Also "rule invcn1b:n" is implemented which implements the
+	specular version of invcn1.
+
 2008-11-12: rule invc1 (creation of a wrinkle) is now implemented.
 	command "listwr" show all applicable instances,
 	command "-r r:s wrinkle" wrinkles stratum s of region r
