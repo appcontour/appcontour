@@ -1,3 +1,16 @@
+2008-11-13: all inverse rules are now implemented.  See Changelog
+	for a bit of help.  Basically, inverse rules have the
+	following names: INVN1, INVN2, INVN3, INVN4, INVC1, INVC2
+	INVCN1, INVCN1B, INVCN3.  And are typically applied as
+	contour rule invxx:n (to apply the nth instance).  The
+	list of possible instances can be obtained with the commands:
+	- contour listmergearcs|listma (list of INVN? and INVC2)
+	- contour listinvc1|liststrata (list of INVC1)
+	- contour listinvcn1|listswallowtails (list of INVCN1 and INVCN1B)
+	- contour listinvcn3|listpunctures (list of INVCN3)
+	Script "contour_interact.sh" is adapted to allow use of
+	the inverse rules.
+
 2007-07-04: the "mendes graph" of a map of a 2-dimensional manifold
 	in R^2 is defined in D. Hacon, C. Mendes de Jesus, and 
         M.C. Romero Fuster, Stable maps from surfaces to the plane 
