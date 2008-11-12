@@ -35,6 +35,8 @@
 #define ACTION_ISHUFFMAN 18
 #define ACTION_MERGEARCS 19
 #define ACTION_LISTMA 20
+#define ACTION_WRINKLE 21
+#define ACTION_LISTWR 22
 
 int debug = 0;
 int quiet = 0;
@@ -88,6 +90,16 @@ main (int argc, char *argv[])
       if (user_data.manum > MAPTMAX)
       {
         fprintf (stderr, "Too many tagged arcs (%d)\n", user_data.manum);
+        exit (1);
+      }
+      continue;
+    }
+    if (strcmp(argv[i],"--stratum") == 0 || strcmp(argv[i],"-s") == 0)
+    {
+      user_data.stratum[user_data.stnum++] = atoi (argv[++i]);
+      if (user_data.stnum > MSPTMAX)
+      {
+        fprintf (stderr, "Too many tagged strata (%d)\n", user_data.stnum);
         exit (1);
       }
       continue;
@@ -220,8 +232,12 @@ main (int argc, char *argv[])
       ccid = atoi (argv[i]) - 1;
     }
     if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
+    if (strcmp(argv[i],"wrinkle") == 0) action = ACTION_WRINKLE;
     if (strcmp(argv[i],"listma") == 0) action = ACTION_LISTMA;
     if (strcmp(argv[i],"listmergearcs") == 0) action = ACTION_LISTMA;
+    if (strcmp(argv[i],"liststrata") == 0) action = ACTION_LISTWR;
+    if (strcmp(argv[i],"listwr") == 0) action = ACTION_LISTWR;
+    if (strcmp(argv[i],"listinvc1") == 0) action = ACTION_LISTWR;
     if (strcmp(argv[i],"testallrules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"rules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"countcc") == 0) action = ACTION_COUNTCC;
@@ -271,6 +287,35 @@ main (int argc, char *argv[])
     if (res == 0)
     {
       fprintf (stderr, "Rule does not match!\n");
+      exit(14);
+    }
+    break;
+
+    case ACTION_LISTWR:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    list_strata (sketch);
+    break;
+
+    case ACTION_WRINKLE:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    if (user_data.mrnum < 1 || user_data.stnum < 1) {
+      fprintf (stderr, "You must specify a region and a stratum\n");
+      fprintf (stderr, "   using options -r and --stratum\n");
+      list_strata (sketch);
+      exit(15);
+    }
+    r = findregion (sketch, user_data.region[0]);
+    if (r == 0) fprintf (stderr, "Cannot find region %d\n", 
+			user_data.region[0]);
+    if (! (r)) exit(15);
+    res = apply_createwrinkle (sketch, r,  
+	user_data.stratum[0], 0);
+    printsketch (sketch);
+    if (res == 0)
+    {
+      fprintf (stderr, "Cannot create wrinkle!\n");
       exit(14);
     }
     break;

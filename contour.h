@@ -3,6 +3,7 @@
 
 #define MRPTMAX 4
 #define MAPTMAX 4
+#define MSPTMAX 4
 
 struct tagged_data {
   int mrnum;
@@ -10,6 +11,8 @@ struct tagged_data {
   int manum;
   int arc[MAPTMAX];
   int arcl[MAPTMAX];
+  int stnum;
+  int stratum[MSPTMAX];
 };
   
 /*
@@ -146,6 +149,9 @@ void applyrulecr3 (struct border *b1, struct border *b2, int dindex,
 
 /* invrules.c */
 
+int list_strata (struct sketch *s);
+int apply_createwrinkle (struct sketch *s, struct region *r,
+		     int stratum, int test);
 int lookup_mergearcs (char *rule);
 int rule_mergearcs (struct sketch *s, int code, int rcount);
 int list_mergearcs (struct sketch *s);

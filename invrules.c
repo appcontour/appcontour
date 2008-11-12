@@ -2,18 +2,109 @@
 #include <strings.h>
 #include "contour.h"
 
-extern int debug;
-
 /*
  * definizione regole di trasformazione inverse per superfici isotope
  */
 
+extern int debug;
+
 /* local prototypes */
 int c_mergearcs (struct sketch *s, struct region *r,
 	struct arc *a1, struct arc *a2, int a1l, int a2l);
+int c_createwrinkle (struct sketch *s, struct region *r, int stratum);
 int common_work_mergearcs (struct sketch *s, 
 			   struct border *bp1, struct border *bp2, 
                            int a1pos, int a2pos, int rule);
+
+/*
+ * creazione di un wrinkle (inv C1)
+ */
+
+static int countwrrules = 0;
+static int applywr = 0;
+static int applywrc = 0;
+
+int
+list_strata (struct sketch *s)
+{
+  int res;
+  struct region *r = 0;
+  extern int quiet;
+  extern struct tagged_data user_data;
+
+  if (user_data.mrnum > 0) {
+    r = findregion (s, user_data.region[0]);
+    if (r == 0) {fprintf (stderr, "Cannot find region %d\n",
+      user_data.region[0]); return (0);}
+  }
+
+  if (r && quiet == 0) printf ("Restricted to region %d\n", r->tag);
+  countwrrules = 0;
+  applywr = applywrc = 0;
+  res = c_createwrinkle (s, r, -1);
+  if (quiet) printf ("\n");
+  return (res);
+}
+
+int
+c_createwrinkle (struct sketch *s, struct region *r, int stratum)
+{
+  extern int quiet;
+  int res;
+
+  if (r == 0) {
+    for (r = s->regions; r; r = r->next) {
+      if (quiet == 0 && applywr == 0) printf ("Region %d:\n", r->tag);
+      res = c_createwrinkle (s, r, -1);
+      if (res) return (res);
+    }
+    return (0);
+  }
+
+  if (stratum < 0) {
+    for (stratum = 0; stratum < r->f; stratum++) {
+      res = c_createwrinkle (s, r, stratum);
+      if (res) return (res);
+    }
+    return (0);
+  }
+
+  assert (stratum >= 0);
+  res = apply_createwrinkle (s, r, stratum, 1);
+
+  if (res) {
+    countwrrules++;
+    if (applywr == 0) {
+      if (quiet == 0)
+        printf ("-r %d --stratum %d (", r->tag, stratum);
+      printf ("INVC1:%d", countwrrules);
+      if (quiet == 0) printf (")\n");
+        else printf (" ");
+    }
+    if (applywr && countwrrules == applywrc) {
+      res = apply_createwrinkle (s, r, stratum, 0);
+      return (res);
+    } else {
+      return (0);
+    }
+  }
+
+  return (0);
+}
+
+int
+apply_createwrinkle (struct sketch *s, struct region *r, 
+        int stratum, int test)
+{
+  int res;
+  extern int verbose;
+
+  assert (s && r && stratum >= 0);
+  if (stratum >= r->f) return (0);
+  if (test) return (1);
+printf ("NOT IMPLEMENTED\n");
+return (0);
+}
 
 /*
  * Questa funzione serve ad applicare una mossa inversa
