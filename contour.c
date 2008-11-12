@@ -181,6 +181,7 @@ main (int argc, char *argv[])
       printf ("    case the stdin (or file) must contain two descriptions\n");
       printf ("  rule <rule>: apply indicated rule to contour\n");
       printf ("  mergearcs: apply an inverse rule that merges two arcs\n");
+      printf ("  wrinkle: apply inverse C1 rule\n");
       printf ("  extractcc <int>: extract 3D connected component\n");
       printf ("  removecc <int>: remove 3D connected component from contour\n");
       printf ("  leftright: left-right reflection\n");
