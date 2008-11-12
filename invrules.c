@@ -25,6 +25,29 @@ static int applywr = 0;
 static int applywrc = 0;
 
 int
+rule_createwrinkle (struct sketch *s, int rcount)
+{
+  int res;
+  struct region *r = 0;
+  extern struct tagged_data user_data;
+
+  if (debug) printf ("Chiamato rule_createwrinkle, rcount %d\n",
+    rcount);
+
+  if (user_data.mrnum > 0) {
+    r = findregion (s, user_data.region[0]);
+    if (r == 0) {fprintf (stderr, "Cannot find region %d\n",
+      user_data.region[0]); return (0);}
+  }
+
+  countwrrules = 0;
+  applywr = 1;
+  applywrc = rcount;
+  res = c_createwrinkle (s, r, -1);
+  return (res);
+}
+
+int
 list_strata (struct sketch *s)
 {
   int res;
@@ -96,14 +119,42 @@ int
 apply_createwrinkle (struct sketch *s, struct region *r, 
         int stratum, int test)
 {
-  int res;
-  extern int verbose;
+  struct region *newr;
+  struct arc *newa;
+  struct borderlist *newbl1, *newbl2;
+  struct border *newbp1, *newbp2;
 
   assert (s && r && stratum >= 0);
   if (stratum >= r->f) return (0);
   if (test) return (1);
-printf ("NOT IMPLEMENTED\n");
-return (0);
+
+  /* devo aggiungere un s^1 con due cuspidi */
+  newa = newarc (s);
+  newa->depths = (int *) malloc (3*sizeof (int));
+  newa->depthsdim = 3;
+  newa->cusps = 2;
+  newa->dvalues = 2;
+  newa->depths[0] = newa->depths[2] = stratum;
+  newa->depths[1] = stratum + 1;
+  newa->endpoints = 0;
+
+  newr = newregion (s);
+  newbl1 = newborderlist (newr);
+  newbp1 = newborder (newbl1);
+  newbl1->sponda = newbp1;
+  newbp1->next = newbp1;
+  newbl2 = newborderlist (r);
+  newbp2 = newborder (newbl2);
+  newbl2->sponda = newbp2;
+  newbp2->next = newbp2;
+  newa->regionleft = newbp1;
+  newa->regionright = newbp2;
+  newbp1->info = newbp2->info = newa;
+  newbp1->orientation = 1;
+  newbp2->orientation = -1;
+
+  if (debug) printsketch (s);
+  return (1);
 }
 
 /*

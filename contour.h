@@ -149,6 +149,7 @@ void applyrulecr3 (struct border *b1, struct border *b2, int dindex,
 
 /* invrules.c */
 
+int rule_createwrinkle (struct sketch *s, int rcount);
 int list_strata (struct sketch *s);
 int apply_createwrinkle (struct sketch *s, struct region *r,
 		     int stratum, int test);

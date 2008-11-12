@@ -68,6 +68,8 @@ apply_rule (char *rule, struct sketch *sketch)
   else if (strcasecmp (rule, "t1") == 0) res = rule_t1 (sketch, rcount);
   else if ((code = lookup_mergearcs (rule))) 
        res = rule_mergearcs (sketch, code, rcount);
+  else if (strcasecmp (rule, "invc1") == 0) 
+       res = rule_createwrinkle (sketch, rcount);
   else printf ("Invalid rule %s\n", rule);
 
   if (debug) printf ("res = %d\n", res);

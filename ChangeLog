@@ -1,3 +1,10 @@
+2008-11-12: rule invc1 (creation of a wrinkle) is now implemented.
+	command "listwr" show all applicable instances,
+	command "-r r:s wrinkle" wrinkles stratum s of region r
+	command "rule invc1:n" applies the n-th instance of
+	rule invc1 (wrinkle).
+	contour_interact.sh is also updated.
+
 2008-11-08: the first set of inverse rules is now implemented.
 	command "mergearcs" lists all applicable rules inverse
 	of N1, N2, N3, N4, C2 (they are all a kind of merge of

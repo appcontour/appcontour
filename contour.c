@@ -68,8 +68,15 @@ main (int argc, char *argv[])
   {
     if (strcmp(argv[i],"-r") == 0 || strcmp(argv[i],"--region") == 0)
     {
-      user_data.region[user_data.mrnum++] = atoi (argv[++i]);
-      if (user_data.mrnum > MRPTMAX)
+      user_data.region[user_data.mrnum] = strtol (argv[++i], &endch, 10);
+      if (*endch == ':' && *(++endch)) 
+	user_data.stratum[user_data.stnum++] = strtol (endch, &endch, 10);
+      if (*endch != '\0') {
+        fprintf (stderr, "Conversion error in %s, %x\n", argv[i], (int)*endch);
+	exit (1);
+      }
+      user_data.mrnum++;
+      if (user_data.mrnum > MRPTMAX || user_data.stnum > MSPTMAX)
       {
         fprintf (stderr, "Too many tagged regions (%d)\n", user_data.mrnum);
         exit (1);

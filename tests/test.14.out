@@ -1,0 +1,52 @@
+Region 0:
+Region 1:
+-r 1 --stratum 0 (INVC1:1)
+-r 1 --stratum 1 (INVC1:2)
+-r 1 --stratum 2 (INVC1:3)
+-r 1 --stratum 3 (INVC1:4)
+Region 2:
+-r 2 --stratum 0 (INVC1:5)
+-r 2 --stratum 1 (INVC1:6)
+-r 2 --stratum 2 (INVC1:7)
+-r 2 --stratum 3 (INVC1:8)
+Region 3:
+Region 4:
+-r 4 --stratum 0 (INVC1:9)
+-r 4 --stratum 1 (INVC1:10)
+sketch {
+Arc 3: (0 1 0);
+Arc 1: (0);
+Arc 2: (0);
+Region 0 (f = 0): () (-a1) (-a2);
+Region 3 (f = 0): (+a3);
+Region 1 (f = 2): (+a1) (-a3);
+Region 2 (f = 2): (+a2);
+}
+sketch {
+Arc 6: (1 2 1);
+Arc 1: (0);
+Arc 2: [0 1 2);
+Arc 3: [2 1 0);
+Arc 4: [0];
+Arc 5: [0];
+Region 0 (f = 0): () (-a1);
+Region 5 (f = 0): (+a6);
+Region 1 (f = 4): (+a2);
+Region 2 (f = 4): (+a3);
+Region 3 (f = 0): (-a4 -a5);
+Region 4 (f = 2): (+a1) (-a6) (-a2 +a4 -a3 +a5);
+}
+sketch {
+Arc 1: (0);
+Arc 2: (0 1 0);
+Arc 3: [0 1 2);
+Arc 4: [2 1 0);
+Arc 5: [0];
+Arc 6: [0];
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 6): (+a2);
+Region 2 (f = 4): (+a4);
+Region 3 (f = 0): (-a5 -a6);
+Region 4 (f = 2): (+a1) (-a3 +a5 -a4 +a6);
+Region 5 (f = 4): (+a3) (-a2);
+}

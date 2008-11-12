@@ -1,0 +1,13 @@
+#
+# test sulla regola inversa invc1
+#
+# questo provoca la scrittura di una lista di tutte le
+# possibili applicazioni di mergearcs:
+./contour listwr examples/torus2.morse
+#
+# un semplice esempio di invC1 su due S1 disgiunti:
+./contour wrinkle -r 1:0 examples/disjoint_spheres.morse
+#
+# un esempio piu' complessi di invc1
+./contour wrinkle examples/torus2.morse -r 4:1
+./contour rule invc1:1 examples/torus2.morse
