@@ -1,0 +1,16 @@
+#
+# test sulle regole inverse invcn1 e invcn3
+#
+# questo provoca la scrittura di una lista di tutte le
+# possibili applicazioni:
+./contour listinvcn1 examples/torus2.morse
+./contour listinvcn3 examples/torus2.morse
+#
+# un semplice esempio di invC1 su due S1 disgiunti:
+./contour swallowtail -a 1:0 examples/disjoint_spheres.morse
+./contour puncture -a 2:0 -a 2:0 examples/torus2.morse
+#
+# un esempio piu' complesso di invcn1, invcn3
+./contour rule invcn1:4 examples/torus2.morse
+./contour rule invcn1b:4 examples/torus2.morse
+./contour rule invcn3:7 examples/torus2.morse

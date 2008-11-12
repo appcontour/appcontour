@@ -70,6 +70,12 @@ apply_rule (char *rule, struct sketch *sketch)
        res = rule_mergearcs (sketch, code, rcount);
   else if (strcasecmp (rule, "invc1") == 0) 
        res = rule_createwrinkle (sketch, rcount);
+  else if (strcasecmp (rule, "invcn1") == 0) 
+       res = rule_createswallowtail (sketch, rcount);
+  else if (strcasecmp (rule, "invcn1b") == 0) 
+       res = rule_createswallowtailb (sketch, rcount);
+  else if (strcasecmp (rule, "invcn3") == 0) 
+       res = rule_puncture (sketch, rcount);
   else printf ("Invalid rule %s\n", rule);
 
   if (debug) printf ("res = %d\n", res);
@@ -363,7 +369,7 @@ rule_c2 (struct sketch *sketch, int rcount)
           if (debug) printf ("prima di chiamare join_cusps\n");
           if (debug) printsketch (sketch);
           /* OLD join_cusps (cusp1, cusp1pos, cusp2, cusp2pos, sketch); */
-          pinch_arcs (&cusp1, cusp1pos, &cusp2, cusp2pos, sketch, 1);
+          pinch_arcs (&cusp1, cusp1pos, &cusp2, cusp2pos, sketch, 1, 1);
           if (debug) checkconsistency (sketch);
           taglia_nodo (cusp1->next, sketch, 0, 0);
           return (1);
@@ -1353,15 +1359,16 @@ remove_s1 (struct border *b, struct sketch *sketch)
 void
 pinch_arcs (struct border **bp1pt, int cusp1pos, 
             struct border **bp2pt, int cusp2pos, 
-            struct sketch *sketch, int removecusps)
+            struct sketch *sketch, int removecusp1, int removecusp2)
 {
   struct borderlist *bl1, *bl2;
   struct border *bp1, *bp2;
   int ori;
 
-  assert (removecusps == 0 || removecusps == 1 || removecusps == -1);
+  assert (removecusp1 == 0 || removecusp1 == 1 || removecusp1 == -1);
+  assert (removecusp2 == 0 || removecusp2 == 1 || removecusp2 == -1);
   bp1 = *bp1pt; bp2 = *bp2pt;
-  spezza_bordo (bp1, cusp1pos, sketch, removecusps);
+  spezza_bordo (bp1, cusp1pos, sketch, removecusp1);
   if (debug) printf ("dopo il primo spezza_bordo\n");
   if (debug) printsketch (sketch);
   if (bp1 == bp2)
@@ -1373,19 +1380,19 @@ pinch_arcs (struct border **bp1pt, int cusp1pos,
     if (bp1->info->endpoints == 1)
     {
       if (debug) printf ("era un S1\n");
-      if (cusp2pos > cusp1pos) cusp2pos -= cusp1pos + removecusps;
+      if (cusp2pos > cusp1pos) cusp2pos -= cusp1pos + removecusp1;
         else cusp2pos += bp1->info->cusps - cusp1pos;
     } else {
       if (cusp2pos > cusp1pos)
       {
-        cusp2pos -= cusp1pos + removecusps;
+        cusp2pos -= cusp1pos + removecusp1;
         if (ori > 0) bp2 = bp2->next;   /* cambiera' bp1 se ori < 0 */
       } else {
         if (ori < 0) bp2 = bp2->next;   /* cambiera' bp1 se ori > 0 */
       }
     }
   }
-  spezza_bordo (bp2, cusp2pos, sketch, removecusps);
+  spezza_bordo (bp2, cusp2pos, sketch, removecusp2);
   if (bp1 == bp2) bp1 = bp2->next;
   if (debug) printf ("dopo il secondo spezza_bordo\n");
   if (debug) printsketch (sketch);

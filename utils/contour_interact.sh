@@ -14,6 +14,16 @@ function listwr ()
   eval $commandchain | contour listwr 2>/dev/null
 }
 
+function listst ()
+{
+  eval $commandchain | contour listinvcn1 2>/dev/null
+}
+
+function listpu ()
+{
+  eval $commandchain | contour listinvcn3 2>/dev/null
+}
+
 function displayinfo ()
 {
   eval $commandchain | contour info 2>/dev/null
@@ -119,9 +129,11 @@ do
   applicablesimple=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
   applicablema=`eval $commandchain | contour listma -q 2>/dev/null | tail -1`
   applicablewr=`eval $commandchain | contour listwr -q 2>/dev/null | tail -1`
+  applicablest=`eval $commandchain | contour listinvcn1 -q 2>/dev/null | tail -1`
+  applicablepu=`eval $commandchain | contour listinvcn3 -q 2>/dev/null | tail -1`
   echo "Applicable rules: $applicablesimple"
   #echo "Applicable mergearcs rules: $applicablema"
-  applicable=" $applicablesimple $applicablema $applicablewr "
+  applicable=" $applicablesimple $applicablema $applicablewr $applicablest $applicablepu "
   set -o history
   read -e -p "Contour> " command arg
   if [ "$?" != "0" ]
@@ -136,6 +148,12 @@ do
   history -s $command $arg
 
   case $command in
+    listst|swallowtail)
+      listst
+      ;;
+    listpu|puncture)
+      listpu
+      ;;
     listwr|wrinkle)
       listwr
       ;;
@@ -185,7 +203,7 @@ do
     help)
       echo "Valid commands are:"
       echo "help, quit, print, info, morse, back"
-      echo -n "wrinkle, mergearcs"
+      echo -n "wrinkle, mergearcs, swallowtail, puncture"
       if [ -n "$showcontour" ]
       then
         echo ", show [rule]"

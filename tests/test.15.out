@@ -1,0 +1,108 @@
+-a 1:0 (INVCN1:1 INVCN1B:1)
+-a 2:0 (INVCN1:2 INVCN1B:2)
+-a 2:1 (INVCN1:3 INVCN1B:3)
+-a 2:2 (INVCN1:4 INVCN1B:4)
+-a 3:0 (INVCN1:5 INVCN1B:5)
+-a 3:1 (INVCN1:6 INVCN1B:6)
+-a 3:2 (INVCN1:7 INVCN1B:7)
+-a 4:0 (INVCN1:8 INVCN1B:8)
+-a 5:0 (INVCN1:9 INVCN1B:9)
+-a 2:0 -a 2:0 (INVCN3:1)
+-a 2:0 -a 2:1 (INVCN3:2)
+-a 2:0 -a 2:2 (INVCN3:3)
+-a 2:0 -a 3:0 (INVCN3:4)
+-a 2:0 -a 3:1 (INVCN3:5)
+-a 2:0 -a 3:2 (INVCN3:6)
+-a 2:1 -a 2:0 (INVCN3:7)
+-a 2:1 -a 2:1 (INVCN3:8)
+-a 2:1 -a 2:2 (INVCN3:9)
+-a 2:1 -a 3:0 (INVCN3:10)
+-a 2:1 -a 3:1 (INVCN3:11)
+-a 2:1 -a 3:2 (INVCN3:12)
+-a 3:0 -a 2:0 (INVCN3:13)
+-a 3:0 -a 2:1 (INVCN3:14)
+-a 3:0 -a 2:2 (INVCN3:15)
+-a 3:0 -a 3:0 (INVCN3:16)
+-a 3:0 -a 3:1 (INVCN3:17)
+-a 3:0 -a 3:2 (INVCN3:18)
+-a 3:1 -a 2:0 (INVCN3:19)
+-a 3:1 -a 2:1 (INVCN3:20)
+-a 3:1 -a 2:2 (INVCN3:21)
+-a 3:1 -a 3:0 (INVCN3:22)
+-a 3:1 -a 3:1 (INVCN3:23)
+-a 3:1 -a 3:2 (INVCN3:24)
+sketch {
+Arc 3: [0 1 2);
+Arc 1: [0);
+Arc 2: (0);
+Region 0 (f = 0): () (-a1) (-a2);
+Region 3 (f = 0): (+a3);
+Region 1 (f = 2): (+a1 -a3);
+Region 2 (f = 2): (+a2);
+}
+sketch {
+Arc 1: (0);
+Arc 2: [0);
+Arc 3: [2 1 0);
+Arc 4: [0];
+Arc 5: [0];
+Arc 6: [0];
+Arc 7: [0];
+Arc 8: [1 2];
+Arc 9: [2 3];
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 2): (-a2);
+Region 2 (f = 4): (+a3);
+Region 3 (f = 0): (-a4 -a5);
+Region 4 (f = 6): (+a6 +a9);
+Region 5 (f = 4): (+a2 -a6 +a8 +a7 -a9);
+Region 6 (f = 2): (+a1) (-a3 +a5 -a8 -a7 +a4);
+}
+sketch {
+Arc 1: (0);
+Arc 2: [2 1 0);
+Arc 3: [2 3 4);
+Arc 4: [0];
+Arc 5: [0];
+Arc 6: [2];
+Arc 7: [0 1 2];
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 4): (+a2);
+Region 2 (f = 6): (+a3);
+Region 3 (f = 0): (-a4 -a5);
+Region 4 (f = 4): (-a3 +a6 +a7);
+Region 5 (f = 2): (+a1) (-a2 +a5 -a6 -a7 +a4);
+}
+sketch {
+Arc 1: (0);
+Arc 2: [2 1 0);
+Arc 3: [4 3 2);
+Arc 4: [0];
+Arc 5: [0];
+Arc 6: [2];
+Arc 7: [0 1 2];
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 4): (+a2);
+Region 2 (f = 6): (+a3);
+Region 3 (f = 0): (-a4 -a5);
+Region 4 (f = 4): (-a3 +a6 +a7);
+Region 5 (f = 2): (+a1) (-a2 +a5 -a6 -a7 +a4);
+}
+sketch {
+Arc 1: (0);
+Arc 2: [0 1);
+Arc 3: [2 1 0);
+Arc 4: [0];
+Arc 5: [0];
+Arc 6: [0];
+Arc 7: [0];
+Arc 8: [2];
+Arc 9: [3 4];
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 2): (-a2);
+Region 2 (f = 4): (+a3);
+Region 3 (f = 0): (-a4 -a5);
+Region 4 (f = 6): (+a6 +a9);
+Region 5 (f = 4): (+a2 -a6 +a8 +a7 -a9);
+Region 6 (f = 2): (+a1) (-a3 +a5 -a8 -a7 +a4);
+}

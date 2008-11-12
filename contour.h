@@ -131,7 +131,7 @@ void spezza_bordo (struct border *cusp, int cpos, struct sketch *sketch,
 		 int removecusp);
 void pinch_arcs (struct border **bp1pt, int cusp1pos,
                  struct border **bp2pt, int cusp2pos,
-                 struct sketch *sketch, int removecusps);
+                 struct sketch *sketch, int removecusp1, int removecusp2);
 /*
  * ora sostituita con la precedente con "removecusps = 1"
  *
@@ -149,6 +149,16 @@ void applyrulecr3 (struct border *b1, struct border *b2, int dindex,
 
 /* invrules.c */
 
+int rule_puncture (struct sketch *s, int rcount);
+int list_punctures (struct sketch *s);
+int apply_puncture (struct sketch *s, 
+		     struct arc *a1, struct arc *a2,
+		     int a1l, int a2l, int test);
+int rule_createswallowtail (struct sketch *s, int rcount);
+int rule_createswallowtailb (struct sketch *s, int rcount);
+int list_swallowtails (struct sketch *s);
+int apply_createswallowtail (struct sketch *s, struct arc *a,
+		     int arcl, int sign, int test);
 int rule_createwrinkle (struct sketch *s, int rcount);
 int list_strata (struct sketch *s);
 int apply_createwrinkle (struct sketch *s, struct region *r,
@@ -159,8 +169,6 @@ int list_mergearcs (struct sketch *s);
 int apply_mergearcs (struct sketch *s, struct region *r,
 		     struct arc *a1, struct arc *a2,
 		     int a1l, int a2l, int test);
-int aggiungi_losanga (struct border *bp1, struct border *bp2, 
-		struct sketch *s);
 
 int sketchcmp (struct sketch *s1, struct sketch *s2);
 int regioncmp (struct region *r1, struct region *r2);

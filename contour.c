@@ -37,6 +37,10 @@
 #define ACTION_LISTMA 20
 #define ACTION_WRINKLE 21
 #define ACTION_LISTWR 22
+#define ACTION_SWALLOWTAIL 23
+#define ACTION_LISTST 24
+#define ACTION_PUNCTURE 25
+#define ACTION_LISTPU 26
 
 int debug = 0;
 int quiet = 0;
@@ -240,12 +244,20 @@ main (int argc, char *argv[])
       ccid = atoi (argv[i]) - 1;
     }
     if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
-    if (strcmp(argv[i],"wrinkle") == 0) action = ACTION_WRINKLE;
     if (strcmp(argv[i],"listma") == 0) action = ACTION_LISTMA;
     if (strcmp(argv[i],"listmergearcs") == 0) action = ACTION_LISTMA;
+    if (strcmp(argv[i],"wrinkle") == 0) action = ACTION_WRINKLE;
     if (strcmp(argv[i],"liststrata") == 0) action = ACTION_LISTWR;
     if (strcmp(argv[i],"listwr") == 0) action = ACTION_LISTWR;
     if (strcmp(argv[i],"listinvc1") == 0) action = ACTION_LISTWR;
+    if (strcmp(argv[i],"swallowtail") == 0) action = ACTION_SWALLOWTAIL;
+    if (strcmp(argv[i],"listinvcn1") == 0) action = ACTION_LISTST;
+    if (strcmp(argv[i],"listst") == 0) action = ACTION_LISTST;
+    if (strcmp(argv[i],"listswallowtails") == 0) action = ACTION_LISTST;
+    if (strcmp(argv[i],"invcn3") == 0) action = ACTION_PUNCTURE;
+    if (strcmp(argv[i],"puncture") == 0) action = ACTION_PUNCTURE;
+    if (strcmp(argv[i],"listinvcn3") == 0) action = ACTION_LISTPU;
+    if (strcmp(argv[i],"listpunctures") == 0) action = ACTION_LISTPU;
     if (strcmp(argv[i],"testallrules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"rules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"countcc") == 0) action = ACTION_COUNTCC;
@@ -295,6 +307,64 @@ main (int argc, char *argv[])
     if (res == 0)
     {
       fprintf (stderr, "Rule does not match!\n");
+      exit(14);
+    }
+    break;
+
+    case ACTION_LISTPU:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    list_punctures (sketch);
+    break;
+
+    case ACTION_PUNCTURE:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    if (user_data.manum < 2) {
+      fprintf (stderr, "You must specify two arcs\n");
+      fprintf (stderr, "   using options -a\n");
+      list_punctures (sketch);
+      exit(15);
+    }
+    a = findarc (sketch, user_data.arc[0]);
+    a2 = findarc (sketch, user_data.arc[1]);
+    if (a == 0) fprintf (stderr, "Cannot find arc %d\n", user_data.arc[0]);
+    if (a2 == 0) fprintf (stderr, "Cannot find arc %d\n", user_data.arc[1]);
+    if (! (a && a2)) exit(15);
+    res = apply_puncture (sketch, a, a2,
+        user_data.arcl[0], user_data.arcl[1], 0);
+    printsketch (sketch);
+    if (res == 0)
+    {
+      fprintf (stderr, "Cannot create puncture!\n");
+      exit(14);
+    }
+    break;
+
+    case ACTION_LISTST:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    list_swallowtails (sketch);
+    break;
+
+    case ACTION_SWALLOWTAIL:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    if (user_data.manum < 1) {
+      fprintf (stderr, "You must specify an arc\n");
+      fprintf (stderr, "   using options -a n:i\n");
+      list_swallowtails (sketch);
+      exit(15);
+    }
+    a = findarc (sketch, user_data.arc[0]);
+    if (a == 0) fprintf (stderr, "Cannot find arc %d\n", user_data.arc[0]);
+    if (! (a)) exit(15);
+    res = apply_createswallowtail (sketch, a,  
+	user_data.arcl[0], 1, 0);
+    printsketch (sketch);
+    if (res == 0)
+    {
+      fprintf (stderr, "Cannot create swallowtail!\n");
       exit(14);
     }
     break;
