@@ -1,19 +1,21 @@
-testallrules for
+contour removecc 1 
 
 sketch {
-Arc 1: (0);
-Arc 2: (0);
-Arc 3: [0 1 0 1 2);
-Arc 4: [0 1 2 1 2);
+Arc 1: [0);
+Arc 2: [0 1 2);
+Arc 3: [0];
+Arc 4: [0];
 Arc 5: [0];
-Arc 6: [0];
-Region 0 (f = 0): () (-a1);
-Region 1 (f = 2): (-a2);
-Region 2 (f = 4): (+a3);
-Region 3 (f = 0): (-a5 -a6);
-Region 4 (f = 2): (+a1) (-a3 +a5 -a4 +a6);
-Region 5 (f = 4): (+a4) (+a2);
+Arc 6: [2];
+Region 0: () (-a1);
+Region 1: (+a2);
+Region 2: (-a3 -a4);
+Region 3: (-a5 +a4);
+Region 4: (+a5 +a6);
+Region 5: (+a1 -a2) (+a3 -a6);
 }
 
-(prova.sketch) enters some loop (probably due to new rule T1.
-(SOLVED)
+
+contour: appcontour.c:663: remove_transparent_arcs: Assertion `br->next != br' failed.
+Abort
+
