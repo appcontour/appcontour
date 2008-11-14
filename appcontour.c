@@ -641,6 +641,14 @@ remove_transparent_arcs (struct sketch *sketch)
     bl->info = br->info = 0;  /* rimuovi il riferimento all'arco */
     assert (rl->f == rr->f);
     if (rl != rr) rl = rr = regionunion (rl, rr, sketch);
+    /*
+     * resolving bug of 2008.11.13:
+     * it might happen that we remain with a node with a loop
+     * and no other arcs coming out (e.g. a swallowtail)
+     * in this case we simply treat it as an isolated S1
+     */
+    if (arc->endpoints == 1 && bl->next == bl && br->next == br)
+      arc->endpoints = 0;
     switch (arc->endpoints)
     {
       case 0:

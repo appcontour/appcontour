@@ -1,3 +1,5 @@
+2008-11-14: fixed a couple of bugs.
+
 2008-11-12: rule invcn1 (creation of a swallowtail) and rule
 	invcn3 (puncture).
 	command "listinvcn1" ("listswallatails") or command
