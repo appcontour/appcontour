@@ -1462,9 +1462,14 @@ spezza_bordo (struct border *bp, int cusppos, struct sketch *sketch,
      * TODO: Mmm, probabilmente non conviene riallocare,
      * ma si puo' continuare ad usare lo spazio vecchio
      */
+    if (arc->cusps > 0) arc->dvalues++;
+    /* questo if e' stato aggiunto il 14 nov 2008
+     * in precedenza non c'era! Speriamo non causi problemi
+     * nel caso arc->cusps == 0 e removecusp = 0
+     */
     arc->cusps -= removecusp;
     arc->depthsdim -= removecusp;
-    arc->dvalues += 1 - removecusp;
+    arc->dvalues -= removecusp;
     newdepths = (int *) malloc (arc->depthsdim * sizeof (int));
     if (removecusp < 0) newdepths[0] = -9999;
     for (i = 0; i < arc->depthsdim; i++)
