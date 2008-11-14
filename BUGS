@@ -20,19 +20,18 @@ contour: appcontour.c:663: remove_transparent_arcs: Assertion `br->next != br' f
 Abort
 
 ------------------------------------------------------------
-contour rule invc2:1
+./contour rule invc2:1
+contour: sketch.c:936: mergearcsc: Assertion `arc1->depths[0] == arc1->depths[arc1->dvalues-1] + sign*dincr' failed.
+Abortito
 
 sketch {
 Arc 1: (0);
 Arc 2: (0);
 Arc 3: (1);
-Arc 4: (1);
 Region 0 (f = 0): () (-a1);
 Region 1 (f = 2): (-a2);
-Region 2 (f = 2): (-a3);
-Region 3 (f = 2): (+a1) (-a4);
-Region 4 (f = 4): (+a4) (+a2) (+a3);
+Region 2 (f = 2): (+a1) (-a3);
+Region 3 (f = 4): (+a3) (+a2);
 }
 
-contour: sketch.c:936: mergearcsc: Assertion `arc1->depths[0] == arc1->depths[arc1->dvalues-1] + sign*dincr' failed.
-Abort
+SOLVED 14/11/2008
