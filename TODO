@@ -1,1 +1,14 @@
-Improve graphic presentation of Hacon graph
+1. Improve graphic presentation of Hacon graph
+2. Change the name of the rules, these are the names used
+   by Ohmoto:
+   - N1, N2, N3, N4 -> K (kasanie: tangency)
+                 K0 = N4, K1 = N3,N2, K2 = N1
+   - N5             -> T (triple-point)
+                 T0 se il triangolino dentro ha f = 0
+		 T1 se il triangolino dentro ha f = 2
+   - C1             -> L (lip)
+   - C2             -> B (beak-to-beak)
+   - CN1            -> S (swallowtail)
+   - CN3            -> C (cusp crossing)
+                 C0 se la cuspide sta tutta a sx dell'arco
+		 C1 altrimenti
