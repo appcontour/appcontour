@@ -41,6 +41,8 @@
 #define ACTION_LISTST 24
 #define ACTION_PUNCTURE 25
 #define ACTION_LISTPU 26
+#define ACTION_ADDSPHERE 27
+#define ACTION_PUNCHHOLE 28
 
 int debug = 0;
 int quiet = 0;
@@ -58,7 +60,7 @@ int
 main (int argc, char *argv[])
 {
   struct sketch *sketch, *s1, *s2;
-  int i, count, action=ACTION_NONE, res, ccid = 0;
+  int ori = 0, i, count, action=ACTION_NONE, res, ccid = 0;
   unsigned int rndseed = 0;
   int newextregion = 0;
   char rule[10], *endch;
@@ -243,6 +245,8 @@ main (int argc, char *argv[])
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
       ccid = atoi (argv[i]) - 1;
     }
+    if (strcmp(argv[i],"addsphere") == 0) action = ACTION_ADDSPHERE;
+    if (strcmp(argv[i],"punchhole") == 0) action = ACTION_PUNCHHOLE;
     if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
     if (strcmp(argv[i],"listma") == 0) action = ACTION_LISTMA;
     if (strcmp(argv[i],"listmergearcs") == 0) action = ACTION_LISTMA;
@@ -435,6 +439,31 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     if (testallrules (sketch) == 0) exit(15);
+    break;
+
+    case ACTION_ADDSPHERE:
+    ori = 1;
+    case ACTION_PUNCHHOLE:
+    if (ori != 1) ori = -1;
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    if (user_data.mrnum < 1 || user_data.stnum < 1) {
+      fprintf (stderr, "You must specify a region and a d value\n");
+      fprintf (stderr, "   using options -r and --stratum\n");
+      list_strata (sketch);
+      exit(15);
+    }
+    r = findregion (sketch, user_data.region[0]);
+    if (r == 0) fprintf (stderr, "Cannot find region %d\n", 
+			user_data.region[0]);
+    if (! (r)) exit(15);
+    res = add_s1 (sketch, r, user_data.stratum[0], ori);
+    printsketch (sketch);
+    if (res == 0)
+    {
+      fprintf (stderr, "Cannot add s1!\n");
+      exit(14);
+    }
     break;
 
     case ACTION_EXTRACTCC:

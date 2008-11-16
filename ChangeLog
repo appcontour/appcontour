@@ -1,3 +1,8 @@
+2008-11-16: added cut&paste: add sphere (add a positive S1)
+	punch hole (add a negative S1), commands are respectively
+	"addsphere" and "punchhole" (option -r x:y must be used
+	to indicate region and dvalue.
+
 2008-11-14: fixed a couple of bugs.
 
 2008-11-12: rule invcn1 (creation of a swallowtail) and rule

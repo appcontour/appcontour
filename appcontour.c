@@ -8,6 +8,8 @@ extern int quiet;
 int checkdnodecons (struct border *b, int dd[4]);
 int getdatnode (struct border *b);
 struct border *reverse_border (struct border *);
+int add_s1 (struct sketch *s, struct region *r, 
+            int stratum, int ori);
 /* fine prototipi */
 
 /*
@@ -120,6 +122,61 @@ showinfo (struct sketch *sketch)
   printf ("Regions:            %d\n", numregions);
   printf ("Connected comp.:    %d\n", numholes);
 
+}
+
+/*
+ * ad an S1 to the apparent contour in the given region
+ * and with the given d value.
+ *
+ * if ori == 1  this corresponds to adding a sphere
+ * if ori == -1 this corresponds to punching a hole in two
+ * strata and glueing them at the cut
+ */
+
+int
+add_s1 (struct sketch *s, struct region *r, int dval, int ori)
+{
+  struct region *newr;
+  struct arc *newa;
+  struct borderlist *newbl1, *newbl2;
+  struct border *newbp1, *newbp2;
+
+  assert (s && r && dval >= 0);
+  assert (ori == 1 || ori == -1);
+  if (ori > 0 && dval > r->f) return (0);
+  if (ori < 0 && dval > r->f - 2) return (0);
+
+  /* devo aggiungere un s^1 senza cuspidi */
+  newa = newarc (s);
+  newa->depths = (int *) malloc (sizeof (int));
+  newa->depthsdim = 1;
+  newa->cusps = 0;
+  newa->dvalues = 1;
+  newa->depths[0] = dval;
+  newa->endpoints = 0;
+
+  newr = newregion (s);
+  newbl1 = newborderlist (newr);
+  newbp1 = newborder (newbl1);
+  newbl1->sponda = newbp1;
+  newbp1->next = newbp1;
+  newbl2 = newborderlist (r);
+  newbp2 = newborder (newbl2);
+  newbl2->sponda = newbp2;
+  newbp2->next = newbp2;
+  newbp1->info = newbp2->info = newa;
+  if (ori > 0) {
+    newa->regionleft = newbp1;
+    newa->regionright = newbp2;
+  } else {
+    newa->regionleft = newbp2;
+    newa->regionright = newbp1;
+  }
+  newbp1->orientation = ori;
+  newbp2->orientation = -ori;
+
+  if (debug) printsketch (s);
+  return (1);
 }
 
 /*
