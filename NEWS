@@ -5,7 +5,7 @@
 	contour rule invxx:n (to apply the nth instance).  The
 	list of possible instances can be obtained with the commands:
 	- contour listmergearcs|listma (list of INVN? and INVC2)
-	- contour listinvc1|liststrata (list of INVC1)
+	- contour listinvc1 (list of INVC1)
 	- contour listinvcn1|listswallowtails (list of INVCN1 and INVCN1B)
 	- contour listinvcn3|listpunctures (list of INVCN3)
 	Script "contour_interact.sh" is adapted to allow use of

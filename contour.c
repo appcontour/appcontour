@@ -251,7 +251,6 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"listma") == 0) action = ACTION_LISTMA;
     if (strcmp(argv[i],"listmergearcs") == 0) action = ACTION_LISTMA;
     if (strcmp(argv[i],"wrinkle") == 0) action = ACTION_WRINKLE;
-    if (strcmp(argv[i],"liststrata") == 0) action = ACTION_LISTWR;
     if (strcmp(argv[i],"listwr") == 0) action = ACTION_LISTWR;
     if (strcmp(argv[i],"listinvc1") == 0) action = ACTION_LISTWR;
     if (strcmp(argv[i],"swallowtail") == 0) action = ACTION_SWALLOWTAIL;
