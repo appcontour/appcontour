@@ -43,6 +43,7 @@
 #define ACTION_LISTPU 26
 #define ACTION_ADDSPHERE 27
 #define ACTION_PUNCHHOLE 28
+#define ACTION_LISTSTRATA 29
 
 int debug = 0;
 int quiet = 0;
@@ -245,6 +246,7 @@ main (int argc, char *argv[])
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
       ccid = atoi (argv[i]) - 1;
     }
+    if (strcmp(argv[i],"liststrata") == 0) action = ACTION_LISTSTRATA;
     if (strcmp(argv[i],"addsphere") == 0) action = ACTION_ADDSPHERE;
     if (strcmp(argv[i],"punchhole") == 0) action = ACTION_PUNCHHOLE;
     if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
@@ -311,6 +313,15 @@ main (int argc, char *argv[])
     {
       fprintf (stderr, "Rule does not match!\n");
       exit(14);
+    }
+    break;
+
+    case ACTION_LISTSTRATA:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    for (r = sketch->regions; r; r = r->next) {
+      if (quiet) printf ("%d:%d\n", r->tag, r->f);
+         else printf ("Region %d has %d strata\n", r->tag, r->f);
     }
     break;
 

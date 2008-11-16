@@ -192,6 +192,8 @@ int free_connected_components (struct sketch *sketch);
 int extract_connected_component (int ccid, struct sketch *sketch);
 int remove_connected_component (int ccid, struct sketch *sketch);
 
+int add_s1 (struct sketch *s, struct region *r,
+            int stratum, int ori);
 int frontback (struct sketch *s);
 int leftright (struct sketch *s);
 int changeextregion (struct sketch *s, int tag);

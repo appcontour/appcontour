@@ -8,8 +8,6 @@ extern int quiet;
 int checkdnodecons (struct border *b, int dd[4]);
 int getdatnode (struct border *b);
 struct border *reverse_border (struct border *);
-int add_s1 (struct sketch *s, struct region *r, 
-            int stratum, int ori);
 /* fine prototipi */
 
 /*
