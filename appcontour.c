@@ -99,7 +99,8 @@ showinfo (struct sketch *sketch)
     else printf ("Huffman labelling:  %d\n", 
       sketch->huffman_labelling?1:0);
 
-  if (! quiet) printf ("\nProperties of the 3D surface:\n");
+  if (! quiet) printf ("\nProperties of the %s:\n",
+      sketch->huffman_labelling?"3D surface":"2D manifold");
   if (sketch->huffman_labelling)
     printf ("Connected comp.:    %d\n", count_connected_components (sketch));
   printf ("Total Euler ch.:    %d\n", euler_characteristic (sketch));
@@ -147,10 +148,12 @@ add_s1 (struct sketch *s, struct region *r, int dval, int ori)
   /* devo aggiungere un s^1 senza cuspidi */
   newa = newarc (s);
   newa->depths = (int *) malloc (sizeof (int));
+     /* depths non viene usato se non e' huffman */
   newa->depthsdim = 1;
+  if (s->huffman_labelling == 0) newa->depthsdim = 0;
   newa->cusps = 0;
   newa->dvalues = 1;
-  newa->depths[0] = dval;
+  if (s->huffman_labelling) newa->depths[0] = dval;
   newa->endpoints = 0;
 
   newr = newregion (s);

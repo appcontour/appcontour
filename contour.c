@@ -46,6 +46,8 @@
 #define ACTION_LISTSTRATA 29
 #define ACTION_LISTHOLES 30
 #define ACTION_REMOVEHOLE 31
+#define ACTION_LISTSPHERES 32
+#define ACTION_REMOVESPHERE 33
 
 int debug = 0;
 int quiet = 0;
@@ -252,6 +254,8 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"listholes") == 0) action = ACTION_LISTHOLES;
     if (strcmp(argv[i],"removehole") == 0) action = ACTION_REMOVEHOLE;
+    if (strcmp(argv[i],"listspheres") == 0) action = ACTION_LISTSPHERES;
+    if (strcmp(argv[i],"removesphere") == 0) action = ACTION_REMOVESPHERE;
     if (strcmp(argv[i],"liststrata") == 0) action = ACTION_LISTSTRATA;
     if (strcmp(argv[i],"addsphere") == 0) action = ACTION_ADDSPHERE;
     if (strcmp(argv[i],"punchhole") == 0) action = ACTION_PUNCHHOLE;
@@ -322,7 +326,10 @@ main (int argc, char *argv[])
     }
     break;
 
+    case ACTION_LISTSPHERES:
+    ori = 1;
     case ACTION_LISTHOLES:
+    if (ori != 1) ori = -1;
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     for (r = sketch->regions; r; r = r->next) {
@@ -331,14 +338,18 @@ main (int argc, char *argv[])
       bp = bl->sponda;
       if (bp == 0) continue;
       if (bp->next != bp) continue;
-      if (bp->orientation >= 0) continue;
+      if (bp->orientation * ori <= 0) continue;
       if (bp->info->cusps != 0) continue;
       if (quiet) printf ("%d\n", r->tag);
-         else printf ("Region %d is a hole\n", r->tag);
+         else printf ("Region %d is a %s\n", r->tag,
+                      (ori > 0)?"sphere":"hole");
     }
     break;
 
+    case ACTION_REMOVESPHERE:
+    ori = 1;
     case ACTION_REMOVEHOLE:
+    if (ori != 1) ori = -1;
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     if (user_data.mrnum < 1) {
@@ -355,7 +366,7 @@ main (int argc, char *argv[])
     bp = bl->sponda;
     if (bp == 0) exit (17);
     if (bp->next != bp) exit (18);
-    if (bp->orientation >= 0) exit (19);
+    if (bp->orientation * ori <= 0) exit (19);
     if (bp->info->cusps != 0) exit (20);
     remove_s1 (bp, sketch);
     printsketch (sketch);
@@ -373,7 +384,7 @@ main (int argc, char *argv[])
     case ACTION_LISTPU:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
-    list_punctures (sketch);
+    if (sketch->huffman_labelling) list_punctures (sketch);
     break;
 
     case ACTION_PUNCTURE:
@@ -403,7 +414,7 @@ main (int argc, char *argv[])
     case ACTION_LISTST:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
-    list_swallowtails (sketch);
+    if (sketch->huffman_labelling) list_swallowtails (sketch);
     break;
 
     case ACTION_SWALLOWTAIL:
@@ -431,7 +442,7 @@ main (int argc, char *argv[])
     case ACTION_LISTWR:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
-    list_strata (sketch);
+    if (sketch->huffman_labelling) list_strata (sketch);
     break;
 
     case ACTION_WRINKLE:
@@ -460,7 +471,7 @@ main (int argc, char *argv[])
     case ACTION_LISTMA:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
-    list_mergearcs (sketch);
+    if (sketch->huffman_labelling) list_mergearcs (sketch);
     break;
 
     case ACTION_MERGEARCS:
@@ -502,9 +513,10 @@ main (int argc, char *argv[])
     if (ori != 1) ori = -1;
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
-    if (user_data.mrnum < 1 || user_data.stnum < 1) {
-      fprintf (stderr, "You must specify a region and a d value\n");
-      fprintf (stderr, "   using options -r and --stratum\n");
+    if (user_data.mrnum < 1 || 
+        (user_data.stnum < 1 && sketch->huffman_labelling)) {
+      fprintf (stderr, "You must specify a region using option -r\n");
+      fprintf (stderr, "   if huffman a stratum is required, use -r x:y\n");
       list_strata (sketch);
       exit(15);
     }

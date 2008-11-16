@@ -1,0 +1,8 @@
+#
+# annulus with both positive S^1
+morse {
+    ^l  ;  # l: left [orientazione verso sinistra]
+  | ^l |;
+  | U  |;
+    U   ;
+}

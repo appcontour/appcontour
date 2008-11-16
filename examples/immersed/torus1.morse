@@ -1,0 +1,9 @@
+#
+# This is a torus seen from above
+#
+morse {
+    ^l  ;  # l: left [orientazione verso sinistra]
+  | ^r |;
+  | U  |;
+    U;
+}
