@@ -44,6 +44,8 @@
 #define ACTION_ADDSPHERE 27
 #define ACTION_PUNCHHOLE 28
 #define ACTION_LISTSTRATA 29
+#define ACTION_LISTHOLES 30
+#define ACTION_REMOVEHOLE 31
 
 int debug = 0;
 int quiet = 0;
@@ -68,6 +70,8 @@ main (int argc, char *argv[])
   FILE *infile = 0;
   struct mendesgraph *mendes;
   struct region *r;
+  struct borderlist *bl;
+  struct border *bp;
   struct arc *a, *a2;
 
   user_data.mrnum = user_data.manum = 0;
@@ -246,6 +250,8 @@ main (int argc, char *argv[])
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
       ccid = atoi (argv[i]) - 1;
     }
+    if (strcmp(argv[i],"listholes") == 0) action = ACTION_LISTHOLES;
+    if (strcmp(argv[i],"removehole") == 0) action = ACTION_REMOVEHOLE;
     if (strcmp(argv[i],"liststrata") == 0) action = ACTION_LISTSTRATA;
     if (strcmp(argv[i],"addsphere") == 0) action = ACTION_ADDSPHERE;
     if (strcmp(argv[i],"punchhole") == 0) action = ACTION_PUNCHHOLE;
@@ -314,6 +320,45 @@ main (int argc, char *argv[])
       fprintf (stderr, "Rule does not match!\n");
       exit(14);
     }
+    break;
+
+    case ACTION_LISTHOLES:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    for (r = sketch->regions; r; r = r->next) {
+      bl = r->border;
+      if (bl->next) continue;
+      bp = bl->sponda;
+      if (bp == 0) continue;
+      if (bp->next != bp) continue;
+      if (bp->orientation >= 0) continue;
+      if (bp->info->cusps != 0) continue;
+      if (quiet) printf ("%d\n", r->tag);
+         else printf ("Region %d is a hole\n", r->tag);
+    }
+    break;
+
+    case ACTION_REMOVEHOLE:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    if (user_data.mrnum < 1) {
+      fprintf (stderr, "You must specify a region\n");
+      fprintf (stderr, "   using options -r\n");
+      exit(15);
+    }
+    r = findregion (sketch, user_data.region[0]);
+    if (r == 0) fprintf (stderr, "Cannot find region %d\n",
+                        user_data.region[0]);
+    if (! (r)) exit(15);
+    bl = r->border;
+    if (bl->next) exit (16);
+    bp = bl->sponda;
+    if (bp == 0) exit (17);
+    if (bp->next != bp) exit (18);
+    if (bp->orientation >= 0) exit (19);
+    if (bp->info->cusps != 0) exit (20);
+    remove_s1 (bp, sketch);
+    printsketch (sketch);
     break;
 
     case ACTION_LISTSTRATA:

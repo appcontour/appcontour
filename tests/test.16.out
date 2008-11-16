@@ -1,0 +1,30 @@
+1
+2
+sketch {
+Arc 1: (0);
+Arc 2: (0);
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 0): (-a2);
+Region 2 (f = 2): (+a1) (+a2);
+}
+Region 0 has 0 strata
+Region 1 has 0 strata
+Region 2 has 2 strata
+sketch {
+Arc 3: (0);
+Arc 1: (0);
+Arc 2: (0);
+Region 0 (f = 0): () (-a1);
+Region 3 (f = 0): (+a3);
+Region 1 (f = 0): (-a2) (-a3);
+Region 2 (f = 2): (+a1) (+a2);
+}
+sketch {
+Arc 3: (0);
+Arc 1: (0);
+Arc 2: (0);
+Region 0 (f = 0): () (-a1);
+Region 3 (f = 0): (-a3);
+Region 1 (f = 0): (-a2);
+Region 2 (f = 2): (+a1) (+a3) (+a2);
+}
