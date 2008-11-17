@@ -1,37 +1,44 @@
-contour removecc 1 
+2008.11.17
 
-sketch {
-Arc 1: [0);
-Arc 2: [0 1 2);
-Arc 3: [0];
-Arc 4: [0];
-Arc 5: [0];
-Arc 6: [2];
-Region 0: () (-a1);
-Region 1: (+a2);
-Region 2: (-a3 -a4);
-Region 3: (-a5 +a4);
-Region 4: (+a5 +a6);
-Region 5: (+a1 -a2) (+a3 -a6);
-}
+bug in showcontour (doptimize)
 
+failing example:
+showcontour prova.morse --pause
 
-contour: appcontour.c:663: remove_transparent_arcs: Assertion `br->next != br' failed.
-Abort
-
-------------------------------------------------------------
-./contour rule invc2:1
-contour: sketch.c:936: mergearcsc: Assertion `arc1->depths[0] == arc1->depths[arc1->dvalues-1] + sign*dincr' failed.
+problem in
+./show/showcontour prova.morse --pause
+found an unwind at (11.000000,8.000000)
+showcontour: doptimize.c:882: check_unwind: Assertion `ld->earc->refcount >1' failed.
 Abortito
 
-sketch {
-Arc 1: (0);
-Arc 2: (0);
-Arc 3: (1);
-Region 0 (f = 0): () (-a1);
-Region 1 (f = 2): (-a2);
-Region 2 (f = 2): (+a1) (-a3);
-Region 3 (f = 4): (+a3) (+a2);
-}
+workaround...
+by now we comment definition of DOPT_UNWIND:
+#define DOPT_UNWIND
 
-SOLVED 14/11/2008
+it seems that it finds an "unwind" where it shouldn't
+
+where prova.morse is:
+
+-----------------------------------------------------------------
+morse {
+                        ^l0               ^l0                ;
+                      /   \             /   \                ;
+                     /     \           /     \               ;
+                   /    ^r0  \       /    ^r0  \             ;
+                  /   /   \   \     /   /   \   \            ;
+                 /   /     \     Xd2   /     \   \           ;
+               /   /        \  /  \u0/         \   \         ;
+             /   /           Xd0   Xu2           \   \       ;
+           /   /            / \d0 / \u0            \   \     ;
+         /   /             /     Xu0d0\              \   \   ;
+         \   \             \     Xd2   /             /   /   ;
+           \   \            \  /  \u0/             /   /     ;
+             \   \           Xd0   Xu2           /   /       ;
+               \   \        / \d0 / \u0        /   /         ;
+                 \   \     /     Xu0d0\      /   /           ;
+                  \   \   /   /     \   \   /   /            ;
+                   \    U    /       \    U    /             ;
+                     \     /           \     /               ;
+                      \   /             \   /                ;
+                        U                 U                  ;
+}

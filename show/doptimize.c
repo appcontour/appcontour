@@ -12,7 +12,7 @@
 #define DOPT_CHECK_CROSS_TURN
 #define DOPT_CHECK_CROSS_STAIRS
 #define DOPT_LOWER_PLATEAU
-#define DOPT_UNWIND
+//#define DOPT_UNWIND
 
 /* macro definitions */
 
@@ -879,6 +879,7 @@ check_unwind (struct polyline *contour, struct line *lb)
   /* maintain arc references and refcount */
 
   MVARC (lc, la);
+assert (ld->earc->refcount > 1);
   MVARC (ld, lh);
 
   /* removals */
