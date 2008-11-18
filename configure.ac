@@ -8,30 +8,22 @@ AC_CONFIG_SRCDIR([contour.c])
 AC_CONFIG_HEADER([config.h])
 
 #glut="yes"
-gtk="yes"
+#gtk="yes"
 
 AC_ARG_WITH([glut],
   AC_HELP_STRING([--without-glut], [no glut engine for showcontour]),
-  glut="no",
-  glut="yes")
+  [glut=="no"],
+  [with_glut=check])
 
 AC_ARG_WITH([gtk],
   AC_HELP_STRING([--without-gtk], [no gtk engine for showcontour]),
-  gtk="no",
-  gtk="yes")
+  [gtk="no"],
+  [with_gtk=check])
 
 #AC_ARG_WITH([none],
 #  AC_HELP_STRING([--with-none], [no graphic engine for showcontour]),
 #  nograph="yes"; gtk="no"; glut="no",
 #  nograph="no")
-
-if (test "$glut" != "yes" -a "$nograph" != "yes" -a "$gtk" != "yes"); then
-  AC_MSG_ERROR([You must select an interface for showcontour to build.
-     Possible options are:
-       --with-gtk     GTK engine
-       --with-glut    GLUT engine
-       --with-none    no graphic engine]);
-fi
 
 # Checks for programs.
 AC_PROG_CC
@@ -42,32 +34,58 @@ AC_PROG_CC
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h])
 
-GRAPHIC_LIB=""
-if (test "$gtk" = "yes"); then
-  dnl check for GTK gtk-config.
-  AC_PATH_PROG(GTK_CONFIG, gtk-config, no, ${PATH})
-  if (test "${GTK_CONFIG}" = "no"); then
-     AC_MSG_ERROR([No gtk library found, use --with-none or --with-glut.])
-  fi
-  CFLAGS="${CFLAGS} `${GTK_CONFIG} --cflags`"
-  GRAPHIC_LIB="${GRAPHIC_LIB} `${GTK_CONFIG} --libs`"
-  AC_DEFINE(HAVE_GTK, 1, [You have a usable gtk library.])
-fi
+GTKLIBS=
+AS_IF([test "x$with_gtk" != xno],
+      [AC_CHECK_LIB([gtk], [main],
+              [AC_PATH_PROG(GTK_CONFIG, gtk-config, no, ${PATH})
+               AC_SUBST([GTKLIBS], ["`${GTK_CONFIG} --libs`"])
+               AC_SUBST([GTK_CFLAGS], ["`${GTK_CONFIG} --cflags`"])
+               AC_DEFINE([HAVE_GTK], [1],
+                         [Define if you have gtk])
+               gtk="yes"
+              ],
+              [if test "x$with_gtk" != xcheck; then
+                 AC_MSG_FAILURE(
+                   [--with-gtk was given, but test for gtk failed])
+               else
+                 AC_MSG_WARN([gtk libraries not found, gtk graphic disabled])
+               fi
+              ], "")])
 
-if (test "$glut" = "yes"); then
-  dnl check for GLUT headers.
-  AC_CHECK_HEADERS(GL/glut.h, ,
-    [AC_MSG_ERROR([No glut.h found, use --with-none or --with-gtk.])])
-  dnl check for GLUT.
-  AC_CHECK_LIB(glut, glutMainLoop, [GRAPHIC_LIB="${GRAPHIC_LIB} -lglut"],
-    [AC_MSG_ERROR([No glut library found, use --with-none or --with-gtk.])])
-  AC_DEFINE(HAVE_GLUT, 1, [You have a usable glut library.])
-fi
+GLUTLIBS=
+AS_IF([test "x$with_glut" != xno],
+      [AC_CHECK_HEADERS(GL/glut.h,
+          [AC_CHECK_LIB([glut], [main],
+              [AC_SUBST([GLUTLIBS], ["-lglut"])
+               AC_SUBST([GLUT_CFLAGS], ["-I/usr/include/GL"])
+               AC_DEFINE([HAVE_GLUT], [1],[Define if you have glut])
+               glut="yes"
+              ],
+              [if test "x$with_glut" != xcheck; then
+                 AC_MSG_FAILURE(
+                   [--with-glut was given, but test for glut failed])
+               else
+                 AC_MSG_WARN([gtk libraries not found, gtk graphic disabled])
+               fi
+              ], "")
+          ],
+          [if test "x$with_glut" != xcheck; then
+                 AC_MSG_FAILURE(
+                   [--with-glut was given, but test for glut failed])
+           else
+                 AC_MSG_WARN([gtk libraries not found, gtk graphic disabled])
+           fi
+          ])
+       ])  
 
-if (test "$GRAPHIC_LIB" = ""); then
+AC_SUBST([GRAPHIC_LIB],["${GTKLIBS} ${GLUTLIBS}"])
+if (test "$GRAPHIC_LIB" = " "); then
+
   GRAPHIC_LIB="-lm"
 fi
-AC_SUBST(GRAPHIC_LIB)
+
+AC_SUBST([CFLAGS],["${GTK_CFLAGS} ${GLUT_CFLAGS}"]) 
+#AC_SUBST(GRAPHIC_LIB)
 AM_CONDITIONAL(ENABLE_GLUT, test "$glut" = "yes")
 AM_CONDITIONAL(ENABLE_GTK, test "$gtk" = "yes")
 

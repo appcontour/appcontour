@@ -1,12 +1,12 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* You have a usable glut library. */
+/* Define if you have glut */
 #undef HAVE_GLUT
 
 /* Define to 1 if you have the <GL/glut.h> header file. */
 #undef HAVE_GL_GLUT_H
 
-/* You have a usable gtk library. */
+/* Define if you have gtk */
 #undef HAVE_GTK
 
 /* Define to 1 if you have the <inttypes.h> header file. */

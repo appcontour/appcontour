@@ -694,6 +694,10 @@ CPP
 GREP
 EGREP
 GTK_CONFIG
+GTKLIBS
+GTK_CFLAGS
+GLUTLIBS
+GLUT_CFLAGS
 GRAPHIC_LIB
 ENABLE_GLUT_TRUE
 ENABLE_GLUT_FALSE
@@ -2224,14 +2228,14 @@ ac_config_headers="$ac_config_headers config.h"
 
 
 #glut="yes"
-gtk="yes"
+#gtk="yes"
 
 
 # Check whether --with-glut was given.
 if test "${with_glut+set}" = set; then
-  withval=$with_glut; glut="no"
+  withval=$with_glut; glut=="no"
 else
-  glut="yes"
+  with_glut=check
 fi
 
 
@@ -2240,7 +2244,7 @@ fi
 if test "${with_gtk+set}" = set; then
   withval=$with_gtk; gtk="no"
 else
-  gtk="yes"
+  with_gtk=check
 fi
 
 
@@ -2248,20 +2252,6 @@ fi
 #  AC_HELP_STRING([--with-none], [no graphic engine for showcontour]),
 #  nograph="yes"; gtk="no"; glut="no",
 #  nograph="no")
-
-if (test "$glut" != "yes" -a "$nograph" != "yes" -a "$gtk" != "yes"); then
-  { { echo "$as_me:$LINENO: error: You must select an interface for showcontour to build.
-     Possible options are:
-       --with-gtk     GTK engine
-       --with-glut    GLUT engine
-       --with-none    no graphic engine" >&5
-echo "$as_me: error: You must select an interface for showcontour to build.
-     Possible options are:
-       --with-gtk     GTK engine
-       --with-glut    GLUT engine
-       --with-none    no graphic engine" >&2;}
-   { (exit 1); exit 1; }; };
-fi
 
 # Checks for programs.
 ac_ext=c
@@ -4140,9 +4130,65 @@ fi
 done
 
 
-GRAPHIC_LIB=""
-if (test "$gtk" = "yes"); then
-    # Extract the first word of "gtk-config", so it can be a program name with args.
+GTKLIBS=
+if test "x$with_gtk" != xno; then
+  { echo "$as_me:$LINENO: checking for main in -lgtk" >&5
+echo $ECHO_N "checking for main in -lgtk... $ECHO_C" >&6; }
+if test "${ac_cv_lib_gtk_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgtk "" $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_gtk_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_gtk_main=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_gtk_main" >&5
+echo "${ECHO_T}$ac_cv_lib_gtk_main" >&6; }
+if test $ac_cv_lib_gtk_main = yes; then
+  # Extract the first word of "gtk-config", so it can be a program name with args.
 set dummy gtk-config; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
@@ -4183,21 +4229,36 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-  if (test "${GTK_CONFIG}" = "no"); then
-     { { echo "$as_me:$LINENO: error: No gtk library found, use --with-none or --with-glut." >&5
-echo "$as_me: error: No gtk library found, use --with-none or --with-glut." >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-  CFLAGS="${CFLAGS} `${GTK_CONFIG} --cflags`"
-  GRAPHIC_LIB="${GRAPHIC_LIB} `${GTK_CONFIG} --libs`"
+               GTKLIBS="`${GTK_CONFIG} --libs`"
+
+               GTK_CFLAGS="`${GTK_CONFIG} --cflags`"
+
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_GTK 1
 _ACEOF
 
+               gtk="yes"
+
+else
+  if test "x$with_gtk" != xcheck; then
+                 { { echo "$as_me:$LINENO: error: --with-gtk was given, but test for gtk failed
+See \`config.log' for more details." >&5
+echo "$as_me: error: --with-gtk was given, but test for gtk failed
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+               else
+                 { echo "$as_me:$LINENO: WARNING: gtk libraries not found, gtk graphic disabled" >&5
+echo "$as_me: WARNING: gtk libraries not found, gtk graphic disabled" >&2;}
+               fi
+
 fi
 
-if (test "$glut" = "yes"); then
+fi
+
+
+GLUTLIBS=
+if test "x$with_glut" != xno; then
 
 for ac_header in GL/glut.h
 do
@@ -4338,22 +4399,13 @@ if test `eval echo '${'$as_ac_Header'}'` = yes; then
   cat >>confdefs.h <<_ACEOF
 #define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
-
-else
-  { { echo "$as_me:$LINENO: error: No glut.h found, use --with-none or --with-gtk." >&5
-echo "$as_me: error: No glut.h found, use --with-none or --with-gtk." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-done
-
-    { echo "$as_me:$LINENO: checking for glutMainLoop in -lglut" >&5
-echo $ECHO_N "checking for glutMainLoop in -lglut... $ECHO_C" >&6; }
-if test "${ac_cv_lib_glut_glutMainLoop+set}" = set; then
+ { echo "$as_me:$LINENO: checking for main in -lglut" >&5
+echo $ECHO_N "checking for main in -lglut... $ECHO_C" >&6; }
+if test "${ac_cv_lib_glut_main+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lglut  $LIBS"
+LIBS="-lglut "" $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -4361,17 +4413,11 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char glutMainLoop ();
+
 int
 main ()
 {
-return glutMainLoop ();
+return main ();
   ;
   return 0;
 }
@@ -4394,39 +4440,77 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext &&
        $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_glut_glutMainLoop=yes
+  ac_cv_lib_glut_main=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_glut_glutMainLoop=no
+	ac_cv_lib_glut_main=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_glut_glutMainLoop" >&5
-echo "${ECHO_T}$ac_cv_lib_glut_glutMainLoop" >&6; }
-if test $ac_cv_lib_glut_glutMainLoop = yes; then
-  GRAPHIC_LIB="${GRAPHIC_LIB} -lglut"
-else
-  { { echo "$as_me:$LINENO: error: No glut library found, use --with-none or --with-gtk." >&5
-echo "$as_me: error: No glut library found, use --with-none or --with-gtk." >&2;}
-   { (exit 1); exit 1; }; }
-fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_glut_main" >&5
+echo "${ECHO_T}$ac_cv_lib_glut_main" >&6; }
+if test $ac_cv_lib_glut_main = yes; then
+  GLUTLIBS="-lglut"
+
+               GLUT_CFLAGS="-I/usr/include/GL"
 
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_GLUT 1
 _ACEOF
 
+               glut="yes"
+
+else
+  if test "x$with_glut" != xcheck; then
+                 { { echo "$as_me:$LINENO: error: --with-glut was given, but test for glut failed
+See \`config.log' for more details." >&5
+echo "$as_me: error: --with-glut was given, but test for glut failed
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+               else
+                 { echo "$as_me:$LINENO: WARNING: gtk libraries not found, gtk graphic disabled" >&5
+echo "$as_me: WARNING: gtk libraries not found, gtk graphic disabled" >&2;}
+               fi
+
 fi
 
-if (test "$GRAPHIC_LIB" = ""); then
+
+else
+  if test "x$with_glut" != xcheck; then
+                 { { echo "$as_me:$LINENO: error: --with-glut was given, but test for glut failed
+See \`config.log' for more details." >&5
+echo "$as_me: error: --with-glut was given, but test for glut failed
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+           else
+                 { echo "$as_me:$LINENO: WARNING: gtk libraries not found, gtk graphic disabled" >&5
+echo "$as_me: WARNING: gtk libraries not found, gtk graphic disabled" >&2;}
+           fi
+
+fi
+
+done
+
+
+fi
+
+
+GRAPHIC_LIB="${GTKLIBS} ${GLUTLIBS}"
+
+if (test "$GRAPHIC_LIB" = " "); then
+
   GRAPHIC_LIB="-lm"
 fi
 
+CFLAGS="${GTK_CFLAGS} ${GLUT_CFLAGS}"
+
+#AC_SUBST(GRAPHIC_LIB)
  if test "$glut" = "yes"; then
   ENABLE_GLUT_TRUE=
   ENABLE_GLUT_FALSE='#'
@@ -5422,6 +5506,10 @@ CPP!$CPP$ac_delim
 GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
 GTK_CONFIG!$GTK_CONFIG$ac_delim
+GTKLIBS!$GTKLIBS$ac_delim
+GTK_CFLAGS!$GTK_CFLAGS$ac_delim
+GLUTLIBS!$GLUTLIBS$ac_delim
+GLUT_CFLAGS!$GLUT_CFLAGS$ac_delim
 GRAPHIC_LIB!$GRAPHIC_LIB$ac_delim
 ENABLE_GLUT_TRUE!$ENABLE_GLUT_TRUE$ac_delim
 ENABLE_GLUT_FALSE!$ENABLE_GLUT_FALSE$ac_delim
@@ -5431,7 +5519,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 86; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 90; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
