@@ -38,8 +38,8 @@ GTKLIBS=
 AS_IF([test "x$with_gtk" != xno],
       [AC_CHECK_LIB([gtk], [main],
               [AC_PATH_PROG(GTK_CONFIG, gtk-config, no, ${PATH})
-               AC_SUBST([GTKLIBS], ["`${GTK_CONFIG} --libs`"])
-               AC_SUBST([GTK_CFLAGS], ["`${GTK_CONFIG} --cflags`"])
+               GTKLIBS="`${GTK_CONFIG} --libs`"
+               GTK_CFLAGS="`${GTK_CONFIG} --cflags`"
                AC_DEFINE([HAVE_GTK], [1],
                          [Define if you have gtk])
                gtk="yes"
@@ -56,8 +56,8 @@ GLUTLIBS=
 AS_IF([test "x$with_glut" != xno],
       [AC_CHECK_HEADERS(GL/glut.h,
           [AC_CHECK_LIB([glut], [main],
-              [AC_SUBST([GLUTLIBS], ["-lglut"])
-               AC_SUBST([GLUT_CFLAGS], ["-I/usr/include/GL"])
+              [GLUTLIBS="-lglut"
+               GLUT_CFLAGS="-I/usr/include/GL"
                AC_DEFINE([HAVE_GLUT], [1],[Define if you have glut])
                glut="yes"
               ],
@@ -65,7 +65,7 @@ AS_IF([test "x$with_glut" != xno],
                  AC_MSG_FAILURE(
                    [--with-glut was given, but test for glut failed])
                else
-                 AC_MSG_WARN([gtk libraries not found, gtk graphic disabled])
+                 AC_MSG_WARN([glut libraries not found, glut graphic disabled])
                fi
               ], "")
           ],
@@ -73,17 +73,18 @@ AS_IF([test "x$with_glut" != xno],
                  AC_MSG_FAILURE(
                    [--with-glut was given, but test for glut failed])
            else
-                 AC_MSG_WARN([gtk libraries not found, gtk graphic disabled])
+                 AC_MSG_WARN([glut libraries not found, glut graphic disabled])
            fi
           ])
        ])  
 
-AC_SUBST([GRAPHIC_LIB],["${GTKLIBS} ${GLUTLIBS}"])
+GRAPHIC_LIB="${GTKLIBS} ${GLUTLIBS}"
 if (test "$GRAPHIC_LIB" = " "); then
 
   GRAPHIC_LIB="-lm"
 fi
 
+AC_SUBST([GRAPHIC_LIB])
 AC_SUBST([CFLAGS],["${GTK_CFLAGS} ${GLUT_CFLAGS}"]) 
 #AC_SUBST(GRAPHIC_LIB)
 AM_CONDITIONAL(ENABLE_GLUT, test "$glut" = "yes")
