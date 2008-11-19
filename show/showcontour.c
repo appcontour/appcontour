@@ -57,7 +57,6 @@ int inherit_earc (struct line *line);
 void setarcinfo (struct polyline *contour);
 int setarcinfo1 (struct line *l);
 int enforce_crossover_info (struct polyline *contour);
-struct earc *mergearcinfo (struct earc *arc1, struct earc *arc2);
 void check_contour (struct polyline *contour);
 void insertcusps (struct polyline *contour);
 int insert_cusps_on_arc (struct line *l);

@@ -125,6 +125,7 @@ double evolve (struct polyline *contour, double incrtime, double incsimtime);
 /* incrtime is a realtime increment, incsimtime is an increment in the
  * simulation time
  */
+struct earc *mergearcinfo (struct earc *arc1, struct earc *arc2);
 void redistributenodes (struct polyline *contour);
 void init_rarc (struct polyline *contour);
 struct line *nextp (struct line *l, struct vertex *p);

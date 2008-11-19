@@ -12,7 +12,7 @@
 #define DOPT_CHECK_CROSS_TURN
 #define DOPT_CHECK_CROSS_STAIRS
 #define DOPT_LOWER_PLATEAU
-//#define DOPT_UNWIND
+#define DOPT_UNWIND
 
 /* macro definitions */
 
@@ -29,7 +29,28 @@
   n2->y = temp;
 #define RMN(node) removenode (contour, node)
 #define RML(line) removeline (contour, line)
-#define MVARC(ld,lh) \
+/*
+ * the following works *only* if we are sure that
+ * there is at least another line with the same earc
+ * as ld, which is never the case since 'mergearcsinfo'
+ * is not done yet.  This call should be replaced
+ * by the following one.
+ */
+#define MVARC_DANGER(ld,lh) \
+  ld->earc->refcount--;\
+  assert (ld->earc->refcount > 0);\
+  ld->earc = lh->earc;\
+  ld->earc->refcount++;
+/*
+ * the third argument is a line in the same
+ * arc as ld, into which inherit earc info
+ * in case the refcount reaches 0
+ */
+#define MVARC(ld,lh,ea) \
+  if (ld->earc->refcount <= 1) { \
+    assert (ld->earc != ea); \
+    ld->earc = mergearcinfo (ea, ld->earc); \
+  } \
   ld->earc->refcount--;\
   assert (ld->earc->refcount > 0);\
   ld->earc = lh->earc;\
@@ -418,8 +439,8 @@ check_cross_turn (struct polyline *contour, struct line *line)
   CHAINFC2 (backward1, a, lb4b5);
   CHAINFC2 (backward2, a, lc2c3);
   CHAINFC6 (backward4, a, lac1, c1, lc1c2, c2, lae);
-  MVARC (lc1c2, lae);
-  MVARC (lac1, lae);
+  MVARC_DANGER (lc1c2, lae);
+  MVARC_DANGER (lac1, lae);
   RMN (b1);
   RMN (b2);
   RMN (b3);
@@ -494,7 +515,7 @@ check_cross_slide (struct polyline *contour, struct line *line)
   a->line[i3] = lb1b2;
   a->line[i4] = ld1d2;
 
-  MVARC (lab1, line);
+  MVARC_DANGER (lab1, line);
 
   CHAINFC4 (backward1, a, lab1, b1, line);
   CHAINFC2 (backward2, a, lc1c2);
@@ -615,8 +636,8 @@ check_cross_stairs (struct polyline *contour, struct line *line)
   CHAINFC2 (backward4, a, ld2d3);
 
   /* maintain arc references and refcount */
-  MVARC (lab1, line);
-  MVARC (lb1b2, line);
+  MVARC_DANGER (lab1, line);
+  MVARC_DANGER (lb1b2, line);
 
   /* rimozioni */
   RMN (c1);
@@ -760,7 +781,7 @@ check_lower_plateau (struct polyline *contour, struct line *line)
       bt->line[1-backward2] = l2;
       b->line[i2] = l3;
       b->line[i4] = l2;
-      MVARC (l2, l1);
+      MVARC_DANGER (l2, l1);
     } else {
       l = b->line[1];
     }
@@ -878,9 +899,8 @@ check_unwind (struct polyline *contour, struct line *lb)
 
   /* maintain arc references and refcount */
 
-  MVARC (lc, la);
-assert (ld->earc->refcount > 1);
-  MVARC (ld, lh);
+  MVARC (lc, la, ld->earc);
+  MVARC (ld, lh, le->earc);
 
   /* removals */
 
