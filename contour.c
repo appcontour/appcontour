@@ -278,13 +278,17 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"wrinkle") == 0) action = ACTION_WRINKLE;
     if (strcmp(argv[i],"listwr") == 0) action = ACTION_LISTWR;
     if (strcmp(argv[i],"listinvc1") == 0) action = ACTION_LISTWR;
+    if (strcmp(argv[i],"listinvl") == 0) action = ACTION_LISTWR;
     if (strcmp(argv[i],"swallowtail") == 0) action = ACTION_SWALLOWTAIL;
     if (strcmp(argv[i],"listinvcn1") == 0) action = ACTION_LISTST;
+    if (strcmp(argv[i],"listinvs") == 0) action = ACTION_LISTST;
     if (strcmp(argv[i],"listst") == 0) action = ACTION_LISTST;
     if (strcmp(argv[i],"listswallowtails") == 0) action = ACTION_LISTST;
     if (strcmp(argv[i],"invcn3") == 0) action = ACTION_PUNCTURE;
+    if (strcmp(argv[i],"invc") == 0) action = ACTION_PUNCTURE;
     if (strcmp(argv[i],"puncture") == 0) action = ACTION_PUNCTURE;
     if (strcmp(argv[i],"listinvcn3") == 0) action = ACTION_LISTPU;
+    if (strcmp(argv[i],"listinvc") == 0) action = ACTION_LISTPU;
     if (strcmp(argv[i],"listpunctures") == 0) action = ACTION_LISTPU;
     if (strcmp(argv[i],"testallrules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"rules") == 0) action = ACTION_TESTALLRULES;
