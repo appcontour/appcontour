@@ -3,7 +3,7 @@
 #
 # questo provoca la scrittura di una lista di tutte le
 # possibili applicazioni di mergearcs:
-./contour applyrule n4 examples/torus2.morse | ./contour mergearcs
+./contour applyrule n4 examples/torus2.morse | ./contour listma
 #
 # un semplice esempio di invN1 su due S1 disgiunti:
 ./contour mergearcs examples/disjoint_spheres.morse -r 0 -a 1 -a 2

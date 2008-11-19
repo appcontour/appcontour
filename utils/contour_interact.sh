@@ -14,17 +14,17 @@ function listma ()
 
 function listwr ()
 {
-  eval $commandchain | contour listwr 2>/dev/null
+  eval $commandchain | contour $ns listwr 2>/dev/null
 }
 
 function listst ()
 {
-  eval $commandchain | contour listinvcn1 2>/dev/null
+  eval $commandchain | contour $ns listinvcn1 2>/dev/null
 }
 
 function listpu ()
 {
-  eval $commandchain | contour listinvcn3 2>/dev/null
+  eval $commandchain | contour $ns listinvcn3 2>/dev/null
 }
 
 function displayinfo ()
@@ -67,7 +67,7 @@ function buildcommandchain ()
   commandchain="$catcommand"
   for rule in $rules
   do
-    commandchain="$commandchain | contour applyrule $rule 2>/dev/null"
+    commandchain="$commandchain | contour $ns applyrule $rule 2>/dev/null"
   done
 }
 
@@ -129,11 +129,11 @@ do
     echo "Applied rules: $rules"
   fi
   buildcommandchain
-  applicablesimple=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
+  applicablesimple=`eval $commandchain | contour $ns testallrules 2>/dev/null | tail -1`
   applicablema=`eval $commandchain | contour $ns listma -q 2>/dev/null | tail -1`
-  applicablewr=`eval $commandchain | contour listwr -q 2>/dev/null | tail -1`
-  applicablest=`eval $commandchain | contour listinvcn1 -q 2>/dev/null | tail -1`
-  applicablepu=`eval $commandchain | contour listinvcn3 -q 2>/dev/null | tail -1`
+  applicablewr=`eval $commandchain | contour $ns listwr -q 2>/dev/null | tail -1`
+  applicablest=`eval $commandchain | contour $ns listinvcn1 -q 2>/dev/null | tail -1`
+  applicablepu=`eval $commandchain | contour $ns listinvcn3 -q 2>/dev/null | tail -1`
   echo "Applicable rules: $applicablesimple"
   #echo "Applicable mergearcs rules: $applicablema"
   applicable=" $applicablesimple $applicablema $applicablewr $applicablest $applicablepu "

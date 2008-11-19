@@ -4,6 +4,7 @@
 
 /*
  * definizione regole di trasformazione inverse per superfici isotope
+ * c'e' anche un aggancio per chirurgia orizzontale
  */
 
 extern int debug;
@@ -21,6 +22,43 @@ int common_work_mergearcs (struct sketch *s,
                            int a1pos, int a2pos, int rule);
 int aggiungi_losanga (struct border *bp1, struct border *bp2,
 		struct sketch *s, int rule);
+
+/*
+ * chirurgia orizzontale: glue arcs
+ * ori = 1: pinchneck
+ * ori = -1: gluearcs
+ */
+
+#define IS_SURGERY 2001
+
+int
+gluearcs_or_pinchneck (struct sketch *s, struct arc *a1,
+      struct arc *a2, int a1l, int a2l, int ori)
+{
+  struct border *bp1, *bp2;
+  int res;
+
+  assert (ori == 1 || ori == -1);
+  if (ori > 0) {
+    bp1 = a1->regionleft;
+    bp2 = a2->regionleft;
+  } else {
+    bp1 = a1->regionright;
+    bp2 = a2->regionright;
+  }
+  if (bp1->border->region != bp2->border->region)
+    return (0);
+
+  if (a1l >= a1->dvalues) return (0);
+  if (a2l >= a2->dvalues) return (0);
+
+  if (s->huffman_labelling && a1->depths[a1l] != a2->depths[a2l])
+    return (0);
+
+  assert (s->huffman_labelling);
+  res = common_work_mergearcs (s, bp1, bp2, a1l, a2l, IS_SURGERY);
+  return (res);
+}
 
 /*
  * creazione di una puncture
@@ -844,7 +882,11 @@ common_work_mergearcs (struct sketch *s,
 
   assert (bp1 != bp2);
 
-  if (rule == INV_C2) {
+  if (rule == IS_SURGERY) {
+    assert (s->huffman_labelling);  //just for now!
+    taglia_nodo (bp1->next, s, 0, 0);
+    res = 1;
+  } else if (rule == INV_C2) {
     bp1->next->info->depths[0] = bp2->next->info->depths[1];
     bp2->next->info->depths[0] = bp1->next->info->depths[1];
     taglia_nodo (bp1->next, s, 0, 0);

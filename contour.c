@@ -48,6 +48,8 @@
 #define ACTION_REMOVEHOLE 31
 #define ACTION_LISTSPHERES 32
 #define ACTION_REMOVESPHERE 33
+#define ACTION_GLUEARCS 34
+#define ACTION_PINCHNECK 35
 
 int debug = 0;
 int quiet = 0;
@@ -199,21 +201,27 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--help") == 0)
     {
       printf ("Usage: %s [options] command [file]\n", argv[0]);
-      printf ("  possible commands are:\n");
-      printf ("  print, printmorse, iscontour, ishuffman, canonify, countcc\n");
-      printf ("  rules, info, characteristic, knot2morse\n");
-      printf ("  compare: lessicographic comparison between two contours, in this\n");
-      printf ("    case the stdin (or file) must contain two descriptions\n");
+      printf (" possible operating commands are:\n");
       printf ("  rule <rule>: apply indicated rule to contour\n");
       printf ("  mergearcs: apply an inverse rule that merges two arcs\n");
-      printf ("  wrinkle: apply inverse C1 rule\n");
+      printf ("  wrinkle: apply inverse L (lip) rule\n");
+      printf ("  punchhole/removehole: perform vertical surgery\n");
+      printf ("  gluearcs/pinchneck: perform horizontal surgery\n");
+      printf ("  addsphere/removesphere: add-remove small sphere\n");
       printf ("  extractcc <int>: extract 3D connected component\n");
       printf ("  removecc <int>: remove 3D connected component from contour\n");
       printf ("  leftright: left-right reflection\n");
       printf ("  frontback: front-back reflection\n");
       printf ("  mendes: compute Mendes graph (see Hacon-Mendes-Romero Fuster)\n");
       printf ("  evert <int>: make region <int> become the unbounded region\n");
-      printf ("\n  possible options are:\n");
+      printf ("\n possible informational commands are:\n");
+      printf ("  info, characteristic, rules, iscontour, ishuffman, countcc\n");
+      printf ("  list[ma|invl|invs|strata]\n");
+      printf ("  compare: lessicographic comparison between two contours, in this\n");
+      printf ("    case the stdin (or file) must contain two descriptions\n");
+      printf ("\n possible conversion and standardization commands are:\n");
+      printf ("  print, printmorse, knot2morse, canonify\n");
+      printf ("\n possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
       printf ("  -q: be quiet\n");
@@ -226,7 +234,8 @@ main (int argc, char *argv[])
       printf ("      e.g. for Mendes graph graphic presentation\n");
       printf ("  -r|--region <int>: mark region for specific action\n");
       printf ("  -a|--arc <int>: mark arc for specific action\n");
-      printf ("\n  if file is not given, description is taken from standard input\n");
+      printf ("  --oldnames|--newnames: select set of names for rules\n");
+      printf ("\n if file is not given, description is taken from standard input\n");
       exit (0);
     }
     if (globals.rulenames == 0) globals.rulenames = RULENAMES_OLD;
@@ -273,6 +282,8 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"addsphere") == 0) action = ACTION_ADDSPHERE;
     if (strcmp(argv[i],"punchhole") == 0) action = ACTION_PUNCHHOLE;
     if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
+    if (strcmp(argv[i],"gluearcs") == 0) action = ACTION_GLUEARCS;
+    if (strcmp(argv[i],"pinchneck") == 0) action = ACTION_PINCHNECK;
     if (strcmp(argv[i],"listma") == 0) action = ACTION_LISTMA;
     if (strcmp(argv[i],"listmergearcs") == 0) action = ACTION_LISTMA;
     if (strcmp(argv[i],"wrinkle") == 0) action = ACTION_WRINKLE;
@@ -524,6 +535,32 @@ main (int argc, char *argv[])
     if (testallrules (sketch) == 0) exit(15);
     break;
 
+    case ACTION_PINCHNECK:
+    ori = 1;
+    case ACTION_GLUEARCS:
+    if (ori != 1) ori = -1;
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    if (user_data.manum < 2) {
+      fprintf (stderr, "You must specify two arcs using option -a\n");
+      exit(15);
+    }
+    a = findarc (sketch, user_data.arc[0]);
+    a2 = findarc (sketch, user_data.arc[1]);
+    if (a == 0 || a2 == 0) {
+      fprintf (stderr, "Cannot find arc %d\n", 
+	(a == 0)?user_data.arc[0]:user_data.arc[1]);
+      exit (15);
+    }
+    res = gluearcs_or_pinchneck (sketch, a, a2, user_data.arcl[0],
+            user_data.arcl[1], ori);
+    printsketch (sketch);
+    if (res == 0) {
+      fprintf (stderr, "Cannot %s!\n", (ori > 0)?"pinch neck":"glue arcs");
+      exit(14);
+    }
+    break;
+
     case ACTION_ADDSPHERE:
     ori = 1;
     case ACTION_PUNCHHOLE:
@@ -538,13 +575,13 @@ main (int argc, char *argv[])
       exit(15);
     }
     r = findregion (sketch, user_data.region[0]);
-    if (r == 0) fprintf (stderr, "Cannot find region %d\n", 
-			user_data.region[0]);
-    if (! (r)) exit(15);
+    if (r == 0) {
+      fprintf (stderr, "Cannot find region %d\n", user_data.region[0]);
+      exit(15);
+    }
     res = add_s1 (sketch, r, user_data.stratum[0], ori);
     printsketch (sketch);
-    if (res == 0)
-    {
+    if (res == 0) {
       fprintf (stderr, "Cannot add s1!\n");
       exit(14);
     }

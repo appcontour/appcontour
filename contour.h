@@ -156,6 +156,8 @@ void applyrulecr3 (struct border *b1, struct border *b2, int dindex,
 
 /* invrules.c */
 
+int gluearcs_or_pinchneck (struct sketch *s, struct arc *a1,
+      struct arc *a2, int a1l, int a2l, int ori);
 int rule_puncture (struct sketch *s, int rcount);
 int list_punctures (struct sketch *s);
 int apply_puncture (struct sketch *s, 

@@ -128,10 +128,10 @@ testallrules (struct sketch *sketch)
         if (exitcode == 1) printf (" ");
 	if (globals.rulenames == RULENAMES_NEW) {
 	  switch (ru14) {
-	    case 1: printf ("K0"); break;
+	    case 1: printf ("K2"); break;
 	    case 2: printf ("K1"); break;
 	    case 3: printf ("K1B"); break;
-	    case 4: printf ("K2"); break;
+	    case 4: printf ("K0"); break;
 	    default: printf ("K?"); break;
 	  }
 	} else printf ("N%d", ru14);
