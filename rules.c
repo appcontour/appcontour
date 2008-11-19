@@ -66,6 +66,18 @@ apply_rule (char *rule, struct sketch *sketch)
   else if (strcasecmp (rule, "cr4lb") == 0) res = rule_cr4lb (sketch, rcount);
   else if (strcasecmp (rule, "cr4rb") == 0) res = rule_cr4rb (sketch, rcount);
   else if (strcasecmp (rule, "t1") == 0) res = rule_t1 (sketch, rcount);
+/* should be renamed to: */
+  else if (strcasecmp (rule, "ti") == 0) res = rule_t1 (sketch, rcount);
+/* new names: taken from Ohmoto-Aicardi */
+  else if (strcasecmp (rule, "k0") == 0) res = rule_n14 (sketch, 4, rcount);
+  else if (strcasecmp (rule, "k1") == 0) res = rule_n14 (sketch, 2, rcount);
+  else if (strcasecmp (rule, "k1b") == 0) res = rule_n14 (sketch, 3, rcount);
+  else if (strcasecmp (rule, "k2") == 0) res = rule_n14 (sketch, 1, rcount);
+  else if (strcasecmp (rule, "t") == 0) res = rule_n5 (sketch, rcount);
+  else if (strcasecmp (rule, "l") == 0) res = rule_c1 (sketch, rcount);
+  else if (strcasecmp (rule, "b") == 0) res = rule_c2 (sketch, rcount);
+  else if (strcasecmp (rule, "s") == 0) res = rule_cn1 (sketch, rcount);
+  else if (strcasecmp (rule, "c") == 0) res = rule_cn3 (sketch, rcount);
   else if ((code = lookup_mergearcs (rule))) 
        res = rule_mergearcs (sketch, code, rcount);
   else if (strcasecmp (rule, "invc1") == 0) 
@@ -75,6 +87,14 @@ apply_rule (char *rule, struct sketch *sketch)
   else if (strcasecmp (rule, "invcn1b") == 0) 
        res = rule_createswallowtailb (sketch, rcount);
   else if (strcasecmp (rule, "invcn3") == 0) 
+       res = rule_puncture (sketch, rcount);
+  else if (strcasecmp (rule, "invl") == 0) 
+       res = rule_createwrinkle (sketch, rcount);
+  else if (strcasecmp (rule, "invs") == 0) 
+       res = rule_createswallowtail (sketch, rcount);
+  else if (strcasecmp (rule, "invsb") == 0) 
+       res = rule_createswallowtailb (sketch, rcount);
+  else if (strcasecmp (rule, "invc") == 0) 
        res = rule_puncture (sketch, rcount);
   else printf ("Invalid rule %s\n", rule);
 

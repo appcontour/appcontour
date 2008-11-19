@@ -518,6 +518,17 @@ static char *invmergerules[] = {
   "INVC2",
   0};
 
+/* new names */
+static char *invmergerulesnn[] = {
+  "",
+  "INVK2",
+  "INVK1",
+  "INVK1B",
+  "INVK1Bbis",
+  "INVK0",
+  "INVB",
+  0};
+
 static int countmarules[NUM_INVNC];
 static int applyma = 0;
 static int applymac = 0;
@@ -530,6 +541,10 @@ lookup_mergearcs (char *rule)
   for (i = 1; invmergerules[i]; i++)
   {
     if (strcasecmp (rule, invmergerules[i]) == 0) return (i);
+  }
+  for (i = 1; invmergerules[i]; i++)
+  {
+    if (strcasecmp (rule, invmergerulesnn[i]) == 0) return (i);
   }
   return (0);
 }
