@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define RULENAMES_OLD 1
+#define RULENAMES_NEW 2
+
+struct global_data {
+  int rulenames;
+};
+
 #define MRPTMAX 4
 #define MAPTMAX 4
 #define MSPTMAX 4

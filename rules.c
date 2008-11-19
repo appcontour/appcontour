@@ -3,6 +3,7 @@
 #include "contour.h"
 
 extern int debug;
+extern struct global_data globals;
 
 /*
  * definizione regole di trasformazione per superfici isotope
@@ -125,25 +126,43 @@ testallrules (struct sketch *sketch)
       if (res)
       {
         if (exitcode == 1) printf (" ");
-        printf ("N%d", ru14);
+	if (globals.rulenames == RULENAMES_NEW) {
+	  switch (ru14) {
+	    case 1: printf ("K0"); break;
+	    case 2: printf ("K1"); break;
+	    case 3: printf ("K1B"); break;
+	    case 4: printf ("K2"); break;
+	    default: printf ("K?"); break;
+	  }
+	} else printf ("N%d", ru14);
         if (rcount > 1) printf (":%d", rcount);
         rcount++;
         exitcode = 1;
       } else break;
     }
   }
-  exitcode = testsinglerule ("N5", rule_n5, exitcode, sketch);
+  if (globals.rulenames == RULENAMES_NEW) {
+    exitcode = testsinglerule ("T", rule_n5, exitcode, sketch);
+    exitcode = testsinglerule ("L", rule_c1, exitcode, sketch);
+    exitcode = testsinglerule ("B", rule_c2, exitcode, sketch);
+    exitcode = testsinglerule ("S", rule_cn1, exitcode, sketch);
+    exitcode = testsinglerule ("C", rule_cn3, exitcode, sketch);
+    exitcode = testsinglerule ("TI", rule_t1, exitcode, sketch);
+  } else {
+    exitcode = testsinglerule ("N5", rule_n5, exitcode, sketch);
+    exitcode = testsinglerule ("C1", rule_c1, exitcode, sketch);
+    exitcode = testsinglerule ("C2", rule_c2, exitcode, sketch);
+    exitcode = testsinglerule ("CN1", rule_cn1, exitcode, sketch);
+    exitcode = testsinglerule ("CN3", rule_cn3, exitcode, sketch);
+    exitcode = testsinglerule ("T1", rule_t1, exitcode, sketch);
+  }
   exitcode = testsinglerule ("CR2", rule_cr2, exitcode, sketch);
-  exitcode = testsinglerule ("C1", rule_c1, exitcode, sketch);
-  exitcode = testsinglerule ("C2", rule_c2, exitcode, sketch);
   exitcode = testsinglerule ("A1", rule_a1, exitcode, sketch);
   exitcode = testsinglerule ("A2", rule_a2, exitcode, sketch);
-  exitcode = testsinglerule ("CN1", rule_cn1, exitcode, sketch);
   exitcode = testsinglerule ("CN2L", rule_cn2l, exitcode, sketch);
   exitcode = testsinglerule ("CN2R", rule_cn2r, exitcode, sketch);
   exitcode = testsinglerule ("CN2LB", rule_cn2lb, exitcode, sketch);
   exitcode = testsinglerule ("CN2RB", rule_cn2rb, exitcode, sketch);
-  exitcode = testsinglerule ("CN3", rule_cn3, exitcode, sketch);
   exitcode = testsinglerule ("CR3L", rule_cr3l, exitcode, sketch);
   exitcode = testsinglerule ("CR3R", rule_cr3r, exitcode, sketch);
   exitcode = testsinglerule ("CR1", rule_cr1, exitcode, sketch);
@@ -152,7 +171,6 @@ testallrules (struct sketch *sketch)
   exitcode = testsinglerule ("CR4R", rule_cr4r, exitcode, sketch);
   exitcode = testsinglerule ("CR4LB", rule_cr4lb, exitcode, sketch);
   exitcode = testsinglerule ("CR4RB", rule_cr4rb, exitcode, sketch);
-  exitcode = testsinglerule ("T1", rule_t1, exitcode, sketch);
   /* commented out because there is an infinite loop in some cases */
   printf ("\n");
   return (exitcode);

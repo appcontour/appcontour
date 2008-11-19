@@ -7,6 +7,7 @@
  */
 
 extern int debug;
+extern struct global_data globals;
 
 /* local prototypes */
 int c_createswallowtail (struct sketch *s, struct arc *a, int arcl, int sign);
@@ -120,7 +121,7 @@ c_puncture (struct sketch *s, struct arc *a1, struct arc *a2,
     if (applypu == 0) {
       if (quiet == 0)
         printf ("-a %d:%d -a %d:%d (", a1->tag, a1l, a2->tag, a2l);
-      printf ("INVCN3:%d", countpurules);
+      printf ("INV%s:%d", (globals.rulenames == RULENAMES_NEW)?"C":"CN3", countpurules);
       if (quiet == 0) printf (")\n");
         else printf (" ");
     }
@@ -274,8 +275,8 @@ c_createswallowtail (struct sketch *s, struct arc *a1, int a1l, int sign)
     if (applyst == 0) {
       if (quiet == 0)
         printf ("-a %d:%d (", a1->tag, a1l);
-      printf ("INVCN1:%d", countstrules);
-      printf (" INVCN1B:%d", countstrules);
+      printf ("INV%s:%d", (globals.rulenames == RULENAMES_NEW)?"S":"CN1", countstrules);
+      printf (" INV%s:%d", (globals.rulenames == RULENAMES_NEW)?"SB":"CN1B", countstrules);
       if (quiet == 0) printf (")\n");
         else printf (" ");
     }
@@ -435,7 +436,7 @@ c_createwrinkle (struct sketch *s, struct region *r, int stratum)
     if (applywr == 0) {
       if (quiet == 0)
         printf ("-r %d --stratum %d (", r->tag, stratum);
-      printf ("INVC1:%d", countwrrules);
+      printf ("INV%s:%d", (globals.rulenames == RULENAMES_NEW)?"L":"C1", countwrrules);
       if (quiet == 0) printf (")\n");
         else printf (" ");
     }
@@ -659,7 +660,10 @@ c_mergearcs (struct sketch *s, struct region *r,
       if (quiet == 0)
         printf ("-r %d -a %d:%d -a %d:%d (", 
           r->tag, a1->tag, a1l, a2->tag, a2l);
-      printf ("%s:%d", invmergerules[rule], countmarules[rule]);
+      if (globals.rulenames == RULENAMES_NEW) 
+          printf ("%s:%d", invmergerulesnn[rule], countmarules[rule]);
+        else
+          printf ("%s:%d", invmergerules[rule], countmarules[rule]);
       if (quiet == 0) printf (")\n");
         else printf (" ");
     }

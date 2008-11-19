@@ -59,6 +59,7 @@ int doretagregions = 1;
 int finfinity = 0;
 int mendesge = HGE_TEXT;
 
+struct global_data globals;
 struct tagged_data user_data;
 
 int
@@ -77,8 +78,19 @@ main (int argc, char *argv[])
   struct arc *a, *a2;
 
   user_data.mrnum = user_data.manum = 0;
+  globals.rulenames = 0;
   for (i = 1; i < argc; i++)
   {
+    if (strcmp(argv[i],"--newnames") == 0)
+    {
+      globals.rulenames = RULENAMES_NEW;
+      continue;
+    }
+    if (strcmp(argv[i],"--oldnames") == 0)
+    {
+      globals.rulenames = RULENAMES_OLD;
+      continue;
+    }
     if (strcmp(argv[i],"-r") == 0 || strcmp(argv[i],"--region") == 0)
     {
       user_data.region[user_data.mrnum] = strtol (argv[++i], &endch, 10);
@@ -217,6 +229,7 @@ main (int argc, char *argv[])
       printf ("\n  if file is not given, description is taken from standard input\n");
       exit (0);
     }
+    if (globals.rulenames == 0) globals.rulenames = RULENAMES_OLD;
     if (infile)
     {
       printf ("Too many arguments: %s\n", argv[i]);

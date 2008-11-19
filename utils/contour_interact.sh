@@ -2,11 +2,14 @@
 #
 example=$1
 
+#ns="--oldnames"
+ns="--newnames"
+
 showcontouroptions="--steps 4"
 
 function listma ()
 {
-  eval $commandchain | contour listma 2>/dev/null
+  eval $commandchain | contour $ns listma 2>/dev/null
 }
 
 function listwr ()
@@ -127,7 +130,7 @@ do
   fi
   buildcommandchain
   applicablesimple=`eval $commandchain | contour testallrules 2>/dev/null | tail -1`
-  applicablema=`eval $commandchain | contour listma -q 2>/dev/null | tail -1`
+  applicablema=`eval $commandchain | contour $ns listma -q 2>/dev/null | tail -1`
   applicablewr=`eval $commandchain | contour listwr -q 2>/dev/null | tail -1`
   applicablest=`eval $commandchain | contour listinvcn1 -q 2>/dev/null | tail -1`
   applicablepu=`eval $commandchain | contour listinvcn3 -q 2>/dev/null | tail -1`
