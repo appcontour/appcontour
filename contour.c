@@ -80,7 +80,9 @@ main (int argc, char *argv[])
   struct arc *a, *a2;
 
   user_data.mrnum = user_data.manum = 0;
-  globals.rulenames = 0;
+  globals.rulenames = RULENAMES_NEW;
+  if (getenv ("APPCONTOUR_OLDNAMES")) 
+    globals.rulenames = RULENAMES_OLD;
   for (i = 1; i < argc; i++)
   {
     if (strcmp(argv[i],"--newnames") == 0)
@@ -238,7 +240,6 @@ main (int argc, char *argv[])
       printf ("\n if file is not given, description is taken from standard input\n");
       exit (0);
     }
-    if (globals.rulenames == 0) globals.rulenames = RULENAMES_OLD;
     if (infile)
     {
       printf ("Too many arguments: %s\n", argv[i]);

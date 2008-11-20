@@ -1,5 +1,5 @@
 #
-# test sulla regola inversa invc1
+# test sulla regola inversa invl (lip)
 #
 # questo provoca la scrittura di una lista di tutte le
 # possibili applicazioni di mergearcs:
@@ -10,4 +10,4 @@
 #
 # un esempio piu' complessi di invc1
 ./contour wrinkle examples/torus2.morse -r 4:1
-./contour rule invc1:1 examples/torus2.morse
+./contour rule invl:1 examples/torus2.morse

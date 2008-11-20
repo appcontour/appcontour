@@ -1,21 +1,22 @@
 #
+# test sulle regole inverse invK0-invK2 e invB
 # test sulle regole inverse invN1-invN4 e invC2
 #
 # questo provoca la scrittura di una lista di tutte le
 # possibili applicazioni di mergearcs:
-./contour applyrule n4 examples/torus2.morse | ./contour listma
+./contour applyrule k0 examples/torus2.morse | ./contour listma
 #
-# un semplice esempio di invN1 su due S1 disgiunti:
+# un semplice esempio di invK2 su due S1 disgiunti:
 ./contour mergearcs examples/disjoint_spheres.morse -r 0 -a 1 -a 2
 #
-# un esempio piu' complessi di invN1
-./contour applyrule n4 examples/torus2.morse | ./contour mergearcs -r 2 -a 2:0 -a 2:1 --ti 1
-# invN4
-./contour applyrule n4 examples/torus2.morse | ./contour mergearcs -r 1 -a 2:0 -a 2:2
-# invN2
-./contour applyrule n4 examples/torus2.morse | ./contour mergearcs -r 2 -a 1:0 -a 2:2
-# invN3
-./contour applyrule n4 examples/torus2.morse | ./contour mergearcs -r 2 -a 2:0 -a 1:0
-# invC2
+# un esempio piu' complessi di invK2
+./contour applyrule k0 examples/torus2.morse | ./contour mergearcs -r 2 -a 2:0 -a 2:1 --ti 1
+# invK0
+./contour applyrule k0 examples/torus2.morse | ./contour mergearcs -r 1 -a 2:0 -a 2:2
+# invK1
+./contour applyrule k0 examples/torus2.morse | ./contour mergearcs -r 2 -a 1:0 -a 2:2
+# invK1B
+./contour applyrule k0 examples/torus2.morse | ./contour mergearcs -r 2 -a 2:0 -a 1:0
+# invB 
 ./contour mergearcs examples/hill.morse -r 3 -a 4:1 -a 3:0
 ./contour mergearcs examples/hill.morse -r 3 -a 4:0 -a 4:1
