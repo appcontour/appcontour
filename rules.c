@@ -79,6 +79,10 @@ apply_rule (char *rule, struct sketch *sketch)
   else if (strcasecmp (rule, "b") == 0) res = rule_c2 (sketch, rcount);
   else if (strcasecmp (rule, "s") == 0) res = rule_cn1 (sketch, rcount);
   else if (strcasecmp (rule, "c") == 0) res = rule_cn3 (sketch, rcount);
+  else if (strcasecmp (rule, "cr0l") == 0) res = rule_cn2l (sketch, rcount);
+  else if (strcasecmp (rule, "cr0r") == 0) res = rule_cn2r (sketch, rcount);
+  else if (strcasecmp (rule, "cr0lb") == 0) res = rule_cn2lb (sketch, rcount);
+  else if (strcasecmp (rule, "cr0rb") == 0) res = rule_cn2rb (sketch, rcount);
   else if ((code = lookup_mergearcs (rule))) 
        res = rule_mergearcs (sketch, code, rcount);
   else if (strcasecmp (rule, "invc1") == 0) 
@@ -148,6 +152,10 @@ testallrules (struct sketch *sketch)
     exitcode = testsinglerule ("S", rule_cn1, exitcode, sketch);
     exitcode = testsinglerule ("C", rule_cn3, exitcode, sketch);
     exitcode = testsinglerule ("TI", rule_t1, exitcode, sketch);
+    exitcode = testsinglerule ("CR0L", rule_cn2l, exitcode, sketch);
+    exitcode = testsinglerule ("CR0R", rule_cn2r, exitcode, sketch);
+    exitcode = testsinglerule ("CR0LB", rule_cn2lb, exitcode, sketch);
+    exitcode = testsinglerule ("CR0RB", rule_cn2rb, exitcode, sketch);
   } else {
     exitcode = testsinglerule ("N5", rule_n5, exitcode, sketch);
     exitcode = testsinglerule ("C1", rule_c1, exitcode, sketch);
@@ -155,14 +163,14 @@ testallrules (struct sketch *sketch)
     exitcode = testsinglerule ("CN1", rule_cn1, exitcode, sketch);
     exitcode = testsinglerule ("CN3", rule_cn3, exitcode, sketch);
     exitcode = testsinglerule ("T1", rule_t1, exitcode, sketch);
+    exitcode = testsinglerule ("CN2L", rule_cn2l, exitcode, sketch);
+    exitcode = testsinglerule ("CN2R", rule_cn2r, exitcode, sketch);
+    exitcode = testsinglerule ("CN2LB", rule_cn2lb, exitcode, sketch);
+    exitcode = testsinglerule ("CN2RB", rule_cn2rb, exitcode, sketch);
   }
   exitcode = testsinglerule ("CR2", rule_cr2, exitcode, sketch);
   exitcode = testsinglerule ("A1", rule_a1, exitcode, sketch);
   exitcode = testsinglerule ("A2", rule_a2, exitcode, sketch);
-  exitcode = testsinglerule ("CN2L", rule_cn2l, exitcode, sketch);
-  exitcode = testsinglerule ("CN2R", rule_cn2r, exitcode, sketch);
-  exitcode = testsinglerule ("CN2LB", rule_cn2lb, exitcode, sketch);
-  exitcode = testsinglerule ("CN2RB", rule_cn2rb, exitcode, sketch);
   exitcode = testsinglerule ("CR3L", rule_cr3l, exitcode, sketch);
   exitcode = testsinglerule ("CR3R", rule_cr3r, exitcode, sketch);
   exitcode = testsinglerule ("CR1", rule_cr1, exitcode, sketch);
@@ -1785,7 +1793,7 @@ remove_cusp (struct region *r, struct sketch *sketch)
 }
 
 /*
- * applicazione mossa CR3 = C2^{-1} + CN2R
+ * applicazione mossa CR3 = C2^{-1} + CR0R (ex CN2R)
  * rimozione di un nodo a favore di due cuspidi;
  * la struttura e' piuttosto complicata...
  */

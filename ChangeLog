@@ -1,3 +1,23 @@
+2008-11-20: new names for simple rules (and their inverse) is now
+	the default.  The environment variable "APPCONTOUR_OLDNAMES"
+	can be set to a nonempty value to force use of old names
+	(or use the option --oldnames).  Here is the correspondence:
+	K0    = N4  (tangency)
+	K1    = N2
+	K1B   = N3
+	K2    = N1
+	T     = N5  (triple point)
+	L     = C1  (lip)
+	B     = C2  (beak-to-beak)
+	S     = CN1 (swallowtail)
+	C     = CN3 (cusp-crossing)
+
+	TI    = T1  (transfer-island)
+	CR0L  = CN2L
+	CR0R  = CN2R
+	CR0LB = CN2LB
+	CR0RB = CN2RB
+
 2008-11-16: added cut&paste: add sphere (add a positive S1)
 	punch hole (add a negative S1), commands are respectively
 	"addsphere" and "punchhole" (option -r x:y must be used

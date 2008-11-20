@@ -71,7 +71,7 @@ main (int argc, char *argv[])
   int ori = 0, i, count, action=ACTION_NONE, res, ccid = 0;
   unsigned int rndseed = 0;
   int newextregion = 0;
-  char rule[10], *endch;
+  char rule[10], *endch, *envvar;
   FILE *infile = 0;
   struct mendesgraph *mendes;
   struct region *r;
@@ -81,7 +81,7 @@ main (int argc, char *argv[])
 
   user_data.mrnum = user_data.manum = 0;
   globals.rulenames = RULENAMES_NEW;
-  if (getenv ("APPCONTOUR_OLDNAMES")) 
+  if ((envvar = getenv ("APPCONTOUR_OLDNAMES")) && *envvar) 
     globals.rulenames = RULENAMES_OLD;
   for (i = 1; i < argc; i++)
   {
