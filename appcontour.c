@@ -11,6 +11,65 @@ struct border *reverse_border (struct border *);
 /* fine prototipi */
 
 /*
+ * list occurences of horizontal surgery
+ */
+
+int
+list_hor_sur (struct sketch *s, int ori)
+{
+  struct region *r;
+  struct borderlist *bl1, *bl2;
+  struct border *bp1, *bp2, *bpstart1, *bpstart2, *bpn1;
+  struct arc *a1, *a2;
+  int i1, i2, huffman;
+
+  huffman = s->huffman_labelling;
+  for (r = s->regions; r; r = r->next)
+  {
+    if (! quiet) printf ("Region %d:\n", r->tag);
+    for (bl1 = r->border; bl1; bl1 = bl1->next)
+    {
+      bpstart1 = bl1->sponda;
+      if (bpstart1 == 0) continue;
+      bp1 = bpstart1;
+      do {
+        if (bp1->orientation * ori <= 0) continue;
+ 	a1 = bp1->info;
+        bpn1 = bp1->next;
+        for (i1 = 0; i1 < a1->dvalues; i1++) {
+          for (i2 = i1 + 1; i2 < a1->dvalues; i2++) {
+	    if (huffman && a1->depths[i1] != a1->depths[i2]) continue;
+	    printf ("-a %d:%d -a %d:%d\n", a1->tag, i1, a1->tag, i2);
+	  }
+	  for (bp2 = bpn1; bp2 != bpstart1; bp2 = bp2->next) {
+            if (bp2->orientation * ori <= 0) continue;
+	    a2 = bp2->info;
+	    for (i2 = 0; i2 < a2->dvalues; i2++) {
+	      if (huffman && a1->depths[i1] != a2->depths[i2]) continue;
+              printf ("-a %d:%d -a %d:%d\n", a1->tag, i1, a2->tag, i2);
+	    }
+	  }
+	  for (bl2 = bl1->next; bl2; bl2 = bl2->next) {
+	    bpstart2 = bl2->sponda;
+	    if (bpstart2 == 0) continue;
+	    bp2 = bpstart2;
+	    do {
+	      if (bp2->orientation *ori <= 0) continue;
+	      a2 = bp2->info;
+	      for (i2 = 0; i2 < a2->dvalues; i2++) {
+	        if (huffman && a1->depths[i1] != a2->depths[i2]) continue;
+		printf ("-a %d:%d -a %d:%d\n", a1->tag, i1, a2->tag, i2);
+	      }
+	    } while (bp2 = bp2->next, bp2 != bpstart2);
+	  }
+	}
+      } while (bp1 = bp1->next, bp1 != bpstart1);
+    }
+  }
+  return (1);
+}
+
+/*
  * find region data from tag
  */
 

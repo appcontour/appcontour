@@ -188,6 +188,7 @@ int count_hidden_arcs (struct sketch *s1);
 
 /* prototipi appcontour */
 
+int list_hor_sur (struct sketch *s, int ori);
 struct region *findregion (struct sketch *s, int tag);
 struct arc *findarc (struct sketch *s, int tag);
 void showinfo (struct sketch *sketch);

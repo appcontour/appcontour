@@ -542,8 +542,9 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     if (user_data.manum < 2) {
-      fprintf (stderr, "You must specify two arcs using option -a\n");
-      exit(15);
+      if (! quiet) printf ("You must specify two arcs using option -a:\n");
+      res = list_hor_sur (sketch, ori);
+      break;
     }
     a = findarc (sketch, user_data.arc[0]);
     a2 = findarc (sketch, user_data.arc[1]);
