@@ -69,14 +69,17 @@ readmorse (FILE *file)
   }
   if (sketch->regions->next == 0)
   {
-    fprintf(stderr, "Empty contour is not allowed\n");
-    freesketch(sketch);
-    return(0);
+    fprintf(stderr, "Warning: empty contour\n");
+    sketch->isempty = 1;
+    has_huffman_labelling++;
+    assert (sketch->regions->border->sponda == infborder);
+    assert (sketch->regions->next == 0);
+    assert (sketch->regions->border->next == 0);
   }
   assert (actregionsnum == 1);
   assert (infborder->next == infborder);
   assert (infborder->info == &infinity);
-  for (region = sketch->regions; region->next; region = region->next)
+  for (region = sketch->regions; region; region = region->next)
   {
     if (region->border->sponda == infborder)
     {

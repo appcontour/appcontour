@@ -184,6 +184,7 @@ canonify (struct sketch *sketch)
   int tag;
 
   if (debug) printf ("canonify arcs...\n");
+  if (sketch->isempty) return;
   for (arc = sketch->arcs; arc; arc = arc->next)
   {
     canonifyarc (arc);
@@ -313,6 +314,7 @@ sortarcs (struct sketch *s)
   struct arc *arc;
   int tag = 1;
 
+  if (s->isempty) return;
  /*
   * usiamo un metodo naive con complessita' n^2!
   */
@@ -1349,6 +1351,7 @@ newsketch ()
   s->regioncount = 0;
   s->cc_tagged = 0;
   s->huffman_labelling = 0;
+  s->isempty = 0;  /* we assume that empty is an exceptional situation */
   return (s);
 }
 
