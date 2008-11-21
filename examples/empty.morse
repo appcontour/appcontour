@@ -1,0 +1,6 @@
+#
+# il vuoto e' un particolare caso di contorno
+# apparente (con huffman labelling)
+#
+morse {
+}

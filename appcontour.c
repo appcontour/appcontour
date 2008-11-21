@@ -153,7 +153,8 @@ showinfo (struct sketch *sketch)
   numlcomponents = count_link_components (sketch);
 
   if (! quiet)
-    printf ("This is an apparent contour %s Huffman labelling\n", 
+    printf ("This is an%s apparent contour %s Huffman labelling\n", 
+      sketch->isempty?(" EMPTY"):(""),
       sketch->huffman_labelling?("with"):("without"));
     else printf ("Huffman labelling:  %d\n", 
       sketch->huffman_labelling?1:0);
@@ -874,6 +875,7 @@ count_connected_components (struct sketch *sketch)
   struct region *r;
   int i, ccidmax = -1, ccidmin = BIG_INT;
 
+  if (sketch->isempty) return (0);
   if (tag_connected_components (sketch) < 0) return (-1);
 
   for (r = sketch->regions; r; r = r->next)

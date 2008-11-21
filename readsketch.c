@@ -55,6 +55,10 @@ readsketch (FILE *file)
     if (debug) printsketch (sketch);
   }
   sketch->huffman_labelling = has_huffman_labelling;
+  if (sketch->regions->next == 0) {
+    fprintf (stderr, "Warning: empty sketch!\n");
+    sketch->isempty = sketch->huffman_labelling = 1;
+  }
   if (debug) printsketch (sketch);
   postprocesssketch (sketch);
   return (sketch);
