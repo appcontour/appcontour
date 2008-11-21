@@ -120,6 +120,7 @@ testallrules (struct sketch *sketch)
   int res;
 
   printf ("Rules that apply:\n");
+  if (sketch->isempty) { printf ("\n"); return (1); }
   for (ru14 = 1; ru14 <=4; ru14++)
   {
     rcount = 1;
