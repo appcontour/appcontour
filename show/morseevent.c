@@ -141,6 +141,10 @@ getmorseeventl (FILE *filein, struct morseevent *morseevent)
 
   switch (tok)
   {
+    case TOK_RBRACE:
+      morseevent->type = ME_RBRACE;
+      break;
+
     case TOK_SEMICOLON:
       tok = gettokens (filein);
       if (tok == TOK_RBRACE)

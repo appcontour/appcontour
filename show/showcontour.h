@@ -52,6 +52,7 @@ struct polyline {
   double *rgradx;
   double *rgrady;
   int rgraddim;
+  int isempty;
 };
 
 /*

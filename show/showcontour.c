@@ -116,6 +116,7 @@ main (int argc, char *argv[])
   tok = gettoken (filein);
   if (tok != TOK_RBRACE) exit (1);
 
+  if (contour->isempty) {grmain (); return (0);}
   reorder_node_ptr (contour);
   if (dodoptimize) doptimize (contour);
 
@@ -1305,6 +1306,7 @@ buildpolyline (FILE *filein)
   contour->rgradx = contour->rgrady = 0;
   contour->rgraddim = 0;
   contour->rentime = contour->rgradtime = -1.0;
+  contour->isempty = 0;
 
   contour->h = dx = dy = 1.0;    /* aggiusto alla fine */
   i = 0;            /* conta gli eventi su ciascuna riga */
@@ -1388,6 +1390,9 @@ buildpolyline (FILE *filein)
     }
     switch (morseevent.type)
     {
+      case ME_RBRACE:
+	contour->isempty = 1;
+	ungettoken (TOK_RBRACE);
       case ME_LASTROW:
         goon = 0;
         i--;
@@ -1588,6 +1593,7 @@ renormalize (struct polyline *contour)
   struct vertex *v;
   double xmax, ymax, xmin, ymin, dx, dy;
 
+  assert (contour->isempty == 0);
   /* compute containing rectangle */
   xmax = xmin = contour->vertex->x;
   ymax = ymin = contour->vertex->y;
@@ -1756,6 +1762,7 @@ grmain (void)
   int i;
   static double incrtime = 0.25;
 
+  if (contour->isempty) steps = 0;
   switch (gr_id)
   {
     case GO_XFIG:
