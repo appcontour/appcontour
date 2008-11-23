@@ -49,10 +49,17 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
   double arrowwidth, arrowheight;
   double stv, arrowthick;
 
-  fprintf (file, "#FIG 3.2\n");
+  fprintf (file, "#FIG 3.2  produced by showcontour\n");
   fprintf (file, "Landscape\nCenter\nInches\nLetter\n100.00\nSingle\n");
   fprintf (file, "-2\n1200 2\n");
 
+  if (contour->isempty) {
+    fprintf (file, "2 2 0 1 0 7 50 -1 -1 0.000 0 0 -1 0 0 5\n");
+    fprintf (file, "   150 150 8250 150 8250 8250 150 8250 150 150\n");
+    fprintf (file, "2 2 0 1 0 7 50 -1 -1 0.000 0 0 -1 0 0 5\n");
+    fprintf (file, "   3450 3975 4725 3975 4725 4650 3450 4650 3450 3975\n");
+    fprintf (file, "4 0 0 50 -1 0 24 0.0000 2 360 1110 3525 4425 Empty\\001\n");
+  }
   //init_rarc (contour);
   maxx = -1000.0;
   maxy = -1000.0;
