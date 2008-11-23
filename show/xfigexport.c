@@ -49,7 +49,8 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
   double arrowwidth, arrowheight;
   double stv, arrowthick;
 
-  fprintf (file, "#FIG 3.2  produced by showcontour\n");
+  fprintf (file, "#FIG 3.2  produced by showcontour version %s\n", 
+                 PACKAGE_VERSION);
   fprintf (file, "Landscape\nCenter\nInches\nLetter\n100.00\nSingle\n");
   fprintf (file, "-2\n1200 2\n");
 
