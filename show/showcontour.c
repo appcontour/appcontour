@@ -116,7 +116,6 @@ main (int argc, char *argv[])
   tok = gettoken (filein);
   if (tok != TOK_RBRACE) exit (1);
 
-  if (contour->isempty) {grmain (); return (0);}
   reorder_node_ptr (contour);
   if (dodoptimize) doptimize (contour);
 
@@ -1593,7 +1592,7 @@ renormalize (struct polyline *contour)
   struct vertex *v;
   double xmax, ymax, xmin, ymin, dx, dy;
 
-  assert (contour->isempty == 0);
+  if (contour->isempty) return;
   /* compute containing rectangle */
   xmax = xmin = contour->vertex->x;
   ymax = ymin = contour->vertex->y;
