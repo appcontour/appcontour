@@ -1499,7 +1499,6 @@ spezza_bordo (struct border *bp, int cusppos, struct sketch *sketch,
   if (removecusp == -1) assert (bp->orientation > 0);
   if (arc->endpoints == 0)  /* questo e' un s1 */
   {
-    assert (sketch->huffman_labelling); /* TODO! */
     /* in questo caso non si creano altri archi e bordi.
      * l'apertura di un S1 aumenta di uno il numero di
      * valori di d, anche se il dimensionamento rimane
@@ -1516,19 +1515,21 @@ spezza_bordo (struct border *bp, int cusppos, struct sketch *sketch,
      * nel caso arc->cusps == 0 e removecusp = 0
      */
     arc->cusps -= removecusp;
-    arc->depthsdim -= removecusp;
     arc->dvalues -= removecusp;
-    newdepths = (int *) malloc (arc->depthsdim * sizeof (int));
-    if (removecusp < 0) newdepths[0] = -9999;
-    for (i = 0; i < arc->depthsdim; i++)
-    {
-      if (i + removecusp < 0) continue;
-      j = i + cusppos + removecusp;
-      if (j >= arc->depthsdim) j -= arc->depthsdim - 1 + removecusp;
-      newdepths[i] = arc->depths[j];
+    if (sketch->huffman_labelling) {
+      arc->depthsdim -= removecusp;
+      newdepths = (int *) malloc (arc->depthsdim * sizeof (int));
+      if (removecusp < 0) newdepths[0] = -9999;
+      for (i = 0; i < arc->depthsdim; i++)
+      {
+        if (i + removecusp < 0) continue;
+        j = i + cusppos + removecusp;
+        if (j >= arc->depthsdim) j -= arc->depthsdim - 1 + removecusp;
+        newdepths[i] = arc->depths[j];
+      }
+      free (arc->depths);
+      arc->depths = newdepths;
     }
-    free (arc->depths);
-    arc->depths = newdepths;
     arc->endpoints = 1;
   } else {
     /* in questo caso si crea un nuovo arco e due nuove sponde */

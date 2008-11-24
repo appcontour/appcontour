@@ -1,3 +1,6 @@
+2008-11-24: fixed gluearcs/pinchneck for contours without huffman
+	labelling.
+
 2008-11-20: new names for simple rules (and their inverse) is now
 	the default.  The environment variable "APPCONTOUR_OLDNAMES"
 	can be set to a nonempty value to force use of old names
