@@ -1,0 +1,653 @@
+#!/bin/bash
+#
+# this is just a "proof of concept" of a possible use of appcontour
+# in a web interface.
+# This script MUST be changed as appropriate and used as a cgi-bin
+# script in an apache environment
+#
+
+#export APPCONTOUR_OLDNAMES="1"
+base="/tmp/contour"
+repo="/home/export/paolini/webcontour"
+contour="/usr/local/bin/contour"
+showcontour="/usr/local/bin/showcontour"
+
+function removeifnoaction ()
+{
+  flist=$*
+  for file in $flist
+  do
+    # rm $file
+    if ! grep -q ACTION $file; then rm $file; fi
+  done
+}
+
+function headerpre ()
+{
+  title="$1"
+  cat <<EOT
+    <h1>$title</h1>
+    <img src="e.png" align="right">
+    <pre>
+EOT
+}
+
+function footerpre ()
+{
+  echo "</pre>"
+}
+
+function htmlize ()
+{
+  headerpre "Inverse rules"
+  while read line
+  do
+    if echo "$line" | grep -q "(.*)"
+    then
+      rules=`echo "$line" | cut -f1 -d')' | cut -f2 -d'('`
+      for rule in $rules
+      do
+        rulel=`echo $rule | tr ":" "_"`
+        line=`echo "$line" | sed -e "s*$rule*<a href=\"$rulel/\">$rule</a>*"`
+      done
+      echo -n '<!-- ACTION -->'
+    fi
+    echo "$line"
+  done
+  footerpre
+}
+
+function removesphere ()
+{
+  headerpre "Remove sphere"
+  while read line
+  do
+    region=$line
+    echo -n '<!-- ACTION -->'
+    echo -n '<a href="removesphere.'
+    echo -n "$region/"
+    echo -n '">'
+    echo "Region $region is a sphere</a>"
+  done
+  footerpre
+}
+
+function removehole ()
+{
+  headerpre "Remove hole"
+  while read line
+  do
+    region=$line
+    echo -n '<!-- ACTION -->'
+    echo -n '<a href="removehole.'
+    echo -n "$region/"
+    echo -n '">'
+    echo "Region $region is a hole</a>"
+  done
+  footerpre
+}
+
+function pinchneck ()
+{
+  headerpre "Pinch neck"
+  while read a b c d
+  do
+    if [ "$a" = "Region" ]; then echo "$a $b $c $d"; continue; fi
+    if [ "$a" != "-a" ]; then continue; fi
+    a1=`echo "$b" | tr ':' '_'`
+    a2=`echo "$d" | tr ':' '_'`
+    echo -n '<!-- ACTION -->'
+    echo -n '<a href="pinchneck.'
+    echo -n "${a1}.${a2}/"
+    echo -n '">'
+    echo "-a $b -a $d</a>"
+  done
+  footerpre
+}
+
+function gluearcs ()
+{
+  headerpre "Glue arcs"
+  while read a b c d
+  do
+    if [ "$a" = "Region" ]; then echo "$a $b $c $d"; continue; fi
+    if [ "$a" != "-a" ]; then continue; fi
+    a1=`echo "$b" | tr ':' '_'`
+    a2=`echo "$d" | tr ':' '_'`
+    echo -n '<!-- ACTION -->'
+    echo -n '<a href="gluearcs.'
+    echo -n "${a1}.${a2}/"
+    echo -n '">'
+    echo "-a $b -a $d</a>"
+  done
+  footerpre
+}
+
+function adds1plus ()
+{
+  headerpre "Add sphere"
+  while read line
+  do
+    region=`echo "$line" | cut -f1 -d:`
+    strata=`echo "$line" | cut -f2 -d:`
+    if [ ! -f ishuffman ]; then strata="0"; fi
+    for i in `seq 0 $strata`
+    do
+      echo -n '<!-- ACTION -->'
+      echo -n '<a href="addsphere.'
+      echo -n "$region"
+      if [ -f ishuffman ]; then echo -n ".$i"; fi
+      echo -n '/">'
+      echo -n "Region $region"
+      if [ -f ishuffman ]; then echo -n ", d $i"; fi
+      echo "</a>"
+    done
+  done
+  footerpre
+}
+
+function adds1minus ()
+{
+  headerpre "Punch hole"
+  while read line
+  do
+    region=`echo "$line" | cut -f1 -d:`
+    strata=`echo "$line" | cut -f2 -d:`
+    if [ "$strata" -lt "2" ]; then continue; fi
+    strata=$[ $strata - 2 ]
+    if [ ! -f ishuffman ]; then strata="0"; fi
+    for i in `seq 0 $strata`
+    do
+      echo -n '<!-- ACTION -->'
+      echo -n '<a href="punchhole.'
+      echo -n "$region"
+      if [ -f ishuffman ]; then echo -n ".$i"; fi
+      echo -n '/">'
+      echo -n "Region $region"
+      if [ -f ishuffman ]; then echo -n ", d $i"; fi
+      echo "</a>"
+    done
+  done
+  footerpre
+}
+
+function constructall ()
+{
+  if [ ! -f "e.morse" ]
+  then
+    pwd
+    echo "<br>"
+    echo "<b>INTERNAL ERROR 1"
+    echo "</html>"
+    rm *
+    exit
+  fi
+  if [ ! -f "e.fig" ]
+  then
+    lockfile efig.lock -l 60
+    $showcontour --ge xfig --skiprtime 1.5 --title e e.morse
+    rm -f efig.lock
+  fi
+  if [ ! -f "e.fig" ]
+  then
+    echo "<b>INTERNAL ERROR 2"
+    echo "</html>"
+    exit
+  fi
+  if [ ! -f "e.png" ]
+  then
+    lockfile epng.lock -l 60
+    /usr/bin/fig2dev -L png -m 0.5 e.fig e.png
+    /usr/bin/fig2dev -L png -m 0.1 e.fig et.png
+    rm -f epng.lock
+  fi
+  if $contour ishuffman -q e.morse 2>/dev/null
+  then
+    if [ ! -f ishuffman ]
+    then
+      lockfile rules.lock -l 60
+      touch ishuffman
+      rules=`$contour testallrules e.morse 2>/dev/null | grep -v "^Rules"`
+      $contour listmergearcs e.morse 2>/dev/null | htmlize >invrulesma.html
+      grep -v "INVK[012]B\?_" invrulesma.html >invrulesc2.html
+      grep -v "INVB_" invrulesma.html >invrulesnx.html
+      grep -v "INVK[01]B\?_" invrulesnx.html >invrulesn1.html
+      grep -v "INVK[12]B\?_" invrulesnx.html >invrulesn4.html
+      grep -v "INVK[02]_" invrulesnx.html >invrulesn23.html
+      removeifnoaction invrulesn23.html invrulesn4.html 
+      removeifnoaction invrulesn1.html invrulesc2.html
+      $contour listwr e.morse 2>/dev/null | htmlize >invruleswr.html
+      $contour listswallowtails e.morse 2>/dev/null |htmlize >invrulesst.html
+      $contour listpunctures e.morse 2>/dev/null | htmlize >invrulespu.html
+      removeifnoaction invrulespu.html invrulesst.html invruleswr.html
+      cc=`$contour -q countcc e.morse 2>/dev/null`
+      if [ "$cc" -gt "1" ]
+      then
+        echo "$cc" >countcc
+      fi
+      rm *.rule
+      for r in $rules
+      do
+        rmod=`echo "$r" | tr ":" "_"`
+        $contour applyrule $r e.morse | $contour printmorse >$rmod.rule
+        if [ ! -f "$rmod.rule.png" ]
+        then
+          $showcontour --ge xfig --skiprtime 1 --title $rmod.rule $rmod.rule
+          /usr/bin/fig2dev -L png -m 0.15 $rmod.rule.fig $rmod.rule.png
+        fi
+      done
+      rm -f rules.lock
+    fi
+  fi
+  $contour -q liststrata e.morse 2>/dev/null | adds1plus >addsphere.html
+  $contour -q liststrata e.morse 2>/dev/null | adds1minus >punchhole.html
+  $contour -q listholes e.morse 2>/dev/null | removehole >removehole.html
+# if necessary, this is the number of arcs in the contour
+#  narcs=`$contour -q info e.morse 2>/dev/null | grep -i "^arcs:" | tr -s ' ' | cut -f2 -d' '`
+  $contour -q listspheres e.morse 2>/dev/null | removesphere >removesphere.html
+  $contour pinchneck e.morse 2>/dev/null | pinchneck >pinchneck.html
+  $contour gluearcs e.morse 2>/dev/null | gluearcs >gluearcs.html
+# XXX lavorare qui
+  removeifnoaction punchhole.html removehole.html removesphere.html
+  removeifnoaction pinchneck.html gluearcs.html
+}
+
+path="$PATH_INFO"
+if [ -z "$path" ]
+then
+  echo "Content-Type: text/html"
+  echo "<html>"
+  echo "Non trovo path"
+  echo "</html>"
+  exit
+fi
+
+pathnos=${path%/}
+
+if [ "$pathnos" = "$path" ]
+then
+  fname=`basename $path`
+  case "$fname" in
+    cleanup)
+      pathtoremove=`dirname $path`
+      path=`dirname $pathtoremove`
+      fname=`basename $pathtoremove`
+      echo "Content-Type: text/html"
+      echo ""
+      if [ -d "${base}${pathtoremove}" ]
+      then
+	rm -r ${base}${pathtoremove}
+	echo "<h1>Cleaned</h1>"
+      else
+        echo "Cannot find example"
+      fi
+#      echo "Cleanup remove $pathtoremove, new path $path"
+      cat <<EOT
+      <a href="../">Click here</a> to go back,
+      <a href="../$fname/">or here</a> to recompute.
+EOT
+      exit
+    ;;
+  esac
+  fext=`echo "$fname" | cut -f2- -d.`
+  getsketch=""
+  getmendes=""
+  if [ "$fext" = "sketch" ]
+  then
+    getsketch="yes"
+    pathne=${path%.$fext}
+    path=${pathne}.morse
+    fext="morse"
+  fi
+  if [ "$fext" = "mendes" ]
+  then
+    getmendes="yes"
+    pathne=${path%.$fext}
+    path=${pathne}.morse
+    fext="morse"
+  fi
+  if [ -f "${base}${path}" ]
+  then
+    case "$fext" in
+      rule.png|png)
+        echo "Content-Type: image/png"
+        ;;
+      html)
+        echo "Content-Type: text/html"
+        ;;
+      morse)
+        echo "Content-Type: text/html"
+        echo ""
+        echo "<pre>"
+        if [ -n "$getsketch" ]
+        then
+          $contour print ${base}${path}
+        elif [ -n "$getmendes" ]
+        then
+          $contour --verbose mendes ${base}${path}
+        else
+          cat ${base}${path}
+        fi
+        echo "</pre>"
+        exit
+        ;;
+      *)
+      echo "Content-Type: text/plain"
+      ;;
+    esac
+    echo ""
+    cat ${base}${path}
+  fi
+  exit
+fi
+
+if [ ! -d $base ]
+then
+  lockfile /tmp/contour_mkdir.lock -l 60
+  mkdir $base
+  rm -f /tmp/contour_mkdir.lock
+fi
+
+echo "Content-Type: text/html"
+echo ""
+
+echo "<html>"
+
+null=`echo "$path" | cut -f1 -d/`
+
+if [ -n "$null" ]
+then
+  echo "Errore nell'indicazione della path"
+  echo "</html>"
+  exit
+fi
+
+category=`echo "$path" | cut -f2 -d/`
+example=`echo "$path" | cut -f3 -d/`
+pathrules=`echo "$path" | cut -f4- -d/ | tr '/' ' '`
+
+if [ -z "$category" ]
+then
+  if [ -f "$repo/HEADER.html" ]
+  then
+    cat $repo/HEADER.html
+  fi
+  echo "<ul>"
+  list=`ls $repo/`
+  for c in $list
+  do
+    if [ ! -d "$repo/$c" ]; then continue; fi
+    echo "<li><a href=\"$c/\">$c</a>"
+    if [ -f "$repo/$c/README.html" ]
+    then
+      echo "<br>"
+      cat $repo/$c/README.html
+    fi
+  done
+  echo "</ul>"
+  echo "</html>"
+  exit
+fi
+if [ ! -d "$repo/$category" ]
+then
+  echo "Invalid category: $category"
+  echo "</html>"
+  exit
+fi
+
+lf="$base/mkdir.lock"
+base="$base/$category"
+repo="$repo/$category"
+if [ ! -d "$base" ]
+then
+  lockfile $lf -l 60
+  mkdir $base
+  rm -f $lf
+fi
+
+if [ -z "$example" ]
+then
+  echo "<h1>Available examples ($category)</h1>"
+  if [ -f "$repo/HEADER.html" ]; then cat $repo/HEADER.html; fi
+#  echo "<ul>"
+  list=`ls $repo/*.morse`
+  numcols=6
+  col=0
+  echo -n '<table border="1"><col span="'
+  echo -n "$numcols"
+  echo '" align="center"><tr>'
+  for file in $list
+  do
+    col=$[ $col + 1 ]
+    bname=`basename $file ".morse"`
+#    echo "<li>"
+    echo "<th>"
+    pngfile=""
+    if [ ! -f "$base/$bname.png" ]
+    then
+      if [ -f "$repo/$bname.png" ]; then cp $repo/$bname.png $base/$bname.png; fi
+      if [ -f "$base/$bname/et.png" ]; then cp $base/$bname/et.png $base/$bname.png; fi
+    fi
+    if [ -f "$base/$bname.png" ]
+    then
+      echo "<a href=\"$bname/\">"
+      echo "<img src=\"$bname.png\" align=\"middle\" border=\"1\">"
+      echo "</a>"
+      echo "<br>"
+      echo "$bname"
+    else
+      echo "<a href=\"$bname/\">"
+      echo "$bname"
+      echo "</a>"
+    fi
+    echo "</th>"
+    if [ "$col" -ge "$numcols" ]; then echo "</tr><tr>"; col=0; fi
+  done
+  echo "</tr></table>"
+#  echo "</ul>"
+  exit
+fi
+
+if [ ! -d "$base/$example" -o ! -f "$base/$example/e.morse" ]
+then
+  if [ ! -f "$repo/$example.morse" ]
+  then
+    echo "<b>Example $example not found in local repository"
+    echo "</html>"
+    exit
+  fi
+  lockfile $base/mkdir.lock -l 60
+  if [ ! -d "$base/$example" ]
+  then
+    mkdir $base/$example
+  fi
+  cp $repo/$example.morse $base/$example/e.morse
+  rm -f $base/mkdir.lock
+fi
+echo '<a href="../">[BACK]</a><a href="cleanup">[CLEANUP]</a>'
+echo "<h1>$path</h1>"
+
+cd $base/$example
+
+constructall
+
+for rule in $pathrules
+do
+  if [ ! -d "$rule" ]
+  then
+    lockfile mkdir.lock -l 60
+    mkdir $rule
+    rm -f mkdir.lock
+  fi
+  cd $rule
+  if [ ! -f "e.morse" ]
+  then
+    lockfile cp.lock -l 60
+    action=`echo "$rule" | cut -f1 -d.`
+    arg1=`echo "$rule" | cut -s -f2 -d.`
+    arg2=`echo "$rule" | cut -s -f3 -d.`
+    start3=`echo "$action" | cut -c1-3`
+    if [ "$start3" = "INV" ]; then saction=$action; action="INV"; fi
+    case $action in
+      addsphere|punchhole)
+	rarg="${arg1}"
+	if [ -f ../ishuffman ]; then rarg="${arg1}:${arg2}"; fi
+        $contour $action -r $rarg ../e.morse | $contour printmorse >e.morse
+      ;;
+      removesphere|removehole)
+        $contour $action -r ${arg1} ../e.morse | $contour printmorse >e.morse
+      ;;
+      extractcc|removecc)
+        $contour $action $arg1 ../e.morse | $contour printmorse >e.morse
+      ;;
+      pinchneck|gluearcs)
+	a1=`echo $arg1 | tr '_' ':'`
+	a2=`echo $arg2 | tr '_' ':'`
+	$contour $action -a $a1 -a $a2 ../e.morse | $contour printmorse >e.morse
+      ;;
+      frontback|leftright)
+        $contour $action ../e.morse | $contour printmorse >e.morse
+      ;;
+      INV)
+	rule=`echo "$saction" | tr "_" ":"`
+        $contour rule $rule ../e.morse | $contour printmorse >e.morse
+      ;;
+      *)
+        if [ -f ../$rule.rule ]
+        then
+          cp ../$rule.rule e.morse
+        else
+          echo "Cannot find rule result"
+        fi
+      ;;
+    esac
+    rm -f cp.lock
+  fi
+  constructall
+done
+
+echo '<img src="e.png" align="right">'
+
+if [ -f "ishuffman" ]
+then
+  list=`ls *.rule.png`
+  if [ -n "$list" ]
+  then
+    echo "<h2>Applicable direct rules (3D deformations):</h2>"
+
+    cols=6
+    colcnt=0
+    echo "<table><tr>"
+    for f in $list
+    do
+      if [ "$colcnt" -ge "$cols" ]
+      then
+        echo "</tr><tr>"
+        colcnt=0
+      fi
+      colcnt=$[ $colcnt + 1 ]
+      bname=`basename $f ".rule.png"`
+      rname=`echo "$bname" | tr '_' ':'`
+      echo "<td>"
+      echo "<a href=\"$bname/\"><img src=\"$f\" alt=\"$rname\" border=\"1\"></a>"
+      echo "<br><b>$rname</b>"
+      echo "</td>"
+    done
+    echo "</tr></table>"
+  else
+    echo "<h2>No applicable direct rule!</h2>"
+  fi
+fi
+echo "<hr>"
+
+if [ -f "ishuffman" ]
+then
+  cat <<EOT
+    <h2>Inverse rules (3D deformations):</h2>
+    <ul>
+EOT
+  if [ -f "invrulesn1.html" -o -f "invrulesn23.html" -o -f "invrulesn4.html" ]
+  then
+    echo "<li>"
+    if [ -f "invrulesn4.html" ]
+    then echo '  <a href="invrulesn4.html">INVK0</a>,'; fi
+    if [ -f "invrulesn23.html" ]
+    then echo '  <a href="invrulesn23.html">INVK1, INVK1B</a>,'; fi
+    if [ -f "invrulesn1.html" ]
+    then echo '  <a href="invrulesn1.html">INVK2</a>'; fi
+    if [ -f "invruleswr.html" ]
+    then echo '<li><a href="invruleswr.html">INVL</a>  (lip)'; fi
+    if [ -f "invrulesc2.html" ]
+    then echo '<li><a href="invrulesc2.html">INVB</a>  (beak-to-beak)'; fi
+  fi
+  if [ -f "invrulesst.html" ]
+  then echo '<li><a href="invrulesst.html">INVS</a> (swallowtail)'; fi
+  if [ -f "invrulespu.html" ]
+  then echo '<li><a href="invrulespu.html">INVC</a> (cusp-crossing)'; fi
+  echo "</ul><hr>"
+fi
+if [ -f "ishuffman" ]
+then
+  echo "The following transformations DO NOT correspond to a deformation of the surface!"
+  echo "<h2>3D cut/paste and connected components:</h2>"
+else
+  echo "<h2>Cut and paste:</h2>"
+fi
+echo "<ul>"
+if [ -f "punchhole.html" ]
+then
+  echo '<li><a href="punchhole.html">Punch a hole</a>'
+  if [ -f "removehole.html" ]
+  then
+    echo ' - <a href="removehole.html">Remove a hole</a>'
+  fi
+fi
+if [ -f "addsphere.html" ]
+then
+  echo '<li><a href="addsphere.html">Add a sphere</a>'
+  if [ -f "removesphere.html" ]
+  then
+    echo ' - <a href="removesphere.html">Remove a sphere</a>'
+  fi
+fi
+if [ -f "gluearcs.html" ]
+then
+  echo '<li><a href="gluearcs.html">Glue arcs</a>'
+  if [ -f "pinchneck.html" ]
+  then
+    echo ' - <a href="pinchneck.html">Pinch neck</a>'
+  fi
+fi
+if [ -f "countcc" ]
+then
+  cc=`cat countcc`
+  for i in `seq $cc`
+  do
+    echo "<li><a href=\"extractcc.$i/\">Extract</a> /"
+    echo "<a href=\"removecc.$i/\">Remove</a> connected component $i" 
+  done
+fi
+echo '</ul>'
+echo "<hr>"
+echo "<h2>3D symmetries:</h2>"
+echo '<ul>'
+echo "<li><a href=\"leftright/\">Left-Right</a> symmetry"
+echo "<li><a href=\"frontback/\">Front-Back</a> symmetry"
+echo "</ul>"
+echo "<hr>"
+
+echo "<h2>Description:</h2>"
+echo "<pre>"
+$contour info e.morse
+echo "</pre>"
+echo "<hr>"
+echo "<ul>"
+echo "<li><a href=\"e.morse\">Morse description</a>"
+echo "<li><a href=\"e.sketch\">Region description</a>"
+if [ -f "ishuffman" ]
+then
+  echo "<li><a href=\"e.mendes\">Mendes graph</a>"
+fi
+echo '</ul>'
+
+echo "</html>"
