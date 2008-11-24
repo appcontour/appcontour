@@ -1499,6 +1499,7 @@ spezza_bordo (struct border *bp, int cusppos, struct sketch *sketch,
   if (removecusp == -1) assert (bp->orientation > 0);
   if (arc->endpoints == 0)  /* questo e' un s1 */
   {
+    assert (sketch->huffman_labelling); /* TODO! */
     /* in questo caso non si creano altri archi e bordi.
      * l'apertura di un S1 aumenta di uno il numero di
      * valori di d, anche se il dimensionamento rimane
@@ -1559,28 +1560,33 @@ spezza_bordo (struct border *bp, int cusppos, struct sketch *sketch,
     }
 
     arcnew->cusps = arc->cusps - cusppos - removecusp;
-    arcnew->depthsdim = arcnew->cusps + 1;
-    arcnew->dvalues = arcnew->depthsdim;
-    newdepths = (int *) malloc (arcnew->depthsdim * sizeof (int));
-    arcnew->depths = newdepths;
+    arcnew->dvalues = arcnew->cusps + 1;
     /* devo definire endpoints, che ora e' 2 */
     arc->endpoints = arcnew->endpoints = 2;
-    if (removecusp < 0) newdepths[0] = -9999;
-    for (i = 0; i <= arcnew->cusps; i++)
-    {
-      if (i + removecusp < 0) continue;
-      newdepths[i] = arc->depths[i + cusppos + removecusp];
+    arcnew->depthsdim = arcnew->dvalues;
+    if (sketch->huffman_labelling == 0) arcnew->depthsdim = 0;
+    newdepths = (int *) malloc (arcnew->depthsdim * sizeof (int));
+    arcnew->depths = newdepths;
+    if (sketch->huffman_labelling) {
+      if (removecusp < 0) newdepths[0] = -9999;
+      for (i = 0; i <= arcnew->cusps; i++)
+      {
+        if (i + removecusp < 0) continue;
+        newdepths[i] = arc->depths[i + cusppos + removecusp];
+      }
     }
     arc->cusps = cusppos;
     arc->dvalues = cusppos + 1;
-    newdepths = (int *) malloc ((cusppos + 1) * sizeof (int));
-    for (i = 0; i < arc->cusps + 1; i++)
-    {
-      newdepths[i] = arc->depths[i];
+    if (sketch->huffman_labelling) {
+      newdepths = (int *) malloc ((cusppos + 1) * sizeof (int));
+      for (i = 0; i < arc->cusps + 1; i++)
+      {
+        newdepths[i] = arc->depths[i];
+      }
+      free (arc->depths);
+      arc->depths = newdepths;
+      arc->depthsdim = cusppos + 1;
     }
-    free (arc->depths);
-    arc->depths = newdepths;
-    arc->depthsdim = cusppos + 1;
   }
   if (debug) checkconsistency (sketch);
 }

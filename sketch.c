@@ -935,18 +935,21 @@ mergearcsc (struct arc *arc1, struct arc *arc2, int dincr,
   {
     if (debug) printf ("struttura a goccia\n");
     assert (arc1->endpoints == 1);
-    assert (arc1->depths[0] == arc1->depths[arc1->dvalues-1] + sign*dincr);
     arc1->endpoints = 0;
+    if (sketch->huffman_labelling)
+      assert (arc1->depths[0] == arc1->depths[arc1->dvalues-1] + sign*dincr);
     if (dincr != 0)          /* devo aggiungere un po' di cuspidi */
     {
-      newdepths = (int *) malloc ((arc1->cusps + 1 + dincr)*sizeof(int));
-      for (i = 0; i <= arc1->cusps; i++) newdepths[i] = arc1->depths[i];
-      for (i = 0; i < dincr; i++) newdepths[arc1->cusps + 1 + i] = 
+      if (sketch->huffman_labelling) {
+        arc1->depthsdim = arc1->cusps + 1 + dincr;
+        newdepths = (int *) malloc ((arc1->depthsdim)*sizeof(int));
+        for (i = 0; i <= arc1->cusps; i++) newdepths[i] = arc1->depths[i];
+        for (i = 0; i < dincr; i++) newdepths[arc1->cusps + 1 + i] = 
                          newdepths[arc1->cusps + i] + sign;
-      free (arc1->depths);
-      arc1->depths = newdepths;
+        free (arc1->depths);
+        arc1->depths = newdepths;
+      }
       arc1->cusps += dincr;
-      arc1->depthsdim = arc1->cusps + 1;
       arc1->dvalues += dincr;
     }
     arc1->dvalues--;
@@ -957,19 +960,21 @@ mergearcsc (struct arc *arc1, struct arc *arc2, int dincr,
   /* due archi diversi */
   /* mi assicuro che le sponde non siano ancora eliminate! */
   assert (arc1->endpoints > 0 && arc2->endpoints > 0);
-  assert (arc1->depths[arc1->dvalues-1] + sign*dincr == arc2->depths[0]);
-  newdim = arc1->cusps + arc2->cusps + 1 + dincr;
-  newdepths = (int *) malloc (newdim * sizeof (int));
-  for (i = 0; i < arc1->dvalues; i++) newdepths[i] = arc1->depths[i];
-  for (i = 0; i < dincr; i++) 
-    newdepths[i + arc1->dvalues] = newdepths[i + arc1->dvalues - 1] + sign;
-  for (i = 0; i < arc2->dvalues; i++) 
-    newdepths[i + arc1->dvalues + dincr - 1] = arc2->depths[i];
+  if (sketch->huffman_labelling) {
+    assert (arc1->depths[arc1->dvalues-1] + sign*dincr == arc2->depths[0]);
+    newdim = arc1->cusps + arc2->cusps + 1 + dincr;
+    newdepths = (int *) malloc (newdim * sizeof (int));
+    for (i = 0; i < arc1->dvalues; i++) newdepths[i] = arc1->depths[i];
+    for (i = 0; i < dincr; i++) 
+      newdepths[i + arc1->dvalues] = newdepths[i + arc1->dvalues - 1] + sign;
+    for (i = 0; i < arc2->dvalues; i++) 
+      newdepths[i + arc1->dvalues + dincr - 1] = arc2->depths[i];
+    arc1->depthsdim = newdim;
+    free (arc1->depths);
+    arc1->depths = newdepths;
+  }
   arc1->cusps += arc2->cusps + dincr;
   arc1->dvalues += arc2->dvalues + dincr - 1;
-  arc1->depthsdim = newdim;
-  free (arc1->depths);
-  arc1->depths = newdepths;
   arc2->regionleft = arc2->regionright = 0;
   removearc (arc2, sketch);
 

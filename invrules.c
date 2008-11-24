@@ -55,7 +55,6 @@ gluearcs_or_pinchneck (struct sketch *s, struct arc *a1,
   if (s->huffman_labelling && a1->depths[a1l] != a2->depths[a2l])
     return (0);
 
-  assert (s->huffman_labelling);
   res = common_work_mergearcs (s, bp1, bp2, a1l, a2l, IS_SURGERY);
   return (res);
 }
@@ -883,7 +882,6 @@ common_work_mergearcs (struct sketch *s,
   assert (bp1 != bp2);
 
   if (rule == IS_SURGERY) {
-    assert (s->huffman_labelling);  //just for now!
     taglia_nodo (bp1->next, s, 0, 0);
     res = 1;
   } else if (rule == INV_C2) {
