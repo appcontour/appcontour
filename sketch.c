@@ -232,7 +232,8 @@ canonifyarc (struct arc *arc)
 
   if (debug) printf ("looking for loops with cusps...\n");
   if (arc->endpoints > 0) return;
-  if (arc->dvalues < 1) return;
+  if (arc->cusps < 1) return;
+  //if (arc->dvalues < 1) return;
   if (debug) printf ("arc %d with %d endpoints and %d d values\n",
     arc->tag, arc->endpoints, arc->dvalues);
   if (arc->dvalues > 97) {fprintf (stderr, "too many cusps..."); return;}

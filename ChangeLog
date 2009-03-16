@@ -1,3 +1,6 @@
+2009-03-16: fixed allocation problem in canonifyarc 
+	an S1 without cusps has dvalues=1 but should not be canonify
+
 2008-11-24: fixed gluearcs/pinchneck for contours without huffman
 	labelling.
 
