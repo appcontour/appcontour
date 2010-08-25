@@ -56,7 +56,7 @@ GLUTLIBS=
 AS_IF([test "x$with_glut" != xno],
       [AC_CHECK_HEADERS(GL/glut.h,
           [AC_CHECK_LIB([glut], [main],
-              [GLUTLIBS="-lglut"
+              [GLUTLIBS="-lglut -lGL"
                GLUT_CFLAGS="-I/usr/include/GL"
                AC_DEFINE([HAVE_GLUT], [1],[Define if you have glut])
                glut="yes"
