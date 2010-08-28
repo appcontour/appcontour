@@ -1,3 +1,8 @@
+2010-08-28: contour now accepts a morse description in which cusps are
+	given as morse events, rather than arc properties.  This is
+	motivated by the output of the program "visible" that computes
+	a contour with a given visible part.
+
 2009-03-16: fixed allocation problem in canonifyarc 
 	an S1 without cusps has dvalues=1 but should not be canonify
 
