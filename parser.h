@@ -42,6 +42,8 @@
 #define TOK_TAG 40
 #define KEY_CUSP 41
 #define KEY_QUOTE 42
+#define KEY_LT 43
+#define KEY_GT 44
 
 #define TOK_ERROR  9999
 #define TOK_EOF    9990

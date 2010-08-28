@@ -20,6 +20,7 @@ void readregioninfo (FILE *file, struct border *actregion);
 /* end local prototypes */
 
 static int has_huffman_labelling = 0;
+static int cusps_as_morse_events = 0;
 
 struct sketch *
 readmorse (FILE *file)
@@ -34,6 +35,7 @@ readmorse (FILE *file)
   struct borderlist *bl;
 
   infinity.tag = INFINITY_ARC;
+  cusps_as_morse_events = 0;
 
   sketch = newsketch ();
   extregion = newregion(sketch);
@@ -106,6 +108,7 @@ readrow (FILE *file, struct sketch *sketch,
   struct border *r1, *r2, *r3, *rtemp;
   struct region *r3region, *r1region;
   struct borderlist *bl, *r3bl;
+  int *newdepths;
 
   if (debug) printf ("Nuova riga, regioni attive: %d\n", actregionsnum);
   if (debug) checkconsistency (sketch);
@@ -251,23 +254,40 @@ readrow (FILE *file, struct sketch *sketch,
         }
         if (arcleft->depths && arcright->depths)
         {
-          // fprintf (stderr, "warning: arc info given twice\n");
-          if (arcleft->cusps != arcright->cusps)
-          {
-            fprintf (stderr, "fatal: incompatible dup definition\n");
-            exit (11);
-          }
-          for (i = 0; i < arcleft->cusps + 1; i++)
-          {
-            if (arcleft->depths[i] != arcright->depths[i])
+          if (cusps_as_morse_events)
+          { /* in this case cusps are morse events, so we must concatenate the
+             * two depth vectors
+             */
+            assert (r2->orientation * r2->next->orientation == 1);
+            if (r2->orientation > 0) newdepths = concatenate_depths (arcleft, arcright);
+              else newdepths = concatenate_depths (arcright, arcleft);
+            arcleft->cusps += arcright->cusps;
+            free (arcright->depths);
+            free (arcleft->depths);
+            arcright->depths = 0;
+            arcleft->depths = newdepths;
+            arcleft->depthsdim += arcright->cusps;
+            arcleft->dvalues += arcright->cusps;
+            arcright->cusps = -1;
+          } else {
+            // fprintf (stderr, "warning: arc info given twice\n");
+            if (arcleft->cusps != arcright->cusps)
             {
               fprintf (stderr, "fatal: incompatible dup definition\n");
               exit (11);
             }
+            for (i = 0; i < arcleft->cusps + 1; i++)
+            {
+              if (arcleft->depths[i] != arcright->depths[i])
+              {
+                fprintf (stderr, "fatal: incompatible dup definition\n");
+                exit (11);
+              }
+            }
+            free (arcright->depths);   
+            arcright->cusps = -1;
+            arcright->depths = 0;
           }
-          free (arcright->depths);   
-          arcright->cusps = -1;
-          arcright->depths = 0;
         }
 //        assert (r2->orientation != 0 && r2->next->orientation != 0);
         if (arcleft->depths)        /* rimuovo l'arco di destra */
@@ -387,6 +407,22 @@ readrow (FILE *file, struct sketch *sketch,
       getarcinfo(tok, file, bleft, bright);
       continue;
     }
+    if (tok == KEY_LT || tok == KEY_GT)
+    {
+      if (debug) printf ("Trovata chiave %c\n", (tok == KEY_LT)?'<':'>');
+      bleft = actregions[actr]->next;
+
+      if (++actr >= actregionsnum)
+      {
+        fprintf (stderr, 
+          "Error: too few active regions at cusp key, ignoring...\n");
+        actr--;
+        bright = 0;
+      } else bright = actregions[actr];
+
+      getarcinfo(tok, file, bleft, bright);
+      continue;
+    }
     if (tok == KEY_X)
     {
       if (debug) printf ("Trovata chiave X\n");
@@ -477,6 +513,23 @@ readrow (FILE *file, struct sketch *sketch,
   return (actregionsnum);
 }
 
+int *
+concatenate_depths (struct arc *arcbefore, struct arc *arcafter)
+{
+  int *newdepths, newdepthsdim, i;
+
+  assert (arcbefore->depths && arcafter->depths);
+  newdepthsdim = arcbefore->cusps + arcafter->cusps + 1;
+  newdepths = (int *) malloc (newdepthsdim*sizeof(int));
+  assert (arcbefore->depths[arcbefore->cusps] == arcafter->depths[0]);
+  for (i = 0; i < arcbefore->cusps; i++)
+    newdepths[i] = arcbefore->depths[i];
+  for (i = 0; i <= arcafter->cusps; i++)
+    newdepths[arcbefore->cusps + i] = arcafter->depths[i];
+
+  return (newdepths);
+}
+
 int
 getcrossinfo (FILE *file)
 {
@@ -500,8 +553,25 @@ getarcinfo (int key, FILE *file,
   int depths[50];
   int depthind = 0, require_rbr = 1;
   struct arc *arc;
-  int cusps_no_d = 0;
+  int cusps_no_d = 0, cusp_as_morse = 0;
+  int *newdepths;
 
+  if (key == KEY_LT || key == KEY_GT)
+  {
+    if (debug) printf ("getarcinfo: cusp indicated as morse event\n");
+    if (key == KEY_LT) ungettoken (KEY_DOWN);
+      else ungettoken (KEY_UP);
+    cusps_as_morse_events = 1;
+    key = KEY_I;
+    cusp_as_morse = 1;
+    assert (bleft);
+    arc = bleft->info;
+    assert (arc);
+    if (debug && arc->cusps > 0)
+    {
+      printf ("Ci sono gia' cuspidi: %d, tag:%d\n", arc->cusps, arc->tag);
+    }
+  }
   tok = gettokens (file);
   if (tok == ISNUMBER || tok == KEY_CUSP || tok == KEY_LEFT || 
       tok == KEY_RIGHT || tok == KEY_UP || tok == KEY_DOWN)
@@ -528,6 +598,7 @@ getarcinfo (int key, FILE *file,
     if (tok == TOK_PLUS || tok == TOK_MINUS)
     {
       /* must simulate a 0 as a starting number */
+      assert (cusps_as_morse_events == 0);  /* incompatible! */
       prevd = depths[depthind++] = 0;
       ungettoken (tok);
     }
@@ -598,7 +669,6 @@ getarcinfo (int key, FILE *file,
   assert (bleft);
   arc = bleft->info;
   assert (arc);
-  // if (arc->depths)
   if (abs(orientation*bleft->orientation) == 1)
   {
     fprintf (stderr, 
@@ -615,20 +685,65 @@ getarcinfo (int key, FILE *file,
              arc->tag);
     return (ORIENT_EMPTY);
   }
-  arc->depths = (int *) malloc (depthind*sizeof(int));
-  arc->depthsdim = depthind;
-  arc->cusps = depthind - 1;  /* questo e' il valore che fa testo */
-  if (arc->cusps < 0) arc->cusps = 0;
-  if (depthind > 0)
+  if (cusps_as_morse_events && key != KEY_A && key != KEY_X)
+  /*
+   * note that case KEY_A and KEY_X will allways start new arcs, so
+   * we are safe to use the old syntax
+   */
   {
-    /* nota: in caso di loop senza nodi e' necessario   
-     * indicare una profondita' in piu' (uguale al valore
-     * iniziale) per segnalare il numero giusto di cuspidi
-     */
-    has_huffman_labelling++;
-    for (i = 0; i < depthind; i++)
+    assert (depthind <= 2);
+    if (depthind == 1)
     {
-      arc->depths[i] = depths[i];
+      if (key != KEY_V)
+      {
+        if (orientation > 0)
+        {
+          assert (depths[0] == arc->depths[0]);
+        } else {
+          assert (depths[0] == arc->depths[arc->cusps]);
+        }
+      }
+    } else {
+      newdepths = (int *) malloc (arc->cusps + 2);
+      if (orientation > 0)
+      {
+        newdepths[0] = depths[0];
+        assert (depths[1] == arc->depths[0]);
+        for (i = 0; i <= arc->cusps; i++)
+        {
+          newdepths[i+1] = arc->depths[i];
+        }
+      } else {
+        for (i = 0; i <= arc->cusps; i++)
+        {
+          newdepths[i] = arc->depths[i];
+        }
+        assert (arc->depths[arc->cusps] == depths[0]);
+        newdepths[arc->cusps + 1] = depths[1];
+      }
+      free (arc->depths);
+      arc->depths = newdepths;
+      arc->cusps++;
+      arc->dvalues++;
+      arc->depthsdim = arc->cusps + 1;
+    }
+  } else {
+    // if (arc->depths) /* <--- it seems there is a memory leak here */
+    arc->depths = (int *) malloc (depthind*sizeof(int));
+    arc->depthsdim = depthind;
+    arc->cusps = depthind - 1;  /* questo e' il valore che fa testo */
+    if (arc->cusps < 0) arc->cusps = 0;
+    if (depthind > 0)
+    {
+      /* nota: in caso di loop senza nodi e' necessario   
+       * indicare una profondita' in piu' (uguale al valore
+       * iniziale) per segnalare il numero giusto di cuspidi
+       */
+      has_huffman_labelling++;
+      for (i = 0; i < depthind; i++)
+      {
+        arc->depths[i] = depths[i];
+      }
     }
   }
   if (cusps_no_d) arc->cusps = cusps_no_d;

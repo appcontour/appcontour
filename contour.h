@@ -234,6 +234,7 @@ int getarcinfo (int key, FILE *file,
                 struct border *bleft,
                 struct border *bright);
 int adjustarcinfo (struct arc *narc, struct arc *upperarc, int incr, int oriup);
+int *concatenate_depths (struct arc *arcleft, struct arc *arcright);
 
 int arcmult (struct arc *arc);
 void postprocesssketch (struct sketch *s);
