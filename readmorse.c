@@ -4,6 +4,7 @@
 #include "parser.h"
 
 extern int debug;
+extern int verbose;
 
 /*
  * possiamo idealmente pensare al tutto come contenuto in un
@@ -495,7 +496,7 @@ readrow (FILE *file, struct sketch *sketch,
       // b2->orientation = 1*2;
       b1->next = newreg->border->sponda;
       newreg->border->sponda->next = b1;
-//printborder(r3, r3->region); printf("\n");
+      //printborder(r3, r3->region); printf("\n");
 
       getarcinfo(tok, file, b1, b2);
       if (havecrossinfo) adjustarcinfo (narc, ularc, dincrr, orirup);
@@ -671,10 +672,10 @@ getarcinfo (int key, FILE *file,
   assert (arc);
   if (abs(orientation*bleft->orientation) == 1)
   {
-    fprintf (stderr, 
-             "%s orientation for arc %d\n",
-             (orientation*bleft->orientation < 0)?"INCOMPATIBLE":"duplicate",
-             arc->tag);
+    if (orientation*bleft->orientation < 0)
+        fprintf (stderr, "INCOMPATIBLE orientation for arc %d\n", arc->tag);
+      else
+        if (verbose) fprintf (stderr, "duplicate orientation for arc %d\n", arc->tag);
     orientation = bleft->orientation;
     // return (ORIENT_EMPTY);
   }
