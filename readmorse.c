@@ -705,7 +705,7 @@ getarcinfo (int key, FILE *file,
         }
       }
     } else {
-      newdepths = (int *) malloc (arc->cusps + 2);
+      newdepths = (int *) malloc ((arc->cusps + 2)*sizeof(int));
       if (orientation > 0)
       {
         newdepths[0] = depths[0];
