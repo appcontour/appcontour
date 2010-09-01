@@ -1,0 +1,9 @@
+#
+# visible apparent contour of a potato
+#
+morse {
+  ^l ;
+ .\ |;
+| ` |;
+ U;
+}

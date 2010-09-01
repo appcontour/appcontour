@@ -1,0 +1,11 @@
+#
+# visible apparent contour of a torus
+#
+morse {
+  ^l ;
+| ,d |;
+| .\u |;
+| `/u |;
+| `d |;
+ Ur;
+}

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+./visible $* | contour printmorse | showcontour --skiprtime 2 --pause
