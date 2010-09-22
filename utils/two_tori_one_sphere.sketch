@@ -1,0 +1,30 @@
+sketch {
+Arc 17: (0);
+Arc 1: [0];
+Arc 2: [0];
+Arc 3: [0];
+Arc 4: [0];
+Arc 5: [0];
+Arc 6: [0];
+Arc 7: [0];
+Arc 8: [0];
+Arc 9: [0];
+Arc 10: [0];
+Arc 11: [0];
+Arc 12: [0];
+Arc 13: [2];
+Arc 14: [2];
+Arc 15: [2];
+Arc 16: [2];
+Region 0 (f = 0): () (-a17) (-a1 -a2);
+Region 10 (f = 0): (+a17);
+Region 1 (f = 0): (-a3 -a4);
+Region 2 (f = 0): (-a5 -a6);
+Region 3 (f = 0): (-a7 -a8);
+Region 4 (f = 2): (-a9 +a6 -a13 +a1);
+Region 5 (f = 2): (-a10 +a5 -a14 +a4);
+Region 6 (f = 2): (-a11 +a8 -a15 +a3);
+Region 7 (f = 2): (-a12 +a7 -a16 +a2);
+Region 8 (f = 4): (+a12 +a13 +a10 +a15);
+Region 9 (f = 4): (+a11 +a14 +a9 +a16);
+}

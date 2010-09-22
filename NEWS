@@ -1,3 +1,7 @@
+2010-09-22: added utility "utils/contour_describe.sh" which describes
+	verbally the 3D objects corresponding to a contour with huffman
+	labelling.
+
 2008-11-13: all inverse rules are now implemented.  See Changelog
 	for a bit of help.  Basically, inverse rules have the
 	following names: INVN1, INVN2, INVN3, INVN4, INVC1, INVC2
