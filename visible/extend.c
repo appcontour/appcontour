@@ -383,7 +383,11 @@ inherit_orientation_lines (struct line *l)
   {
     prod = ordown[i]*orup[i];
     sum = ordown[i] + orup[i];
-    assert (prod >= 0);
+    if (prod < 0)
+    {
+      fprintf (stderr, "Inconsistent orientation\n");
+      exit (7);
+    }
     if (prod == 0 && sum != 0)
     {
       count++;
