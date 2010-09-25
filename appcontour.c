@@ -891,6 +891,28 @@ count_connected_components (struct sketch *sketch)
 }
 
 int
+connected_component_orientation (int ccid, struct sketch *sketch)
+{
+  struct region *r;
+  int i;
+
+  if (sketch->isempty) return (0);
+  if (tag_connected_components (sketch) < 0) return (-1);
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    for (i = 0; i < r->f; i++)
+    {
+      if (r->strati[i] == ccid)
+      {
+        return (1 - 2*(i%2));
+      }
+    }
+  }
+  return (0);
+}
+
+int
 tag_connected_components (struct sketch *sketch)
 {
   struct region *r;

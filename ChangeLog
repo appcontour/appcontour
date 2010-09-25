@@ -1,3 +1,7 @@
+2010-09-25: new action "ccorientation <int>" that computes the orientation
+	of a single component.  E.g. for a hollow sphere one of the two
+	spheres is positively oriented, the other is negatively oriented.
+
 2010-08-28: contour now accepts a morse description in which cusps are
 	given as morse events, rather than arc properties.  This is
 	motivated by the output of the program "visible" that computes

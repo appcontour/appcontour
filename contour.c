@@ -50,6 +50,7 @@
 #define ACTION_REMOVESPHERE 33
 #define ACTION_GLUEARCS 34
 #define ACTION_PINCHNECK 35
+#define ACTION_CCORIENTATION 36
 
 int debug = 0;
 int quiet = 0;
@@ -212,6 +213,7 @@ main (int argc, char *argv[])
       printf ("  addsphere/removesphere: add-remove small sphere\n");
       printf ("  extractcc <int>: extract 3D connected component\n");
       printf ("  removecc <int>: remove 3D connected component from contour\n");
+      printf ("  ccorientation <int>: computes the orientation of a 3D connected component\n");
       printf ("  leftright: left-right reflection\n");
       printf ("  frontback: front-back reflection\n");
       printf ("  mendes: compute Mendes graph (see Hacon-Mendes-Romero Fuster)\n");
@@ -271,6 +273,13 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"removecc") == 0)
     {
       action = ACTION_REMOVECC;
+      i++;
+      if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
+      ccid = atoi (argv[i]) - 1;
+    }
+    if (strcmp(argv[i],"ccorientation") == 0)
+    {
+      action = ACTION_CCORIENTATION;
       i++;
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
       ccid = atoi (argv[i]) - 1;
@@ -604,6 +613,23 @@ main (int argc, char *argv[])
     res = remove_connected_component (ccid, sketch);
     printsketch (sketch);
     if (res == 0) exit (15);
+    break;
+
+    case ACTION_CCORIENTATION:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    count = count_connected_components (sketch);
+    if (ccid >= count || ccid < 0)
+    {
+      fprintf (stderr, "Invalid cc id: %d, valid range:[1,%d]\n",
+        ccid, count);
+      exit (15);
+    }
+    res = connected_component_orientation (ccid, sketch);
+    if (res == 0) exit (15);
+    if (quiet) printf ("%c\n", (res == 1)?'+':'-');
+      else printf ("Component %d is %s oriented\n", ccid,
+                    (res == 1)?"positively":"negatively");
     break;
 
     case ACTION_COUNTCC:

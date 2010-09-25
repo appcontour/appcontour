@@ -197,6 +197,7 @@ int euler_characteristic (struct sketch *sketch);
 int appcontourcheck (struct sketch *s, int huffman, int verbose);
 int checkorientationborder (struct border *b);
 int count_connected_components (struct sketch *sketch);
+int connected_component_orientation (int ccid, struct sketch *sketch);
 int tag_connected_components (struct sketch *sketch);
 int free_connected_components (struct sketch *sketch);
 
