@@ -2,6 +2,11 @@
 #
 #
 
+usage ()
+{
+  echo "usage: $0 [-v] <contour-description-file>"
+}
+
 function describe ()
 {
   numoutput="0"
@@ -36,6 +41,10 @@ function describe ()
       ;;
       *)
         thenum=$num
+        if [ -n "$nnumber" ]
+        then
+          thenum=`$nnumber -l $num`
+        fi
       ;;
     esac
 
@@ -58,22 +67,43 @@ function describe ()
 }
 
 declare -a holes
+verbose=""
 
-if [ -z "$1" ]
+while getopts "v" option
+do
+  case $option in
+  v)
+    verbose=1
+    ;;
+  *)
+    echo "Invalid option"
+    usage
+    exit 1
+    ;;
+  esac
+done
+
+shift $(( $OPTIND - 1 ))
+
+file=$1
+if [ -z "$file" ]
 then
-  echo "usage: $0 <contour-description-file>"
+  usage
   exit 0
 fi
 
 ccontour=`which contour`
-
 if [ "$?" != "0" ]
 then
   echo "Cannot find contour software! Check your installation"
   exit 1
 fi
 
-file=$1
+nnumber=`which number`
+if [ "$?" != "0" ]
+then
+  nnumber=""
+fi
 
 if [ ! -f $file ]
 then
