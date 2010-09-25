@@ -1,0 +1,30 @@
+There are 2 executables in this directory.
+
+visible:
+
+Takes in input the morse description of a *visible* contour
+(see some examples in directory examples) and computes a morse
+description of a reconstructed apparent contour.
+
+This morse description however contain 'cusps' as events, and
+is not accepted by showcontour (at the moment).
+Program "contour" was recently updated in order to accept this
+kind of description.
+
+morse2morse:
+
+converts the morse description with 'cusps' as events into the
+morse description used by 'contour' and understandable by showcontour.
+
+Example:
+
+
+./visible examples/torus_vis.morse | ./morse2morse | showcontour
+
+alternatively:
+
+./visible examples/torus_vis.morse | contour printmorse | showcontour
+
+The results differ (not in the topology!) because contour transforms the
+incoming morse description into a "region description", thus losing spatial
+information.
