@@ -51,6 +51,8 @@
 #define ACTION_GLUEARCS 34
 #define ACTION_PINCHNECK 35
 #define ACTION_CCORIENTATION 36
+#define ACTION_FINDCCPARENT 37
+#define ACTION_CCORDERING 38
 
 int debug = 0;
 int quiet = 0;
@@ -64,6 +66,9 @@ int mendesge = HGE_TEXT;
 
 struct global_data globals;
 struct tagged_data user_data;
+
+/* prototipi locali */
+void ccid_isvalidp (int ccid, int count);
 
 int
 main (int argc, char *argv[])
@@ -213,7 +218,6 @@ main (int argc, char *argv[])
       printf ("  addsphere/removesphere: add-remove small sphere\n");
       printf ("  extractcc <int>: extract 3D connected component\n");
       printf ("  removecc <int>: remove 3D connected component from contour\n");
-      printf ("  ccorientation <int>: computes the orientation of a 3D connected component\n");
       printf ("  leftright: left-right reflection\n");
       printf ("  frontback: front-back reflection\n");
       printf ("  mendes: compute Mendes graph (see Hacon-Mendes-Romero Fuster)\n");
@@ -221,6 +225,10 @@ main (int argc, char *argv[])
       printf ("\n possible informational commands are:\n");
       printf ("  info, characteristic, rules, iscontour, ishuffman, countcc\n");
       printf ("  list[ma|invl|invs|strata]\n");
+      printf ("  ccorientation <int>: gives the orientation of a 3D connected component\n");
+      printf ("  ccparent <cc>: finds the 3D component that directly contains \"cc\"\n");
+      printf ("    0 means that \"cc\" is external\n");
+      printf ("  ccordering: show 3D inclusion between the connected components\n");
       printf ("  compare: lessicographic comparison between two contours, in this\n");
       printf ("    case the stdin (or file) must contain two descriptions\n");
       printf ("\n possible conversion and standardization commands are:\n");
@@ -284,6 +292,13 @@ main (int argc, char *argv[])
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
       ccid = atoi (argv[i]) - 1;
     }
+    if (strcmp(argv[i],"ccparent") == 0)
+    {
+      action = ACTION_FINDCCPARENT;
+      i++;
+      if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
+      ccid = atoi (argv[i]) - 1;
+    }
     if (strcmp(argv[i],"listholes") == 0) action = ACTION_LISTHOLES;
     if (strcmp(argv[i],"removehole") == 0) action = ACTION_REMOVEHOLE;
     if (strcmp(argv[i],"listspheres") == 0) action = ACTION_LISTSPHERES;
@@ -314,6 +329,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"testallrules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"rules") == 0) action = ACTION_TESTALLRULES;
     if (strcmp(argv[i],"countcc") == 0) action = ACTION_COUNTCC;
+    if (strcmp(argv[i],"ccordering") == 0) action = ACTION_CCORDERING;
     if (strcmp(argv[i],"print") == 0) action = ACTION_PRINTSKETCH;
     if (strcmp(argv[i],"ishuffman") == 0) action = ACTION_ISHUFFMAN;
     if (strcmp(argv[i],"isappcon") == 0) action = ACTION_ISHUFFMAN;
@@ -610,6 +626,7 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     count = count_connected_components (sketch);
+    ccid_isvalidp (ccid, count);
     res = remove_connected_component (ccid, sketch);
     printsketch (sketch);
     if (res == 0) exit (15);
@@ -619,17 +636,33 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     count = count_connected_components (sketch);
-    if (ccid >= count || ccid < 0)
-    {
-      fprintf (stderr, "Invalid cc id: %d, valid range:[1,%d]\n",
-        ccid, count);
-      exit (15);
-    }
+    ccid_isvalidp (ccid, count);
     res = connected_component_orientation (ccid, sketch);
     if (res == 0) exit (15);
     if (quiet) printf ("%c\n", (res == 1)?'+':'-');
       else printf ("Component %d is %s oriented\n", ccid,
                     (res == 1)?"positively":"negatively");
+    break;
+
+    case ACTION_FINDCCPARENT:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    count = count_connected_components (sketch);
+    ccid_isvalidp (ccid, count);
+    res = find_connected_component_parent (ccid, sketch);
+    res++;
+    if (quiet) printf ("%d\n", res);
+      else
+    {
+      if (res <= 0) printf ("None\n");
+      else printf ("Contained in component %d\n", res);
+    }
+    break;
+
+    case ACTION_CCORDERING:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    print_connected_components_ordering (sketch);
     break;
 
     case ACTION_COUNTCC:
@@ -812,3 +845,13 @@ readcontour (FILE *file)
   return (0);
 }
 
+void
+ccid_isvalidp (int ccid, int count)
+{
+  if (ccid >= count || ccid < 0)
+  {
+    fprintf (stderr, "Invalid cc id: %d, valid range:[1,%d]\n",
+      ccid, count);
+    exit (15);
+  }
+}

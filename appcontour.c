@@ -8,6 +8,7 @@ extern int quiet;
 int checkdnodecons (struct border *b, int dd[4]);
 int getdatnode (struct border *b);
 struct border *reverse_border (struct border *);
+void print_ord_tree (int which, int count, int *parents);
 /* fine prototipi */
 
 /*
@@ -910,6 +911,93 @@ connected_component_orientation (int ccid, struct sketch *sketch)
     }
   }
   return (0);
+}
+
+/*
+ * in the 3D scene there is at most one connected component
+ * that directly contains the given component
+ */
+
+int
+find_connected_component_parent (int ccid, struct sketch *sketch)
+{
+  struct region *r;
+  int i, j, k, parity, cc;
+
+  if (sketch->isempty) return (-1);
+  if (tag_connected_components (sketch) < 0) return (-1);
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    for (i = 0; i < r->f; i++)
+    {
+      if (r->strati[i] == ccid)
+      {
+        /*
+         * we found the connected component...
+         */
+        for (j = i-1; j >= 0; j--)
+        {
+          cc = r->strati[j];
+          /* check if cc contains ccid */
+          for (k = 0, parity=0; k < i; k++)
+          {
+            if (r->strati[k] == cc) parity = 1 - parity;
+          }
+          if (parity == 1) return (cc);
+        }
+        return (-1);
+      }
+    }
+  }
+  return (-1);
+}
+
+void
+print_connected_components_ordering (struct sketch *sketch)
+{
+  int count, cc;
+  int *parents;
+
+  count = count_connected_components (sketch);
+
+  if (count <= 0)
+  {
+    printf ("Empty set");
+    return;
+  }
+
+  parents = (int *) malloc (count * sizeof (int));
+
+  for (cc = 0; cc < count; cc++)
+  {
+    parents[cc] = find_connected_component_parent (cc, sketch);
+  }
+
+  print_ord_tree (-1, count, parents);
+  printf ("\n");
+
+  free (parents);
+}
+
+void
+print_ord_tree (int ccid, int count, int *parents)
+{
+  int childs = 0;
+  int i;
+
+  if (ccid >= 0) printf ("%d", ccid+1);
+  for (i = 0; i < count; i++)
+  {
+    if (parents[i] == ccid)
+    {
+      if (childs) printf (" ");
+        else printf ("{");
+      print_ord_tree (i, count, parents);
+      childs++;
+    }
+  }
+  if (childs) printf ("}");
 }
 
 int

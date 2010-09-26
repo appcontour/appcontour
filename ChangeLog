@@ -1,6 +1,15 @@
-2010-09-25: new action "ccorientation <int>" that computes the orientation
-	of a single component.  E.g. for a hollow sphere one of the two
+2010-09-25: new actions:
+        "ccorientation <ccid>" computes the orientation of a single
+        component <ccid>.  E.g. for a hollow sphere one of the two
 	spheres is positively oriented, the other is negatively oriented.
+        "ccparent <ccid>" displays which connected component directly
+        contains component <ccid>, "None" if <ccid> is an external
+	component.
+	"ccordering" prints the complete partial containment ordering
+	scheme among the 3D connected components.  E.g. a result like
+	{4 6{5{1} 2 3}} means that components 4 and 6 are external;
+	5, 2 and 3 are directly contained in component 6; component
+	1 is directly contained in component 5.
 
 2010-08-28: contour now accepts a morse description in which cusps are
 	given as morse events, rather than arc properties.  This is
