@@ -114,7 +114,7 @@ function describe ()
         else
           negis=`myplural $negatives is are`
           theneg=`mynumber $negatives`
-          echo -n " (of which $theneg $negis negatively oriented)"
+          echo -n " ($theneg of which $negis negatively oriented)"
         fi
       fi
     fi
