@@ -992,12 +992,12 @@ print_ord_tree (int ccid, int count, int *parents)
     if (parents[i] == ccid)
     {
       if (childs) printf (" ");
-        else printf ("{");
+        else {if (ccid >= 0) printf ("{");}
       print_ord_tree (i, count, parents);
       childs++;
     }
   }
-  if (childs) printf ("}");
+  if (childs && ccid >= 0) printf ("}");
 }
 
 int

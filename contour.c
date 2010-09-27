@@ -640,7 +640,7 @@ main (int argc, char *argv[])
     res = connected_component_orientation (ccid, sketch);
     if (res == 0) exit (15);
     if (quiet) printf ("%c\n", (res == 1)?'+':'-');
-      else printf ("Component %d is %s oriented\n", ccid,
+      else printf ("Component %d is %s oriented\n", ccid+1,
                     (res == 1)?"positively":"negatively");
     break;
 
