@@ -53,6 +53,7 @@
 #define ACTION_CCORIENTATION 36
 #define ACTION_FINDCCPARENT 37
 #define ACTION_CCORDERING 38
+#define ACTION_CCCHILDS 39
 
 int debug = 0;
 int quiet = 0;
@@ -295,6 +296,13 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"ccparent") == 0)
     {
       action = ACTION_FINDCCPARENT;
+      i++;
+      if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
+      ccid = atoi (argv[i]) - 1;
+    }
+    if (strcmp(argv[i],"ccchilds") == 0)
+    {
+      action = ACTION_CCCHILDS;
       i++;
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
       ccid = atoi (argv[i]) - 1;
@@ -657,6 +665,14 @@ main (int argc, char *argv[])
       if (res <= 0) printf ("None\n");
       else printf ("Contained in component %d\n", res);
     }
+    break;
+
+    case ACTION_CCCHILDS:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    //count = count_connected_components (sketch);
+    //ccid_isvalidp (ccid, count);
+    print_connected_component_childs (ccid, sketch);
     break;
 
     case ACTION_CCORDERING:

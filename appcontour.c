@@ -954,6 +954,26 @@ find_connected_component_parent (int ccid, struct sketch *sketch)
 }
 
 void
+print_connected_component_childs (int ccid, struct sketch *sketch)
+{
+  int ccnum, cc, count;
+  int *parents;
+
+  ccnum = count_connected_components (sketch);
+
+  count = 0;
+  for (cc = 0; cc < ccnum; cc++)
+  {
+    if (find_connected_component_parent (cc, sketch) == ccid)
+    {
+      if (count++ > 0) printf (" ");
+      printf ("%d", cc+1);
+    }
+  }
+  if (count > 0) printf ("\n");
+}
+
+void
 print_connected_components_ordering (struct sketch *sketch)
 {
   int count, cc;

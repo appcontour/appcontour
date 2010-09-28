@@ -200,6 +200,7 @@ int count_connected_components (struct sketch *sketch);
 int connected_component_orientation (int ccid, struct sketch *sketch);
 int find_connected_component_parent (int ccid, struct sketch *sketch);
 void print_connected_components_ordering (struct sketch *sketch);
+void print_connected_component_childs (int ccid, struct sketch *sketch);
 int tag_connected_components (struct sketch *sketch);
 int free_connected_components (struct sketch *sketch);
 
