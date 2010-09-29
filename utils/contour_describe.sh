@@ -307,7 +307,7 @@ totoutput=`echo $totoutput`
 
 if [ -n "$zork" ]
 then
-  echo "You are in a clearing, with a forest surrounding you on all sides."
+#  echo "You are in a clearing, with a forest surrounding you on all sides."
   case $cc in
     0)
       echo "There are no objects here."
