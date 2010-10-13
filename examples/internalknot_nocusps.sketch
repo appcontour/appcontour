@@ -1,0 +1,51 @@
+#
+# obtained from "internalknot.morse" by
+# application of rule B::1 followed by another
+# B::1
+#
+sketch {
+Arc 1: (0);
+Arc 2: (0);
+Arc 3: (0);
+Arc 4: [1];
+Arc 5: [1];
+Arc 6: [1];
+Arc 7: [1];
+Arc 8: [1];
+Arc 9: [1];
+Arc 10: [1];
+Arc 11: [1];
+Arc 12: [1];
+Arc 13: [1];
+Arc 14: [1];
+Arc 15: [1];
+Arc 16: [1];
+Arc 17: [1];
+Arc 18: [1];
+Arc 19: [1];
+Arc 20: [1];
+Arc 21: [1];
+Arc 22: [3];
+Arc 23: [3];
+Arc 24: [3];
+Arc 25: [3];
+Arc 26: [3];
+Arc 27: [3];
+Region 0: () (-a1);
+Region 1: (-a2);
+Region 2: (-a3);
+Region 3: (-a4 -a5);
+Region 4: (-a6 -a7);
+Region 5: (-a8 -a9 -a10);
+Region 6: (-a11 +a4 -a22 +a17);
+Region 7: (-a12 +a20 -a23 +a8);
+Region 8: (-a13 +a5 -a24 +a10);
+Region 9: (-a14 +a6 -a25 +a9);
+Region 10: (-a15 +a7 -a26 +a18);
+Region 11: (+a12 +a24 +a11 +a27);
+Region 12: (+a13 +a25 +a15 +a22);
+Region 13: (+a21 +a26 +a14 +a23);
+Region 14: (+a1) (-a16 -a17 -a18 -a19 -a20);
+Region 15: (-a21 +a19) (+a2);
+Region 16: (+a16 -a27) (+a3);
+}
