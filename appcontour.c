@@ -237,7 +237,8 @@ add_s1 (struct sketch *s, struct region *r, int dval, int ori)
   newbp1->orientation = ori;
   newbp2->orientation = -ori;
 
-  computefvalue (s, s->regions, s->regions->f);
+  if (s->extregion == 0) s->extregion = s->regions;
+  computefvalue (s, s->extregion, s->extregion->f);
   if (debug) printsketch (s);
   return (1);
 }
@@ -252,7 +253,7 @@ put_in_s1 (struct sketch *s)
 {
   int i, changes;
   struct arc *a, *newa;
-  struct region *r, *newr;
+  struct region *newr;
   struct region *extr = 0;
   struct borderlist *newbl1, *newblinf;
   struct border *newbp1, *newbp2;
@@ -280,13 +281,12 @@ put_in_s1 (struct sketch *s)
   if (s->huffman_labelling) newa->depths[0] = 0;
   newa->endpoints = 0;
 
-  /* new external region */
-  for (r = s->regions; r; r = r->next)
-  {
-    if (r->border->sponda == 0) extr = r;
-  }
-  assert (extr);
+  /* old external region */
+  extr = s->regions;
+  if (s->extregion) extr = s->extregion;
+  assert (extr && extr->border->sponda == 0);
 
+  /* new external region */
   newr = newregion (s);
   newbl1 = newborderlist (newr);
   newbp1 = newborder (newbl1);
@@ -304,6 +304,7 @@ put_in_s1 (struct sketch *s)
   newbp1->orientation = -1;
   newbp2->orientation = 1;
 
+  s->extregion = newr;
   changes = adjust_isexternalinfo (s);
   computefvalue (s, newr, extr->f);
   if (debug)
@@ -420,6 +421,34 @@ changeextregion (struct sketch *s, int tag)
   newext->border = bl;
   changes = adjust_isexternalinfo (s);
   return (1);
+}
+
+/*
+ * The idea is to find the apparent contour of the surface sigma after a
+ * deformation of S^3 (compactification of R^3) that moves the point at infinity
+ * inside the surface.
+ * The user indicates a region of the apparent contour, infinity is then moved
+ * across che first strata associated to that region.
+ * Of course there are many possible equivalent apparent contours of the deformed
+ * surface.  We compute one obtained by wrapping Sigma into a big ball and then
+ * punching a hole connecting this new sphere with the first strata of the selected
+ * region
+ */
+
+int
+evert3d (struct sketch *s, int tag)
+{
+  struct region *r;
+  struct region *evertregion = 0;
+
+  for (r = s->regions; r; r = r->next)
+  {
+    if (r->tag == tag) evertregion = r;
+  }
+  assert (evertregion);
+  assert (evertregion->f > 0);
+  if (! put_in_s1 (s) ) return (0);
+  return ( add_s1 (s, evertregion, 0, -1) );
 }
 
 /*

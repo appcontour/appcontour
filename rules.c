@@ -281,7 +281,7 @@ rule_n14 (struct sketch *sketch, int rule, int rcount)
     if (ok && count == 2 && rcount-- <= 1)
     {
       if (onlytest) return (1);
-      fprintf (stderr, "Trovata regione candidata: %d\n", r->tag);
+      if (debug) printf ("Trovata regione candidata: %d\n", r->tag);
       outnw = rimuovi_losanga (r, sketch);
       if (debug) printsketch (sketch);
       taglia_nodo (outnw, sketch, 0, 0);
@@ -328,7 +328,7 @@ rule_n5 (struct sketch *sketch, int rcount)
     if (ok && count == 3 && rcount-- <= 1)
     {
       if (onlytest) return (1);
-      fprintf (stderr, "Trovata regione candidata: %d\n", r->tag);
+      if (debug) printf ("Trovata regione candidata: %d\n", r->tag);
       triple_switch (bstart);
       //canonify (sketch);
       return (1);
@@ -369,7 +369,7 @@ rule_c1 (struct sketch *sketch, int rcount)
     if (rcount-- <= 1)
     {
       if (onlytest) return (1);
-      fprintf (stderr, "Trovata regione candidata: %d\n", r->tag);
+      if (debug) printf ("Trovata regione candidata: %d\n", r->tag);
       remove_s1 (bstart, sketch);
       return (1);
     }
@@ -411,7 +411,7 @@ rule_c2 (struct sketch *sketch, int rcount)
         if (rcount-- <= 1)
         {
           if (onlytest) return (1);
-          fprintf (stderr, "Trovata regione: %d c1 = %d c2 = %d\n", 
+          if (debug) printf ("Trovata regione: %d c1 = %d c2 = %d\n", 
                            r->tag, i, j);
           if (debug) printf ("prima di chiamare join_cusps\n");
           if (debug) printsketch (sketch);
@@ -571,7 +571,7 @@ rule_a12 (struct sketch *sketch, int rcount, int ddiff)
     if (rcount-- <= 1)
     {
       if (onlytest) return (1);
-      fprintf (stderr, "Trovata regione candidata: %d\n", r->tag);
+      if (debug) printf ("Trovata regione candidata: %d\n", r->tag);
       remove_annulus (r, sketch);
       return (1);
     }
@@ -631,7 +631,7 @@ rule_cn1_cr2 (struct sketch *sketch, int rcount, int iscr2)
     if (rcount-- <= 1)
     {
       if (onlytest) return (1);
-      fprintf (stderr, "Trovata regione candidata: %d\n", r->tag);
+      if (debug) printf ("Trovata regione candidata: %d\n", r->tag);
       remove_ear (r, sketch);
       return (1);
     }
@@ -718,7 +718,7 @@ rule_cn2lr (struct sketch *sketch, int rcount, int isleft, int isback)
         if (rcount-- <= 1)
         {
           if (onlytest) return (1);
-          fprintf (stderr, "Trovata regione: %d, arcin %d, arcout %d\n", 
+          if (debug) printf ("Trovata regione: %d, arcin %d, arcout %d\n", 
                            r->tag, arcin->tag, arcout->tag);
           // chiama la funzione che applica la regola
           applyrulecn2 (bpn, arcout, ori, orib, sketch);
@@ -773,7 +773,7 @@ rule_cn3 (struct sketch *sketch, int rcount)
     if (rcount-- <= 1)
     {
       if (onlytest) return (1);
-      fprintf (stderr, "Trovata regione candidata: %d\n", r->tag);
+      if (debug) printf ("Trovata regione candidata: %d\n", r->tag);
       // chiama la funzione che esegue la "rule"
       remove_cusp (r, sketch);
       return (1);
@@ -863,7 +863,7 @@ rule_cr11b (struct sketch *sketch, int rcount, int isback)
           if (rcount-- <= 1)
           {
             if (onlytest) return (1);
-            fprintf (stderr, "Trovata regione: %d, arc %d, cataarc %d\n",
+            if (debug) printf ("Trovata regione: %d, arc %d, cataarc %d\n",
                              r->tag, arc->tag, arct->tag);
             /* applica la regola, che in questo caso e' molto semplice */
             arc->depths[i+1] += 2*orib;
@@ -948,7 +948,7 @@ rule_cr4lr (struct sketch *sketch, int rcount, int isleft, int isback)
           if (rcount-- <= 1)
           {
             if (onlytest) return (1);
-            fprintf (stderr, "Trovata regione: %d, arc %d, i %d\n",
+            if (debug) printf ("Trovata regione: %d, arc %d, i %d\n",
                              r->tag, arc->tag, i);
             /* devo creare un buco a forma di s1 nella regione e
              * accorciare il vettore dei valori di d
@@ -1064,8 +1064,8 @@ rule_cr3lr (struct sketch *sketch, int rcount, int ori)
               if (rcount-- <= 1)
               {
                 if (onlytest) return (1);
-                fprintf (stderr, "Trovata regione: %d, arc1/n/2 = ", r->tag);
-                fprintf (stderr, "%d %d %d, j = %d\n", 
+                if (debug) printf ("Trovata regione: %d, arc1/n/2 = ", r->tag);
+                if (debug) printf ("%d %d %d, j = %d\n", 
                   arc1->tag, arc1n->tag, arc2->tag, j);
                 applyrulecr3 (b1, b2, j, sketch);
                 if (debug) checkconsistency (sketch);

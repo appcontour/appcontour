@@ -29,6 +29,7 @@ struct tagged_data {
 struct sketch {
   struct arc *arcs;
   struct region *regions;
+  struct region *extregion;
   int huffman_labelling;
   int isempty;
   int arccount;
@@ -213,6 +214,7 @@ int put_in_s1 (struct sketch *s);
 int frontback (struct sketch *s);
 int leftright (struct sketch *s);
 int changeextregion (struct sketch *s, int tag);
+int evert3d (struct sketch *s, int tag);
 int compute_ohmoto (struct sketch *s);
 void compute_link_num_arcs (struct sketch *s);
 int count_link_components (struct sketch *s);

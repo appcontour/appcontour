@@ -571,7 +571,12 @@ postprocesssketch (struct sketch *sketch)
   if (debug && dorecomputef) printf ("5: definizione dei valori di f\n");
 
   if (dorecomputef)
-    computefvalue (sketch, sketch->regions, finfinity);
+  {
+    extregion = sketch->regions;
+    if (sketch->extregion) extregion = sketch->extregion;
+    assert (extregion->border->sponda == 0);
+    computefvalue (sketch, extregion, finfinity);
+  }
 
   if (debug) printf ("6: controllo correttezza bordo esterno\n");
 
@@ -631,7 +636,7 @@ adjust_isexternalinfo (struct sketch *sketch)
   {
     for (bl = r->border; bl; bl = bl->next) 
     {
-      if (bl->sponda == 0) {bl->isexternal = 1; found++;}
+      if (bl->sponda == 0) {bl->isexternal = 1; found++; sketch->extregion = r;}
         else bl->isexternal = ISEXTERNAL_UNDEF;
     }
   }
@@ -669,6 +674,7 @@ adjust_isexternalinfo (struct sketch *sketch)
     }
     assert (found == 1);
   }
+  assert (sketch->extregion->border->sponda == 0);
   return (changes);
 }
 
@@ -1361,6 +1367,7 @@ newsketch ()
   s = (struct sketch *) malloc (sizeof (struct sketch));
   s->arcs = 0;
   s->regions = 0;
+  s->extregion = 0;   /* if zero: external region is the first in the list */
   s->arccount = 0;
   s->regioncount = 0;
   s->cc_tagged = 0;

@@ -55,6 +55,7 @@
 #define ACTION_CCORDERING 38
 #define ACTION_CCCHILDS 39
 #define ACTION_WRAP 40
+#define ACTION_3DEVERT 41
 
 int debug = 0;
 int quiet = 0;
@@ -357,6 +358,13 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"evert") == 0)
     {
       action = ACTION_EVERT;
+      i++;
+      if (i >= argc) {fprintf (stderr, "specify a region tag\n"); exit (11);}
+      newextregion = atoi (argv[i]);
+    }
+    if (strcmp(argv[i],"3devert") == 0)
+    {
+      action = ACTION_3DEVERT;
       i++;
       if (i >= argc) {fprintf (stderr, "specify a region tag\n"); exit (11);}
       newextregion = atoi (argv[i]);
@@ -796,6 +804,15 @@ main (int argc, char *argv[])
     case ACTION_EVERT:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     changeextregion (sketch, newextregion);
+    dorecomputef = 0;
+    if (docanonify) postprocesssketch (sketch);
+    if (docanonify) canonify (sketch);
+    printsketch (sketch);
+    break;
+
+    case ACTION_3DEVERT:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    evert3d (sketch, newextregion);
     dorecomputef = 0;
     if (docanonify) postprocesssketch (sketch);
     if (docanonify) canonify (sketch);
