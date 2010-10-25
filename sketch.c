@@ -485,7 +485,7 @@ postprocesssketch (struct sketch *sketch)
   struct region *region, *extregion;
   struct borderlist *hole;
   struct arc *arc;
-  int tag, goon, fleft, fright;
+  int tag;
   extern int dorecomputef;
   extern int doretagregions;
   extern int finfinity;
@@ -571,33 +571,41 @@ postprocesssketch (struct sketch *sketch)
   if (debug && dorecomputef) printf ("5: definizione dei valori di f\n");
 
   if (dorecomputef)
-  {
-    for (region = sketch->regions; region; region = region->next)
-    {
-      region->f = F_UNDEF;
-    }
-    assert (sketch->regions->border->sponda == 0);
-    sketch->regions->f = finfinity;    /* valore 0 nella regione esterna */
-    goon = 1;
-    while (goon)
-    {
-      goon = 0;
-      for (arc = sketch->arcs; arc; arc = arc->next)
-      {
-        fleft = arc->regionleft->border->region->f;
-        fright = arc->regionright->border->region->f;
-        if (fleft == F_UNDEF && fright == F_UNDEF) continue;
-        if (fleft != F_UNDEF && fright != F_UNDEF) continue;
-        goon = 1;
-        if (fright != F_UNDEF) arc->regionleft->border->region->f = fright + 2;
-          else arc->regionright->border->region->f = fleft - 2;
-      }
-    }
-  }
+    computefvalue (sketch, sketch->regions, finfinity);
 
   if (debug) printf ("6: controllo correttezza bordo esterno\n");
 
   assert (adjust_isexternalinfo (sketch) == 0);
+}
+
+void
+computefvalue (struct sketch *s, struct region *extregion, int finfinity)
+{
+  int goon, fleft, fright;
+  struct region *r;
+  struct arc *a;
+
+  for (r = s->regions; r; r = r->next)
+  {
+    r->f = F_UNDEF;
+  }
+  assert (extregion->border->sponda == 0); /* this MUST be the external region */
+  extregion->f = finfinity;    /* valore 0 nella regione esterna */
+  goon = 1;
+  while (goon)
+  {
+    goon = 0;
+    for (a = s->arcs; a; a = a->next)
+    {
+      fleft = a->regionleft->border->region->f;
+      fright = a->regionright->border->region->f;
+      if (fleft == F_UNDEF && fright == F_UNDEF) continue;
+      if (fleft != F_UNDEF && fright != F_UNDEF) continue;
+      goon = 1;
+      if (fright != F_UNDEF) a->regionleft->border->region->f = fright + 2;
+        else a->regionright->border->region->f = fleft - 2;
+    }
+  }
 }
 
 /*

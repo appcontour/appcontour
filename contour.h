@@ -209,6 +209,7 @@ int remove_connected_component (int ccid, struct sketch *sketch);
 
 int add_s1 (struct sketch *s, struct region *r,
             int stratum, int ori);
+int put_in_s1 (struct sketch *s);
 int frontback (struct sketch *s);
 int leftright (struct sketch *s);
 int changeextregion (struct sketch *s, int tag);
@@ -242,6 +243,7 @@ int *concatenate_depths (struct arc *arcleft, struct arc *arcright);
 
 int arcmult (struct arc *arc);
 void postprocesssketch (struct sketch *s);
+void computefvalue (struct sketch *s, struct region *extregion, int finfinity);
 int adjust_isexternalinfo (struct sketch *s);
 int iei_process_region (struct region *r);
 void defineregionleftright (struct border *border);

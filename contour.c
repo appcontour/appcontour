@@ -54,6 +54,7 @@
 #define ACTION_FINDCCPARENT 37
 #define ACTION_CCORDERING 38
 #define ACTION_CCCHILDS 39
+#define ACTION_WRAP 40
 
 int debug = 0;
 int quiet = 0;
@@ -217,6 +218,7 @@ main (int argc, char *argv[])
       printf ("  punchhole/removehole: perform vertical surgery\n");
       printf ("  gluearcs/pinchneck: perform horizontal surgery\n");
       printf ("  addsphere/removesphere: add-remove small sphere\n");
+      printf ("  wrap: put the 3D surface into a big sphere\n");
       printf ("  extractcc <int>: extract 3D connected component\n");
       printf ("  removecc <int>: remove 3D connected component from contour\n");
       printf ("  leftright: left-right reflection\n");
@@ -313,6 +315,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"removesphere") == 0) action = ACTION_REMOVESPHERE;
     if (strcmp(argv[i],"liststrata") == 0) action = ACTION_LISTSTRATA;
     if (strcmp(argv[i],"addsphere") == 0) action = ACTION_ADDSPHERE;
+    if (strcmp(argv[i],"wrap") == 0) action = ACTION_WRAP;
     if (strcmp(argv[i],"punchhole") == 0) action = ACTION_PUNCHHOLE;
     if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
     if (strcmp(argv[i],"gluearcs") == 0) action = ACTION_GLUEARCS;
@@ -618,6 +621,17 @@ main (int argc, char *argv[])
     printsketch (sketch);
     if (res == 0) {
       fprintf (stderr, "Cannot add s1!\n");
+      exit(14);
+    }
+    break;
+
+    case ACTION_WRAP:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    canonify (sketch);
+    res = put_in_s1 (sketch);
+    printsketch (sketch);
+    if (res == 0) {
+      fprintf (stderr, "Cannot wrap contour in an s1!\n");
       exit(14);
     }
     break;

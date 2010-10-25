@@ -237,6 +237,77 @@ add_s1 (struct sketch *s, struct region *r, int dval, int ori)
   newbp1->orientation = ori;
   newbp2->orientation = -ori;
 
+  computefvalue (s, s->regions, s->regions->f);
+  if (debug) printsketch (s);
+  return (1);
+}
+
+/*
+ * ad a positively oriented S1 wrapping the whole contour with d=0
+ * i.e. a big sphere that contains everything
+ */
+
+int
+put_in_s1 (struct sketch *s)
+{
+  int i, changes;
+  struct arc *a, *newa;
+  struct region *r, *newr;
+  struct region *extr = 0;
+  struct borderlist *newbl1, *newblinf;
+  struct border *newbp1, *newbp2;
+
+  /* previous huffman labelling is increased by 1 */
+  if (s->huffman_labelling)
+  {
+    for (a = s->arcs; a; a = a->next)
+    {
+      for (i = 0; i < a->dvalues; i++)
+      {
+        a->depths[i]++;
+      }
+    }
+  }
+
+  /* devo aggiungere un s^1 senza cuspidi */
+  newa = newarc (s);
+  newa->depths = (int *) malloc (sizeof (int));
+     /* depths non viene usato se non e' huffman */
+  newa->depthsdim = 1;
+  if (s->huffman_labelling == 0) newa->depthsdim = 0;
+  newa->cusps = 0;
+  newa->dvalues = 1;
+  if (s->huffman_labelling) newa->depths[0] = 0;
+  newa->endpoints = 0;
+
+  /* new external region */
+  for (r = s->regions; r; r = r->next)
+  {
+    if (r->border->sponda == 0) extr = r;
+  }
+  assert (extr);
+
+  newr = newregion (s);
+  newbl1 = newborderlist (newr);
+  newbp1 = newborder (newbl1);
+  newbl1->sponda = newbp1;
+  newbp1->next = newbp1;
+  newbp2 = newborder (extr->border);
+  extr->border->sponda = newbp2;
+  newbp2->next = newbp2;
+  newbp1->info = newbp2->info = newa;
+  newblinf = newborderlist (newr);
+  newblinf->sponda = 0;
+
+  newa->regionleft = newbp2;
+  newa->regionright = newbp1;
+  newbp1->orientation = -1;
+  newbp2->orientation = 1;
+
+  changes = adjust_isexternalinfo (s);
+  computefvalue (s, newr, extr->f);
+  if (debug)
+    appcontourcheck (s, 1, 0);
   if (debug) printsketch (s);
   return (1);
 }
@@ -957,7 +1028,6 @@ void
 print_connected_component_childs (int ccid, struct sketch *sketch)
 {
   int ccnum, cc, count;
-  int *parents;
 
   ccnum = count_connected_components (sketch);
 
