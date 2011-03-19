@@ -53,7 +53,8 @@ PROGRAMS = $(bin_PROGRAMS)
 am_contour_OBJECTS = contour.$(OBJEXT) readsketch.$(OBJEXT) \
 	readmorse.$(OBJEXT) rules.$(OBJEXT) sketch.$(OBJEXT) \
 	parser.$(OBJEXT) appcontour.$(OBJEXT) printmorse.$(OBJEXT) \
-	knot2morse.$(OBJEXT) mendes.$(OBJEXT) invrules.$(OBJEXT)
+	knot2morse.$(OBJEXT) mendes.$(OBJEXT) invrules.$(OBJEXT) \
+	fundamental.$(OBJEXT)
 contour_OBJECTS = $(am_contour_OBJECTS)
 contour_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -206,7 +207,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = show utils
-contour_SOURCES = contour.c readsketch.c readmorse.c rules.c sketch.c parser.c appcontour.c printmorse.c knot2morse.c mendes.c invrules.c contour.h parser.h mendes.h
+contour_SOURCES = contour.c readsketch.c readmorse.c rules.c sketch.c parser.c appcontour.c printmorse.c knot2morse.c mendes.c invrules.c fundamental.c contour.h parser.h mendes.h fundamental.h
 EXTRA_DIST = examples/*.morse examples/*.knot examples/*.sketch examples/immersed/*.morse examples/failing_examples/*.morse tests/test.* test BUGS utils/*.sh TODO
 AM_CFLAGS = -Wall
 all: config.h
@@ -314,6 +315,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/appcontour.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/contour.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fundamental.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/invrules.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/knot2morse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mendes.Po@am__quote@

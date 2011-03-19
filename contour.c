@@ -13,6 +13,7 @@
 #include "contour.h"
 #include "parser.h"
 #include "mendes.h"
+#include "fundamental.h"
 
 #define ACTION_NONE 0
 #define ACTION_PRINTSKETCH 1
@@ -56,6 +57,7 @@
 #define ACTION_CCCHILDS 39
 #define ACTION_WRAP 40
 #define ACTION_3DEVERT 41
+#define ACTION_FUNDAMENTAL 42
 
 int debug = 0;
 int quiet = 0;
@@ -79,7 +81,7 @@ main (int argc, char *argv[])
   struct sketch *sketch, *s1, *s2;
   int ori = 0, i, count, action=ACTION_NONE, res, ccid = 0;
   unsigned int rndseed = 0;
-  int newextregion = 0;
+  int newextregion = 0, fg_type;
   char rule[10], *endch, *envvar;
   FILE *infile = 0;
   struct mendesgraph *mendes;
@@ -87,6 +89,7 @@ main (int argc, char *argv[])
   struct borderlist *bl;
   struct border *bp;
   struct arc *a, *a2;
+  struct ccomplex *ccomplex;
 
   user_data.mrnum = user_data.manum = 0;
   globals.rulenames = RULENAMES_NEW;
@@ -355,6 +358,10 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"frontback") == 0) action = ACTION_FRONTBACK;
     if (strcmp(argv[i],"leftright") == 0) action = ACTION_LEFTRIGHT;
     if (strcmp(argv[i],"mendes") == 0) action = ACTION_MENDES;
+    if (strcmp(argv[i],"fundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"sfundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"ifundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
+    if (strcmp(argv[i],"efundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"evert") == 0)
     {
       action = ACTION_EVERT;
@@ -824,6 +831,12 @@ main (int argc, char *argv[])
     if (docanonify) canonify (sketch);
     mendes = compute_mendes (sketch);
     print_mendes (mendes);
+    break;
+
+    case ACTION_FUNDAMENTAL:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    if (docanonify) canonify (sketch);
+    ccomplex = compute_fundamental (sketch, fg_type);
     break;
 
     default:
