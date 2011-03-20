@@ -20,6 +20,7 @@ struct ccomplex {
     struct ccomplexnode *nodes;
     int arcnum;
     struct ccomplexarc *arcs;
+    int facenum;
     int ccnum;
     struct ccomplexcc *cc;    // connected components list
   };
@@ -54,6 +55,7 @@ struct ccomplexcc {
 struct ccomplex *compute_fundamental (struct sketch *s, int which);
 int fundamental_countnodes (struct sketch *s);
 int fundamental_countarcs (struct sketch *s, int which);
-void fundamental_fillnodes (struct ccomplexnode *vecpt, int vecdim, struct sketch *s);
+int fundamental_countfaces (struct sketch *s, int which);
+void fundamental_fillnodes (struct ccomplex *cc);
 void fundamental_fillarcs (struct ccomplex *cc);
 int find_spanning_tree (struct ccomplex *cc);

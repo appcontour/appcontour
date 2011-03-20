@@ -15,12 +15,6 @@ compute_fundamental (struct sketch *s, int fg_type)
   struct ccomplex *cc;
   int ccnum;
 
-  //assert (fg_type == FG_INTERNAL);
-  assert (fg_type == FG_SURFACE);
-                                    /*
-                                     * only the computation of the fund. group of the surface
-                                     * is supported right now
-                                     */
   if (finfinity != 0) fprintf (stderr, "Value of f at infinity (%d) must be zero\n", finfinity);
   assert (finfinity == 0);
   computefvalue (s, s->regions, 0 /* should be finfinity */);
@@ -30,16 +24,20 @@ compute_fundamental (struct sketch *s, int fg_type)
   cc->sketch = s;
 
   cc->nodenum = fundamental_countnodes (s);
-  if (debug) printf ("Complex nodes: %d\n", cc->nodenum);
-  cc->nodes = (struct ccomplexnode *) malloc (cc->nodenum * sizeof (struct ccomplexnode));
-  fundamental_fillnodes (cc->nodes, cc->nodenum, cc->sketch);
   cc->arcnum = fundamental_countarcs (cc->sketch, cc->type);
+  cc->facenum = fundamental_countfaces (cc->sketch, cc->type);
+  if (debug) printf ("Complex nodes: %d\n", cc->nodenum);
   if (debug) printf ("Complex arcs: %d\n", cc->arcnum);
+  if (debug) printf ("Complex faces: %d\n", cc->facenum);
+  if (debug) printf ("Euler characteristic: %d\n", cc->nodenum + cc->facenum - cc->arcnum);
+  cc->nodes = (struct ccomplexnode *) malloc (cc->nodenum * sizeof (struct ccomplexnode));
   cc->arcs = (struct ccomplexarc *) malloc (cc->arcnum * sizeof (struct ccomplexarc));
+  fundamental_fillnodes (cc);
   fundamental_fillarcs (cc);
 
   ccnum = find_spanning_tree (cc);
   if (debug) printf ("Found %d connected components\n", ccnum);
+
 
   assert (ccnum >= 1);
 
@@ -47,6 +45,7 @@ compute_fundamental (struct sketch *s, int fg_type)
 
   // ora: calcolo generatori (per ogni cc), poi bisogna aggiungere le relazioni
   printf ("Not implemented!\n");
+  return (cc);
 }
 
 /*
@@ -134,11 +133,14 @@ cc_find_new_base_node (struct ccomplex *cc)
  */
 
 void
-fundamental_fillnodes (struct ccomplexnode *vec, int vecdim, struct sketch *s)
+fundamental_fillnodes (struct ccomplex *cc)
 {
   struct arc *a;
   struct ccomplexnode *vecpt;
+  struct ccomplexnode *vec = cc->nodes;
+  struct sketch *s = cc->sketch;
   int fleft, strata, stratum;
+  int vecdim = cc->nodenum;
 
   vecpt = vec;
   for (a = s->arcs; a; a = a->next)
@@ -172,49 +174,55 @@ int
 fundamental_countnodes (struct sketch *s)
 {
   int virtualnodes = 0;
-  int nodesonfolds = 0;
-  int nodesonstrata = 0;
+  int normalnodes = 0;
+  // int nodesonfolds = 0;
+  // int nodesonstrata = 0;
+  int cuspnodes = 0;
   int fleft, fright;
   int strata;
   struct arc *a;
-  struct region *r;
-  struct borderlist *bl;
-  struct border *b, *bp;
+  // struct region *r;
+  // struct borderlist *bl;
+  // struct border *b, *bp;
 
   for (a = s->arcs; a; a = a->next)
   {
     if (a->cusps > 0)
     {
-      fprintf (stderr, "Cusps are not allowed for now (arc %d: %d cusps)\n", a->tag, a->cusps);
+      cuspnodes += a->cusps;
+      // fprintf (stderr, "Cusps are not allowed for now (arc %d: %d cusps)\n", a->tag, a->cusps);
     }
+    fleft = a->regionleft->border->region->f;
+    fright = a->regionright->border->region->f;
+    assert (fleft - fright == 2);
+    strata = fleft -1;
     if (a->endpoints != 0)
     {
-      nodesonfolds += 1;
+      normalnodes += strata;
     } else {
-      fleft = a->regionleft->border->region->f;
-      fright = a->regionright->border->region->f;
-      assert (fleft - fright == 2);
-      strata = fleft -1;
       virtualnodes += strata;
     }
   }
 
-  for (r = s->regions; r; r = r->next)
-  {
-    strata = r->f;
-    if (strata == 0) continue;
-    for (bl = r->border; bl; bl = bl->next)
-    {
-      bp = b = bl->sponda;
-      do
-      {
-        if (bp->orientation < 0 && bp->next->orientation < 0) nodesonstrata += strata;
-        bp = bp->next;
-      } while (bp != b);
-    }
-  }
+  //for (r = s->regions; r; r = r->next)
+  //{
+  //  strata = r->f;
+  //  if (strata == 0) continue;
+  //  for (bl = r->border; bl; bl = bl->next)
+  //  {
+  //    bp = b = bl->sponda;
+  //    do
+  //    {
+  //      if (bp->orientation < 0 && bp->next->orientation < 0) nodesonstrata += strata;
+  //      bp = bp->next;
+  //    } while (bp != b);
+  //  }
+  //}
 
-  return (virtualnodes + nodesonfolds + nodesonstrata);
+  assert ((normalnodes % 2) == 0);  // normal nodes are counted twice!
+  normalnodes /= 2;
+
+  return (virtualnodes + normalnodes);
 }
 
 /*
@@ -262,7 +270,9 @@ assert (0);
 
 /*
  * count the number of arcs (1D cells) in the structure of cells
- * (we remove the 3D cells by deformation retraction)
+ * (we remove the 3D cells by deformation retraction, also we
+ * remove virtual arcs on top of virtual walls, which are themselves
+ * removed)
  */
 
 int
@@ -274,6 +284,7 @@ fundamental_countarcs (struct sketch *s, int fg_type)
   struct arc *a;
   struct region *r;
   struct borderlist *bl;
+  int strata;
 
   for (a = s->arcs; a; a = a->next)
   {
@@ -285,9 +296,11 @@ fundamental_countarcs (struct sketch *s, int fg_type)
   for (r = s->regions; r; r = r->next)
   {
 printf ("region: %d\n", r->tag);
+    strata = r->f;
+    assert ((strata % 2) == 0);
     if (r->border->sponda == 0)
     {
-      assert (r->f == 0);
+      assert (strata == 0);
       if (fg_type == FG_EXTERNAL)
       {
         /*
@@ -295,12 +308,96 @@ printf ("region: %d\n", r->tag);
          * the connected components to each other, they are
          * one less than the number of connected components
          */
-        for (bl = r->border->next; bl; bl = bl->next) virtualarcs++;
+printf ("virtualarcs 1: %d\n", virtualarcs);
+        assert (r->border->next);
+        for (bl = r->border->next->next; bl; bl = bl->next) virtualarcs++;
+printf ("virtualarcs 2: %d\n", virtualarcs);
       }
     } else {
-      for (bl = r->border->next; bl; bl = bl->next) virtualarcs += r->f;
+      if (fg_type != FG_SURFACE) strata /= 2;
+      if (fg_type == FG_EXTERNAL) strata++;
+printf ("virtualarcs 3: %d\n", virtualarcs);
+      for (bl = r->border->next; bl; bl = bl->next) virtualarcs += strata;
+printf ("virtualarcs 4: %d\n", virtualarcs);
     }
   }
 
+printf ("foldarcs = %d, cutarcs = %d, virtualarcs = %d\n", foldarcs, cutarcs, virtualarcs);
   return (foldarcs + cutarcs + virtualarcs);
+}
+
+/*
+ * count the number of faces (2D cells) in the structure of cells
+ * (we remove the 3D cells by deformation retraction, also we
+ * remove virtual vertical walls together with their top arc
+ * in case of fg_internal/fg_external)
+ */
+
+int
+fundamental_countfaces (struct sketch *s, int fg_type)
+{
+  int orizfaces = 0;
+  int walls = 0;
+  struct arc *a;
+  struct region *r;
+  int strata, fright;
+printf ("fg_type = %d\n", fg_type);
+  /*
+   * orizontal faces (no virtual walls because we deformation-retract them)
+   */
+
+  for (r = s->regions; r; r = r->next)
+  {
+    strata = r->f;
+    assert ((strata % 2) == 0);
+    if (r->border->sponda == 0)
+    {
+      assert (strata == 0);
+      continue;
+    }
+    switch (fg_type)
+    {
+      case FG_SURFACE:
+        orizfaces += strata;
+      break;
+
+      case FG_INTERNAL:
+        orizfaces += strata/2;
+      break;
+
+      case FG_EXTERNAL:
+        orizfaces += strata/2 + 1;
+      break;
+
+      default:
+        assert (0);
+      break;
+    }
+  }
+
+  /*
+   * vertical walls (not for FG_SURFACE)
+   */
+
+  if (fg_type != FG_SURFACE)
+  {
+    for (a = s->arcs; a; a = a->next)
+    {
+      fright = a->regionright->border->region->f;
+printf ("fright = %d, huffman=%d\n", fright, a->depths[0]);
+      assert ((fright % 2) == 0);
+      fright /= 2;
+      assert (a->cusps == 0);
+      if ((a->depths[0] % 2) == 1)
+      {
+        if (fg_type == FG_INTERNAL)
+          fright += 1;
+         else
+          fright -= 1;
+      }
+      walls += fright;
+    }
+  }
+printf ("orizfaces = %d, walls = %d\n", orizfaces, walls);
+  return (orizfaces + walls);
 }
