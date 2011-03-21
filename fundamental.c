@@ -281,16 +281,46 @@ fundamental_countarcs (struct sketch *s, int fg_type)
   int foldarcs = 0;
   int cutarcs = 0;
   int virtualarcs = 0;
+  int columns = 0;
+  int vcolumns = 0;
+  int acnodes = 0;
   struct arc *a;
   struct region *r;
   struct borderlist *bl;
-  int strata;
+  int strata, fright, d;
 
   for (a = s->arcs; a; a = a->next)
   {
-    assert (a->cusps == 0);   /* no cusps allowed for now */
     cutarcs += a->regionright->border->region->f;
     foldarcs++;
+    if (fg_type != FG_SURFACE)
+    {
+      /* count columns */
+      fright = a->regionright->border->region->f;
+      assert ((fright % 2) == 0);
+      fright /= 2;
+      d = (a->depths[0] % 2);
+      if (fg_type == FG_EXTERNAL) d = -d;
+      if (a->endpoints == 0)
+      {
+        vcolumns += fright + d;
+      } else {
+        columns += fright + 2*d;
+        acnodes++;
+      }
+    }
+  }
+
+  if (fg_type != FG_SURFACE)
+  {
+    assert ((acnodes % 2) == 0);
+    acnodes /= 2;
+    if (fg_type == FG_INTERNAL)
+      columns -= acnodes;
+     else
+      columns += acnodes;
+    assert ((columns % 2) == 0);
+    columns /= 2;
   }
 
   for (r = s->regions; r; r = r->next)
@@ -323,7 +353,8 @@ printf ("virtualarcs 4: %d\n", virtualarcs);
   }
 
 printf ("foldarcs = %d, cutarcs = %d, virtualarcs = %d\n", foldarcs, cutarcs, virtualarcs);
-  return (foldarcs + cutarcs + virtualarcs);
+printf ("columns = %d, vcolumns = %d\n", columns, vcolumns);
+  return (foldarcs + cutarcs + virtualarcs + columns + vcolumns);
 }
 
 /*
