@@ -303,6 +303,13 @@ fundamental_countnodes (struct sketch *s)
  * fill the vector containing all the arcs of the complex
  */
 
+/*
+ * local prototypes
+ */
+
+int stratum_start (struct arc *a, int stratum);
+int stratum_end (struct arc *a, int stratum);
+
 void
 fundamental_fillarcs (struct ccomplex *cc)
 {
@@ -352,8 +359,8 @@ fundamental_fillarcs (struct ccomplex *cc)
         bord = a->regionleft->next;
         bord = gettransborder (bord);
         anext = bord->next->info;
-        na = fund_findnode (cc, a, stratum);      //TODO: stratum va modificato! 
-        nb = fund_findnode (cc, anext, stratum);  //TODO
+        na = fund_findnode (cc, a, stratum_start (a, stratum));
+        nb = fund_findnode (cc, anext, stratum_end (a, stratum));
       }
       assert (na >= 0);
 printf ("a: %d, anext: %d, stratum %d\n", a->tag, anext->tag, stratum);
@@ -431,6 +438,58 @@ printf ("a: %d, anext: %d, stratum %d\n", a->tag, anext->tag, stratum);
 
   assert (vecpt == cc->arcs + cc->arcnum);
 }
+
+int stratum_start (struct arc *a, int stratum)
+{
+  int d2tilde, d2delta;
+  struct arc *ta;
+  struct border *bord;
+
+  if (a->endpoints == 0) return (stratum);
+
+  bord = a->regionright->next;
+  ta = bord->info;
+  d2delta = get_d_increase_across_node (ta, -bord->orientation);
+  assert ( d2delta == 0 || d2delta == 2);
+  d2delta /= 2;
+  if (bord->orientation > 0)
+  {
+    d2tilde = ta->depths[0] + d2delta;
+    if (stratum > d2tilde) stratum--;
+  } else {
+    d2tilde = ta->depths[ta->cusps] + d2delta;
+    if (stratum >= d2tilde) stratum++;
+  }
+  return (stratum);
+}
+
+int stratum_end (struct arc *a, int stratum)
+{
+  int d2tilde, d2delta;
+  struct arc *ta;
+  struct border *bord;
+
+  if (a->endpoints == 0) return (stratum);
+
+  bord = a->regionleft->next;
+  ta = bord->info;
+  d2delta = get_d_increase_across_node (ta, -bord->orientation);
+  assert ( d2delta == 0 || d2delta == -2);
+  d2delta /= 2;
+  if (bord->orientation > 0)
+  {
+    d2tilde = ta->depths[0] + d2delta;
+    if (stratum > d2tilde) stratum--;
+  } else {
+    d2tilde = ta->depths[ta->cusps] + d2delta;
+    if (stratum >= d2tilde) stratum++;
+  }
+  return (stratum);
+}
+
+/*
+ * =================================
+ */
 
 int
 fund_findnode (struct ccomplex *cc, struct arc *a, int stratum)
