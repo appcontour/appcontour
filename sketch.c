@@ -860,7 +860,7 @@ get_d_increase_across_node (struct arc *arc, int ori)
   arcnext = b->next->info;
   dthere = arcnext->depths[0];
   if (ori < 0) dthere = arcnext->depths[arcnext->dvalues-1];
-  if (debug) printf ("arc %d, arcnext %d, increase %d\n", 
+  if (debug > 1) printf ("arc %d, arcnext %d, increase %d\n", 
                 arc->tag, arcnext->tag, dthere - dhere);
   return (dthere - dhere);
 }

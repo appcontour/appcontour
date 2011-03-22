@@ -7,6 +7,9 @@
 #include "contour.h"
 #include "fundamental.h"
 
+/* local prototypes */
+void fundamental_printarcs (struct ccomplex *cc);
+
 struct ccomplex *
 compute_fundamental (struct sketch *s, int fg_type)
 {
@@ -73,6 +76,8 @@ compute_fundamental (struct sketch *s, int fg_type)
   if (debug) printf ("Creating arcs\n");
   fundamental_fillarcs (cc);
 
+if (debug) fundamental_printarcs (cc);
+  if (debug) printf ("Constructing spanning tree\n");
   ccnum = find_spanning_tree (cc);
   if (debug) printf ("Found %d connected components\n", ccnum);
 
@@ -363,7 +368,7 @@ fundamental_fillarcs (struct ccomplex *cc)
         nb = fund_findnode (cc, anext, stratum_end (a, stratum));
       }
       assert (na >= 0);
-printf ("a: %d, anext: %d, stratum %d\n", a->tag, anext->tag, stratum);
+//printf ("a: %d, anext: %d, stratum %d\n", a->tag, anext->tag, stratum);
       assert (nb >= 0);
       sectiona = sectionb = 0;
       while (sectiona <= a->cusps)
@@ -381,6 +386,8 @@ printf ("a: %d, anext: %d, stratum %d\n", a->tag, anext->tag, stratum);
         if (sectiona > 0) n1 = cuspnodes[sectiona];
         n2 = nb;
         if (sectionb <= a->cusps) n2 = cuspnodes[sectionb];
+        assert (n1 >= 0);
+        assert (n2 >= 0);
         vecpt->enda = n1;
         vecpt->endb = n2;
         vecpt++;
@@ -410,6 +417,7 @@ printf ("a: %d, anext: %d, stratum %d\n", a->tag, anext->tag, stratum);
         for (bl = r->border->next->next; bl; bl = bl->next)
         {
           n2 = fund_findnode (cc, bl->sponda->info, 0);
+          assert (n2 >= 0);
           assert (vecpt < cc->arcs + cc->arcnum);
           vecpt->type = CC_ARCTYPE_VIRTUAL;
           vecpt->enda = n1;
@@ -423,9 +431,11 @@ printf ("a: %d, anext: %d, stratum %d\n", a->tag, anext->tag, stratum);
         if ((stratum % 2) == 1 && cc->type == FG_INTERNAL) continue;
         if (stratum > 0 && (stratum % 2) == 0 && cc->type == FG_EXTERNAL) continue;
         n1 = fund_findnode (cc, r->border->sponda->info, stratum);
+        assert (n1 >= 0);
         for (bl = r->border->next; bl; bl = bl->next)
         {
           n2 = fund_findnode (cc, bl->sponda->info, stratum);
+          assert (n2 >= 0);
           assert (vecpt < cc->arcs + cc->arcnum);
           vecpt->type = CC_ARCTYPE_VIRTUAL;
           vecpt->enda = n1;
@@ -666,4 +676,21 @@ fundamental_countfaces (struct sketch *s, int fg_type)
     }
   }
   return (orizfaces + walls + cuspwalls);
+}
+
+/*
+ * ============
+ */
+
+void
+fundamental_printarcs (struct ccomplex *cc)
+{
+  int n;
+  struct ccomplexarc *arc;
+
+  for (n = 0; n < cc->arcnum; n++)
+  {
+    arc = cc->arcs + n;
+    printf ("arc %d[%d,%d], type %d\n", n, arc->enda, arc->endb, arc->type);
+  }
 }

@@ -169,7 +169,7 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--debug") == 0)
     {
-      debug = 1;
+      debug++;
       continue;
     }
     if (strcmp(argv[i],"--nocanonify") == 0)
