@@ -74,10 +74,10 @@ compute_fundamental (struct sketch *s, int fg_type)
   cc->arcs = (struct ccomplexarc *) malloc (cc->arcnum * sizeof (struct ccomplexarc));
   if (debug) printf ("Creating nodes\n");
   fundamental_fillnodes (cc);
+if (debug) fundamental_printnodes (cc);
   if (debug) printf ("Creating arcs\n");
   fundamental_fillarcs (cc);
 
-if (debug) fundamental_printnodes (cc);
 if (debug) fundamental_printarcs (cc);
   if (debug) printf ("Constructing spanning tree\n");
   ccnum = find_spanning_tree (cc);
@@ -474,6 +474,7 @@ fundamental_fillarcs (struct ccomplex *cc)
       if (cc->type == FG_EXTERNAL) parity = 1;
       if (a->endpoints == 0)
       {
+        strata++;
         /* creating virtual columns */
         d = a->depths[0];
         for (stratum = 0; stratum < strata - 1; stratum++)
