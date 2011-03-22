@@ -321,9 +321,10 @@ int stratum_varcend (struct border *bord, int stratum);
 void
 fundamental_fillarcs (struct ccomplex *cc)
 {
-  struct arc *a, *anext;
+  struct arc *a, *anext, *ase;
   int stratum, strata;
   int n1, n2, i, n, na, nb;
+  int d, dne, dse, parity;
   int sectiona, sectionb;
   struct ccomplexarc *vecpt;
   struct ccomplexnode *node;
@@ -371,7 +372,6 @@ fundamental_fillarcs (struct ccomplex *cc)
         nb = fund_findnode (cc, anext, stratum_end (a, stratum));
       }
       assert (na >= 0);
-//printf ("a: %d, anext: %d, stratum %d\n", a->tag, anext->tag, stratum);
       assert (nb >= 0);
       sectiona = sectionb = 0;
       while (sectiona <= a->cusps)
@@ -393,6 +393,10 @@ fundamental_fillarcs (struct ccomplex *cc)
         assert (n2 >= 0);
         vecpt->enda = n1;
         vecpt->endb = n2;
+        vecpt->stratum = stratum;
+        vecpt->cusp1 = sectiona;
+        vecpt->cusp2 = sectionb;
+        if (sectionb > a->cusps) vecpt->cusp2 = 0;
         vecpt++;
         sectiona = sectionb;
       }
@@ -425,6 +429,7 @@ fundamental_fillarcs (struct ccomplex *cc)
           vecpt->type = CC_ARCTYPE_VIRTUAL;
           vecpt->enda = n1;
           vecpt->endb = n2;
+          vecpt->stratum = 0;
           vecpt++;
         }
       }
@@ -445,6 +450,71 @@ fundamental_fillarcs (struct ccomplex *cc)
           vecpt->type = CC_ARCTYPE_VIRTUAL;
           vecpt->enda = n1;
           vecpt->endb = n2;
+          vecpt->stratum = stratum;
+          vecpt++;
+        }
+      }
+    }
+  }
+
+  /*
+   * we now generate all the columns
+   */
+
+  if (cc->type != FG_SURFACE)
+  {
+    for (a = s->arcs; a; a = a->next)
+    {
+      strata = a->regionright->border->region->f;
+      /*
+       * parity is the strata parity of the base of
+       * columns, it will change when crossing nodes
+       */
+      parity = 0;
+      if (cc->type == FG_EXTERNAL) parity = 1;
+      if (a->endpoints == 0)
+      {
+        /* creating virtual columns */
+        d = a->depths[0];
+        for (stratum = 0; stratum < strata - 1; stratum++)
+        {
+          if (stratum == d) parity = 1 - parity;
+          if ((stratum % 2) != parity) continue;
+          na = fund_findnode (cc, a, stratum);
+          nb = fund_findnode (cc, a, stratum+1);
+          assert (na >= 0 && nb >= 0);
+          assert (vecpt < cc->arcs + cc->arcnum);
+          vecpt->enda = na;
+          vecpt->endb = nb;
+          vecpt->type = CC_ARCTYPE_VCOLUMN;
+          vecpt->stratum = stratum;  /* of the column base */
+          vecpt++;
+        }
+      } else {
+        bord = a->regionright;
+        assert (bord->orientation < 0);
+        bord = bord->next;
+        if (bord->orientation < 0) continue;
+        /* canonically oriented node */
+        ase = bord->info;
+        dne = a->depths[0];
+        dse = ase->depths[0];
+        if (dne >= dse + 2)
+          dne--;
+         else
+          dse++;
+        for (stratum = 0; stratum < strata - 1; stratum++)
+        {
+          if (stratum == dne || stratum == dse) parity = 1 - parity;
+          if ((stratum % 2) != parity) continue;
+          na = fund_findnode (cc, a, stratum);
+          nb = fund_findnode (cc, a, stratum+1);
+          assert (na >= 0 && nb >= 0);
+          assert (vecpt < cc->arcs + cc->arcnum);
+          vecpt->enda = na;
+          vecpt->endb = nb;
+          vecpt->type = CC_ARCTYPE_COLUMN;
+          vecpt->stratum = stratum;  /* of the column base */
           vecpt++;
         }
       }
@@ -539,6 +609,7 @@ fund_findnode (struct ccomplex *cc, struct arc *a, int stratum)
   for (n = 0; n < cc->nodenum; n++)
   {
     node = cc->nodes + n;
+    if (node->type == CC_NODETYPE_CUSP) continue;
     if ((node->ne == a || node->se == a) && node->stratum == stratum) return (n);
   }
   fprintf (stderr, "Warning: cannot find arc endpoint in the cell complex for arc %d, stratum %d\n",
@@ -738,6 +809,9 @@ fundamental_printarcs (struct ccomplex *cc)
   for (n = 0; n < cc->arcnum; n++)
   {
     arc = cc->arcs + n;
-    printf ("arc %d[%d,%d], type %d\n", n, arc->enda, arc->endb, arc->type);
+    printf ("arc %d[%d,%d], stratum %d, type %d", n, arc->enda, arc->endb, arc->stratum, arc->type);
+    if (arc->type == CC_ARCTYPE_CUT || arc->type == CC_ARCTYPE_FOLD)
+      printf (" (%d-%d)", arc->cusp1, arc->cusp2);
+    printf ("\n");
   }
 }

@@ -14,6 +14,8 @@
 #define CC_ARCTYPE_CUT 1
 #define CC_ARCTYPE_FOLD 2
 #define CC_ARCTYPE_VIRTUAL 3
+#define CC_ARCTYPE_COLUMN 4
+#define CC_ARCTYPE_VCOLUMN 5
 
 struct ccomplex {
     struct sketch *sketch;
@@ -40,6 +42,8 @@ struct ccomplexarc {
     int type;
     int enda;
     int endb;
+    int cusp1;
+    int cusp2;
     int isinspanningtree;
     int stratum;
     struct arc *arc;
