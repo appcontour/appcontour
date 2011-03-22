@@ -9,6 +9,7 @@
 
 /* local prototypes */
 void fundamental_printarcs (struct ccomplex *cc);
+void fundamental_printnodes (struct ccomplex *cc);
 
 struct ccomplex *
 compute_fundamental (struct sketch *s, int fg_type)
@@ -76,6 +77,7 @@ compute_fundamental (struct sketch *s, int fg_type)
   if (debug) printf ("Creating arcs\n");
   fundamental_fillarcs (cc);
 
+if (debug) fundamental_printnodes (cc);
 if (debug) fundamental_printarcs (cc);
   if (debug) printf ("Constructing spanning tree\n");
   ccnum = find_spanning_tree (cc);
@@ -314,6 +316,7 @@ fundamental_countnodes (struct sketch *s)
 
 int stratum_start (struct arc *a, int stratum);
 int stratum_end (struct arc *a, int stratum);
+int stratum_varcend (struct border *bord, int stratum);
 
 void
 fundamental_fillarcs (struct ccomplex *cc)
@@ -430,11 +433,13 @@ fundamental_fillarcs (struct ccomplex *cc)
       {
         if ((stratum % 2) == 1 && cc->type == FG_INTERNAL) continue;
         if (stratum > 0 && (stratum % 2) == 0 && cc->type == FG_EXTERNAL) continue;
-        n1 = fund_findnode (cc, r->border->sponda->info, stratum);
+        n1 = fund_findnode (cc, r->border->sponda->info,
+                            stratum_varcend (r->border->sponda, stratum));
         assert (n1 >= 0);
         for (bl = r->border->next; bl; bl = bl->next)
         {
-          n2 = fund_findnode (cc, bl->sponda->info, stratum);
+          n2 = fund_findnode (cc, bl->sponda->info,
+                              stratum_varcend (bl->sponda, stratum));
           assert (n2 >= 0);
           assert (vecpt < cc->arcs + cc->arcnum);
           vecpt->type = CC_ARCTYPE_VIRTUAL;
@@ -498,6 +503,30 @@ int stratum_end (struct arc *a, int stratum)
 }
 
 /*
+ * this function computes the stratum number for one of the endpoints
+ * of a virtual arc added to make a region simply connected.
+ * the stratum in input is that of the virtual arc
+ */
+
+int
+stratum_varcend (struct border *bord, int stratum)
+{
+  struct arc *a;
+  int d;
+
+  a = bord->info;
+  d = a->depths[0];
+
+  if (bord->orientation > 0 && stratum > d) stratum--;
+  if (bord->orientation < 0 && stratum >= d) stratum++;
+  /* this is the stratum of the corresponding arc */
+
+  if (a->endpoints == 0) return (stratum);
+
+  return (stratum_start (a, stratum));
+}
+
+/*
  * =================================
  */
 
@@ -512,6 +541,8 @@ fund_findnode (struct ccomplex *cc, struct arc *a, int stratum)
     node = cc->nodes + n;
     if ((node->ne == a || node->se == a) && node->stratum == stratum) return (n);
   }
+  fprintf (stderr, "Warning: cannot find arc endpoint in the cell complex for arc %d, stratum %d\n",
+    a->tag, stratum);
   return (-1);
 }
 
@@ -681,6 +712,22 @@ fundamental_countfaces (struct sketch *s, int fg_type)
 /*
  * ============
  */
+
+void
+fundamental_printnodes (struct ccomplex *cc)
+{
+  int n;
+  struct ccomplexnode *node;
+
+  for (n = 0; n < cc->nodenum; n++)
+  {
+    node = cc->nodes + n;
+    if (node->type == CC_NODETYPE_CUSP) 
+      printf ("node %d of CUSP type, ne-arc %d, cusp %d\n", n, node->ne->tag, node->cusp);
+     else
+      printf ("node %d of type %d, ne-arc %d, stratum %d\n", n, node->type, node->ne->tag, node->stratum);
+  }
+}
 
 void
 fundamental_printarcs (struct ccomplex *cc)
