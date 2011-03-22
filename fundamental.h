@@ -9,9 +9,11 @@
 #define CC_NODETYPE_CUT 2
 #define CC_NODETYPE_VIRTUALFOLD 3
 #define CC_NODETYPE_VIRTUALCUT 4
+#define CC_NODETYPE_CUSP 5
 
 #define CC_ARCTYPE_CUT 1
 #define CC_ARCTYPE_FOLD 2
+#define CC_ARCTYPE_VIRTUAL 3
 
 struct ccomplex {
     struct sketch *sketch;
@@ -28,9 +30,10 @@ struct ccomplex {
 struct ccomplexnode {
     int type;
     int stratum;
+    int cusp;
     struct ccomplexcc *cc;
-    struct arc *under;
-    struct arc *over;
+    struct arc *ne;   // with both arcs oriented from left to right
+    struct arc *se;
   };
 
 struct ccomplexarc {
@@ -58,4 +61,5 @@ int fundamental_countarcs (struct sketch *s, int which);
 int fundamental_countfaces (struct sketch *s, int which);
 void fundamental_fillnodes (struct ccomplex *cc);
 void fundamental_fillarcs (struct ccomplex *cc);
+int fund_findnode (struct ccomplex *cc, struct arc *a, int stratum);
 int find_spanning_tree (struct ccomplex *cc);

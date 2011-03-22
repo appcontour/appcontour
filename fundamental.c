@@ -68,7 +68,9 @@ compute_fundamental (struct sketch *s, int fg_type)
 
   cc->nodes = (struct ccomplexnode *) malloc (cc->nodenum * sizeof (struct ccomplexnode));
   cc->arcs = (struct ccomplexarc *) malloc (cc->arcnum * sizeof (struct ccomplexarc));
+  if (debug) printf ("Creating nodes\n");
   fundamental_fillnodes (cc);
+  if (debug) printf ("Creating arcs\n");
   fundamental_fillarcs (cc);
 
   ccnum = find_spanning_tree (cc);
@@ -171,16 +173,30 @@ cc_find_new_base_node (struct ccomplex *cc)
 void
 fundamental_fillnodes (struct ccomplex *cc)
 {
-  struct arc *a;
+  struct arc *a, *ane, *ase;
+  struct border *bord;
   struct ccomplexnode *vecpt;
   struct ccomplexnode *vec = cc->nodes;
   struct sketch *s = cc->sketch;
   int fleft, strata, stratum;
   int vecdim = cc->nodenum;
+  int dne, dse, i;
 
   vecpt = vec;
   for (a = s->arcs; a; a = a->next)
   {
+    if (a->cusps > 0)
+    {
+      for (i = 1; i <= a->cusps; i++)
+      {
+        assert (vecpt < vec + vecdim);
+        vecpt->type = CC_NODETYPE_CUSP;
+        vecpt->stratum = a->depths[i];
+        vecpt->ne = vecpt->se = a;
+        vecpt->cusp = i;
+        vecpt++;
+      }
+    }
     if (a->endpoints == 0)
     {
       fleft = a->regionleft->border->region->f;
@@ -191,11 +207,34 @@ fundamental_fillnodes (struct ccomplex *cc)
         vecpt->type = CC_NODETYPE_VIRTUALCUT;
         if (stratum == a->depths[0]) vecpt->type = CC_NODETYPE_VIRTUALFOLD;
         vecpt->stratum = stratum;
-        vecpt->under = vecpt->over = a;
+        vecpt->ne = vecpt->se = a;
         vecpt++;
       }
     } else {
-      assert (0);
+      bord = a->regionright;
+      assert (bord->orientation < 0);
+      bord = bord->next;
+      if (bord->orientation < 0) continue;
+      /* archi in posizione canonica */
+      ane = a;
+      ase = bord->info;
+      strata = ane->regionright->border->region->f;
+      dne = ane->depths[0];
+      dse = ase->depths[0];
+      if (dne >= dse + 2)
+        dne--;
+       else
+        dse++;
+      for (stratum = 0; stratum < strata; stratum++)
+      {
+        assert (vecpt < vec + vecdim);
+        vecpt->type = CC_NODETYPE_CUT;
+        if (stratum == dse || stratum == dne) vecpt->type = CC_NODETYPE_FOLD;
+        vecpt->stratum = stratum;
+        vecpt->ne = ane;
+        vecpt->se = ase;
+        vecpt++;
+      }
     }
   }
   assert (vecpt == vec + vecdim);
@@ -267,40 +306,144 @@ fundamental_countnodes (struct sketch *s)
 void
 fundamental_fillarcs (struct ccomplex *cc)
 {
-  struct arc *a;
+  struct arc *a, *anext;
   int stratum, strata;
-  int n1, n2;
+  int n1, n2, i, n, na, nb;
+  int sectiona, sectionb;
   struct ccomplexarc *vecpt;
+  struct ccomplexnode *node;
   struct sketch *s = cc->sketch;
+  struct border *bord;
+  struct region *r;
+  struct borderlist *bl;
+  int *cuspnodes = 0;
 
   vecpt = cc->arcs;
 
   for (a = s->arcs; a; a = a->next)
   {
     strata = a->regionright->border->region->f + 1;
+    if (a->cusps > 0) cuspnodes = (int *) malloc ((a->cusps+1)*sizeof(int));
+    for (i = 1; i <= a->cusps; i++)
+    { /*
+       * cerco i nodi corrispondenti alle cuspidi, memorizzati
+       * nel vettore cuspnodes a partire dall'indice 1
+       */
+      for (n = 0; n < cc->nodenum; n++)
+      {
+        node = cc->nodes + n;
+        if (node->type == CC_NODETYPE_CUSP && node->ne == a)
+        {
+          assert (node->cusp <= a->cusps);
+          cuspnodes[node->cusp] = n;
+        }
+      }
+    }
+
     for (stratum = 0; stratum < strata; stratum++)
-    {
-      assert (vecpt < cc->arcs + cc->arcnum);
-      vecpt->type = CC_ARCTYPE_CUT;
-      if (stratum == a->depths[0]) vecpt->type = CC_ARCTYPE_FOLD;
+    { /*
+       * devo trovare i due nodi estremi dell'arco
+       */
+      na = nb = -1;
       if (a->endpoints == 0)
       {
-        printf ("devo cercare l'arco chiuso %d, strato %d\n", a->tag, stratum);
-        n1 = n2 = 0;  // TODO!
-        vecpt->enda = n1;
-        vecpt->endb = n2;
+        na = nb = fund_findnode (cc, a, stratum);
       } else {
-        printf ("devo cercare l'arco %d, strato %d\n", a->tag, stratum);
-assert (0);
-        n1 = n2 = 0;  // TODO!
+        bord = a->regionleft->next;
+        bord = gettransborder (bord);
+        anext = bord->next->info;
+        na = fund_findnode (cc, a, stratum);      //TODO: stratum va modificato! 
+        nb = fund_findnode (cc, anext, stratum);  //TODO
+      }
+      assert (na >= 0);
+printf ("a: %d, anext: %d, stratum %d\n", a->tag, anext->tag, stratum);
+      assert (nb >= 0);
+      sectiona = sectionb = 0;
+      while (sectiona <= a->cusps)
+      {
+        while (sectionb <= a->cusps &&
+          ((a->depths[sectiona] == stratum) ==
+           (a->depths[sectionb] == stratum)) ) sectionb++;
+        /* now sectiona and sectionb-1 indicate an arc */
+        
+        assert (vecpt < cc->arcs + cc->arcnum);
+        vecpt->type = CC_ARCTYPE_CUT;
+        if (stratum == a->depths[sectiona]) vecpt->type = CC_ARCTYPE_FOLD;
+
+        n1 = na;
+        if (sectiona > 0) n1 = cuspnodes[sectiona];
+        n2 = nb;
+        if (sectionb <= a->cusps) n2 = cuspnodes[sectionb];
         vecpt->enda = n1;
         vecpt->endb = n2;
+        vecpt++;
+        sectiona = sectionb;
       }
-      vecpt++;
+    }
+    if (cuspnodes) {free (cuspnodes); cuspnodes = 0;}
+  }
+
+  for (r = s->regions; r; r = r->next)
+  {
+    strata = r->f;
+    assert ((strata % 2) == 0);
+    if (r->border->sponda == 0)
+    {
+      assert (strata == 0);
+      if (cc->type == FG_EXTERNAL)
+      {
+        /*
+         * in this case we need to create virtual arcs connecting
+         * the connected components to each other, they are
+         * one less than the number of connected components
+         */
+        assert (r->border->next);
+        n1 = fund_findnode (cc, r->border->next->sponda->info, 0);
+        assert (n1 >= 0);
+        for (bl = r->border->next->next; bl; bl = bl->next)
+        {
+          n2 = fund_findnode (cc, bl->sponda->info, 0);
+          assert (vecpt < cc->arcs + cc->arcnum);
+          vecpt->type = CC_ARCTYPE_VIRTUAL;
+          vecpt->enda = n1;
+          vecpt->endb = n2;
+          vecpt++;
+        }
+      }
+    } else {
+      for (stratum = 0; stratum < strata; stratum++)
+      {
+        if ((stratum % 2) == 1 && cc->type == FG_INTERNAL) continue;
+        if (stratum > 0 && (stratum % 2) == 0 && cc->type == FG_EXTERNAL) continue;
+        n1 = fund_findnode (cc, r->border->sponda->info, stratum);
+        for (bl = r->border->next; bl; bl = bl->next)
+        {
+          n2 = fund_findnode (cc, bl->sponda->info, stratum);
+          assert (vecpt < cc->arcs + cc->arcnum);
+          vecpt->type = CC_ARCTYPE_VIRTUAL;
+          vecpt->enda = n1;
+          vecpt->endb = n2;
+          vecpt++;
+        }
+      }
     }
   }
 
   assert (vecpt == cc->arcs + cc->arcnum);
+}
+
+int
+fund_findnode (struct ccomplex *cc, struct arc *a, int stratum)
+{
+  int n;
+  struct ccomplexnode *node;
+
+  for (n = 0; n < cc->nodenum; n++)
+  {
+    node = cc->nodes + n;
+    if ((node->ne == a || node->se == a) && node->stratum == stratum) return (n);
+  }
+  return (-1);
 }
 
 /*
