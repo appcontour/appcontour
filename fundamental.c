@@ -793,6 +793,8 @@ fundamental_countfaces (struct sketch *s, int fg_type)
  */
 
 /* local prototypes */
+void fund_fillivec (struct ccomplex *cc, struct ccomplexface *face,
+                    struct arc *a, int stratum, int cusp1, int cusp2);
 int fund_findarc (struct ccomplex *cc, struct arc *a, int stratum, int cusp1, int cusp2);
 int fund_findvarc (struct ccomplex *cc, struct borderlist *bl, int stratum);
 int fund_findcolumn (struct ccomplex *cc, int nnode, int stratum);
@@ -802,14 +804,12 @@ fundamental_fillfaces (struct ccomplex *cc)
 {
   int stratum, strata, arcnum, i, d, dcusp;
   struct ccomplexface *vecpt;
-  struct ccomplexarc *arc1, *arc2;
-  struct ccomplexnode *nodes;
   struct region *r;
   struct borderlist *bl;
   struct border *b, *bp;
   struct arc *a;
-  int ori, startcusp, astratum, na, na1, na2, *ivec;
-  int parity;
+  int ori, startcusp, astratum, na, *ivec;
+  int parity, sectiona, sectionb, cusp1, cusp2;
 
   struct sketch *s = cc->sketch;
 
@@ -932,55 +932,115 @@ fundamental_fillfaces (struct ccomplex *cc)
    */
   if (cc->type != FG_SURFACE)
   {
-    nodes = cc->nodes;
     for (a = s->arcs; a; a = a->next)
     {
-      if (a->cusps > 0)
-      {
-printf ("Vertical walls for arcs with cusps not yet implemented!\n");
-continue;
-      }
-      strata = a->regionright->border->region->f + 1;
+      strata = a->regionleft->border->region->f;  // strata with fold lines counting twice
       d = a->depths[0];
       parity = 0;
       if (cc->type == FG_EXTERNAL) parity = 1;
       for (stratum = 0; stratum < strata - 1; stratum++)
       {
-        if (stratum == d) parity = 1 - parity;
         if ((stratum % 2) != parity) continue;
-        /* devo creare un muro verticale, composto da max 4 archi */
-        na1 = fund_findarc (cc, a, stratum, 0, 0);
-        na2 = fund_findarc (cc, a, stratum+1, 0, 0);
-        arc1 = cc->arcs + na1;
-        arc2 = cc->arcs + na2;
-        arcnum = 2;
-        if (arc1->enda != arc2->enda) arcnum++;
-        if (arc1->endb != arc2->endb) arcnum++;
-        vecpt->type = CC_FACETYPE_WALL;
-        vecpt->stratum = stratum;
-        vecpt->facebordernum = arcnum;
-        ivec = vecpt->faceborder = (int *) malloc (arcnum * sizeof (int));
-        arcnum = 0;
-        ivec[arcnum++] = na1 + 1;
-        if (arc1->endb != arc2->endb)
+        sectionb = 0;
+        for (sectiona = 0; sectiona <= a->cusps; sectiona++)
         {
-          na = fund_findcolumn (cc, arc1->endb, nodes[arc1->endb].stratum);
-          assert (na >= 0);
-          ivec[arcnum++] = na + 1;
+          if (a->depths[sectiona] == stratum) continue;
+          for (sectionb = sectiona + 1;
+               a->depths[sectionb] != stratum && sectionb <= a->cusps;
+               sectionb++);
+          /* now sectiona-(sectionb-1) is a wall range */
+          cusp1 = sectiona;
+          cusp2 = sectionb;
+          sectiona = sectionb;
+          if (cusp2 > a->cusps) cusp2 = 0;
+          astratum = stratum;
+          if (stratum > a->depths[cusp1]) astratum--;
+          /* devo creare un muro verticale */
+          fund_fillivec (cc, vecpt, a, astratum, cusp1, cusp2);
+          vecpt++;
         }
-        ivec[arcnum++] = - na2 - 1;
-        if (arc1->endb != arc2->endb)
-        {
-          na = fund_findcolumn (cc, arc1->enda, nodes[arc1->enda].stratum);
-          assert (na >= 0);
-          ivec[arcnum++] = - na - 1;
-        }
-        vecpt++;
       }
     }
   }
 
   assert (vecpt == cc->faces + cc->facenum);
+}
+
+/* create integer vector with boundary of a vertical face */
+
+void
+fund_fillivec (struct ccomplex *cc, struct ccomplexface *face,
+               struct arc *a, int stratum, int cusp1, int cusp2)
+{
+  int na, na1, na2;
+  struct ccomplexarc *arc1, *arc2;
+  struct ccomplexnode *nodes = cc->nodes;
+  int arcnum, *ivec;
+  int i, *buffer1, *buffer2;
+  int ib1, ib2;
+  int cuspstart;
+
+  buffer1 = (int *) malloc ((a->cusps + 1)*sizeof(int));
+  buffer2 = (int *) malloc ((a->cusps + 1)*sizeof(int));
+
+  ib1 = 0;
+  cuspstart = cusp1;
+  do {
+    na1 = fund_findarc (cc, a, stratum, cuspstart, -1);  // find arc starting at cusp1
+    assert (na1 >= 0);
+    buffer1[ib1++] = na1;
+    arc1 = cc->arcs + na1;
+    cuspstart = arc1->cusp2;
+  } while (cuspstart != cusp2);
+
+  ib2 = 0;
+  cuspstart = cusp1;
+  do {
+    na2 = fund_findarc (cc, a, stratum + 1, cuspstart, -1);  // find arc starting at cusp1
+    assert (na2 >= 0);
+    buffer2[ib2++] = na2;
+    arc2 = cc->arcs + na2;
+    cuspstart = arc2->cusp2;
+  } while (cuspstart != cusp2);
+
+  arcnum = ib1 + ib2;
+  arc1 = cc->arcs + buffer1[0];
+  arc2 = cc->arcs + buffer2[0];
+  if (arc1->enda != arc2->enda) arcnum++;
+  arc1 = cc->arcs + buffer1[ib1-1];
+  arc2 = cc->arcs + buffer2[ib2-1];
+  if (arc1->endb != arc2->endb) arcnum++;
+
+  face->type = CC_FACETYPE_WALL;
+  face->stratum = stratum;
+  face->facebordernum = arcnum;
+  ivec = face->faceborder = (int *) malloc (arcnum * sizeof (int));
+  arcnum = 0;
+  for (i = 0; i < ib1; i++)
+    ivec[arcnum++] = buffer1[i] + 1;
+
+  arc1 = cc->arcs + buffer1[ib1-1];
+  arc2 = cc->arcs + buffer2[ib2-1];
+  if (arc1->endb != arc2->endb)
+  {
+    na = fund_findcolumn (cc, arc1->endb, nodes[arc1->endb].stratum);
+    assert (na >= 0);
+    ivec[arcnum++] = na + 1;
+  }
+  for (i = ib2 - 1; i >= 0; i--)
+    ivec[arcnum++] = - buffer2[i] - 1;
+
+  arc1 = cc->arcs + buffer1[0];
+  arc2 = cc->arcs + buffer2[0];
+  if (arc1->enda != arc2->enda)
+  {
+    na = fund_findcolumn (cc, arc1->enda, nodes[arc1->enda].stratum);
+    assert (na >= 0);
+    ivec[arcnum++] = - na - 1;
+  }
+
+  free (buffer1);
+  free (buffer2);
 }
 
 int
@@ -993,8 +1053,10 @@ fund_findarc (struct ccomplex *cc, struct arc *a, int stratum, int cusp1, int cu
   {
     arc = cc->arcs + n;
     if (arc->type != CC_ARCTYPE_CUT && arc->type != CC_ARCTYPE_FOLD) continue;
-    if (arc->arc != a) continue;
-    if (arc->stratum == stratum && arc->cusp1 == cusp1 && arc->cusp2 == cusp2) return (n);
+    if (arc->arc != a || arc->stratum != stratum) continue;
+    if (arc->cusp1 == cusp1 && arc->cusp2 == cusp2) return (n);
+    if (cusp2 < 0 && arc->cusp1 == cusp1) return (n);
+    if (cusp1 < 0 && arc->cusp2 == cusp2) return (n);
   }
   fprintf (stderr, "Warning: cannot find face border for arc %d, stratum %d, ",
     a->tag, stratum);
