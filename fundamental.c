@@ -435,6 +435,7 @@ fundamental_fillarcs (struct ccomplex *cc)
           vecpt->enda = n1;
           vecpt->endb = n2;
           vecpt->stratum = 0;
+          vecpt->bl = bl;
           vecpt++;
         }
       }
@@ -456,6 +457,7 @@ fundamental_fillarcs (struct ccomplex *cc)
           vecpt->enda = n1;
           vecpt->endb = n2;
           vecpt->stratum = stratum;
+          vecpt->bl = bl;
           vecpt++;
         }
       }
@@ -615,7 +617,7 @@ fund_findnode (struct ccomplex *cc, struct arc *a, int stratum)
   for (n = 0; n < cc->nodenum; n++)
   {
     node = cc->nodes + n;
-    if (node->type == CC_NODETYPE_CUSP) continue;
+    if (node->type < CC_NODETYPE_FOLD || node->type > CC_NODETYPE_VIRTUALCUT) continue;
     if ((node->ne == a || node->se == a) && node->stratum == stratum) return (n);
   }
   fprintf (stderr, "Warning: cannot find arc endpoint in the cell complex for arc %d, stratum %d\n",
@@ -792,6 +794,7 @@ fundamental_countfaces (struct sketch *s, int fg_type)
 
 /* local prototypes */
 int fund_findarc (struct ccomplex *cc, struct arc *a, int stratum, int cusp1, int cusp2);
+int fund_findvarc (struct ccomplex *cc, struct borderlist *bl, int stratum);
 
 void
 fundamental_fillfaces (struct ccomplex *cc)
@@ -853,8 +856,8 @@ fundamental_fillfaces (struct ccomplex *cc)
       {
         if (bl != r->border)
         {
-printf ("cerco arco virtuale (TODO)\n");
-          ivec[arcnum++] = 9999;
+          na = fund_findvarc (cc, bl, stratum);
+          ivec[arcnum++] = na+1;   // orientato positivamente
         }
         bp = b = bl->sponda;
         do
@@ -905,10 +908,11 @@ printf ("cerco arco virtuale (TODO)\n");
         } while (bp != b);
         if (bl != r->border)
         {
-printf ("cerco arco virtuale indietro (TODO)\n");
-          ivec[arcnum++] = -9999;
+          na = fund_findvarc (cc, bl, stratum);
+          ivec[arcnum++] = -na-1;   // orientato negativamente
         }
       }
+      if ((stratum % 2) == 1) cc_revert_face (cc, vecpt - cc->faces);
       vecpt++;
     }
   }
@@ -935,8 +939,48 @@ fund_findarc (struct ccomplex *cc, struct arc *a, int stratum, int cusp1, int cu
   return (-1);
 }
 
+int
+fund_findvarc (struct ccomplex *cc, struct borderlist *bl, int stratum)
+{
+  int n;
+  struct ccomplexarc *arc;
+
+  for (n = 0; n < cc->arcnum; n++)
+  {
+    arc = cc->arcs + n;
+    if (arc->type != CC_ARCTYPE_VIRTUAL) continue;
+    if (arc->bl == bl && arc->stratum == stratum) return (n);
+  }
+  fprintf (stderr, "Warning: cannot find face border for varc in region %d, stratum %d\n",
+    bl->region->tag, stratum);
+  return (-1);
+}
+
 /*
- * ============
+ * functions for ccomplex manipulation
+ */
+
+void
+cc_revert_face (struct ccomplex *cc, int nface)
+{
+  struct ccomplexface *face = cc->faces;
+  int *newvec, *oldvec;
+  int i, size;
+
+  face += nface;
+  size = face->facebordernum;
+  newvec = (int *) malloc (size * sizeof (int));
+  oldvec = face->faceborder;
+
+  for (i = 0; i < size; i++)
+    newvec[size - i - 1] = -oldvec[i];
+
+  free (oldvec);
+  face->faceborder = newvec;
+}
+
+/*
+ * functions for printing ccomplex content
  */
 
 void

@@ -5,10 +5,14 @@
 #define FG_SURFACE 0
 #define FG_INTERNAL 1
 #define FG_EXTERNAL (-1)
+
+/* from here... */
 #define CC_NODETYPE_FOLD 1
 #define CC_NODETYPE_CUT 2
 #define CC_NODETYPE_VIRTUALFOLD 3
 #define CC_NODETYPE_VIRTUALCUT 4
+/* ...to here must be kept contiguous */
+/* see function fund_findnode */
 #define CC_NODETYPE_CUSP 5
 
 #define CC_ARCTYPE_CUT 1
@@ -50,6 +54,7 @@ struct ccomplexarc {
     int isinspanningtree;
     int stratum;
     struct arc *arc;
+    struct borderlist *bl;  // for virtual arcs, this points to the connecting island
   };
 
 /*
@@ -86,3 +91,4 @@ void fundamental_fillarcs (struct ccomplex *cc);
 void fundamental_fillfaces (struct ccomplex *cc);
 int fund_findnode (struct ccomplex *cc, struct arc *a, int stratum);
 int find_spanning_tree (struct ccomplex *cc);
+void cc_revert_face (struct ccomplex *cc, int nface);
