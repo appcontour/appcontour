@@ -10,6 +10,7 @@
 /* local prototypes */
 void fundamental_printarcs (struct ccomplex *cc);
 void fundamental_printnodes (struct ccomplex *cc);
+void fundamental_printfaces (struct ccomplex *cc);
 
 struct ccomplex *
 compute_fundamental (struct sketch *s, int fg_type)
@@ -72,13 +73,16 @@ compute_fundamental (struct sketch *s, int fg_type)
 
   cc->nodes = (struct ccomplexnode *) malloc (cc->nodenum * sizeof (struct ccomplexnode));
   cc->arcs = (struct ccomplexarc *) malloc (cc->arcnum * sizeof (struct ccomplexarc));
+  cc->faces = (struct ccomplexface *) malloc (cc->facenum * sizeof (struct ccomplexface));
   if (debug) printf ("Creating nodes\n");
   fundamental_fillnodes (cc);
 if (debug) fundamental_printnodes (cc);
   if (debug) printf ("Creating arcs\n");
   fundamental_fillarcs (cc);
-
 if (debug) fundamental_printarcs (cc);
+  if (debug) printf ("Creating faces\n");
+  fundamental_fillfaces (cc);
+if (debug) fundamental_printfaces (cc);
   if (debug) printf ("Constructing spanning tree\n");
   ccnum = find_spanning_tree (cc);
   if (debug) printf ("Found %d connected components\n", ccnum);
@@ -393,6 +397,7 @@ fundamental_fillarcs (struct ccomplex *cc)
         assert (n2 >= 0);
         vecpt->enda = n1;
         vecpt->endb = n2;
+        vecpt->arc = a;
         vecpt->stratum = stratum;
         vecpt->cusp1 = sectiona;
         vecpt->cusp2 = sectionb;
@@ -782,6 +787,155 @@ fundamental_countfaces (struct sketch *s, int fg_type)
 }
 
 /*
+ * compute faces
+ */
+
+/* local prototypes */
+int fund_findarc (struct ccomplex *cc, struct arc *a, int stratum, int cusp1, int cusp2);
+
+void
+fundamental_fillfaces (struct ccomplex *cc)
+{
+  int stratum, strata, arcnum, i, dcusp;
+  struct ccomplexface *vecpt;
+  struct region *r;
+  struct borderlist *bl;
+  struct border *b, *bp;
+  struct arc *a;
+  int ori, startcusp, astratum, na, *ivec;
+
+  struct sketch *s = cc->sketch;
+
+  vecpt = cc->faces;
+
+  for (r = s->regions; r; r = r->next)
+  {
+    strata = r->f;
+    if (r->border->sponda == 0) continue;
+    if (strata == 0 && cc->type == FG_EXTERNAL) strata = 1;
+    /* c'e' uno strato anche nei buchi */
+    for (stratum = 0; stratum < strata; stratum++)
+    {
+      if ((stratum % 2) == 1 && cc->type == FG_INTERNAL) continue;
+      if (stratum > 0 && (stratum % 2) == 0 && cc->type == FG_EXTERNAL) continue;
+      assert (vecpt < cc->faces + cc->facenum);
+      vecpt->type = CC_FACETYPE_HORIZONTAL;
+      vecpt->stratum = stratum;
+      /* count the number of arcs along the boundary */
+      arcnum = 0;
+      for (bl = r->border; bl; bl = bl->next)
+      {
+        bp = b = bl->sponda;
+        do
+        {
+          arcnum++;
+          a = bp->info;
+          for (i = 0; i < a->cusps; i++)
+          {
+            dcusp = a->depths[i];
+            if (a->depths[i+1] < dcusp) dcusp = a->depths[i+1];
+            if (bp->orientation > 0)
+            {
+              if (stratum == dcusp || stratum == dcusp+1 || stratum == dcusp+2) arcnum++;
+            } else {
+              if (stratum == dcusp) arcnum++;
+            }
+          }
+          bp = bp->next;
+        } while (bp != b);
+        if (bl != r->border) arcnum += 2;
+      }
+      vecpt->facebordernum = arcnum;
+      ivec = vecpt->faceborder = (int *) malloc (arcnum * sizeof (int));
+      /* now actually create the border list */
+      arcnum = 0;
+      for (bl = r->border; bl; bl = bl->next)
+      {
+        if (bl != r->border)
+        {
+printf ("cerco arco virtuale (TODO)\n");
+          ivec[arcnum++] = 9999;
+        }
+        bp = b = bl->sponda;
+        do
+        {
+          a = bp->info;
+          ori = bp->orientation;
+          if (ori > 0)
+          {
+            startcusp = 0;
+            astratum = stratum;
+            if (stratum > a->depths[0]) astratum--;
+            for (i = 1; i <= a->cusps; i++)
+            {
+              dcusp = a->depths[i-1];
+              if (a->depths[i] < dcusp) dcusp = a->depths[i];
+              if (stratum == dcusp || stratum == dcusp+1 || stratum == dcusp+2)
+              {
+                na = fund_findarc (cc, a, astratum, startcusp, i);
+                ivec[arcnum++] = na+1;
+                astratum = stratum;
+                if (stratum > a->depths[i]) astratum--;
+                startcusp = i;
+              }
+            }
+            na = fund_findarc (cc, a, astratum, startcusp, 0);
+            ivec[arcnum++] = na+1;
+          } else {
+            startcusp = 0;
+            astratum = stratum;
+            if (stratum >= a->depths[a->cusps]) astratum++;
+            for (i = a->cusps - 1; i >= 0; i--)
+            {
+              dcusp = a->depths[i+1];
+              if (a->depths[i] < dcusp) dcusp = a->depths[i];
+              if (stratum == dcusp)
+              {
+                na = fund_findarc (cc, a, astratum, i+1, startcusp);
+                ivec[arcnum++] = -na-1;
+                astratum = stratum;
+                if (stratum >= a->depths[i]) astratum++;
+                startcusp = i+1;
+              }
+            }
+            na = fund_findarc (cc, a, astratum, 0, startcusp);
+            ivec[arcnum++] = -na-1;
+          }
+          bp = bp->next;
+        } while (bp != b);
+        if (bl != r->border)
+        {
+printf ("cerco arco virtuale indietro (TODO)\n");
+          ivec[arcnum++] = -9999;
+        }
+      }
+      vecpt++;
+    }
+  }
+
+  assert (vecpt == cc->faces + cc->facenum);
+}
+
+int
+fund_findarc (struct ccomplex *cc, struct arc *a, int stratum, int cusp1, int cusp2)
+{
+  int n;
+  struct ccomplexarc *arc;
+
+  for (n = 0; n < cc->arcnum; n++)
+  {
+    arc = cc->arcs + n;
+    if (arc->type != CC_ARCTYPE_CUT && arc->type != CC_ARCTYPE_FOLD) continue;
+    if (arc->arc != a) continue;
+    if (arc->stratum == stratum && arc->cusp1 == cusp1 && arc->cusp2 == cusp2) return (n);
+  }
+  fprintf (stderr, "Warning: cannot find face border for arc %d, stratum %d, ",
+    a->tag, stratum);
+  fprintf (stderr, "cusp1 %d, cusp2 %d\n", cusp1, cusp2);
+  return (-1);
+}
+
+/*
  * ============
  */
 
@@ -812,7 +966,31 @@ fundamental_printarcs (struct ccomplex *cc)
     arc = cc->arcs + n;
     printf ("arc %d[%d,%d], stratum %d, type %d", n, arc->enda, arc->endb, arc->stratum, arc->type);
     if (arc->type == CC_ARCTYPE_CUT || arc->type == CC_ARCTYPE_FOLD)
-      printf (" (%d-%d)", arc->cusp1, arc->cusp2);
+      printf (" (%d-%d), tag %d", arc->cusp1, arc->cusp2, arc->arc->tag);
     printf ("\n");
+  }
+}
+
+void
+fundamental_printfaces (struct ccomplex *cc)
+{
+  int n, i, na;
+  int *ivec;
+  struct ccomplexface *face;
+
+  for (n = 0; n < cc->facenum; n++)
+  {
+    face = cc->faces + n;
+    ivec = face->faceborder;
+    printf ("face %d, stratum %d [", n, face->stratum);
+    for (i = 0; i < face->facebordernum; i++)
+    {
+      na = ivec[i];
+      printf ("%c", (na>0)?'+':'-');
+      if (na < 0) na *= -1;
+      na--;
+      printf ("%d ", na);
+    }
+    printf ("]\n");
   }
 }

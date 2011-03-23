@@ -17,6 +17,8 @@
 #define CC_ARCTYPE_COLUMN 4
 #define CC_ARCTYPE_VCOLUMN 5
 
+#define CC_FACETYPE_HORIZONTAL 1
+
 struct ccomplex {
     struct sketch *sketch;
     int type;
@@ -25,6 +27,7 @@ struct ccomplex {
     int arcnum;
     struct ccomplexarc *arcs;
     int facenum;
+    struct ccomplexface *faces;
     int ccnum;
     struct ccomplexcc *cc;    // connected components list
   };
@@ -49,6 +52,21 @@ struct ccomplexarc {
     struct arc *arc;
   };
 
+/*
+ * integer vector faceborder is dimensioned facebordernum
+ * and contains positive values "na" for positively oriented arcs
+ * negative values for negatively oriented arcs
+ * the integer value |na|-1 points to the actual arc in the
+ * cell structure
+ */
+
+struct ccomplexface {
+    int type;
+    int facebordernum;
+    int *faceborder;
+    int stratum;
+  };
+
 struct ccomplexcc {
     int tag;
     int basenode;
@@ -65,5 +83,6 @@ int fundamental_countarcs (struct sketch *s, int which);
 int fundamental_countfaces (struct sketch *s, int which);
 void fundamental_fillnodes (struct ccomplex *cc);
 void fundamental_fillarcs (struct ccomplex *cc);
+void fundamental_fillfaces (struct ccomplex *cc);
 int fund_findnode (struct ccomplex *cc, struct arc *a, int stratum);
 int find_spanning_tree (struct ccomplex *cc);
