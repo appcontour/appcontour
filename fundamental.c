@@ -802,12 +802,13 @@ fundamental_fillfaces (struct ccomplex *cc)
 {
   int stratum, strata, arcnum, i, d, dcusp;
   struct ccomplexface *vecpt;
-  struct ccomplexarc *arc;
+  struct ccomplexarc *arc1, *arc2;
+  struct ccomplexnode *nodes;
   struct region *r;
   struct borderlist *bl;
   struct border *b, *bp;
   struct arc *a;
-  int ori, startcusp, astratum, na, *ivec;
+  int ori, startcusp, astratum, na, na1, na2, *ivec;
   int parity;
 
   struct sketch *s = cc->sketch;
@@ -931,6 +932,7 @@ fundamental_fillfaces (struct ccomplex *cc)
    */
   if (cc->type != FG_SURFACE)
   {
+    nodes = cc->nodes;
     for (a = s->arcs; a; a = a->next)
     {
       if (a->cusps > 0)
@@ -946,20 +948,33 @@ continue;
       {
         if (stratum == d) parity = 1 - parity;
         if ((stratum % 2) != parity) continue;
-        /* devo creare un muro verticale, composto da 4 archi */
+        /* devo creare un muro verticale, composto da max 4 archi */
+        na1 = fund_findarc (cc, a, stratum, 0, 0);
+        na2 = fund_findarc (cc, a, stratum+1, 0, 0);
+        arc1 = cc->arcs + na1;
+        arc2 = cc->arcs + na2;
+        arcnum = 2;
+        if (arc1->enda != arc2->enda) arcnum++;
+        if (arc1->endb != arc2->endb) arcnum++;
         vecpt->type = CC_FACETYPE_WALL;
         vecpt->stratum = stratum;
-        vecpt->facebordernum = 4;
-        ivec = vecpt->faceborder = (int *) malloc (4 * sizeof (int));
-        na = fund_findarc (cc, a, stratum, 0, 0);
-        ivec[0] = na + 1;
-        arc = cc->arcs + na;
-        na = fund_findcolumn (cc, arc->endb, stratum);
-        ivec[1] = na + 1;
-        na = fund_findcolumn (cc, arc->enda, stratum);
-        ivec[3] = - na - 1;
-        na = fund_findarc (cc, a, stratum+1, 0, 0);
-        ivec[2] = - na - 1;
+        vecpt->facebordernum = arcnum;
+        ivec = vecpt->faceborder = (int *) malloc (arcnum * sizeof (int));
+        arcnum = 0;
+        ivec[arcnum++] = na1 + 1;
+        if (arc1->endb != arc2->endb)
+        {
+          na = fund_findcolumn (cc, arc1->endb, nodes[arc1->endb].stratum);
+          assert (na >= 0);
+          ivec[arcnum++] = na + 1;
+        }
+        ivec[arcnum++] = - na2 - 1;
+        if (arc1->endb != arc2->endb)
+        {
+          na = fund_findcolumn (cc, arc1->enda, nodes[arc1->enda].stratum);
+          assert (na >= 0);
+          ivec[arcnum++] = - na - 1;
+        }
         vecpt++;
       }
     }
