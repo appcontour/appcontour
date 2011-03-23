@@ -795,17 +795,20 @@ fundamental_countfaces (struct sketch *s, int fg_type)
 /* local prototypes */
 int fund_findarc (struct ccomplex *cc, struct arc *a, int stratum, int cusp1, int cusp2);
 int fund_findvarc (struct ccomplex *cc, struct borderlist *bl, int stratum);
+int fund_findcolumn (struct ccomplex *cc, int nnode, int stratum);
 
 void
 fundamental_fillfaces (struct ccomplex *cc)
 {
-  int stratum, strata, arcnum, i, dcusp;
+  int stratum, strata, arcnum, i, d, dcusp;
   struct ccomplexface *vecpt;
+  struct ccomplexarc *arc;
   struct region *r;
   struct borderlist *bl;
   struct border *b, *bp;
   struct arc *a;
   int ori, startcusp, astratum, na, *ivec;
+  int parity;
 
   struct sketch *s = cc->sketch;
 
@@ -876,6 +879,7 @@ fundamental_fillfaces (struct ccomplex *cc)
               if (stratum == dcusp || stratum == dcusp+1 || stratum == dcusp+2)
               {
                 na = fund_findarc (cc, a, astratum, startcusp, i);
+                assert (na >= 0);
                 ivec[arcnum++] = na+1;
                 astratum = stratum;
                 if (stratum > a->depths[i]) astratum--;
@@ -894,14 +898,18 @@ fundamental_fillfaces (struct ccomplex *cc)
               if (a->depths[i] < dcusp) dcusp = a->depths[i];
               if (stratum == dcusp)
               {
+                assert (r->f > 0);     // be sure we cannot be here even for FG_EXTERNAL
                 na = fund_findarc (cc, a, astratum, i+1, startcusp);
+                assert (na >= 0);
                 ivec[arcnum++] = -na-1;
                 astratum = stratum;
                 if (stratum >= a->depths[i]) astratum++;
                 startcusp = i+1;
               }
             }
+            if (cc->type == FG_EXTERNAL && r->f == 0) astratum = 0;  // this is a special case!
             na = fund_findarc (cc, a, astratum, 0, startcusp);
+            assert (na >= 0);
             ivec[arcnum++] = -na-1;
           }
           bp = bp->next;
@@ -914,6 +922,46 @@ fundamental_fillfaces (struct ccomplex *cc)
       }
       if ((stratum % 2) == 1) cc_revert_face (cc, vecpt - cc->faces);
       vecpt++;
+    }
+  }
+
+  /*
+   * now create the vertical walls
+   * only for FG_INTERNAL and FG_EXTERNAL
+   */
+  if (cc->type != FG_SURFACE)
+  {
+    for (a = s->arcs; a; a = a->next)
+    {
+      if (a->cusps > 0)
+      {
+printf ("Vertical walls for arcs with cusps not yet implemented!\n");
+continue;
+      }
+      strata = a->regionright->border->region->f + 1;
+      d = a->depths[0];
+      parity = 0;
+      if (cc->type == FG_EXTERNAL) parity = 1;
+      for (stratum = 0; stratum < strata - 1; stratum++)
+      {
+        if (stratum == d) parity = 1 - parity;
+        if ((stratum % 2) != parity) continue;
+        /* devo creare un muro verticale, composto da 4 archi */
+        vecpt->type = CC_FACETYPE_WALL;
+        vecpt->stratum = stratum;
+        vecpt->facebordernum = 4;
+        ivec = vecpt->faceborder = (int *) malloc (4 * sizeof (int));
+        na = fund_findarc (cc, a, stratum, 0, 0);
+        ivec[0] = na + 1;
+        arc = cc->arcs + na;
+        na = fund_findcolumn (cc, arc->endb, stratum);
+        ivec[1] = na + 1;
+        na = fund_findcolumn (cc, arc->enda, stratum);
+        ivec[3] = - na - 1;
+        na = fund_findarc (cc, a, stratum+1, 0, 0);
+        ivec[2] = - na - 1;
+        vecpt++;
+      }
     }
   }
 
@@ -953,6 +1001,23 @@ fund_findvarc (struct ccomplex *cc, struct borderlist *bl, int stratum)
   }
   fprintf (stderr, "Warning: cannot find face border for varc in region %d, stratum %d\n",
     bl->region->tag, stratum);
+  return (-1);
+}
+
+int
+fund_findcolumn (struct ccomplex *cc, int nnode, int stratum)
+{
+  int n;
+  struct ccomplexarc *arc;
+
+  for (n = 0; n < cc->arcnum; n++)
+  {
+    arc = cc->arcs + n;
+    if (arc->type != CC_ARCTYPE_COLUMN && arc->type != CC_ARCTYPE_VCOLUMN) continue;
+    if (arc->enda == nnode && arc->stratum == stratum) return (n);
+  }
+  fprintf (stderr, "Warning: cannot find vertical column at node %d, stratum %d\n",
+    nnode, stratum);
   return (-1);
 }
 

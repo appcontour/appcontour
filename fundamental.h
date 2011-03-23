@@ -22,6 +22,7 @@
 #define CC_ARCTYPE_VCOLUMN 5
 
 #define CC_FACETYPE_HORIZONTAL 1
+#define CC_FACETYPE_WALL 2
 
 struct ccomplex {
     struct sketch *sketch;
