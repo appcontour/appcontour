@@ -91,6 +91,8 @@ struct ccomplexcc {
  */
 
 void compute_fundamental (struct ccomplex *cc);
+int complex_meltfaces (struct ccomplex *cc);
+void complex_do_melt_faces (struct ccomplex *cc, int, int, int);
 int complex_collapse (struct ccomplex *cc);
 int complex_collapse_faces (struct ccomplex *cc);
 int complex_collapse_arcs (struct ccomplex *cc);
@@ -113,3 +115,4 @@ void cellcomplex_printarcs (struct ccomplex *cc, int verbose);
 void cellcomplex_printnodes (struct ccomplex *cc, int verbose);
 void cellcomplex_printfaces (struct ccomplex *cc, int verbose);
 int onarc2narc (int);
+int cellcomplex_checkconsistency (struct ccomplex *cc);

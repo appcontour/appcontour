@@ -846,7 +846,6 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     if (docanonify) canonify (sketch);
     ccomplex = compute_cellcomplex (sketch, fg_type);
-    if (debug) cellcomplex_print (ccomplex, 2);
     count = complex_collapse (ccomplex);
     if (debug) printf ("Collapsed %d cell pairs\n", count);
     if (debug) printf ("Euler characteristic %d = %d nodes - %d arcs + %d faces\n",
@@ -862,6 +861,7 @@ main (int argc, char *argv[])
     if (docanonify) canonify (sketch);
     ccomplex = compute_cellcomplex (sketch, fg_type);
     count = complex_collapse (ccomplex);
+    count = complex_facemelt (ccomplex);
     compute_fundamental (ccomplex);
     printf ("Not implemented!\n");
     break;

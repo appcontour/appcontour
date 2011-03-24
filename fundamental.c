@@ -12,7 +12,10 @@ extern int debug;
 void
 compute_fundamental (struct ccomplex *cc)
 {
-  int ccnum;
+  int ccnum, gennum, n;
+  struct ccomplexarc *arc;
+  struct ccomplexnode *node;
+  struct ccomplexcc *cccc;
 
   if (debug) printf ("Constructing spanning tree\n");
   ccnum = find_spanning_tree (cc);
@@ -20,7 +23,21 @@ compute_fundamental (struct ccomplex *cc)
 
   assert (ccnum >= 1);
 
-  assert (ccnum == 1);  // only one connected component allowed for now
+  for (cccc = cc->cc; cccc; cccc = cccc->next)
+  {
+    if (ccnum > 1) printf ("Connected component %d:\n", cccc->tag);
+    gennum = 0;
+    for (n = 0; n < cc->arcdim; n++)
+    {
+      arc = cc->arcs + n;
+      if (arc->type == CC_REMOVED) continue;
+      if (arc->isinspanningtree) continue;
+      node = cc->nodes + arc->enda;
+      if (node->cc != cccc) continue;
+      gennum++;
+    }
+    printf ("Found %d generators\n", gennum);
+  }
 
   // ora: calcolo generatori (per ogni cc), poi bisogna aggiungere le relazioni
   printf ("Not implemented!\n");
@@ -114,6 +131,123 @@ complex_collapse_arcs (struct ccomplex *cc)
   }
   if (debug) printf ("collapsed %d arcs\n", count);
   return (count);
+}
+
+/*
+ * melt together pairs of different faced that share
+ * a common arc (border of no other face)
+ */
+
+int complex_facemelt (struct ccomplex *cc)
+{
+  struct ccomplexarc *arcs = cc->arcs;
+  struct ccomplexface *faces = cc->faces;
+  struct ccomplexarc *arc;
+  struct ccomplexface *face, *face1, *face2;
+  int count = 0;
+  int goon = 1;
+  int n, m, i, nface1, nface2, i1, i2;
+  int *ivec, *ivec1, *ivec2;
+
+  while (goon)
+  {
+    goon = 0;
+    for (n = 0; n < cc->arcdim; n++)
+    {
+      arc = arcs + n;
+      if (arc->type == CC_REMOVED) continue;
+      if (arc->refcount != 2) continue;
+      nface1 = nface2 = -1;
+      for (m = 0; m < cc->facedim; m++)
+      {
+        face = faces + m;
+        if (face->type == CC_REMOVED) continue;
+        ivec = face->faceborder;
+        for (i = 0; i < face->facebordernum; i++)
+        {
+          if (onarc2narc(ivec[i]) == n)
+          {
+            if (nface1 < 0)
+            {
+              nface1 = m;
+              i1 = i;
+            } else {
+              assert (nface2 < 0);
+              nface2 = m;
+              i2 = i;
+            }
+          }
+        }
+      }
+      assert (nface1 >= 0 && nface2 >= 0);
+      if (nface1 == nface2) continue;
+      /*
+       * We can melt the two faces together
+       */
+      face1 = faces + nface1;
+      face2 = faces + nface2;
+      ivec1 = face1->faceborder;
+      ivec2 = face2->faceborder;
+      if (ivec1[i1] < 0) cc_revert_face (cc, nface1);
+      if (ivec2[i2] > 0) cc_revert_face (cc, nface2);
+      goon = 1;
+      count++;
+      complex_do_melt_faces (cc, nface1, nface2, m);
+      if (debug) cellcomplex_checkconsistency (cc);
+    }
+  }
+  return (count);
+}
+
+/*
+ * we know that arc is positively oriented in nface1 and
+ * negatively oriented in nface2
+ */
+
+void
+complex_do_melt_faces (struct ccomplex *cc, int nface1, int nface2, int narc)
+{
+  struct ccomplexface *face1, *face2;
+  int *ivec1, *ivec2, *newivec;
+  int found1 = 0;
+  int found2 = 0;
+  int i, j, k, j2;
+
+  face1 = cc->faces + nface1;
+  ivec1 = face1->faceborder;
+  face2 = cc->faces + nface2;
+  ivec2 = face2->faceborder;
+  newivec = (int *) malloc (face1->facebordernum + face2->facebordernum - 2);
+
+  k = 0;
+  for (i = 0; i < face1->facebordernum; i++)
+  {
+    if (ivec1[i] == narc + 1)
+    {
+      found1++;
+      assert (found1 == 1);
+      for (j = 0; j < face2->facebordernum; j++)
+      {
+        if (ivec2[j] == - narc - 1)
+        {
+          found2++;
+          assert (found2 == 1);
+          j2 = j;
+          continue;
+        }
+        if (found2) newivec[k++] = ivec2[j];
+      }
+      assert (found2);
+      for (j = 0; j < j2; j++) newivec[k++] = ivec2[j];
+    } else {
+      newivec[k++] = ivec1[i];
+    }
+  }
+  complex_remove_arc (cc, narc);
+  face1->facebordernum += face2->facebordernum;
+  free (ivec1);
+  face1->faceborder = newivec;
+  complex_remove_face (cc, nface2);
 }
 
 void
@@ -213,6 +347,7 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   extern int finfinity;
   struct ccomplex *cc;
   int euler, surfeuler, realeuler;
+  int status;
 
   if (finfinity != 0) fprintf (stderr, "Value of f at infinity (%d) must be zero\n", finfinity);
   assert (finfinity == 0);
@@ -279,6 +414,9 @@ compute_cellcomplex (struct sketch *s, int fg_type)
 
   if (debug)
   {
+    cellcomplex_print (cc, 2);
+    status = cellcomplex_checkconsistency (cc);
+    assert (status);
     printf ("Connected components: %d\n", find_spanning_tree (cc));
   }
   return (cc);
@@ -783,6 +921,7 @@ stratum_varcend (struct border *bord, int stratum)
 
   a = bord->info;
   d = a->depths[0];
+  if (bord->orientation < 0) d = a->depths[a->cusps];
 
   if (bord->orientation > 0 && stratum > d) stratum--;
   if (bord->orientation < 0 && stratum >= d) stratum++;
@@ -1021,7 +1160,12 @@ fundamental_fillfaces (struct ccomplex *cc)
       arcnum = 0;
       for (bl = r->border; bl; bl = bl->next)
       {
-        bp = b = bl->sponda;
+        b = bl->sponda;
+        if (b->orientation < 0) b = b->next;
+        /* if the base arc is negatively oriented, then the
+         * base node is "after" this arc
+         */
+        bp = b;
         do
         {
           arcnum++;
@@ -1052,7 +1196,16 @@ fundamental_fillfaces (struct ccomplex *cc)
           na = fund_findvarc (cc, bl, stratum);
           ivec[arcnum++] = na+1;   // orientato positivamente
         }
-        bp = b = bl->sponda;
+        b = bl->sponda;
+        if (b->orientation < 0)
+        {
+          b = b->next;
+        }
+        /* if the base arc is negatively oriented, then the
+         * base node is "after" this arc
+         */
+        bp = b;
+
         do
         {
           a = bp->info;
@@ -1162,11 +1315,13 @@ fund_fillivec (struct ccomplex *cc, struct ccomplexface *face,
                struct arc *a, int stratum, int cusp1, int cusp2)
 {
   int na, na1, na2;
+  struct ccomplexarc *arcs = cc->arcs;
   struct ccomplexarc *arc1, *arc2;
   struct ccomplexnode *nodes = cc->nodes;
+  struct ccomplexnode *n1, *n2;
   int arcnum, *ivec;
   int i, *buffer1, *buffer2;
-  int ib1, ib2;
+  int ib1, ib2, nnode;
   int cuspstart;
 
   buffer1 = (int *) malloc ((a->cusps + 1)*sizeof(int));
@@ -1178,7 +1333,7 @@ fund_fillivec (struct ccomplex *cc, struct ccomplexface *face,
     na1 = fund_findarc (cc, a, stratum, cuspstart, -1);  // find arc starting at cusp1
     assert (na1 >= 0);
     buffer1[ib1++] = na1;
-    arc1 = cc->arcs + na1;
+    arc1 = arcs + na1;
     cuspstart = arc1->cusp2;
   } while (cuspstart != cusp2);
 
@@ -1188,17 +1343,24 @@ fund_fillivec (struct ccomplex *cc, struct ccomplexface *face,
     na2 = fund_findarc (cc, a, stratum + 1, cuspstart, -1);  // find arc starting at cusp1
     assert (na2 >= 0);
     buffer2[ib2++] = na2;
-    arc2 = cc->arcs + na2;
+    arc2 = arcs + na2;
     cuspstart = arc2->cusp2;
   } while (cuspstart != cusp2);
 
   arcnum = ib1 + ib2;
-  arc1 = cc->arcs + buffer1[0];
-  arc2 = cc->arcs + buffer2[0];
-  if (arc1->enda != arc2->enda) arcnum++;
-  arc1 = cc->arcs + buffer1[ib1-1];
-  arc2 = cc->arcs + buffer2[ib2-1];
-  if (arc1->endb != arc2->endb) arcnum++;
+  arc1 = arcs + buffer1[0];
+  arc2 = arcs + buffer2[0];
+  n1 = nodes + arc1->enda;
+  n2 = nodes + arc2->enda;
+  assert (n2->stratum >= n1->stratum);
+  arcnum += n2->stratum - n1->stratum;
+
+  arc1 = arcs + buffer1[ib1-1];
+  arc2 = arcs + buffer2[ib2-1];
+  n1 = nodes + arc1->endb;
+  n2 = nodes + arc2->endb;
+  assert (n2->stratum >= n1->stratum);
+  arcnum += n2->stratum - n1->stratum;
 
   face->type = CC_FACETYPE_WALL;
   face->stratum = stratum;
@@ -1208,24 +1370,33 @@ fund_fillivec (struct ccomplex *cc, struct ccomplexface *face,
   for (i = 0; i < ib1; i++)
     ivec[arcnum++] = buffer1[i] + 1;
 
-  arc1 = cc->arcs + buffer1[ib1-1];
-  arc2 = cc->arcs + buffer2[ib2-1];
-  if (arc1->endb != arc2->endb)
+  arc1 = arcs + buffer1[ib1-1];
+  arc2 = arcs + buffer2[ib2-1];
+  nnode = arc1->endb;
+  n1 = nodes + nnode;
+  n2 = nodes + arc2->endb;
+  for (i = n1->stratum; i < n2->stratum; i++)
   {
-    na = fund_findcolumn (cc, arc1->endb, nodes[arc1->endb].stratum);
+    na = fund_findcolumn (cc, nnode, i);
     assert (na >= 0);
     ivec[arcnum++] = na + 1;
+    nnode = arcs[na].endb;
   }
+ 
   for (i = ib2 - 1; i >= 0; i--)
     ivec[arcnum++] = - buffer2[i] - 1;
 
-  arc1 = cc->arcs + buffer1[0];
-  arc2 = cc->arcs + buffer2[0];
-  if (arc1->enda != arc2->enda)
+  arc1 = arcs + buffer1[0];
+  arc2 = arcs + buffer2[0];
+  nnode = arc2->enda;
+  n1 = nodes + arc1->enda;
+  n2 = nodes + nnode;
+  for (i = n2->stratum - 1; i >= n1->stratum; i--)
   {
-    na = fund_findcolumn (cc, arc1->enda, nodes[arc1->enda].stratum);
+    na = fund_findcolumn (cc, nnode, i);
     assert (na >= 0);
     ivec[arcnum++] = - na - 1;
+    nnode = arcs[na].enda;
   }
 
   free (buffer1);
@@ -1280,7 +1451,8 @@ fund_findcolumn (struct ccomplex *cc, int nnode, int stratum)
   {
     arc = cc->arcs + n;
     if (arc->type != CC_ARCTYPE_COLUMN && arc->type != CC_ARCTYPE_VCOLUMN) continue;
-    if (arc->enda == nnode && arc->stratum == stratum) return (n);
+    if (arc->stratum != stratum) continue;
+    if (arc->enda == nnode || arc->endb == nnode) return (n);
   }
   fprintf (stderr, "Warning: cannot find vertical column at node %d, stratum %d\n",
     nnode, stratum);
@@ -1399,3 +1571,63 @@ cellcomplex_print (struct ccomplex *cc, int verbose)
   cellcomplex_printarcs (cc, verbose);
   cellcomplex_printfaces (cc, verbose);
 }
+
+/*
+ * controlli di consistenza
+ */
+
+int
+cellcomplex_checkconsistency (struct ccomplex *cc)
+{
+  struct ccomplexnode *nodes = cc->nodes;
+  struct ccomplexarc *arcs = cc->arcs;
+  struct ccomplexface *faces = cc->faces;
+  int count, n, nnode, i, inext, *ivec;
+  int a1, a2, nodeto, nodefrom;
+
+  for (count = 0, n = 0; n < cc->nodedim; n++)
+    if (nodes[n].type != CC_REMOVED) count++;
+  assert (count == cc->nodenum);
+
+  for (count = 0, n = 0; n < cc->arcdim; n++)
+  {
+    if (arcs[n].type == CC_REMOVED) continue;
+    count++;
+    nnode = arcs[n].enda;
+    assert (nnode >= 0 && nnode < cc->nodedim && nodes[nnode].type != CC_REMOVED);
+    nnode = arcs[n].endb;
+    assert (nnode >= 0 && nnode < cc->nodedim && nodes[nnode].type != CC_REMOVED);
+  }
+  assert (count == cc->arcnum);
+
+  for (count = 0, n = 0; n < cc->facedim; n++)
+  {
+    if (faces[n].type == CC_REMOVED) continue;
+    count++;
+    assert (faces[n].facebordernum > 0);
+    ivec = faces[n].faceborder;
+    for (i = 0; i < faces[n].facebordernum; i++)
+    {
+      inext = i + 1;
+      if (inext >= faces[n].facebordernum) inext = 0;
+      a1 = onarc2narc (ivec[i]);
+      assert (a1 >= 0 && a1 < cc->arcdim && arcs[a1].type != CC_REMOVED);
+      a2 = onarc2narc (ivec[inext]);
+      assert (a2 >= 0 && a2 < cc->arcdim && arcs[a2].type != CC_REMOVED);
+      nodeto = arcs[a1].endb;
+      if (ivec[i] < 0) nodeto = arcs[a1].enda;
+      nodefrom = arcs[a2].enda;
+      if (ivec[inext] < 0) nodefrom = arcs[a2].endb;
+      if (nodeto != nodefrom)
+      {
+        printf ("Consistency error in face %d for contiguous arcs %c%d %c%d\n",
+          n, (ivec[i]>0)?'+':'-', a1, (ivec[inext]>0)?'+':'-', a2);
+        return (0);
+      }
+    }
+  }
+  assert (count == cc->facenum);
+
+  return (1);
+}
+
