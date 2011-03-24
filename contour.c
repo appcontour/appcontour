@@ -861,7 +861,7 @@ main (int argc, char *argv[])
     if (docanonify) canonify (sketch);
     ccomplex = compute_cellcomplex (sketch, fg_type);
     count = complex_collapse (ccomplex);
-    count = complex_facemelt (ccomplex);
+    if (debug) printf ("%d pairs of cells collapsed\n", count);
     compute_fundamental (ccomplex);
     printf ("Not implemented!\n");
     break;

@@ -12,10 +12,15 @@ extern int debug;
 void
 compute_fundamental (struct ccomplex *cc)
 {
-  int ccnum, gennum, n;
+  int ccnum, gennum, n, count;
   struct ccomplexarc *arc;
   struct ccomplexnode *node;
   struct ccomplexcc *cccc;
+
+  count = complex_melt (cc);
+
+  if (debug) cellcomplex_checkconsistency (cc);
+  if (debug) cellcomplex_print (cc, 1);
 
   if (debug) printf ("Constructing spanning tree\n");
   ccnum = find_spanning_tree (cc);
@@ -134,6 +139,26 @@ complex_collapse_arcs (struct ccomplex *cc)
 }
 
 /*
+ * perform varius melt operations iteratively
+ */
+
+int
+complex_melt (struct ccomplex *cc)
+{
+  int goon = 1;
+  int count = 0;
+
+  while (goon)
+  {
+    goon = 0;
+    goon += complex_facemelt (cc);
+    goon += complex_faceremovekink (cc);
+    count += goon;
+  }
+  return (count);
+}
+
+/*
  * melt together pairs of different faced that share
  * a common arc (border of no other face)
  */
@@ -192,10 +217,68 @@ int complex_facemelt (struct ccomplex *cc)
       if (ivec2[i2] > 0) cc_revert_face (cc, nface2);
       goon = 1;
       count++;
-      complex_do_melt_faces (cc, nface1, nface2, m);
+      complex_do_melt_faces (cc, nface1, nface2, n);
       if (debug) cellcomplex_checkconsistency (cc);
     }
   }
+  if (debug) printf ("Melted %d faces\n", count);
+  return (count);
+}
+
+/*
+ * remove consecutive equal arcs in a face
+ * (with opposite orientation), the face must
+ * have at least three arcs.
+ * the case with two arcs creates a "bubble"
+ * that can be removed without changing the
+ * fundamental group.
+ */
+
+int
+complex_faceremovekink (struct ccomplex *cc)
+{
+  struct ccomplexarc *arcs = cc->arcs;
+  struct ccomplexface *faces = cc->faces;
+  struct ccomplexarc *arc;
+  struct ccomplexface *face;
+  struct ccomplexnode *nodes = cc->nodes;
+  int count = 0;
+  int goon = 1;
+  int n, i;
+  int *ivec;
+  int nnode, inext;
+
+  while (goon)
+  {
+    goon = 0;
+    for (n = 0; n < cc->facedim; n++)
+    {
+      face = faces + n;
+      if (face->type == CC_REMOVED) continue;
+      if (face->facebordernum <= 2) continue;
+      ivec = face->faceborder;
+      for (i = 0; i < face->facebordernum; i++)
+      {
+        arc = arcs + onarc2narc (ivec[i]);
+        if (arc->refcount != 2) continue;
+        nnode = arc->endb;
+        if (ivec[i] < 0) nnode = arc->enda;
+        if (nodes[nnode].refcount != 1) continue;
+        inext = i + 1;
+        if (inext >= face->facebordernum) inext = 0;
+        if (ivec[i] + ivec[inext] == 0)
+        {
+          goon = 1;
+          count++;
+          complex_do_removekink (cc, n, i, inext, nnode);
+          if (debug) cellcomplex_checkconsistency (cc);
+          break;
+        }
+      }
+    }
+  }
+
+  if (debug) printf ("Removed %d face kinks\n", count);
   return (count);
 }
 
@@ -208,16 +291,20 @@ void
 complex_do_melt_faces (struct ccomplex *cc, int nface1, int nface2, int narc)
 {
   struct ccomplexface *face1, *face2;
+  struct ccomplexarc *arc;
   int *ivec1, *ivec2, *newivec;
   int found1 = 0;
   int found2 = 0;
   int i, j, k, j2;
+  int newsize;
 
+  arc = cc->arcs + narc;
   face1 = cc->faces + nface1;
   ivec1 = face1->faceborder;
   face2 = cc->faces + nface2;
   ivec2 = face2->faceborder;
-  newivec = (int *) malloc (face1->facebordernum + face2->facebordernum - 2);
+  newsize = face1->facebordernum + face2->facebordernum - 2;
+  newivec = (int *) malloc (newsize*sizeof (int));
 
   k = 0;
   for (i = 0; i < face1->facebordernum; i++)
@@ -243,11 +330,39 @@ complex_do_melt_faces (struct ccomplex *cc, int nface1, int nface2, int narc)
       newivec[k++] = ivec1[i];
     }
   }
+  assert (k == newsize);
+  arc->refcount -= 2;
   complex_remove_arc (cc, narc);
   face1->facebordernum += face2->facebordernum;
+  face1->facebordernum -= 2;
   free (ivec1);
   face1->faceborder = newivec;
-  complex_remove_face (cc, nface2);
+  complex_remove_face_nd (cc, nface2);
+}
+
+void
+complex_do_removekink (struct ccomplex *cc, int n, int iprev, int inext, int nnode)
+{
+  struct ccomplexface *faces = cc->faces;
+  struct ccomplexface *face;
+  struct ccomplexarc *arcs = cc->arcs;
+  struct ccomplexarc *arc;
+  int i, k, *ivec, narc;
+
+  face = faces + n;
+  ivec = face->faceborder;
+  narc = onarc2narc (ivec[iprev]);
+  arc = arcs + narc;
+  arc->refcount -= 2;
+
+  for (i = 0, k = 0; i < face->facebordernum; i++)
+  {
+    if (i == iprev || i == inext) continue;
+    ivec[k++] = ivec[i];
+  }
+  face->facebordernum -= 2;
+  complex_remove_arc (cc, narc);
+  complex_remove_node (cc, nnode);
 }
 
 void
@@ -267,6 +382,16 @@ complex_remove_face (struct ccomplex *cc, int nface)
   }
   free (ivec);
 
+  faces[nface].type = CC_REMOVED;
+  cc->facenum--;
+}
+
+void
+complex_remove_face_nd (struct ccomplex *cc, int nface)
+{
+  struct ccomplexface *faces = cc->faces;
+
+  free (faces[nface].faceborder);
   faces[nface].type = CC_REMOVED;
   cc->facenum--;
 }
@@ -349,18 +474,6 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   int euler, surfeuler, realeuler;
   int status;
 
-  if (finfinity != 0) fprintf (stderr, "Value of f at infinity (%d) must be zero\n", finfinity);
-  assert (finfinity == 0);
-  computefvalue (s, s->regions, 0 /* should be finfinity */);
-
-  cc = (struct ccomplex *) malloc (sizeof (struct ccomplex));
-  cc->type = fg_type;
-  cc->sketch = s;
-
-  cc->nodenum = cc->nodedim = fundamental_countnodes (s);
-  cc->arcnum = cc->arcdim = fundamental_countarcs (cc->sketch, cc->type);
-  cc->facenum = cc->facedim = fundamental_countfaces (cc->sketch, cc->type);
-  euler = cc->nodenum - cc->arcnum + cc->facenum;
   if (debug)
   {
     printf ("Computing cell complex for the ");
@@ -377,10 +490,36 @@ compute_cellcomplex (struct sketch *s, int fg_type)
     }
     printf (".\n");
   }
-  if (debug) printf ("Euler characteristic: %d = %d nodes - %d arcs + %d faces.\n",
-             euler, cc->nodenum, cc->arcnum, cc->facenum);
+
   surfeuler = euler_characteristic (s);
   assert ((surfeuler % 2) == 0);
+
+  /*
+   * the cell complex of the external body is simply computed by
+   * placing everything into a big sphere
+   * NOTE: this modifies the "sketch" structure
+   */
+
+  if (fg_type == FG_EXTERNAL)
+  {
+    status = put_in_s1 (s);
+    assert (status);
+    postprocesssketch (s);
+  }
+  if (finfinity != 0) fprintf (stderr, "Value of f at infinity (%d) must be zero\n", finfinity);
+  assert (finfinity == 0);
+  computefvalue (s, s->regions, 0 /* should be finfinity */);
+
+  cc = (struct ccomplex *) malloc (sizeof (struct ccomplex));
+  cc->type = fg_type;
+  cc->sketch = s;
+
+  cc->nodenum = cc->nodedim = fundamental_countnodes (s);
+  cc->arcnum = cc->arcdim = fundamental_countarcs (cc->sketch, cc->type);
+  cc->facenum = cc->facedim = fundamental_countfaces (cc->sketch, cc->type);
+  euler = cc->nodenum - cc->arcnum + cc->facenum;
+  if (debug) printf ("Euler characteristic: %d = %d nodes - %d arcs + %d faces.\n",
+             euler, cc->nodenum, cc->arcnum, cc->facenum);
   switch (fg_type)
   {
     case FG_SURFACE:
@@ -456,6 +595,7 @@ find_spanning_tree (struct ccomplex *cc)
     cccc = (struct ccomplexcc *) malloc (sizeof (struct ccomplexcc));
     cccc->tag = cc->ccnum;
     cccc->basenode = bn;
+    cccc->next = 0;
     cc->ccnum++;
     if (lastcc == 0)
       cc->cc = cccc;
@@ -743,34 +883,10 @@ fundamental_fillarcs (struct ccomplex *cc)
     if (r->border->sponda == 0)
     {
       assert (strata == 0);
-      if (cc->type == FG_EXTERNAL)
-      {
-        /*
-         * in this case we need to create virtual arcs connecting
-         * the connected components to each other, they are
-         * one less than the number of connected components
-         */
-        assert (r->border->next);
-        n1 = fund_findnode (cc, r->border->next->sponda->info, 0);
-        assert (n1 >= 0);
-        for (bl = r->border->next->next; bl; bl = bl->next)
-        {
-          n2 = fund_findnode (cc, bl->sponda->info, 0);
-          assert (n2 >= 0);
-          assert (vecpt < cc->arcs + cc->arcdim);
-          vecpt->type = CC_ARCTYPE_VIRTUAL;
-          vecpt->enda = n1;
-          vecpt->endb = n2;
-          vecpt->stratum = 0;
-          vecpt->bl = bl;
-          vecpt++;
-        }
-      }
     } else {
       for (stratum = 0; stratum < strata; stratum++)
       {
-        if ((stratum % 2) == 1 && cc->type == FG_INTERNAL) continue;
-        if (stratum > 0 && (stratum % 2) == 0 && cc->type == FG_EXTERNAL) continue;
+        if ((stratum % 2) == 1 && cc->type != FG_SURFACE) continue;
         n1 = fund_findnode (cc, r->border->sponda->info,
                             stratum_varcend (r->border->sponda, stratum));
         assert (n1 >= 0);
@@ -805,7 +921,6 @@ fundamental_fillarcs (struct ccomplex *cc)
        * columns, it will change when crossing nodes
        */
       parity = 0;
-      if (cc->type == FG_EXTERNAL) parity = 1;
       if (a->endpoints == 0)
       {
         strata++;
@@ -921,7 +1036,13 @@ stratum_varcend (struct border *bord, int stratum)
 
   a = bord->info;
   d = a->depths[0];
-  if (bord->orientation < 0) d = a->depths[a->cusps];
+  /*
+   * the target point for a virtual arc is by convention the
+   * starting point for the arc corresponding to bord (using
+   * the arc orientation, not the "bord" list orientation)
+   * this choice has to be compensated when generating the
+   * horizontal face in case bord->orientation is negative
+   */
 
   if (bord->orientation > 0 && stratum > d) stratum--;
   if (bord->orientation < 0 && stratum >= d) stratum++;
@@ -987,7 +1108,6 @@ fundamental_countarcs (struct sketch *s, int fg_type)
       assert ((fright % 2) == 0);
       fright /= 2;
       d = (a->depths[0] % 2);
-      if (fg_type == FG_EXTERNAL) d = -d;
       if (a->endpoints == 0)
       {
         vcolumns += fright + d;
@@ -1002,10 +1122,7 @@ fundamental_countarcs (struct sketch *s, int fg_type)
   {
     assert ((acnodes % 2) == 0);
     acnodes /= 2;
-    if (fg_type == FG_INTERNAL)
-      columns -= acnodes;
-     else
-      columns += acnodes;
+    columns -= acnodes;
     assert ((columns % 2) == 0);
     columns /= 2;
   }
@@ -1017,19 +1134,8 @@ fundamental_countarcs (struct sketch *s, int fg_type)
     if (r->border->sponda == 0)
     {
       assert (strata == 0);
-      if (fg_type == FG_EXTERNAL)
-      {
-        /*
-         * in this case we need to add virtual arcs connecting
-         * the connected components to each other, they are
-         * one less than the number of connected components
-         */
-        assert (r->border->next);
-        for (bl = r->border->next->next; bl; bl = bl->next) virtualarcs++;
-      }
     } else {
       if (fg_type != FG_SURFACE) strata /= 2;
-      if (fg_type == FG_EXTERNAL) strata++;
       for (bl = r->border->next; bl; bl = bl->next) virtualarcs += strata;
     }
   }
@@ -1072,16 +1178,8 @@ fundamental_countfaces (struct sketch *s, int fg_type)
         orizfaces += strata;
       break;
 
-      case FG_INTERNAL:
-        orizfaces += strata/2;
-      break;
-
-      case FG_EXTERNAL:
-        orizfaces += strata/2 + 1;
-      break;
-
       default:
-        assert (0);
+        orizfaces += strata/2;
       break;
     }
   }
@@ -1099,16 +1197,12 @@ fundamental_countfaces (struct sketch *s, int fg_type)
       fright /= 2;
       if ((a->depths[0] % 2) == 1)
       {
-        if (fg_type == FG_INTERNAL)
-          fright += 1;
-         else
-          fright -= 1;
+        fright += 1;
       }
       for (i = 1; i <= a->cusps; i++)
       {
         dmod2 = a->depths[i] % 2;
-        if (dmod2 == 1 && fg_type == FG_INTERNAL) cuspwalls++;
-        if (dmod2 == 0 && fg_type == FG_EXTERNAL) cuspwalls++;
+        if (dmod2 == 1) cuspwalls++;
       }
       walls += fright;
     }
@@ -1147,12 +1241,9 @@ fundamental_fillfaces (struct ccomplex *cc)
   {
     strata = r->f;
     if (r->border->sponda == 0) continue;
-    if (strata == 0 && cc->type == FG_EXTERNAL) strata = 1;
-    /* c'e' uno strato anche nei buchi */
     for (stratum = 0; stratum < strata; stratum++)
     {
-      if ((stratum % 2) == 1 && cc->type == FG_INTERNAL) continue;
-      if (stratum > 0 && (stratum % 2) == 0 && cc->type == FG_EXTERNAL) continue;
+      if ((stratum % 2) == 1 && cc->type != FG_SURFACE) continue;
       assert (vecpt < cc->faces + cc->facedim);
       vecpt->type = CC_FACETYPE_HORIZONTAL;
       vecpt->stratum = stratum;
@@ -1241,7 +1332,7 @@ fundamental_fillfaces (struct ccomplex *cc)
               if (a->depths[i] < dcusp) dcusp = a->depths[i];
               if (stratum == dcusp)
               {
-                assert (r->f > 0);     // be sure we cannot be here even for FG_EXTERNAL
+                assert (r->f > 0);     // be sure we cannot be here
                 na = fund_findarc (cc, a, astratum, i+1, startcusp);
                 assert (na >= 0);
                 ivec[arcnum++] = -na-1;
@@ -1250,7 +1341,6 @@ fundamental_fillfaces (struct ccomplex *cc)
                 startcusp = i+1;
               }
             }
-            if (cc->type == FG_EXTERNAL && r->f == 0) astratum = 0;  // this is a special case!
             na = fund_findarc (cc, a, astratum, 0, startcusp);
             assert (na >= 0);
             ivec[arcnum++] = -na-1;
@@ -1270,7 +1360,7 @@ fundamental_fillfaces (struct ccomplex *cc)
 
   /*
    * now create the vertical walls
-   * only for FG_INTERNAL and FG_EXTERNAL
+   * only for FG_INTERNAL / EXTERNAL
    */
   if (cc->type != FG_SURFACE)
   {
@@ -1279,7 +1369,6 @@ fundamental_fillfaces (struct ccomplex *cc)
       strata = a->regionleft->border->region->f;  // strata with fold lines counting twice
       d = a->depths[0];
       parity = 0;
-      if (cc->type == FG_EXTERNAL) parity = 1;
       for (stratum = 0; stratum < strata - 1; stratum++)
       {
         if ((stratum % 2) != parity) continue;

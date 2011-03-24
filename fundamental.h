@@ -91,12 +91,16 @@ struct ccomplexcc {
  */
 
 void compute_fundamental (struct ccomplex *cc);
-int complex_meltfaces (struct ccomplex *cc);
+int complex_melt (struct ccomplex *cc);
+int complex_facemelt (struct ccomplex *cc);
+int complex_faceremovekink (struct ccomplex *cc);
 void complex_do_melt_faces (struct ccomplex *cc, int, int, int);
+void complex_do_removekink (struct ccomplex *cc, int, int, int, int);
 int complex_collapse (struct ccomplex *cc);
 int complex_collapse_faces (struct ccomplex *cc);
 int complex_collapse_arcs (struct ccomplex *cc);
 void complex_remove_face (struct ccomplex *cc, int n);
+void complex_remove_face_nd (struct ccomplex *cc, int n);
 void complex_remove_arc (struct ccomplex *cc, int n);
 void complex_remove_node (struct ccomplex *cc, int n);
 void complex_countreferences (struct ccomplex *cc);
