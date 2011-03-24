@@ -6,6 +6,8 @@
 #define FG_INTERNAL 1
 #define FG_EXTERNAL (-1)
 
+#define CC_REMOVED 9999
+
 /* from here... */
 #define CC_NODETYPE_FOLD 1
 #define CC_NODETYPE_CUT 2
@@ -44,6 +46,7 @@ struct ccomplexnode {
     struct ccomplexcc *cc;
     struct arc *ne;   // with both arcs oriented from left to right
     struct arc *se;
+    int refcount;     // number of arcs adjacent to this node
   };
 
 struct ccomplexarc {
@@ -56,6 +59,7 @@ struct ccomplexarc {
     int stratum;
     struct arc *arc;
     struct borderlist *bl;  // for virtual arcs, this points to the connecting island
+    int refcount;           // number of faces adjacent to this arc
   };
 
 /*
@@ -83,7 +87,15 @@ struct ccomplexcc {
  * prototypes
  */
 
-struct ccomplex *compute_fundamental (struct sketch *s, int which);
+void compute_fundamental (struct ccomplex *cc);
+int complex_collapse (struct ccomplex *cc);
+int complex_collapse_faces (struct ccomplex *cc);
+int complex_collapse_arcs (struct ccomplex *cc);
+void complex_remove_face (struct ccomplex *cc, int n);
+void complex_remove_arc (struct ccomplex *cc, int n);
+void complex_remove_node (struct ccomplex *cc, int n);
+void complex_countreferences (struct ccomplex *cc);
+struct ccomplex *compute_cellcomplex (struct sketch *s, int which);
 int fundamental_countnodes (struct sketch *s);
 int fundamental_countarcs (struct sketch *s, int which);
 int fundamental_countfaces (struct sketch *s, int which);
@@ -93,3 +105,7 @@ void fundamental_fillfaces (struct ccomplex *cc);
 int fund_findnode (struct ccomplex *cc, struct arc *a, int stratum);
 int find_spanning_tree (struct ccomplex *cc);
 void cc_revert_face (struct ccomplex *cc, int nface);
+void cellcomplex_print (struct ccomplex *cc);
+void cellcomplex_printarcs (struct ccomplex *cc);
+void cellcomplex_printnodes (struct ccomplex *cc);
+void cellcomplex_printfaces (struct ccomplex *cc);

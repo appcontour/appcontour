@@ -7,18 +7,212 @@
 #include "contour.h"
 #include "fundamental.h"
 
-/* local prototypes */
-void fundamental_printarcs (struct ccomplex *cc);
-void fundamental_printnodes (struct ccomplex *cc);
-void fundamental_printfaces (struct ccomplex *cc);
+extern int debug;
+
+void
+compute_fundamental (struct ccomplex *cc)
+{
+  int ccnum;
+
+  if (debug) printf ("Constructing spanning tree\n");
+  ccnum = find_spanning_tree (cc);
+  if (debug) printf ("Found %d connected components\n", ccnum);
+
+  assert (ccnum >= 1);
+
+  assert (ccnum == 1);  // only one connected component allowed for now
+
+  // ora: calcolo generatori (per ogni cc), poi bisogna aggiungere le relazioni
+  printf ("Not implemented!\n");
+}
+
+/*
+ * procedures for the semplification of the cell complex
+ */
+
+int
+complex_collapse (struct ccomplex *cc)
+{
+  int goon = 1;
+  int count;
+
+  while (goon)
+  {
+    goon = 0;
+    goon += complex_collapse_faces (cc);
+    goon += complex_collapse_arcs (cc);
+    count += goon;
+  }
+  return (count);
+}
+
+int
+complex_collapse_faces (struct ccomplex *cc)
+{
+  struct ccomplexface *faces = cc->faces;
+  struct ccomplexarc *arcs = cc->arcs;
+  int goon = 1;
+  int count = 0;
+  int n, i, *ivec;
+  int narc;
+
+  while (goon)
+  {
+    goon = 0;
+    for (n = 0; n < cc->facenum; n++)
+    {
+      if (faces[n].type == CC_REMOVED) continue;
+      for (i = 0; i < faces[n].facebordernum; i++)
+      {
+        ivec = faces[n].faceborder;
+        narc = ivec[i];
+        if (narc < 0) narc *= -1;
+        narc--;
+        assert (arcs[narc].refcount >= 1);
+        if (arcs[narc].refcount > 1) continue;
+        /* can collapse face n with arc narc */
+        goon = 1;
+        count++;
+        complex_remove_face (cc, n);
+        complex_remove_arc (cc, narc);
+        break;
+      }
+    }
+  }
+  if (debug) printf ("collapsed %d faces\n", count);
+  return (count);
+}
+
+int
+complex_collapse_arcs (struct ccomplex *cc)
+{
+  struct ccomplexarc *arcs = cc->arcs;
+  struct ccomplexnode *nodes = cc->nodes;
+  int goon = 1;
+  int count = 0;
+  int n, nnode, rnode;
+
+  while (goon)
+  {
+    goon = 0;
+    for (n = 0; n < cc->arcnum; n++)
+    {
+      if (arcs[n].type == CC_REMOVED) continue;
+      if (arcs[n].refcount > 0) continue;
+      rnode = -1;
+      nnode = arcs[n].enda;
+      if (nodes[nnode].refcount == 1) rnode = nnode;
+      nnode = arcs[n].endb;
+      if (nodes[nnode].refcount == 1) rnode = nnode;
+      if (rnode >= 0)
+      {
+        goon = 1;
+        count++;
+        complex_remove_arc (cc, n);
+        complex_remove_node (cc, rnode);
+        continue;
+      }
+    }
+  }
+  if (debug) printf ("collapsed %d arcs\n", count);
+  return (count);
+}
+
+void
+complex_remove_face (struct ccomplex *cc, int nface)
+{
+  struct ccomplexarc *arcs = cc->arcs;
+  struct ccomplexface *faces = cc->faces;
+  int i, *ivec, narc;
+
+  ivec = faces[nface].faceborder;
+
+  for (i = 0; i < faces[nface].facebordernum; i++)
+  {
+    narc = ivec[i];
+    if (narc < 0) narc *= -1;
+    narc--;
+    arcs[narc].refcount--;
+  }
+  free (ivec);
+
+  faces[nface].type = CC_REMOVED;
+}
+
+void
+complex_remove_arc (struct ccomplex *cc, int narc)
+{
+  struct ccomplexnode *nodes = cc->nodes;
+  struct ccomplexarc *arcs = cc->arcs;
+  int nnode;
+
+  assert (arcs[narc].refcount == 0);
+  nnode = arcs[narc].enda;
+  nodes[nnode].refcount--;
+  nnode = arcs[narc].endb;
+  nodes[nnode].refcount--;
+
+  arcs[narc].type = CC_REMOVED;
+}
+
+void
+complex_remove_node (struct ccomplex *cc, int nnode)
+{
+  struct ccomplexnode *nodes = cc->nodes;
+
+  assert (nodes[nnode].refcount == 0);
+  nodes[nnode].type = CC_REMOVED;
+}
+
+void
+complex_countreferences (struct ccomplex *cc)
+{
+  int n;
+  struct ccomplexnode *nodes = cc->nodes;
+  struct ccomplexarc *arcs = cc->arcs;
+  struct ccomplexface *faces = cc->faces;
+  int nnode, i, *ivec, narc;
+
+  for (n = 0; n < cc->nodenum; n++)
+  {
+    if (nodes[n].type == CC_REMOVED) continue;
+    nodes[n].refcount = 0;
+  }
+
+  for (n = 0; n < cc->arcnum; n++)
+  {
+    if (arcs[n].type == CC_REMOVED) continue;
+    arcs[n].refcount = 0;
+    nnode = arcs[n].enda;
+    nodes[nnode].refcount++;
+    nnode = arcs[n].endb;
+    nodes[nnode].refcount++;
+  }
+
+  for (n = 0; n < cc->facenum; n++)
+  {
+    if (faces[n].type == CC_REMOVED) continue;
+    for (i = 0; i < faces[n].facebordernum; i++)
+    {
+      ivec = faces[n].faceborder;
+      narc = ivec[i];
+      if (narc < 0) narc *= -1;
+      narc--;
+      arcs[narc].refcount++;
+    }
+  }
+}
+
+/*
+ * procedures for the construction of the cell complex
+ */
 
 struct ccomplex *
-compute_fundamental (struct sketch *s, int fg_type)
+compute_cellcomplex (struct sketch *s, int fg_type)
 {
   extern int finfinity;
-  extern int debug;
   struct ccomplex *cc;
-  int ccnum, euler, surfeuler, realeuler;
+  int euler, surfeuler, realeuler;
 
   if (finfinity != 0) fprintf (stderr, "Value of f at infinity (%d) must be zero\n", finfinity);
   assert (finfinity == 0);
@@ -34,7 +228,7 @@ compute_fundamental (struct sketch *s, int fg_type)
   euler = cc->nodenum - cc->arcnum + cc->facenum;
   if (debug)
   {
-    printf ("Computing fundamental group for the ");
+    printf ("Computing cell complex for the ");
     switch (fg_type)
     {
       case FG_SURFACE: printf ("surface");
@@ -76,24 +270,12 @@ compute_fundamental (struct sketch *s, int fg_type)
   cc->faces = (struct ccomplexface *) malloc (cc->facenum * sizeof (struct ccomplexface));
   if (debug) printf ("Creating nodes\n");
   fundamental_fillnodes (cc);
-if (debug) fundamental_printnodes (cc);
   if (debug) printf ("Creating arcs\n");
   fundamental_fillarcs (cc);
-if (debug) fundamental_printarcs (cc);
   if (debug) printf ("Creating faces\n");
   fundamental_fillfaces (cc);
-if (debug) fundamental_printfaces (cc);
-  if (debug) printf ("Constructing spanning tree\n");
-  ccnum = find_spanning_tree (cc);
-  if (debug) printf ("Found %d connected components\n", ccnum);
 
-
-  assert (ccnum >= 1);
-
-  assert (ccnum == 1);  // only one connected component allowed for now
-
-  // ora: calcolo generatori (per ogni cc), poi bisogna aggiungere le relazioni
-  printf ("Not implemented!\n");
+  complex_countreferences (cc);
   return (cc);
 }
 
@@ -1126,7 +1308,7 @@ cc_revert_face (struct ccomplex *cc, int nface)
  */
 
 void
-fundamental_printnodes (struct ccomplex *cc)
+cellcomplex_printnodes (struct ccomplex *cc)
 {
   int n;
   struct ccomplexnode *node;
@@ -1134,6 +1316,7 @@ fundamental_printnodes (struct ccomplex *cc)
   for (n = 0; n < cc->nodenum; n++)
   {
     node = cc->nodes + n;
+    if (node->type == CC_REMOVED) continue;
     if (node->type == CC_NODETYPE_CUSP) 
       printf ("node %d of CUSP type, ne-arc %d, cusp %d\n", n, node->ne->tag, node->cusp);
      else
@@ -1142,7 +1325,7 @@ fundamental_printnodes (struct ccomplex *cc)
 }
 
 void
-fundamental_printarcs (struct ccomplex *cc)
+cellcomplex_printarcs (struct ccomplex *cc)
 {
   int n;
   struct ccomplexarc *arc;
@@ -1150,6 +1333,7 @@ fundamental_printarcs (struct ccomplex *cc)
   for (n = 0; n < cc->arcnum; n++)
   {
     arc = cc->arcs + n;
+    if (arc->type == CC_REMOVED) continue;
     printf ("arc %d[%d,%d], stratum %d, type %d", n, arc->enda, arc->endb, arc->stratum, arc->type);
     if (arc->type == CC_ARCTYPE_CUT || arc->type == CC_ARCTYPE_FOLD)
       printf (" (%d-%d), tag %d", arc->cusp1, arc->cusp2, arc->arc->tag);
@@ -1158,7 +1342,7 @@ fundamental_printarcs (struct ccomplex *cc)
 }
 
 void
-fundamental_printfaces (struct ccomplex *cc)
+cellcomplex_printfaces (struct ccomplex *cc)
 {
   int n, i, na;
   int *ivec;
@@ -1167,6 +1351,7 @@ fundamental_printfaces (struct ccomplex *cc)
   for (n = 0; n < cc->facenum; n++)
   {
     face = cc->faces + n;
+    if (face->type == CC_REMOVED) continue;
     ivec = face->faceborder;
     printf ("face %d, stratum %d [", n, face->stratum);
     for (i = 0; i < face->facebordernum; i++)
@@ -1179,4 +1364,12 @@ fundamental_printfaces (struct ccomplex *cc)
     }
     printf ("]\n");
   }
+}
+
+void
+cellcomplex_print (struct ccomplex *cc)
+{
+  cellcomplex_printnodes (cc);
+  cellcomplex_printarcs (cc);
+  cellcomplex_printfaces (cc);
 }

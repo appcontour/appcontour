@@ -57,7 +57,8 @@
 #define ACTION_CCCHILDS 39
 #define ACTION_WRAP 40
 #define ACTION_3DEVERT 41
-#define ACTION_FUNDAMENTAL 42
+#define ACTION_CELLCOMPLEX 42
+#define ACTION_FUNDAMENTAL 43
 
 int debug = 0;
 int quiet = 0;
@@ -240,6 +241,9 @@ main (int argc, char *argv[])
       printf ("    case the stdin (or file) must contain two descriptions\n");
       printf ("\n possible conversion and standardization commands are:\n");
       printf ("  print, printmorse, knot2morse, canonify\n");
+      printf ("\n cell complex and fundamental group:\n");
+      printf ("  cellcomplex, insidecomplex, outsidecomplex\n");
+      printf ("  fundamental, insidefundamental, outsidefundamental\n");
       printf ("\n possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
@@ -358,10 +362,15 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"frontback") == 0) action = ACTION_FRONTBACK;
     if (strcmp(argv[i],"leftright") == 0) action = ACTION_LEFTRIGHT;
     if (strcmp(argv[i],"mendes") == 0) action = ACTION_MENDES;
+    if (strcmp(argv[i],"cellcomplex") == 0) {action = ACTION_CELLCOMPLEX; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"insidecomplex") == 0) {action = ACTION_CELLCOMPLEX; fg_type=FG_INTERNAL;}
+    if (strcmp(argv[i],"outsidecomplex") == 0) {action = ACTION_CELLCOMPLEX; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"fundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_SURFACE;}
     if (strcmp(argv[i],"sfundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_SURFACE;}
     if (strcmp(argv[i],"ifundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
+    if (strcmp(argv[i],"insidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"efundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"outsidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"evert") == 0)
     {
       action = ACTION_EVERT;
@@ -833,10 +842,22 @@ main (int argc, char *argv[])
     print_mendes (mendes);
     break;
 
+    case ACTION_CELLCOMPLEX:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    if (docanonify) canonify (sketch);
+    ccomplex = compute_cellcomplex (sketch, fg_type);
+printf ("Collapsing does not work, e.g. for internalknot\n");
+    // count = complex_collapse (ccomplex);
+    cellcomplex_print (ccomplex);
+    break;
+
     case ACTION_FUNDAMENTAL:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     if (docanonify) canonify (sketch);
-    ccomplex = compute_fundamental (sketch, fg_type);
+    ccomplex = compute_cellcomplex (sketch, fg_type);
+    count = complex_collapse (ccomplex);
+    compute_fundamental (ccomplex);
+    printf ("Not implemented!\n");
     break;
 
     default:
