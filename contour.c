@@ -846,9 +846,15 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     if (docanonify) canonify (sketch);
     ccomplex = compute_cellcomplex (sketch, fg_type);
-printf ("Collapsing does not work, e.g. for internalknot\n");
-    // count = complex_collapse (ccomplex);
-    cellcomplex_print (ccomplex);
+    if (debug) cellcomplex_print (ccomplex, 2);
+    count = complex_collapse (ccomplex);
+    if (debug) printf ("Collapsed %d cell pairs\n", count);
+    if (debug) printf ("Euler characteristic %d = %d nodes - %d arcs + %d faces\n",
+                        ccomplex->nodenum - ccomplex->arcnum + ccomplex->facenum,
+                        ccomplex->nodenum, ccomplex->arcnum, ccomplex->facenum);
+    cellcomplex_print (ccomplex, 1);
+    count =  find_spanning_tree (ccomplex);
+    printf ("Found %d connected components\n", count);
     break;
 
     case ACTION_FUNDAMENTAL:

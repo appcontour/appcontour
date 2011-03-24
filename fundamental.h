@@ -30,10 +30,13 @@ struct ccomplex {
     struct sketch *sketch;
     int type;
     int nodenum;
-    struct ccomplexnode *nodes;
     int arcnum;
-    struct ccomplexarc *arcs;
     int facenum;
+    int nodedim;
+    struct ccomplexnode *nodes;
+    int arcdim;
+    struct ccomplexarc *arcs;
+    int facedim;
     struct ccomplexface *faces;
     int ccnum;
     struct ccomplexcc *cc;    // connected components list
@@ -105,7 +108,8 @@ void fundamental_fillfaces (struct ccomplex *cc);
 int fund_findnode (struct ccomplex *cc, struct arc *a, int stratum);
 int find_spanning_tree (struct ccomplex *cc);
 void cc_revert_face (struct ccomplex *cc, int nface);
-void cellcomplex_print (struct ccomplex *cc);
-void cellcomplex_printarcs (struct ccomplex *cc);
-void cellcomplex_printnodes (struct ccomplex *cc);
-void cellcomplex_printfaces (struct ccomplex *cc);
+void cellcomplex_print (struct ccomplex *cc, int verbose);
+void cellcomplex_printarcs (struct ccomplex *cc, int verbose);
+void cellcomplex_printnodes (struct ccomplex *cc, int verbose);
+void cellcomplex_printfaces (struct ccomplex *cc, int verbose);
+int onarc2narc (int);

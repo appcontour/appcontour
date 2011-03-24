@@ -34,7 +34,7 @@ int
 complex_collapse (struct ccomplex *cc)
 {
   int goon = 1;
-  int count;
+  int count = 0;
 
   while (goon)
   {
@@ -59,15 +59,13 @@ complex_collapse_faces (struct ccomplex *cc)
   while (goon)
   {
     goon = 0;
-    for (n = 0; n < cc->facenum; n++)
+    for (n = 0; n < cc->facedim; n++)
     {
       if (faces[n].type == CC_REMOVED) continue;
       for (i = 0; i < faces[n].facebordernum; i++)
       {
         ivec = faces[n].faceborder;
-        narc = ivec[i];
-        if (narc < 0) narc *= -1;
-        narc--;
+        narc = onarc2narc (ivec[i]);
         assert (arcs[narc].refcount >= 1);
         if (arcs[narc].refcount > 1) continue;
         /* can collapse face n with arc narc */
@@ -95,7 +93,7 @@ complex_collapse_arcs (struct ccomplex *cc)
   while (goon)
   {
     goon = 0;
-    for (n = 0; n < cc->arcnum; n++)
+    for (n = 0; n < cc->arcdim; n++)
     {
       if (arcs[n].type == CC_REMOVED) continue;
       if (arcs[n].refcount > 0) continue;
@@ -129,14 +127,14 @@ complex_remove_face (struct ccomplex *cc, int nface)
 
   for (i = 0; i < faces[nface].facebordernum; i++)
   {
-    narc = ivec[i];
-    if (narc < 0) narc *= -1;
-    narc--;
+    narc = onarc2narc (ivec[i]);
     arcs[narc].refcount--;
+    assert (arcs[narc].refcount >= 0);
   }
   free (ivec);
 
   faces[nface].type = CC_REMOVED;
+  cc->facenum--;
 }
 
 void
@@ -146,13 +144,16 @@ complex_remove_arc (struct ccomplex *cc, int narc)
   struct ccomplexarc *arcs = cc->arcs;
   int nnode;
 
-  assert (arcs[narc].refcount == 0);
+  assert (arcs[narc].refcount == 0);  // Cannot remove part of a face border!
   nnode = arcs[narc].enda;
   nodes[nnode].refcount--;
+  assert (nodes[nnode].refcount >= 0);
   nnode = arcs[narc].endb;
   nodes[nnode].refcount--;
+  assert (nodes[nnode].refcount >= 0);
 
   arcs[narc].type = CC_REMOVED;
+  cc->arcnum--;
 }
 
 void
@@ -160,8 +161,9 @@ complex_remove_node (struct ccomplex *cc, int nnode)
 {
   struct ccomplexnode *nodes = cc->nodes;
 
-  assert (nodes[nnode].refcount == 0);
+  assert (nodes[nnode].refcount == 0);  // Cannot remove an endpoint of some arc!
   nodes[nnode].type = CC_REMOVED;
+  cc->nodenum--;
 }
 
 void
@@ -173,13 +175,13 @@ complex_countreferences (struct ccomplex *cc)
   struct ccomplexface *faces = cc->faces;
   int nnode, i, *ivec, narc;
 
-  for (n = 0; n < cc->nodenum; n++)
+  for (n = 0; n < cc->nodedim; n++)
   {
     if (nodes[n].type == CC_REMOVED) continue;
     nodes[n].refcount = 0;
   }
 
-  for (n = 0; n < cc->arcnum; n++)
+  for (n = 0; n < cc->arcdim; n++)
   {
     if (arcs[n].type == CC_REMOVED) continue;
     arcs[n].refcount = 0;
@@ -189,15 +191,13 @@ complex_countreferences (struct ccomplex *cc)
     nodes[nnode].refcount++;
   }
 
-  for (n = 0; n < cc->facenum; n++)
+  for (n = 0; n < cc->facedim; n++)
   {
     if (faces[n].type == CC_REMOVED) continue;
     for (i = 0; i < faces[n].facebordernum; i++)
     {
       ivec = faces[n].faceborder;
-      narc = ivec[i];
-      if (narc < 0) narc *= -1;
-      narc--;
+      narc = onarc2narc (ivec[i]);
       arcs[narc].refcount++;
     }
   }
@@ -222,9 +222,9 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   cc->type = fg_type;
   cc->sketch = s;
 
-  cc->nodenum = fundamental_countnodes (s);
-  cc->arcnum = fundamental_countarcs (cc->sketch, cc->type);
-  cc->facenum = fundamental_countfaces (cc->sketch, cc->type);
+  cc->nodenum = cc->nodedim = fundamental_countnodes (s);
+  cc->arcnum = cc->arcdim = fundamental_countarcs (cc->sketch, cc->type);
+  cc->facenum = cc->facedim = fundamental_countfaces (cc->sketch, cc->type);
   euler = cc->nodenum - cc->arcnum + cc->facenum;
   if (debug)
   {
@@ -265,9 +265,9 @@ compute_cellcomplex (struct sketch *s, int fg_type)
      "WARNING: computed euler caracteristic (%d) differs from expected value (%d).\n",
      euler, realeuler);
 
-  cc->nodes = (struct ccomplexnode *) malloc (cc->nodenum * sizeof (struct ccomplexnode));
-  cc->arcs = (struct ccomplexarc *) malloc (cc->arcnum * sizeof (struct ccomplexarc));
-  cc->faces = (struct ccomplexface *) malloc (cc->facenum * sizeof (struct ccomplexface));
+  cc->nodes = (struct ccomplexnode *) malloc (cc->nodedim * sizeof (struct ccomplexnode));
+  cc->arcs = (struct ccomplexarc *) malloc (cc->arcdim * sizeof (struct ccomplexarc));
+  cc->faces = (struct ccomplexface *) malloc (cc->facedim * sizeof (struct ccomplexface));
   if (debug) printf ("Creating nodes\n");
   fundamental_fillnodes (cc);
   if (debug) printf ("Creating arcs\n");
@@ -305,8 +305,8 @@ find_spanning_tree (struct ccomplex *cc)
   /* initializations */
   cc->cc = 0;
   cc->ccnum = 0;
-  for (i = 0; i < cc->nodenum; i++) nodes[i].cc = 0;
-  for (i = 0; i < cc->arcnum; i++) arcs[i].isinspanningtree = 0;
+  for (i = 0; i < cc->nodedim; i++) nodes[i].cc = 0;
+  for (i = 0; i < cc->arcdim; i++) arcs[i].isinspanningtree = 0;
 
   while ((bn = cc_find_new_base_node (cc)) >= 0)
   {
@@ -324,9 +324,10 @@ find_spanning_tree (struct ccomplex *cc)
     while (again)   // repeated loop on arcs to expand spanning tree
     {
       again = 0;
-      for (i = 0; i < cc->arcnum; i++)
+      for (i = 0; i < cc->arcdim; i++)
       {
         arc = arcs + i;
+        if (arc->type == CC_REMOVED) continue;
         n1 = arc->enda;
         n2 = arc->endb;
 
@@ -352,8 +353,9 @@ cc_find_new_base_node (struct ccomplex *cc)
 {
   int i;
 
-  for (i = 0; i < cc->nodenum; i++)
+  for (i = 0; i < cc->nodedim; i++)
   {
+    if (cc->nodes[i].type == CC_REMOVED) continue;
     if (cc->nodes[i].cc == 0) return (i);
   }
   return (-1);
@@ -372,7 +374,7 @@ fundamental_fillnodes (struct ccomplex *cc)
   struct ccomplexnode *vec = cc->nodes;
   struct sketch *s = cc->sketch;
   int fleft, strata, stratum;
-  int vecdim = cc->nodenum;
+  int vecdim = cc->nodedim;
   int dne, dse, i;
 
   vecpt = vec;
@@ -531,7 +533,7 @@ fundamental_fillarcs (struct ccomplex *cc)
        * cerco i nodi corrispondenti alle cuspidi, memorizzati
        * nel vettore cuspnodes a partire dall'indice 1
        */
-      for (n = 0; n < cc->nodenum; n++)
+      for (n = 0; n < cc->nodedim; n++)
       {
         node = cc->nodes + n;
         if (node->type == CC_NODETYPE_CUSP && node->ne == a)
@@ -567,7 +569,7 @@ fundamental_fillarcs (struct ccomplex *cc)
            (a->depths[sectionb] == stratum)) ) sectionb++;
         /* now sectiona and sectionb-1 indicate an arc */
         
-        assert (vecpt < cc->arcs + cc->arcnum);
+        assert (vecpt < cc->arcs + cc->arcdim);
         vecpt->type = CC_ARCTYPE_CUT;
         if (stratum == a->depths[sectiona]) vecpt->type = CC_ARCTYPE_FOLD;
 
@@ -612,7 +614,7 @@ fundamental_fillarcs (struct ccomplex *cc)
         {
           n2 = fund_findnode (cc, bl->sponda->info, 0);
           assert (n2 >= 0);
-          assert (vecpt < cc->arcs + cc->arcnum);
+          assert (vecpt < cc->arcs + cc->arcdim);
           vecpt->type = CC_ARCTYPE_VIRTUAL;
           vecpt->enda = n1;
           vecpt->endb = n2;
@@ -634,7 +636,7 @@ fundamental_fillarcs (struct ccomplex *cc)
           n2 = fund_findnode (cc, bl->sponda->info,
                               stratum_varcend (bl->sponda, stratum));
           assert (n2 >= 0);
-          assert (vecpt < cc->arcs + cc->arcnum);
+          assert (vecpt < cc->arcs + cc->arcdim);
           vecpt->type = CC_ARCTYPE_VIRTUAL;
           vecpt->enda = n1;
           vecpt->endb = n2;
@@ -673,7 +675,7 @@ fundamental_fillarcs (struct ccomplex *cc)
           na = fund_findnode (cc, a, stratum);
           nb = fund_findnode (cc, a, stratum+1);
           assert (na >= 0 && nb >= 0);
-          assert (vecpt < cc->arcs + cc->arcnum);
+          assert (vecpt < cc->arcs + cc->arcdim);
           vecpt->enda = na;
           vecpt->endb = nb;
           vecpt->type = CC_ARCTYPE_VCOLUMN;
@@ -700,7 +702,7 @@ fundamental_fillarcs (struct ccomplex *cc)
           na = fund_findnode (cc, a, stratum);
           nb = fund_findnode (cc, a, stratum+1);
           assert (na >= 0 && nb >= 0);
-          assert (vecpt < cc->arcs + cc->arcnum);
+          assert (vecpt < cc->arcs + cc->arcdim);
           vecpt->enda = na;
           vecpt->endb = nb;
           vecpt->type = CC_ARCTYPE_COLUMN;
@@ -711,7 +713,7 @@ fundamental_fillarcs (struct ccomplex *cc)
     }
   }
 
-  assert (vecpt == cc->arcs + cc->arcnum);
+  assert (vecpt == cc->arcs + cc->arcdim);
 }
 
 int stratum_start (struct arc *a, int stratum)
@@ -796,7 +798,7 @@ fund_findnode (struct ccomplex *cc, struct arc *a, int stratum)
   int n;
   struct ccomplexnode *node;
 
-  for (n = 0; n < cc->nodenum; n++)
+  for (n = 0; n < cc->nodedim; n++)
   {
     node = cc->nodes + n;
     if (node->type < CC_NODETYPE_FOLD || node->type > CC_NODETYPE_VIRTUALCUT) continue;
@@ -1007,7 +1009,7 @@ fundamental_fillfaces (struct ccomplex *cc)
     {
       if ((stratum % 2) == 1 && cc->type == FG_INTERNAL) continue;
       if (stratum > 0 && (stratum % 2) == 0 && cc->type == FG_EXTERNAL) continue;
-      assert (vecpt < cc->faces + cc->facenum);
+      assert (vecpt < cc->faces + cc->facedim);
       vecpt->type = CC_FACETYPE_HORIZONTAL;
       vecpt->stratum = stratum;
       /* count the number of arcs along the boundary */
@@ -1145,7 +1147,7 @@ fundamental_fillfaces (struct ccomplex *cc)
     }
   }
 
-  assert (vecpt == cc->faces + cc->facenum);
+  assert (vecpt == cc->faces + cc->facedim);
 }
 
 /* create integer vector with boundary of a vertical face */
@@ -1231,7 +1233,7 @@ fund_findarc (struct ccomplex *cc, struct arc *a, int stratum, int cusp1, int cu
   int n;
   struct ccomplexarc *arc;
 
-  for (n = 0; n < cc->arcnum; n++)
+  for (n = 0; n < cc->arcdim; n++)
   {
     arc = cc->arcs + n;
     if (arc->type != CC_ARCTYPE_CUT && arc->type != CC_ARCTYPE_FOLD) continue;
@@ -1252,7 +1254,7 @@ fund_findvarc (struct ccomplex *cc, struct borderlist *bl, int stratum)
   int n;
   struct ccomplexarc *arc;
 
-  for (n = 0; n < cc->arcnum; n++)
+  for (n = 0; n < cc->arcdim; n++)
   {
     arc = cc->arcs + n;
     if (arc->type != CC_ARCTYPE_VIRTUAL) continue;
@@ -1269,7 +1271,7 @@ fund_findcolumn (struct ccomplex *cc, int nnode, int stratum)
   int n;
   struct ccomplexarc *arc;
 
-  for (n = 0; n < cc->arcnum; n++)
+  for (n = 0; n < cc->arcdim; n++)
   {
     arc = cc->arcs + n;
     if (arc->type != CC_ARCTYPE_COLUMN && arc->type != CC_ARCTYPE_VCOLUMN) continue;
@@ -1303,73 +1305,92 @@ cc_revert_face (struct ccomplex *cc, int nface)
   face->faceborder = newvec;
 }
 
+int
+onarc2narc (int onarc)
+{
+  assert (onarc != 0);
+  if (onarc < 0) onarc = -onarc;
+  return (onarc - 1);
+}
+
 /*
  * functions for printing ccomplex content
  */
 
 void
-cellcomplex_printnodes (struct ccomplex *cc)
+cellcomplex_printnodes (struct ccomplex *cc, int verbose)
 {
   int n;
   struct ccomplexnode *node;
 
-  for (n = 0; n < cc->nodenum; n++)
+  for (n = 0; n < cc->nodedim; n++)
   {
     node = cc->nodes + n;
     if (node->type == CC_REMOVED) continue;
-    if (node->type == CC_NODETYPE_CUSP) 
-      printf ("node %d of CUSP type, ne-arc %d, cusp %d\n", n, node->ne->tag, node->cusp);
-     else
-      printf ("node %d of type %d, ne-arc %d, stratum %d\n", n, node->type, node->ne->tag, node->stratum);
-  }
-}
-
-void
-cellcomplex_printarcs (struct ccomplex *cc)
-{
-  int n;
-  struct ccomplexarc *arc;
-
-  for (n = 0; n < cc->arcnum; n++)
-  {
-    arc = cc->arcs + n;
-    if (arc->type == CC_REMOVED) continue;
-    printf ("arc %d[%d,%d], stratum %d, type %d", n, arc->enda, arc->endb, arc->stratum, arc->type);
-    if (arc->type == CC_ARCTYPE_CUT || arc->type == CC_ARCTYPE_FOLD)
-      printf (" (%d-%d), tag %d", arc->cusp1, arc->cusp2, arc->arc->tag);
+    printf ("node %d", n);
+    if (verbose) printf (" ref %d", node->refcount);
+    if (verbose >= 2)
+    {
+      if (node->type == CC_NODETYPE_CUSP) 
+        printf (" of CUSP type, ne-arc %d, cusp %d", node->ne->tag, node->cusp);
+       else
+        printf (" of type %d, ne-arc %d, stratum %d", node->type, node->ne->tag, node->stratum);
+    }
     printf ("\n");
   }
 }
 
 void
-cellcomplex_printfaces (struct ccomplex *cc)
+cellcomplex_printarcs (struct ccomplex *cc, int verbose)
+{
+  int n;
+  struct ccomplexarc *arc;
+
+  for (n = 0; n < cc->arcdim; n++)
+  {
+    arc = cc->arcs + n;
+    if (arc->type == CC_REMOVED) continue;
+    printf ("arc %d[%d,%d]", n, arc->enda, arc->endb);
+    if (verbose) printf (" ref %d", arc->refcount);
+    if (verbose >= 2)
+    {
+      printf (", stratum %d, type %d", arc->stratum, arc->type);
+      if (arc->type == CC_ARCTYPE_CUT || arc->type == CC_ARCTYPE_FOLD)
+        printf (" (%d-%d), tag %d", arc->cusp1, arc->cusp2, arc->arc->tag);
+    }
+    printf ("\n");
+  }
+}
+
+void
+cellcomplex_printfaces (struct ccomplex *cc, int verbose)
 {
   int n, i, na;
   int *ivec;
   struct ccomplexface *face;
 
-  for (n = 0; n < cc->facenum; n++)
+  for (n = 0; n < cc->facedim; n++)
   {
     face = cc->faces + n;
     if (face->type == CC_REMOVED) continue;
     ivec = face->faceborder;
-    printf ("face %d, stratum %d [", n, face->stratum);
+    printf ("face %d [", n);
     for (i = 0; i < face->facebordernum; i++)
     {
-      na = ivec[i];
-      printf ("%c", (na>0)?'+':'-');
-      if (na < 0) na *= -1;
-      na--;
+      na = onarc2narc(ivec[i]);
+      printf ("%c", (ivec[i]>0)?'+':'-');
       printf ("%d ", na);
     }
-    printf ("]\n");
+    printf ("]");
+    if (verbose >= 2) printf (", stratum %d", face->stratum);
+    printf ("\n");
   }
 }
 
 void
-cellcomplex_print (struct ccomplex *cc)
+cellcomplex_print (struct ccomplex *cc, int verbose)
 {
-  cellcomplex_printnodes (cc);
-  cellcomplex_printarcs (cc);
-  cellcomplex_printfaces (cc);
+  cellcomplex_printnodes (cc, verbose);
+  cellcomplex_printarcs (cc, verbose);
+  cellcomplex_printfaces (cc, verbose);
 }
