@@ -276,6 +276,11 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   fundamental_fillfaces (cc);
 
   complex_countreferences (cc);
+
+  if (debug)
+  {
+    printf ("Connected components: %d\n", find_spanning_tree (cc));
+  }
   return (cc);
 }
 
