@@ -4,6 +4,7 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 #include "contour.h"
 #include "fundamental.h"
 
@@ -133,13 +134,32 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
  * local profiles
  */
 
+int simplify_presentation2 (struct presentation *p);
 int sp_eliminatevar (struct presentation *p);
 void sp_do_eliminatevar (struct presentation *p, int);
 int sp_removeemptyrules (struct presentation *p);
 int sp_simplifyword (struct presentation *p);
+int sp_tryeliminatevariable (struct presentation *p);
+struct presentationrule *sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int optsublen);
 
 int
 simplify_presentation (struct presentation *p)
+{
+  int goon = 1;
+  int count = 0;
+
+  while (goon)
+  {
+    goon = 0;
+    goon += simplify_presentation2 (p);
+    goon += sp_tryeliminatevariable (p);
+    count += goon;
+  }
+  return (count);
+}
+
+int
+simplify_presentation2 (struct presentation *p)
 {
   int goon = 1;
   int count = 0;
@@ -156,9 +176,113 @@ simplify_presentation (struct presentation *p)
 }
 
 int
+sp_tryeliminatevariable (struct presentation *p)
+{
+  struct presentationrule *r;
+  struct presentationrule *optsubrule;
+  int goon = 1;
+  int count = 0;
+  int optsublen = INT_MAX;
+  int i, j, v, lpos, lcount;
+  int optsubpos, optsubvar, subvar;
+  int *replaceword;
+
+  while (goon)
+  {
+    goon = 0;
+    optsublen = INT_MAX;
+    optsubvar = 0;
+    for (v = 1; v <= p->gennum; v++)
+    {
+      for (r = p->rules; r; r = r->next)
+      {
+        if (r->length < 2) continue;
+        if (r->length >= optsublen) continue;
+        for (lcount = 0, i = 0; i < r->length; i++)
+        {
+          if (abs(r->var[i]) == v) {lcount++; lpos = i;}
+        }
+        if (lcount != 1) continue; // variable 'v' cannot be eliminated
+        optsublen = r->length;
+        optsubvar = v;
+        optsubrule = r;
+        optsubpos = lpos;
+      }
+    }
+    if (optsubvar > 0)
+    {
+      goon++;
+      count++;
+      optsublen--;
+      replaceword = (int *) malloc (optsublen * sizeof (int));
+      subvar = - optsubrule->var[optsubpos];
+      assert (optsubvar == abs(subvar));
+      for (i = 0; i < optsublen; i++)
+      {
+        j = i + optsubpos + 1;
+        if (j >= optsubrule->length) j -= optsubrule->length;
+        replaceword[i] = optsubrule->var[j];
+        assert (abs (replaceword[i]) != optsubvar);
+      }
+      for (r = p->rules; r; r = r->next)
+        r = sp_do_substitute (r, subvar, replaceword, optsublen);
+      sp_do_eliminatevar (p, subvar);
+      free (replaceword);
+      count += simplify_presentation2 (p);
+    }
+  }
+
+  return (count);
+}
+
+struct presentationrule *
+sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int wordlen)
+{
+  struct presentationrule *newr;
+  int i, j, k, newlength, lcount;
+
+  assert (subvar != 0);
+  assert (wordlen >= 1);
+  if (wordlen == 1) // in-place substitution
+  {
+    for (i = 0; i < r->length; i++)
+    {
+      if (r->var[i] == subvar) r->var[i] = replaceword[0];
+      if (r->var[i] == - subvar) r->var[i] = - replaceword[0];
+    }
+    return (r);
+  } else {
+    // count number of occurrences of subvar
+    for (lcount = 0, i = 0; i < r->length; i++)
+      if (r->var[i] == subvar || r->var[i] == - subvar) lcount++;
+    newlength = r->length - lcount + lcount*wordlen;
+    newr = (struct presentationrule *) malloc (newlength*sizeof (int) + sizeof (struct presentationrule));
+    newr->length = newlength;
+    newr->next = r->next;
+    r->next = newr;
+    for (i = 0, j = 0; i < r->length; i++)
+    {
+      if (r->var[i] != subvar && r->var[i] != - subvar) newr->var[j++] = r->var[i];
+      if (r->var[i] == subvar)
+      {
+        for (k = 0; k < wordlen; k++) newr->var[j++] = replaceword[k];
+      }
+      if (r->var[i] == - subvar)
+      {
+        for (k = wordlen - 1; k >= 0; k--) newr->var[j++] = -replaceword[k];
+      }
+    }
+    assert (j == newlength);
+    // last operation: empty old rule
+    r->length = 0;
+    return (newr);
+  }
+}
+
+int
 sp_simplifyword (struct presentation *p)
 {
-  struct presentationrule *r, *pr;
+  struct presentationrule *r;
   int goon = 1;
   int count = 0;
   int i, j, inext, ifound1, ifound2;
