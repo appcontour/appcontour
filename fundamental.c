@@ -15,7 +15,7 @@ extern int quiet;
 void
 compute_fundamental (struct ccomplex *cc)
 {
-  int ccnum, gennum, count;
+  int ccnum, count;
   struct ccomplexcc *cccc;
 
   count = complex_melt (cc);
@@ -31,7 +31,8 @@ compute_fundamental (struct ccomplex *cc)
   for (cccc = cc->cc; cccc; cccc = cccc->next)
   {
     if (ccnum > 1 && !quiet) printf ("\nConnected component %d:\n", cccc->tag);
-    gennum = compute_fundamental_single (cc, cccc);
+    cccc->p = compute_fundamental_single (cc, cccc);
+    print_presentation (cccc->p);
   }
 }
 
@@ -39,21 +40,24 @@ compute_fundamental (struct ccomplex *cc)
  * compute presentation of fundamental group of one component
  */
 
-int
+struct presentation *
 compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
 {
+  struct presentation *p;
+  struct presentationrule *rule;
   struct ccomplexface *faces = cc->faces;
   struct ccomplexface *face;
   struct ccomplexarc *arcs = cc->arcs;
   struct ccomplexarc *arc;
   struct ccomplexnode *nodes = cc->nodes;
   struct ccomplexnode *node;
-  int gennum, narc, n, r, m, i, s, g;
-  int *ivec;
-  char var;
-  int variable[MAXGENERATORS];
+  int gennum, length, narc, j, n, m, i, s;
+  int *ivec, *variable;
 
-  gennum = 0;
+  p = (struct presentation *) malloc (sizeof (struct presentation));
+  p->gennum = 0;
+  p->rules = 0;
+
   for (n = 0; n < cc->arcdim; n++)
   {
     arc = cc->arcs + n;
@@ -61,47 +65,24 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
     if (arc->isinspanningtree) continue;
     node = cc->nodes + arc->enda;
     if (node->cc != cccc) continue;
-    if (gennum < MAXGENERATORS) variable[gennum] = n;
-    gennum++;
+    p->gennum++;
   }
-  if (gennum == 0)
+  if (p->gennum == 0) return (p);
+
+  variable = (int *) malloc (p->gennum*sizeof (int));
+  for (gennum = 0, n = 0; n < cc->arcdim; n++)
   {
-    if (quiet) printf ("<>\n");
-     else printf ("Trivial group\n<>\n");
-    return (gennum);
-  }
-  for (r = 0, m = 0; m < cc->facedim; m++)
-  {
-    face = faces + m;
-    if (face->type == CC_REMOVED) continue;
-    ivec = face->faceborder;
-    arc = arcs + onarc2narc (ivec[0]);
-    node = nodes + arc->enda;
+    arc = cc->arcs + n;
+    if (arc->type == CC_REMOVED) continue;
+    if (arc->isinspanningtree) continue;
+    node = cc->nodes + arc->enda;
     if (node->cc != cccc) continue;
-    r++;
-  }
-  if (!quiet)
-  {
-    if (r == 0)
-      printf ("Free group of rank %d\n", gennum);
-     else
-      printf ("Finitely presented group with %d generator%s\n", gennum,
-                (gennum == 1)?"":"s");
+    variable[gennum++] = n;
   }
 
-  if (gennum > MAXGENERATORS)
-  {
-    printf ("Too many generators to print the rules\n");
-    return (-1);
-  }
-  printf ("<");
-  for (g = 0; g < gennum; g++)
-  {
-    if (g > 0) printf (",");
-    printf ("%c", 'a' + g);
-  }
-  printf ("; ");
-  for (r = 1, m = 0; m < cc->facedim; m++)
+  /* loop on the list of rules */
+
+  for (m = 0; m < cc->facedim; m++)
   {
     face = faces + m;
     if (face->type == CC_REMOVED) continue;
@@ -109,25 +90,98 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
     arc = arcs + onarc2narc (ivec[0]);
     node = nodes + arc->enda;
     if (node->cc != cccc) continue;
-    if (r++ > 1) printf (", ");
+    /* we have a new rule */
+    for (length = 0, i = 0; i < face->facebordernum; i++)
+    {
+      narc = onarc2narc (ivec[i]);
+      arc = arcs + narc;
+      if (!arc->isinspanningtree) length++;
+    }
+    rule = (struct presentationrule *) malloc (length*sizeof (int) + sizeof (struct presentationrule));
+    rule->length = length;
+    rule->next = 0;
+    if (p->rules != 0) rule->next = p->rules;
+    p->rules = rule;
+
+    j = 0;
     for (i = 0; i < face->facebordernum; i++)
     {
       narc = onarc2narc (ivec[i]);
       arc = arcs + narc;
       if (arc->isinspanningtree) continue;
-      var = 'a';
-      if (ivec[i] < 0) var = 'A';
-      for (s = 0; s < gennum; s++)
+      for (s = 0; s < p->gennum; s++)
       {
         if (variable[s] == narc) break;
       }
-      var += s;
-      if (s >= gennum) var = '?';
+      assert (s < p->gennum);
+      s++;
+      if (ivec[i] < 0) s *= -1;
+      rule->var[j++] = s;
+    }
+  }
+
+  free (variable);
+  return (p);
+}
+
+/*
+ * print presentation of fundamental group
+ */
+
+void
+print_presentation (struct presentation *p)
+{
+  struct presentationrule *r;
+  int generator, rulenum, i, g;
+  char var;
+
+  if (p->gennum == 0)
+  {
+    if (quiet) printf ("<>\n");
+     else printf ("Trivial group\n<>\n");
+    return;
+  }
+  for (rulenum = 0, r = p->rules; r; r = r->next) rulenum++;
+  if (!quiet)
+  {
+    if (rulenum == 0)
+      printf ("Free group of rank %d\n", p->gennum);
+     else
+      printf ("Finitely presented group with %d generator%s\n", p->gennum,
+                (p->gennum == 1)?"":"s");
+  }
+
+  if (p->gennum > MAXGENERATORS)
+  {
+    printf ("Too many generators to print the rules\n");
+    return;
+  }
+  printf ("<");
+  for (g = 0; g < p->gennum; g++)
+  {
+    if (g > 0) printf (",");
+    printf ("%c", 'a' + g);
+  }
+  printf ("; ");
+  for (r = p->rules; r; r = r->next)
+  {
+    if (r != p->rules) printf (", ");
+    for (i = 0; i < r->length; i++)
+    {
+      generator = r->var[i];
+      var = 'a';
+      if (generator < 0)
+      {
+        var = 'A';
+        generator *= -1;
+      }
+      generator--;
+      var += generator;
+      if (generator >= p->gennum) var = '?';
       printf ("%c", var);
     }
   }
   printf (">\n");
-  return (gennum);
 }
 
 /*
@@ -678,6 +732,7 @@ find_spanning_tree (struct ccomplex *cc)
     cccc = (struct ccomplexcc *) malloc (sizeof (struct ccomplexcc));
     cccc->tag = cc->ccnum;
     cccc->basenode = bn;
+    cccc->p = 0;
     cccc->next = 0;
     cc->ccnum++;
     if (lastcc == 0)
