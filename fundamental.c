@@ -10,21 +10,13 @@
 #define MAXGENERATORS 26
 
 extern int debug;
+extern int quiet;
 
 void
 compute_fundamental (struct ccomplex *cc)
 {
-  int ccnum, gennum, n, count;
-  struct ccomplexface *faces = cc->faces;
-  struct ccomplexarc *arcs = cc->arcs;
-  struct ccomplexnode *nodes = cc->nodes;
-  struct ccomplexface *face;
-  struct ccomplexarc *arc;
-  struct ccomplexnode *node;
+  int ccnum, gennum, count;
   struct ccomplexcc *cccc;
-  int narc, s, r, m, i, *ivec;
-  int variable[MAXGENERATORS];
-  char var;
 
   count = complex_melt (cc);
   if (debug) cellcomplex_print (cc, 1);
@@ -38,71 +30,104 @@ compute_fundamental (struct ccomplex *cc)
 
   for (cccc = cc->cc; cccc; cccc = cccc->next)
   {
-    if (ccnum > 1) printf ("\nConnected component %d:\n", cccc->tag);
-    gennum = 0;
-    for (n = 0; n < cc->arcdim; n++)
-    {
-      arc = cc->arcs + n;
-      if (arc->type == CC_REMOVED) continue;
-      if (arc->isinspanningtree) continue;
-      node = cc->nodes + arc->enda;
-      if (node->cc != cccc) continue;
-      if (gennum < MAXGENERATORS) variable[gennum] = n;
-      gennum++;
-    }
-    if (gennum == 0)
-    {
-      printf ("Trivial group\n");
-      continue;
-    }
-    for (r = 0, m = 0; m < cc->facedim; m++)
-    {
-      face = faces + m;
-      if (face->type == CC_REMOVED) continue;
-      ivec = face->faceborder;
-      arc = arcs + onarc2narc (ivec[0]);
-      node = nodes + arc->enda;
-      if (node->cc != cccc) continue;
-      r++;
-    }
+    if (ccnum > 1 && !quiet) printf ("\nConnected component %d:\n", cccc->tag);
+    gennum = compute_fundamental_single (cc, cccc);
+  }
+}
+
+/*
+ * compute presentation of fundamental group of one component
+ */
+
+int
+compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
+{
+  struct ccomplexface *faces = cc->faces;
+  struct ccomplexface *face;
+  struct ccomplexarc *arcs = cc->arcs;
+  struct ccomplexarc *arc;
+  struct ccomplexnode *nodes = cc->nodes;
+  struct ccomplexnode *node;
+  int gennum, narc, n, r, m, i, s, g;
+  int *ivec;
+  char var;
+  int variable[MAXGENERATORS];
+
+  gennum = 0;
+  for (n = 0; n < cc->arcdim; n++)
+  {
+    arc = cc->arcs + n;
+    if (arc->type == CC_REMOVED) continue;
+    if (arc->isinspanningtree) continue;
+    node = cc->nodes + arc->enda;
+    if (node->cc != cccc) continue;
+    if (gennum < MAXGENERATORS) variable[gennum] = n;
+    gennum++;
+  }
+  if (gennum == 0)
+  {
+    if (quiet) printf ("<>\n");
+     else printf ("Trivial group\n<>\n");
+    return (gennum);
+  }
+  for (r = 0, m = 0; m < cc->facedim; m++)
+  {
+    face = faces + m;
+    if (face->type == CC_REMOVED) continue;
+    ivec = face->faceborder;
+    arc = arcs + onarc2narc (ivec[0]);
+    node = nodes + arc->enda;
+    if (node->cc != cccc) continue;
+    r++;
+  }
+  if (!quiet)
+  {
     if (r == 0)
       printf ("Free group of rank %d\n", gennum);
      else
-      printf ("Finitely presented group with %d generator%s\n", gennum, 
+      printf ("Finitely presented group with %d generator%s\n", gennum,
                 (gennum == 1)?"":"s");
+  }
 
-    if (gennum > MAXGENERATORS)
+  if (gennum > MAXGENERATORS)
+  {
+    printf ("Too many generators to print the rules\n");
+    return (-1);
+  }
+  printf ("<");
+  for (g = 0; g < gennum; g++)
+  {
+    if (g > 0) printf (",");
+    printf ("%c", 'a' + g);
+  }
+  printf ("; ");
+  for (r = 1, m = 0; m < cc->facedim; m++)
+  {
+    face = faces + m;
+    if (face->type == CC_REMOVED) continue;
+    ivec = face->faceborder;
+    arc = arcs + onarc2narc (ivec[0]);
+    node = nodes + arc->enda;
+    if (node->cc != cccc) continue;
+    if (r++ > 1) printf (", ");
+    for (i = 0; i < face->facebordernum; i++)
     {
-      printf ("Too many generators to print the rules\n");
-      continue;
-    }
-    for (r = 1, m = 0; m < cc->facedim; m++)
-    {
-      face = faces + m;
-      if (face->type == CC_REMOVED) continue;
-      ivec = face->faceborder;
-      arc = arcs + onarc2narc (ivec[0]);
-      node = nodes + arc->enda;
-      if (node->cc != cccc) continue;
-      printf ("%d: ", r++);
-      for (i = 0; i < face->facebordernum; i++)
+      narc = onarc2narc (ivec[i]);
+      arc = arcs + narc;
+      if (arc->isinspanningtree) continue;
+      var = 'a';
+      if (ivec[i] < 0) var = 'A';
+      for (s = 0; s < gennum; s++)
       {
-        narc = onarc2narc (ivec[i]);
-        arc = arcs + narc;
-        if (arc->isinspanningtree) continue;
-        var = 'a';
-        if (ivec[i] < 0) var = 'A';
-        for (s = 0; s < gennum; s++)
-        {
-          if (variable[s] == narc) break;
-        }
-        var += s;
-        if (s >= gennum) var = '?';
-        printf ("%c", var);
+        if (variable[s] == narc) break;
       }
-      printf ("\n");
+      var += s;
+      if (s >= gennum) var = '?';
+      printf ("%c", var);
     }
   }
+  printf (">\n");
+  return (gennum);
 }
 
 /*

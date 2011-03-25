@@ -91,6 +91,7 @@ struct ccomplexcc {
  */
 
 void compute_fundamental (struct ccomplex *cc);
+int compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc);
 int complex_melt (struct ccomplex *cc);
 int complex_facemelt (struct ccomplex *cc);
 int complex_faceremovekink (struct ccomplex *cc);
