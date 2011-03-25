@@ -192,7 +192,6 @@ sp_simplifyword (struct presentation *p)
         }
         r->length -= 2;
         assert (j == r->length);
-print_presentation (p);
       }
     }
   }
