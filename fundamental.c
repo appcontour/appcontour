@@ -19,7 +19,6 @@ compute_fundamental (struct ccomplex *cc)
   struct ccomplexcc *cccc;
 
   count = complex_melt (cc);
-  if (debug) cellcomplex_print (cc, 1);
   if (debug) cellcomplex_checkconsistency (cc);
 
   if (debug) printf ("Constructing spanning tree\n");
@@ -32,6 +31,8 @@ compute_fundamental (struct ccomplex *cc)
   {
     if (ccnum > 1 && !quiet) printf ("\nConnected component %d:\n", cccc->tag);
     cccc->p = compute_fundamental_single (cc, cccc);
+    if (debug) print_presentation (cccc->p);
+    simplify_presentation (cccc->p);
     print_presentation (cccc->p);
   }
 }
@@ -122,6 +123,148 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
 
   free (variable);
   return (p);
+}
+
+/*
+ * simplify presentation
+ */
+
+/*
+ * local profiles
+ */
+
+int sp_eliminatevar (struct presentation *p);
+void sp_do_eliminatevar (struct presentation *p, int);
+int sp_removeemptyrules (struct presentation *p);
+int sp_simplifyword (struct presentation *p);
+
+int
+simplify_presentation (struct presentation *p)
+{
+  int goon = 1;
+  int count = 0;
+
+  while (goon)
+  {
+    goon = 0;
+    goon += sp_eliminatevar (p);
+    goon += sp_simplifyword (p);
+    goon += sp_removeemptyrules (p);
+    count += goon;
+  }
+  return (count);
+}
+
+int
+sp_simplifyword (struct presentation *p)
+{
+  struct presentationrule *r, *pr;
+  int goon = 1;
+  int count = 0;
+  int i, j, inext, ifound1, ifound2;
+
+  while (goon)
+  {
+    goon = 0;
+    for (r = p->rules; r; r = r->next)
+    {
+      if (r->length < 2) continue;
+      ifound1 = -1;
+      for (i = 0; i < r->length; i++)
+      {
+        inext = i+1;
+        if (inext >= r->length) inext = 0;
+        if (r->var[i] + r->var[inext] == 0)
+        {
+          /* trovato due caratteri che si semplificano */
+          ifound1 = i;
+          ifound2 = inext;
+          break;
+        }
+      }
+      if (ifound1 >= 0)
+      {
+        goon++;
+        count++;
+        for (i = 0, j = 0; i < r->length; i++)
+        {
+          if (i != ifound1 && i != ifound2) r->var[j++] = r->var[i];
+        }
+        r->length -= 2;
+        assert (j == r->length);
+print_presentation (p);
+      }
+    }
+  }
+  return (count);
+}
+
+int
+sp_removeemptyrules (struct presentation *p)
+{
+  struct presentationrule *r, *pr;
+  int goon = 1;
+  int count = 0;
+
+  while (goon)
+  {
+    goon = 0;
+    pr = 0;
+    for (r = p->rules; r; r = r->next)
+    {
+      if (r->length == 0)
+      {
+        if (pr) pr->next = r->next;
+         else p->rules = r->next;
+        goon++;
+        count++;
+        break;
+      }
+      pr = r;
+    }
+  }
+  return (count);
+}
+
+int
+sp_eliminatevar (struct presentation *p)
+{
+  /* find a rule of length one */
+  struct presentationrule *r;
+
+  for (r = p->rules; r; r = r->next)
+  {
+    if (r->length != 1) continue;
+    sp_do_eliminatevar (p, r->var[0]);
+    return (1);
+  }
+  return (0);
+}
+
+void
+sp_do_eliminatevar (struct presentation *p, int generator)
+{
+  struct presentationrule *r;
+  int letter, i, j;
+
+  if (generator < 0) generator *= -1;
+
+  p->gennum--;
+
+  for (r = p->rules; r; r = r->next)
+  {
+    for (i = 0, j = 0; i < r->length; i++)
+    {
+
+      letter = r->var[i];
+      if (letter < 0) letter *= -1;
+      if (letter == generator) continue;
+      if (letter > generator) letter--;
+      if (r->var[i] < 0) letter *= -1;
+      r->var[j++] = letter;
+    }
+    r->length = j;
+  }
 }
 
 /*
