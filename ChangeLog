@@ -1,3 +1,19 @@
+2011-03-25: Computation of the fundamental group of the surface,
+	the internal solid set and the external set.
+	This is obtained with the new commands:
+	"fundamental" "insidefundamental" "outsidefundamental".
+	Example:
+	-----------------------------------------------------------------
+	$ ./contour insidefundamental examples/painted_klein_bottle.morse 
+	Finitely presented group with 3 generators
+	<a,b,c; aCAcBCb>
+	-----------------------------------------------------------------
+
+2011-03-20: Implemented computation of a cell complex corresponding
+	to the surface, or to the internal solid set, or to the
+	external set.  Commands:
+	"cellcomplex" "insidecomplex" "outsidecomplex"
+
 2010-09-25: new actions:
         "ccorientation <ccid>" computes the orientation of a single
         component <ccid>.  E.g. for a hollow sphere one of the two

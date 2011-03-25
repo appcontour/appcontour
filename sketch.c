@@ -558,7 +558,7 @@ postprocesssketch (struct sketch *sketch)
       if (arc->cusps == 0) arc->dvalues = 1;
       if (arc->depths[arc->cusps] != arc->depths[0])
       {
-        fprintf (stderr, "Warning: the last value of d for a loop MUST duplicate\n");
+        fprintf (stderr, "Warning: the last value of d for a loop (arc %d) MUST duplicate\n", arc->tag);
         fprintf (stderr, "the first one; adjusting...\n");
       }
       arc->depths[arc->cusps] = arc->depths[0];

@@ -1,3 +1,12 @@
+2011-03-25: It is now possible to compute the fundamental group of
+	the surface (not very interesting), of the internal solid set
+	(much more interesting) and of the external set.
+	This allows in certain cases to distinguish apparent contours
+	that cannot be connected by reidemeister-type moves.
+	Of course the underlying big problem lies in the extreme
+	difficulty in identifying finitely presented groups by
+	their presentation.
+
 2010-09-22: added utility "utils/contour_describe.sh" which describes
 	verbally the 3D objects corresponding to a contour with huffman
 	labelling.

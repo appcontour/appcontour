@@ -263,7 +263,8 @@ put_in_s1 (struct sketch *s)
   {
     for (a = s->arcs; a; a = a->next)
     {
-      for (i = 0; i < a->dvalues; i++)
+      //for (i = 0; i < a->dvalues; i++)  // otherwise problems in case endpoints == 0
+      for (i = 0; i <= a->cusps; i++)
       {
         a->depths[i]++;
       }

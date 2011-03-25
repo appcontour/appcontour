@@ -1,0 +1,22 @@
+#
+# example obtained by "painting" the
+# Klein bottle after removal of the
+# small intersection disk
+#
+
+morse {
+              ^l0              ;
+      /       ^l1    \         ;
+     / /       ^r1  \ \        ;
+    / /     /  ^r0 \ \ \       ;
+   / /     |   X'   | \ \      ;
+  / /       Xd0+u3 X'  | \     ;
+ / /       |   X'    X'   |    ;
+| |  ^l1+-  X'    X'     X'    ;
+| | |   X`     Xu1d1- Xu1-u1 | ;
+| |  Xd1-+d1 Xu3u1+- U  |    | ;
+| | |   Xu1-+d1+- |    /    /  ;
+|  \  U      U        /    /   ;
+ \           U           /     ;
+             U                 ;
+}
