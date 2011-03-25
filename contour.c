@@ -863,7 +863,6 @@ main (int argc, char *argv[])
     count = complex_collapse (ccomplex);
     if (debug) printf ("%d pairs of cells collapsed\n", count);
     compute_fundamental (ccomplex);
-    printf ("Not implemented!\n");
     break;
 
     default:

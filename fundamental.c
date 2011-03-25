@@ -7,20 +7,28 @@
 #include "contour.h"
 #include "fundamental.h"
 
+#define MAXGENERATORS 26
+
 extern int debug;
 
 void
 compute_fundamental (struct ccomplex *cc)
 {
   int ccnum, gennum, n, count;
+  struct ccomplexface *faces = cc->faces;
+  struct ccomplexarc *arcs = cc->arcs;
+  struct ccomplexnode *nodes = cc->nodes;
+  struct ccomplexface *face;
   struct ccomplexarc *arc;
   struct ccomplexnode *node;
   struct ccomplexcc *cccc;
+  int narc, s, r, m, i, *ivec;
+  int variable[MAXGENERATORS];
+  char var;
 
   count = complex_melt (cc);
-
-  if (debug) cellcomplex_checkconsistency (cc);
   if (debug) cellcomplex_print (cc, 1);
+  if (debug) cellcomplex_checkconsistency (cc);
 
   if (debug) printf ("Constructing spanning tree\n");
   ccnum = find_spanning_tree (cc);
@@ -30,7 +38,7 @@ compute_fundamental (struct ccomplex *cc)
 
   for (cccc = cc->cc; cccc; cccc = cccc->next)
   {
-    if (ccnum > 1) printf ("Connected component %d:\n", cccc->tag);
+    if (ccnum > 1) printf ("\nConnected component %d:\n", cccc->tag);
     gennum = 0;
     for (n = 0; n < cc->arcdim; n++)
     {
@@ -39,13 +47,62 @@ compute_fundamental (struct ccomplex *cc)
       if (arc->isinspanningtree) continue;
       node = cc->nodes + arc->enda;
       if (node->cc != cccc) continue;
+      if (gennum < MAXGENERATORS) variable[gennum] = n;
       gennum++;
     }
-    printf ("Found %d generators\n", gennum);
-  }
+    if (gennum == 0)
+    {
+      printf ("Trivial group\n");
+      continue;
+    }
+    for (r = 0, m = 0; m < cc->facedim; m++)
+    {
+      face = faces + m;
+      if (face->type == CC_REMOVED) continue;
+      ivec = face->faceborder;
+      arc = arcs + onarc2narc (ivec[0]);
+      node = nodes + arc->enda;
+      if (node->cc != cccc) continue;
+      r++;
+    }
+    if (r == 0)
+      printf ("Free group of rank %d\n", gennum);
+     else
+      printf ("Finitely presented group with %d generator%s\n", gennum, 
+                (gennum == 1)?"":"s");
 
-  // ora: calcolo generatori (per ogni cc), poi bisogna aggiungere le relazioni
-  printf ("Not implemented!\n");
+    if (gennum > MAXGENERATORS)
+    {
+      printf ("Too many generators to print the rules\n");
+      continue;
+    }
+    for (r = 1, m = 0; m < cc->facedim; m++)
+    {
+      face = faces + m;
+      if (face->type == CC_REMOVED) continue;
+      ivec = face->faceborder;
+      arc = arcs + onarc2narc (ivec[0]);
+      node = nodes + arc->enda;
+      if (node->cc != cccc) continue;
+      printf ("%d: ", r++);
+      for (i = 0; i < face->facebordernum; i++)
+      {
+        narc = onarc2narc (ivec[i]);
+        arc = arcs + narc;
+        if (arc->isinspanningtree) continue;
+        var = 'a';
+        if (ivec[i] < 0) var = 'A';
+        for (s = 0; s < gennum; s++)
+        {
+          if (variable[s] == narc) break;
+        }
+        var += s;
+        if (s >= gennum) var = '?';
+        printf ("%c", var);
+      }
+      printf ("\n");
+    }
+  }
 }
 
 /*
@@ -206,13 +263,14 @@ int complex_facemelt (struct ccomplex *cc)
       }
       assert (nface1 >= 0 && nface2 >= 0);
       if (nface1 == nface2) continue;
-      /*
-       * We can melt the two faces together
-       */
       face1 = faces + nface1;
       face2 = faces + nface2;
       ivec1 = face1->faceborder;
       ivec2 = face2->faceborder;
+      if (face1->facebordernum + face2->facebordernum <= 2) continue;
+      /*
+       * We can melt the two faces together
+       */
       if (ivec1[i1] < 0) cc_revert_face (cc, nface1);
       if (ivec2[i2] > 0) cc_revert_face (cc, nface2);
       goon = 1;
