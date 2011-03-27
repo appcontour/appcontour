@@ -1,0 +1,19 @@
+#
+# this produces a knot with two Y junctions
+# selflinked through small loops
+#
+# note that the corresponding tubular surface
+# is the S^3 complement of the "painted klein
+# bottle", that can be obtained by thickening
+# a klein bottle with the small disk removed
+#
+knot {
+    ^       ;
+  /   \     ;
+(  ^   \ ^  ;
+ X  )   X  );
+ \ x    \ x ;
+  Y \    Y );
+   \   U  / ;
+      U     ;
+}

@@ -1,3 +1,6 @@
+2011-03-26: The knot description now also allows for Y junctions
+	(and the equivalent upside-down 'h' junction).
+
 2011-03-25: Computation of the fundamental group of the surface,
 	the internal solid set and the external set.
 	This is obtained with the new commands:

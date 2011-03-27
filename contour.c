@@ -244,6 +244,7 @@ main (int argc, char *argv[])
       printf ("\n cell complex and fundamental group:\n");
       printf ("  cellcomplex, insidecomplex, outsidecomplex\n");
       printf ("  fundamental, insidefundamental, outsidefundamental\n");
+      printf ("  abbreviations: fg, ifg, ofg\n");
       printf ("\n possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
@@ -365,11 +366,12 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"cellcomplex") == 0) {action = ACTION_CELLCOMPLEX; fg_type=FG_SURFACE;}
     if (strcmp(argv[i],"insidecomplex") == 0) {action = ACTION_CELLCOMPLEX; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"outsidecomplex") == 0) {action = ACTION_CELLCOMPLEX; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"fg") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_SURFACE;}
     if (strcmp(argv[i],"fundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_SURFACE;}
     if (strcmp(argv[i],"sfundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_SURFACE;}
-    if (strcmp(argv[i],"ifundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
+    if (strcmp(argv[i],"ifg") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"insidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
-    if (strcmp(argv[i],"efundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"ofg") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"outsidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"evert") == 0)
     {
