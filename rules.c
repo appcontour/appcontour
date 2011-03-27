@@ -503,7 +503,7 @@ rule_t1 (struct sketch *sketch, int rcount)
               /* sposta isole... */
               if (heisemberg < 0)
               {
-                fprintf (stderr, "You need to indicate which isles to transfer, use\n");
+                fprintf (stderr, "You need to indicate which islands to transfer, use\n");
                 fprintf (stderr, "switch \"--ti <int>\", or the special rule names ");
                 fprintf (stderr, "T1::<int>, T1:2:<int>, ...\n");
                 fprintf (stderr, "<int> is interpreted as a bit mask\n");
