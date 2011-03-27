@@ -218,6 +218,8 @@ int evert3d (struct sketch *s, int tag);
 int compute_ohmoto (struct sketch *s);
 void compute_link_num_arcs (struct sketch *s);
 int count_link_components (struct sketch *s);
+int sketch_union (struct sketch *s1, struct sketch *s2);
+int sketch_sum (struct sketch *s1, struct sketch *s2);
 
 
 void canonify (struct sketch *s);

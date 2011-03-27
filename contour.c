@@ -59,6 +59,8 @@
 #define ACTION_3DEVERT 41
 #define ACTION_CELLCOMPLEX 42
 #define ACTION_FUNDAMENTAL 43
+#define ACTION_UNION 44
+#define ACTION_CONNECTEDSUM 45
 
 int debug = 0;
 int quiet = 0;
@@ -230,6 +232,8 @@ main (int argc, char *argv[])
       printf ("  frontback: front-back reflection\n");
       printf ("  mendes: compute Mendes graph (see Hacon-Mendes-Romero Fuster)\n");
       printf ("  evert <int>: make region <int> become the unbounded region\n");
+      printf ("  union: disjoint union of two apparent contours\n");
+      printf ("  sum: connected sum of two apparent contours\n");
       printf ("\n possible informational commands are:\n");
       printf ("  info, characteristic, rules, iscontour, ishuffman, countcc\n");
       printf ("  list[ma|invl|invs|strata]\n");
@@ -325,6 +329,9 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"liststrata") == 0) action = ACTION_LISTSTRATA;
     if (strcmp(argv[i],"addsphere") == 0) action = ACTION_ADDSPHERE;
     if (strcmp(argv[i],"wrap") == 0) action = ACTION_WRAP;
+    if (strcmp(argv[i],"union") == 0) action = ACTION_UNION;
+    if (strcmp(argv[i],"connectedsum") == 0) action = ACTION_CONNECTEDSUM;
+    if (strcmp(argv[i],"sum") == 0) action = ACTION_CONNECTEDSUM;
     if (strcmp(argv[i],"punchhole") == 0) action = ACTION_PUNCHHOLE;
     if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
     if (strcmp(argv[i],"gluearcs") == 0) action = ACTION_GLUEARCS;
@@ -660,6 +667,20 @@ main (int argc, char *argv[])
       fprintf (stderr, "Cannot wrap contour in an s1!\n");
       exit(14);
     }
+    break;
+
+    case ACTION_UNION:
+    case ACTION_CONNECTEDSUM:
+    if ((s1 = readcontour (infile)) == 0) exit (14);
+    canonify (s1);
+    if ((s2 = readcontour (infile)) == 0) exit (14);
+    canonify (s2);
+    if (action == ACTION_UNION)
+      res = sketch_union (s1, s2);   // this adds s2 to s1
+     else
+      res = sketch_sum (s1, s2);     // this sums s2 to s1
+    printsketch (s1);
+    if (res == 0) exit (15);
     break;
 
     case ACTION_EXTRACTCC:

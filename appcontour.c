@@ -12,6 +12,121 @@ void print_ord_tree (int which, int count, int *parents);
 /* fine prototipi */
 
 /*
+ * disjoint union of apparent contours
+ * the first sketch is modified
+ * NOTE: there is no duplication of data, so that
+ * at the end s1 and s2 will share data!
+ * we cannot free any of the two without ruining
+ * the data of the other
+ */
+
+int
+sketch_union (struct sketch *s1, struct sketch *s2)
+{
+  struct region *r1, *r2;
+  struct borderlist *bl;
+  struct arc *a;
+  int tag;
+
+  if (s2->huffman_labelling != s1->huffman_labelling)
+  {
+    fprintf (stderr, "Both or none contours must have Huffan labelling\n");
+    return (0);
+  }
+  assert (s1->extregion->border->sponda == 0);
+  assert (s2->extregion->border->sponda == 0);
+  if (s2->regions != s2->extregion)
+  {
+    for (r2 = s2->regions; r2; r2 = r2->next)
+    {
+      if (r2->next == s2->extregion) r2->next = s2->extregion->next;
+      break;
+    }
+    s2->extregion->next = s2->regions;
+    s2->regions = s2->extregion;
+  }
+  r2 = s2->regions;   // the external region
+  assert (r2->border->sponda == 0);
+  /* we found the external region of s2 */
+  for (bl = s1->extregion->border; bl; bl = bl->next)
+  {
+    if (bl->next == 0)
+    {
+      bl->next = r2->border->next;
+      break;
+    }
+  }
+  for (bl = r2->border->next; bl; bl = bl->next)
+  {
+    bl->region = s1->extregion;
+  }
+  r2->border->next = 0;
+  for (a = s1->arcs; a; a = a->next)
+  {
+    if (a->next == 0)
+    {
+      a->next = s2->arcs;
+      break;
+    }
+  }
+  s2->arcs = 0;
+  for (a = s1->arcs, tag = 1; a; a = a->next) a->tag = tag++;
+  for (r1 = s1->regions; r1; r1 = r1->next)
+  {
+    if (r1->next == 0)
+    {
+      r1->next = s2->regions->next;
+      break;
+    }
+  }
+  s2->regions->next = 0;
+  for (r1 = s1->regions, tag = 0; r1; r1 = r1->next) r1->tag = tag++;
+  return (1);
+}
+
+/*
+ *
+ */
+
+int
+sketch_sum (struct sketch *s1, struct sketch *s2)
+{
+  struct borderlist *bl, *bl1, *bl2;
+  int ccount;
+  int count, count1, count2, i;
+
+  ccount = count_connected_components (s1);
+  for (i = 0, count1 = 0; i < ccount; i++)
+  {
+    if (find_connected_component_parent (i, s1) < 0) count1++;
+  }
+  ccount = count_connected_components (s2);
+  for (i = 0, count2 = 0; i < ccount; i++)
+  {
+    if (find_connected_component_parent (i, s2) < 0) count2++;
+  }
+  assert (count1 >= 1 && count2 >= 1);
+  if (count1 + count2 > 2)
+  {
+    fprintf (stderr, "Connected sum is not well defined for surfaces with more than one external component.\n");
+    return (0);
+  }
+  if (sketch_union (s1, s2) == 0) return (0);
+
+  assert (s1->extregion->border->sponda == 0);
+  count = 0;
+  for (bl = s1->extregion->border; bl; bl = bl->next) count++;
+
+  assert (count == 3);
+
+  bl1 = s1->extregion->border->next;
+  bl2 = s1->extregion->border->next->next;
+  assert (bl1 && bl2);
+  gluearcs_or_pinchneck (s1, bl1->sponda->info, bl2->sponda->info, 0, 0, -1);
+  return (1);
+}
+
+/*
  * list occurences of horizontal surgery
  */
 
