@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(appcontour, 1.1.9, paolini@dmf.unicatt.it)
+AC_INIT(appcontour, 1.2.0, paolini@dmf.unicatt.it)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([contour.c])
 AC_CONFIG_HEADER([config.h])
