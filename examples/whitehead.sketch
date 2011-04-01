@@ -1,0 +1,52 @@
+#
+# this is equivalent to the Whitehead link (modulo a 3d-evert)
+# and can be obtained from the knot "one_chain.knot" (which is
+# an unknot):
+#
+#knot {
+#    ^    ;
+# /   ^ \ ;
+#| ^ | | |;
+# X X  | |;
+#| U | | |;
+# \   U / ;
+#    U    ;
+#}
+#
+# by wrapping it into a torus.  This can be achieved with the
+# contour commands:
+#
+# contour wrap one_chain.knot | contour canonify | contour punchhole -r 1 --stratum 0 | contour canonify >mywhitehead.sketch
+#
+sketch {
+Arc 1: (0);
+Arc 2: (0);
+Arc 3: [1);
+Arc 4: [1);
+Arc 5: [1];
+Arc 6: [1];
+Arc 7: [1];
+Arc 8: [1];
+Arc 9: [1];
+Arc 10: [1];
+Arc 11: [1];
+Arc 12: [1];
+Arc 13: [1];
+Arc 14: [1];
+Arc 15: [3];
+Arc 16: [3];
+Arc 17: [3];
+Arc 18: [3];
+Region 0 (f = 0): () (-a1);
+Region 1 (f = 0): (-a2);
+Region 2 (f = 2): (-a5 -a6);
+Region 3 (f = 4): (+a3 -a7 +a9 -a15);
+Region 4 (f = 4): (+a4 -a8 +a11 -a16);
+Region 5 (f = 2): (-a9 -a10 -a11 -a12);
+Region 6 (f = 4): (-a13 +a10 -a17 +a5);
+Region 7 (f = 4): (-a14 +a12 -a18 +a6);
+Region 8 (f = 6): (+a7 +a15 +a14 +a17);
+Region 9 (f = 6): (+a13 +a18 +a8 +a16);
+Region 10 (f = 2): (+a1) (-a3);
+Region 11 (f = 2): (-a4) (+a2);
+}
