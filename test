@@ -4,6 +4,7 @@
 list=`ls tests/test.??`
 
 tmpfile=test$$.tmp
+failed="0"
 
 for file in $list
 do
@@ -14,7 +15,10 @@ do
 
   if [ -f ${file}.out ]
   then
-    diff $tmpfile ${file}.out
+    if ! diff $tmpfile ${file}.out
+    then
+      failed=$[ $failed + 1 ]
+    fi
   else
     echo "...new test, copying out file"
     cp $tmpfile ${file}.out
@@ -23,10 +27,21 @@ do
   echo "$exitcode" >$tmpfile
   if [ -f ${file}.ec ]
   then
-    diff $tmpfile ${file}.ec
+    if ! diff $tmpfile ${file}.ec
+    then
+      failed=$[ $failed + 1 ]
+    fi
   else
     echo "...new test, copying ec file"
     cp $tmpfile ${file}.ec
   fi
   rm $tmpfile
 done
+
+if [ "$failed" -gt "0" ]
+then
+  echo $failed tests failed
+  exit 1
+fi
+
+exit 0
