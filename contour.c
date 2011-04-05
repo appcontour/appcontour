@@ -62,6 +62,8 @@
 #define ACTION_UNION 44
 #define ACTION_CONNECTEDSUM 45
 
+#define MAXFILELENGTH 2000
+
 int debug = 0;
 int quiet = 0;
 int verbose = 0;
@@ -93,6 +95,7 @@ main (int argc, char *argv[])
   struct border *bp;
   struct arc *a, *a2;
   struct ccomplex *ccomplex;
+  char examplesfilename[MAXFILELENGTH];
 
   user_data.mrnum = user_data.manum = 0;
   globals.rulenames = RULENAMES_NEW;
@@ -275,8 +278,20 @@ main (int argc, char *argv[])
       infile = fopen (argv[i], "r");
       if (infile == 0)
       {
-        perror ("Cannot open input file");
-        exit (10);
+        if (index (argv[i], '/'))
+        {
+          perror ("Cannot open input file");
+          exit (10);
+        }
+        strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
+        strncat (examplesfilename, "/", MAXFILELENGTH);
+        strncat (examplesfilename, argv[i], MAXFILELENGTH);
+        infile = fopen (examplesfilename, "r");
+        if (infile == 0)
+        {
+          perror ("Cannot open input file");
+          exit (10);
+        }
       }
     }
     if (strcmp(argv[i],"applyrule") == 0 || strcmp(argv[i],"rule") == 0)

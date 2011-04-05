@@ -1,3 +1,6 @@
+2011-04-05: Install examples in <prefix>/appcontour/examples, search that
+	directory for contour description if not found in current directory.
+
 2011-03-26: The knot description now also allows for Y junctions
 	(and the equivalent upside-down 'h' junction).
 
