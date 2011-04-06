@@ -1,0 +1,216 @@
+.\" Process this file with
+.\" groff -man -Tascii foo.1
+.\"
+.TH CONTOUR(1)
+.SH NAME
+contour - program that deals with the so-called apparent contours
+.SH SYNOPSIS
+.B contour 
+[ options ] 
+.B command 
+[ file ]
+.SH DESCRIPTION
+.I contour
+is a program that deals with the so-called apparent
+contours, which are basically the outlines of regular generic
+3D compact surfaces as viewed from an external point of view.
+The scene is composed by one or more smooth compact oriented
+surfaces without boundary that do not intersect each other.
+The surfaces are translucid, so that also surfaces lying behind
+are still visible.
+
+From the scene we extract only the projection of the points
+on the surfaces at points where the normal to the surface is
+orthogonal to the projection direction (i.e., the projection
+direction is tangent to the surface).
+
+As a result we obtain a system of regular curves that connect
+nodes where exactly four curves concur.
+We must also allow for cusps to be present.
+
+Our program is controlled by command line and uses descriptions
+given in plain text files.  It is capable of:
+
+- reading a "morse" description (see below).
+
+- reading a "sketch" description, which is of purely topological
+type and very similar to how the sketch is kept in the progam memory
+
+- a filter is present ("contour knot2morse") that can produce a
+morse description corresponding to a surface having the form of a
+thin tube that follow the shape described in a file of type "knot"
+(or directly given on standard input).
+A knot description is enclosed in a "knot { ... }" directive and
+strongly resembles a morse description; only now we are describing
+the form of the tube as if it were just a (knotted) string,
+i.e. of zero width.  The usual symbols "^", "|", "X", "U", ... can
+be used, with the addition of the lower case letter "x", which indicates
+a crossing with the string in the direction nw-se going above the
+string in the direction ne-sw, whereas the upper case "X" indicates
+a crossing with then nw-se string going below the other one.
+Have a look in the 'examples' directory for some basic shapes.
+
+- using unix pipes it is possible to feed the output of the program
+(sketch description) into the program itself, thus allowing to
+concatenate a sequence of "moves".
+
+- checking the applicability of all the implemented "moves" to a
+given sketch.  These moves are topological modifications to a
+sketch that correspond to isotopic modifications on the 3D surface,
+i.e. deformations that do not change the topology of the scene.
+This is achieved with the command:
+
+$ contour testallrules example.morse
+
+where "example.morse" is a file describing the sketch.  If "example.morse"
+is omitted, the program will read the description from standard input.
+
+- applying one of the implemented "moves" as follows:
+
+$ contour applyrule rulename example.morse
+
+where "rulename" is one of the rules (as output by "testallrules").
+In some cases a rule can be applied in different parts of the sketch,
+it will be applied at the first position found, as an alternative
+the syntax "rule:n" will apply the rule at the n-th position in the
+sketch (this is also shown by "testallrules").
+
+- canonifying a "region" description.  This is motivated by the
+interest in understanding whether two sketches are actually the
+same sketch.  Appropriate "canonification" will ensure that two
+"region" descriptions of the same sketch will produce the same
+"canonic" representation.  Unfortunately this is not achieved
+completely...
+
+- comparing to sketches.  This is done in a more-or-less lessicographic
+way.  This is only meaningful after canonification (which is authomatically
+performed).  The command
+
+$ cat example1 example2 | contour compare
+
+will produce one of the following answers:
+- s1 > s2
+- s1 < s2
+- s1 = s2
+
+The answer "s1 = s2" is NOT proved to be true, although we do not
+know an example of the contrary at the moment.
+
+- counting connected components.  The program is capable of counting
+the number of connected components of the 3D scene (the number of
+surfaces):
+
+  $ contour countcc example
+
+- extracting one of the connected components:
+
+  $ contour extractcc n example
+
+- computing the Euler characteristic:
+
+  $ contour characteristic example
+
+- asking for information:
+
+  $ contour info example
+
+which counts the number of arcs, extended arcs, nodes, cusps
+and other information regarding the 2D apparent contour; it also
+outpus the number of connected components and the total Euler
+characteristic of the 3D scene corresponding to the contour.
+A recent addition is the computation of the three Aicardi-Ohmoto
+invariants.
+
+.SH COMMANDS
+.IP operating:
+  rule <rule>: apply indicated rule to contour
+  mergearcs: apply an inverse rule that merges two arcs
+  wrinkle: apply inverse L (lip) rule
+  punchhole/removehole: perform vertical surgery
+  gluearcs/pinchneck: perform horizontal surgery
+  addsphere/removesphere: add-remove small sphere
+  wrap: put the 3D surface into a big sphere
+  extractcc <int>: extract 3D connected component
+  removecc <int>: remove 3D connected component from contour
+  leftright: left-right reflection
+  frontback: front-back reflection
+  mendes: compute Mendes graph (see Hacon-Mendes-Romero Fuster)
+  evert <int>: make region <int> become the unbounded region
+
+.IP "informational:"
+  info, characteristic, rules, iscontour, ishuffman, countcc
+  list[ma|invl|invs|strata]
+  ccorientation <int>: gives the orientation of a 3D connected component
+  ccparent <cc>: finds the 3D component that directly contains "cc" 0 means that "cc" is external
+  ccordering: show 3D inclusion between the connected components
+  compare: lessicographic comparison between two contours, in this case the stdin (or file) must contain two descriptions
+
+.IP "conversion and standardization:"
+  print, printmorse, knot2morse, canonify
+
+.SH OPTIONS
+.IP --help 
+this help
+.IP --version 
+print program version
+.IP -q 
+be quiet
+.IP -v|--verbose 
+be more verbose
+.IP --nocanonify 
+do not canonify region description before printing
+.IP "--transfer_islands|--ti <int_coded_flags>" 
+information on island location in case of ambiguity (e.g. rule C2)
+.IP "--finfinity|--fi <int>" 
+value of f at infinity (default 0)
+.IP "--seed <int>" 
+initialize random number generator e.g. for Mendes graph graphic presentation
+.IP "-r|--region <int>" 
+mark region for specific action
+.IP "-a|--arc <int>" 
+mark arc for specific action
+.IP --oldnames|--newnames 
+select set of names for rules
+
+.\" .SH FILES
+.\" .I /asd/fasdsdsd
+.\" .RS
+.\" The system wide configuration file. See
+.\" .BR foo (5)
+.\" for further details.
+.\" .RE
+.\" .I ~/.foorc
+.\" .RS
+.\" Per user configuration file. See
+.\" .BR foo (5)
+.\" for further details.
+.\" .SH ENVIRONMENT
+.\" .IP FOOCONF
+.\" If non-null the full pathname for an alternate system wide
+.\" .IR foo.conf .
+.\" Overridden by the
+.\" .B -c
+.\" option.
+.\" .SH DIAGNOSTICS
+.\" The following diagnostics may be issued on stderr:
+ 
+.\" Bad magic number.
+.\" .RS
+.\" The input file does not look like an archive file.
+.\" .RE
+.\" Old style baz segments.
+.\" .RS
+.\" .B foo
+.\" can only handle new style baz segments. COBOL
+.\" object libraries are not supported in this version.
+..\" SH BUGS
+.\" The command name should have been chosen more carefully
+.\" to reflect its purpose.
+.SH AUTHOR
+Maurizio Paolini
+.\" .SH "SEE ALSO"
+.\" .BR ert (1),
+.\" .BR dre (5),
+.\" .BR xxddf (1)
+
+
