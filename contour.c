@@ -62,6 +62,9 @@
 #define ACTION_UNION 44
 #define ACTION_CONNECTEDSUM 45
 
+#ifndef EXAMPLES_DIR
+  #define EXAMPLES_DIR ""
+#endif
 #define MAXFILELENGTH 2000
 
 int debug = 0;
@@ -278,7 +281,7 @@ main (int argc, char *argv[])
       infile = fopen (argv[i], "r");
       if (infile == 0)
       {
-        if (index (argv[i], '/'))
+        if (! isalnum (argv[i][0]) || EXAMPLES_DIR[0] == 0 )
         {
           perror ("Cannot open input file");
           exit (10);
