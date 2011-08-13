@@ -577,17 +577,10 @@ mendes_try_expand_arc (int tag, int *arcdata, struct sketch *s)
 void
 print_mendes (struct mendesgraph *h)
 {
-  int **data;
-  int *arcdata;
-  struct sketch *s;
   int ia, in, kigobj, kigobjfa, kigobjflab;
   extern int mendesge, quiet, verbose;
   char *kigpointstyle[] = {"Round", "RoundEmpty" };
   int ptstyleid;
-
-  data = h->nodesdata;
-  arcdata = h->arcsdata;
-  s = h->sketch;
 
   switch (mendesge)
   {

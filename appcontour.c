@@ -281,7 +281,7 @@ showinfo (struct sketch *sketch)
     printf ("Connected comp.:    %d\n", count_connected_components (sketch));
   printf ("Total Euler ch.:    %d\n", euler_characteristic (sketch));
 
-  if (! quiet) printf ("\nAicardi-Ohmoto invariants:\n");
+  if (! quiet) printf ("\nFirst order Vassiliev invariants:\n");
   printf ("Cusps:              %d\n", numcusps);
   if (sketch->huffman_labelling)
     printf ("Positive cusps:     %d\n", poscusps);

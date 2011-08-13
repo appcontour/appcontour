@@ -1,3 +1,5 @@
+2011-08-12: Ohmoto-Aicardi invariants renamed into "First order Vassiliev invariants".
+
 2011-04-05: Install examples in <prefix>/appcontour/examples, search that
 	directory for contour description if not found in current directory.
 
