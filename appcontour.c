@@ -269,10 +269,10 @@ showinfo (struct sketch *sketch)
   numlcomponents = count_link_components (sketch);
 
   if (! quiet)
-    printf ("This is an%s apparent contour %s Huffman labelling\n", 
+    printf ("This is an%s apparent contour %s labelling\n", 
       sketch->isempty?(" EMPTY"):(""),
       sketch->huffman_labelling?("with"):("without"));
-    else printf ("Huffman labelling:  %d\n", 
+    else printf ("labelling:  %d\n", 
       sketch->huffman_labelling?1:0);
 
   if (! quiet) printf ("\nProperties of the %s:\n",
