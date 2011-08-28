@@ -98,13 +98,14 @@ main (int argc, char *argv[])
   int tok, count, vertexnum;
   double kick_out_time;
   FILE *filein;
-  char *grident;
+  //char *grident;
 
   energyinit ();
   filein = parseargs (argc, argv);
   if (filein == 0) filein = stdin;
   if (test == 0) allowrepulsion = 0;
-  grident = grinit(&argc, argv);
+  //grident = grinit(&argc, argv);
+  grinit(&argc, argv);
 
   tok = gettoken (filein);
   if (tok != TOK_MORSE) return (0);
@@ -982,7 +983,8 @@ void
 redistributenodes (struct polyline *contour)
 {
   struct line *line, *nline, *aline;
-  struct vertex *a, *b, *v, *next, *prev;
+  struct vertex *a, *b, *v, *next;
+  //struct vertex *prev;
   double diffx, diffy, len, alen, h, dt;
   int numsub, i, vertexnum, forward, backidx;
   int addednodes = 0, removednodes = 0;
@@ -1002,12 +1004,12 @@ redistributenodes (struct polyline *contour)
     if (len < 0.5*h)
     {   /* can I derefine? */
       v = line->b;
-      prev = line->a;
+      //prev = line->a;
       forward = 1;
       if (v->type != V_REGULAR)
       {
         v = line->a;
-        prev = line->b;
+        //prev = line->b;
         forward = 0;
       }
       if (v->type != V_REGULAR) continue;
