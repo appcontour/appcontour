@@ -1,3 +1,6 @@
+2011-08-28: Huffman labelling renamed simply "labelling".  Added automatic canonification
+	after most of the surgeries.  It can be disabled with the --nocanonify option.
+
 2011-08-12: Ohmoto-Aicardi invariants renamed into "First order Vassiliev invariants".
 
 2011-04-05: Install examples in <prefix>/appcontour/examples, search that

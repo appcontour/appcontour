@@ -241,7 +241,7 @@ main (int argc, char *argv[])
       printf ("  union: disjoint union of two apparent contours\n");
       printf ("  sum: connected sum of two apparent contours\n");
       printf ("\n possible informational commands are:\n");
-      printf ("  info, characteristic, rules, iscontour, ishuffman, countcc\n");
+      printf ("  info, characteristic, rules, iscontour, islabelled, countcc\n");
       printf ("  list[ma|invl|invs|strata]\n");
       printf ("  ccorientation <int>: gives the orientation of a 3D connected component\n");
       printf ("  ccparent <cc>: finds the 3D component that directly contains \"cc\"\n");
@@ -377,6 +377,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"ccordering") == 0) action = ACTION_CCORDERING;
     if (strcmp(argv[i],"print") == 0) action = ACTION_PRINTSKETCH;
     if (strcmp(argv[i],"ishuffman") == 0) action = ACTION_ISHUFFMAN;
+    if (strcmp(argv[i],"islabelled") == 0) action = ACTION_ISHUFFMAN;
     if (strcmp(argv[i],"isappcon") == 0) action = ACTION_ISHUFFMAN;
     if (strcmp(argv[i],"iscontour") == 0) action = ACTION_ISCONTOUR;
     if (strcmp(argv[i],"compare") == 0) action = ACTION_COMPARE;
@@ -485,6 +486,7 @@ main (int argc, char *argv[])
     if (bp->orientation * ori <= 0) exit (19);
     if (bp->info->cusps != 0) exit (20);
     remove_s1 (bp, sketch);
+    if (docanonify) canonify (sketch);
     printsketch (sketch);
     break;
 
@@ -643,6 +645,7 @@ main (int argc, char *argv[])
     }
     res = gluearcs_or_pinchneck (sketch, a, a2, user_data.arcl[0],
             user_data.arcl[1], ori);
+    if (docanonify) canonify (sketch);
     printsketch (sketch);
     if (res == 0) {
       fprintf (stderr, "Cannot %s!\n", (ori > 0)?"pinch neck":"glue arcs");
@@ -669,6 +672,7 @@ main (int argc, char *argv[])
       exit(15);
     }
     res = add_s1 (sketch, r, user_data.stratum[0], ori);
+    if (docanonify) canonify (sketch);
     printsketch (sketch);
     if (res == 0) {
       fprintf (stderr, "Cannot add s1!\n");
@@ -680,6 +684,7 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     res = put_in_s1 (sketch);
+    if (docanonify) canonify (sketch);
     printsketch (sketch);
     if (res == 0) {
       fprintf (stderr, "Cannot wrap contour in an s1!\n");
@@ -697,6 +702,7 @@ main (int argc, char *argv[])
       res = sketch_union (s1, s2);   // this adds s2 to s1
      else
       res = sketch_sum (s1, s2);     // this sums s2 to s1
+    if (docanonify) canonify (s1);
     printsketch (s1);
     if (res == 0) exit (15);
     break;

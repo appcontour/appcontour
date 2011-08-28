@@ -5,5 +5,5 @@
 ./contour removehole -r 1 examples/genus_2.morse
 #
 ./contour liststrata examples/torus1.morse
-./contour addsphere examples/torus1.morse -r 1:0
-./contour punchhole examples/torus1.morse -r 2:0
+./contour --nocanonify addsphere examples/torus1.morse -r 1:0
+./contour --nocanonify punchhole examples/torus1.morse -r 2:0

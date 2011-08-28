@@ -366,7 +366,8 @@ add_s1 (struct sketch *s, struct region *r, int dval, int ori)
 int
 put_in_s1 (struct sketch *s)
 {
-  int i, changes;
+  int i;
+  // int changes;
   struct arc *a, *newa;
   struct region *newr;
   struct region *extr = 0;
@@ -421,7 +422,8 @@ put_in_s1 (struct sketch *s)
   newbp2->orientation = 1;
 
   s->extregion = newr;
-  changes = adjust_isexternalinfo (s);
+  //changes = adjust_isexternalinfo (s);
+  adjust_isexternalinfo (s);
   computefvalue (s, newr, extr->f);
   if (debug)
     appcontourcheck (s, 1, 0);
@@ -522,7 +524,7 @@ changeextregion (struct sketch *s, int tag)
 {
   struct region *r, *newext = 0, *oldext = 0;
   struct borderlist *bl;
-  int changes;
+  // int changes;
 
   for (r = s->regions; r; r = r->next)
   {
@@ -535,7 +537,8 @@ changeextregion (struct sketch *s, int tag)
   bl->region = newext;
   bl->next = newext->border;
   newext->border = bl;
-  changes = adjust_isexternalinfo (s);
+  //changes = adjust_isexternalinfo (s);
+  adjust_isexternalinfo (s);
   return (1);
 }
 
@@ -807,7 +810,7 @@ getdatnode (struct border *b)
 int
 checkdnodecons (struct border *b, int dd[4])
 {
-  struct arc *arc;
+  //struct arc *arc;
   int i, diff, imin;
   int ori[5];
 
@@ -817,7 +820,7 @@ checkdnodecons (struct border *b, int dd[4])
   for (i = 1; i < 4; i++)
   {
     b = b->next;
-    arc = b->info;
+    //arc = b->info;
     b = gettransborder (b);
 
     dd[i] = getdatnode (b);

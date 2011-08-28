@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define RULENAMES_OLD 1
 #define RULENAMES_NEW 2
