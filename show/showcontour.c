@@ -12,6 +12,17 @@
 #include <math.h>
 #include <string.h>
 #include <sys/time.h>
+
+#ifdef HAVE_CONFIG_H
+  #include <config.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+  #include <unistd.h>
+  #include <sys/types.h>
+  #include <sys/wait.h>
+#endif
+
 #include "showcontour.h"
 #include "morseevent.h"
 #include "doptimize.h"
@@ -78,6 +89,7 @@ static double skiptime = 0.0;
 static double skiprtime = 0.0;
 static int test = 0;
 static int dodoptimize = 1;
+static int pipethroughcontour = 0;
 #ifdef HAVE_GTK
 static int gr_id = GO_GTK;
 #else
@@ -99,11 +111,54 @@ main (int argc, char *argv[])
   double kick_out_time;
   FILE *filein;
   //char *grident;
+#ifdef HAVE_UNISTD_H
+  int retcode, cpid;
+  int pipedes[2];
+  //FILE *tomorsefile;
+  //char buf[1024];
+  //char ch;
+#endif
 
   energyinit ();
   filein = parseargs (argc, argv);
   if (filein == 0) filein = stdin;
   if (test == 0) allowrepulsion = 0;
+
+#ifdef HAVE_UNISTD_H
+  if (pipethroughcontour)
+  {
+    fprintf (stderr, "reading morse description via contour filter\n");
+    retcode = pipe (pipedes);
+    cpid = fork ();
+    if (cpid < 0) exit (123);
+    if (cpid == 0)  /* this is the child */
+    {
+      /* the child only writes on pipe */
+      close (pipedes[0]);
+      /* contour any2morse writes on stdout, changing descriptor */
+      retcode = dup2 (pipedes[1], 1);
+      if (retcode < 0) {perror ("error in dup2"); exit (222);}
+      retcode = dup2 (fileno(filein), 0);
+      if (retcode < 0) {perror ("error in dup2"); exit (222);}
+
+//retcode = execl ("/bin/cat", "cat", NULL);
+//TODO: need to check if executable present
+      retcode = execl ("/usr/local/bin/contour", "contour", "any2morse", NULL);
+//while ((ch = getchar()) != EOF) printf ("%c", ch);
+      //close (pipedes[1]);
+      //if (retcode) exit (0);
+      //exit (333);
+    } else {        /* this is the parent */
+      /* the parent reads from the pipe */
+      close (pipedes[1]);
+      filein = fdopen (pipedes[0],"r");
+
+//while ((ch = fgetc (filein)) != EOF) printf ("%c", ch);
+//return (1);
+    }
+  }
+#endif
+
   //grident = grinit(&argc, argv);
   grinit(&argc, argv);
 
@@ -271,6 +326,8 @@ parseargs (int argc, char *argv[])
       }
       if (strcmp (argv[iarg], "--test") == 0) {
         test = 1;
+      } else if (strcmp (argv[iarg], "--pipe") == 0) {
+        pipethroughcontour = 1;
       } else if (strcmp (argv[iarg], "--nodoptimize") == 0) {
         dodoptimize = 0;
       } else if (strcmp (argv[iarg], "--xfigfile") == 0) {
@@ -312,6 +369,7 @@ parseargs (int argc, char *argv[])
         printf ("      [--ge <graphic engine>][--skip <simtime>]\n");
         printf ("      [--skiprtime <seconds>]\n");
         printf ("      [--xfigspecial][--onlyvisible]\n");
+        printf ("      [--pipe] (pipe through 'contour any2morse')\n");
         printf ("\nvalid graphic engines (option --ge): ");
 #ifdef HAVE_GTK
         printf ("gtk ");
