@@ -61,6 +61,7 @@
 #define ACTION_FUNDAMENTAL 43
 #define ACTION_UNION 44
 #define ACTION_CONNECTEDSUM 45
+#define ACTION_ANY2MORSE 46
 
 #ifndef EXAMPLES_DIR
   #define EXAMPLES_DIR ""
@@ -250,7 +251,7 @@ main (int argc, char *argv[])
       printf ("  compare: lessicographic comparison between two contours, in this\n");
       printf ("    case the stdin (or file) must contain two descriptions\n");
       printf ("\n possible conversion and standardization commands are:\n");
-      printf ("  print, printmorse, knot2morse, canonify\n");
+      printf ("  print, printmorse, knot2morse, any2morse, canonify\n");
       printf ("\n cell complex and fundamental group:\n");
       printf ("  cellcomplex, insidecomplex, outsidecomplex\n");
       printf ("  fundamental, insidefundamental, outsidefundamental\n");
@@ -383,6 +384,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"compare") == 0) action = ACTION_COMPARE;
     if (strcmp(argv[i],"canonify") == 0) action = ACTION_CANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
+    if (strcmp(argv[i],"any2morse") == 0) action = ACTION_ANY2MORSE;
     if (strcmp(argv[i],"printmorse") == 0) action = ACTION_PRINTMORSE;
     if (strcmp(argv[i],"characteristic") == 0) action = ACTION_CHARACTERISTIC;
     if (strcmp(argv[i],"info") == 0) action = ACTION_INFO;
@@ -811,6 +813,10 @@ main (int argc, char *argv[])
 
     case ACTION_KNOT2MORSE:
     knot2morse (infile);
+    break;
+
+    case ACTION_ANY2MORSE:
+    any2morse (infile);
     break;
 
     case ACTION_PRINTMORSE:

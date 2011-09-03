@@ -217,3 +217,37 @@ outpatch (char *b)
   eatenspaces = EATSPACES - lb + strlen(bloc);
   printf ("%s", bloc);
 }
+
+int
+any2morse (FILE *file)
+{
+  int tok;
+  char ch;
+  struct sketch *sketch;
+
+  tok = gettoken (file);
+  switch (tok)
+  {
+    case TOK_KNOT:
+    ungettoken (tok);
+    return (knot2morse (file));
+
+    case TOK_MORSE:
+    /* pipe input file unmodified */
+    printf ("morse {");
+    if (gettoken (file) != TOK_LBRACE) fprintf (stderr, "Warning: `{' char expected\n");
+    while ((ch = fgetc (file)) != EOF) printf ("%c", ch);
+    return (1);
+
+    case TOK_SKETCH:
+    ungettoken (tok);
+    if ((sketch = readcontour (file)) == 0) exit (14);
+    printmorse (sketch);
+    return (1);
+
+    default:
+    fprintf (stderr, "Invalid description type, token: %d\n", tok);
+    return (0);
+  }
+  return (1);
+}

@@ -298,6 +298,7 @@ struct borderlist *readsketch_bl (struct region *r, struct sketch *sketch, FILE 
 
 /* knot2morse */
 int knot2morse (FILE *file);
+int any2morse (FILE *file);
 
 /* printmorse */
 void printmorse (struct sketch *sketch);
