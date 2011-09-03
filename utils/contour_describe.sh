@@ -4,7 +4,9 @@
 
 function usage ()
 {
-  echo "usage: $0 [-z] <contour-description-file>"
+  echo "usage: $0 [-o][-z] <contour-description-file>"
+  echo "  option -z gives zork-like description with orientation information"
+  echo "  option -o gives a description with orientation information"
 }
 
 function mynumber ()
@@ -110,15 +112,25 @@ function zorkdescribe ()
   then
     if [ "$ccid" = "0" ]
     then
-      echo -n "You can see"
+      if [ -n "$zork" ]
+      then
+        echo -n "You can see"
+      else
+        echo "External components:"
+      fi
     else
-      echo -n "The ${description[$ccid]} contains"
+      if [ -n "$zork" ]
+      then
+        echo -n "The ${description[$ccid]} contains"
+      else
+        echo "Component #$ccid contains:"
+      fi
     fi
     objnum=`echo $list | wc -w`
     for o in $list
     do
       count=$[ $count + 1 ]
-      if [ "$count" -gt "1" ]
+      if [ "$count" -gt "1" -a -n "$zork" ]
       then
         if [ "$count" -lt "$objnum" ]
         then
@@ -127,13 +139,26 @@ function zorkdescribe ()
           echo -n " and"
         fi
       fi
-      echo -n " a ${description[$o]}"
+      if [ -n "$zork" ]
+      then
+        echo -n " a ${description[$o]}"
+      else
+        echo " ${description[$o]}"
+      fi
     done
-    echo "."
+    if [ -n "$zork" ]
+    then
+      echo "."
+    fi
   else
     if [ -n "$list" ]
     then
-      echo "You can see nothing."
+      if [ -n "$zork" ]
+      then
+        echo "You can see nothing."
+      else
+        echo "Empty apparent contour!"
+      fi
 #    else
 #      echo "The ${description[$ccid]} contains nothing."
     fi
@@ -174,12 +199,19 @@ material[8]="plastic"
 material[9]="sandstone"
 
 zork=""
+orient=""
 
-while getopts "z" option
+while getopts "zno" option
 do
   case $option in
   z)
     zork=1
+    ;;
+  n)
+    zork=""
+    ;;
+  o)
+    orient="1"
     ;;
   *)
     echo "Invalid option"
@@ -254,46 +286,51 @@ done
 for comp in `seq $cc`
 do
   nholes=${holes[$comp]}
-  ldigits=${digits[$nholes]}
-  count=${counter[$nholes]}
-  lcount=$count
-  adj=""
-  if [ "$ldigits" -gt 0 ]
+  if [ -n "$zork" ]
   then
-    idx=$[ $lcount % 10 ]
-    lcount=$[ $lcount / 10 ]
-    adj=${adjective[$idx]}
-    ldigits=$[ $ldigits - 1 ]
-  fi
-  if [ "$ldigits" -gt 0 ]
-  then
-    idx=$[ $lcount % 10 ]
-    lcount=$[ $lcount / 10 ]
-    adj="$adj ${material[$idx]}"
-    ldigits=$[ $ldigits - 1 ]
-  fi
-  for iter in `seq $ldigits`
-  do
-    idx=$[ $lcount % 10 ]
-    lcount=$[ $lcount / 10 ]
-    adj="${adjective[$idx]} $adj"
-    ldigits=$[ $ldigits - 1 ]
-  done
-  case $nholes in
-    0)
-      descr="sphere"
-      ;;
-    1)
-      descr="torus"
-      ;;
-    *)
-      theholes=`mynumber $nholes`
-      descr="sphere with $theholes handles"
-      ;;
-  esac
-  if [ -n "$adj" ]
-  then
-    descr="$adj $descr"
+    ldigits=${digits[$nholes]}
+    count=${counter[$nholes]}
+    lcount=$count
+    adj=""
+    if [ "$ldigits" -gt 0 ]
+    then
+      idx=$[ $lcount % 10 ]
+      lcount=$[ $lcount / 10 ]
+      adj=${adjective[$idx]}
+      ldigits=$[ $ldigits - 1 ]
+    fi
+    if [ "$ldigits" -gt 0 ]
+    then
+      idx=$[ $lcount % 10 ]
+      lcount=$[ $lcount / 10 ]
+      adj="$adj ${material[$idx]}"
+      ldigits=$[ $ldigits - 1 ]
+    fi
+    for iter in `seq $ldigits`
+    do
+      idx=$[ $lcount % 10 ]
+      lcount=$[ $lcount / 10 ]
+      adj="${adjective[$idx]} $adj"
+      ldigits=$[ $ldigits - 1 ]
+    done
+    case $nholes in
+      0)
+        descr="sphere"
+        ;;
+      1)
+        descr="torus"
+        ;;
+      *)
+        theholes=`mynumber $nholes`
+        descr="sphere with $theholes handles"
+        ;;
+    esac
+    if [ -n "$adj" ]
+    then
+      descr="$adj $descr"
+    fi
+  else
+    descr="component #$comp, genus $nholes"
   fi
   description[$comp]="$descr"
   count=$[ $count + 1 ]
@@ -305,26 +342,44 @@ listanew=`echo "$lista" | cut -f1 -d':' | uniq -c | tr -s ' '`
 totoutput=`echo "$listanew" | wc -l`
 totoutput=`echo $totoutput`
 
-if [ -n "$zork" ]
+if [ -z "$orient" ]
 then
-#  echo "You are in a clearing, with a forest surrounding you on all sides."
+  if [ -n "$zork" ]
+  then
+    echo "You are in a clearing, with a forest surrounding you on all sides."
+  fi
   case $cc in
     0)
-      echo "There are no objects here."
+      if [ -n "$zork" ]
+      then
+        echo "There are no objects here."
+      else
+        echo "Empty apparent contour!"
+      fi
       ;;
     1)
-      echo "There is one object here."
-      echo ""
+      if [ -n "$zork" ]
+      then
+        echo "There is one object here."
+        echo ""
+      else
+        echo "Total number of connected components: $cc"
+      fi
       ;;
     *)
-      thecc=`mynumber $cc`
-      echo "There is a total of $thecc objects here."
-      echo ""
+      if [ -n "$zork" ]
+      then
+        thecc=`mynumber $cc`
+        echo "There is a total of $thecc objects here."
+        echo ""
+      else
+        echo "Total number of connected components: $cc"
+      fi
       ;;
   esac
 fi
 
-if [ -n "$zork" ]
+if [ -z "$orient" ]
 then
   zorkdescribe 0
 else
