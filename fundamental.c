@@ -16,10 +16,12 @@ extern int quiet;
 void
 compute_fundamental (struct ccomplex *cc)
 {
-  int ccnum, count;
+  int ccnum;
+  //int count;
   struct ccomplexcc *cccc;
 
-  count = complex_melt (cc);
+  //count = complex_melt (cc);
+  complex_melt (cc);
   if (debug) cellcomplex_checkconsistency (cc);
 
   if (debug) printf ("Constructing spanning tree\n");
@@ -1628,7 +1630,8 @@ int fund_findcolumn (struct ccomplex *cc, int nnode, int stratum);
 void
 fundamental_fillfaces (struct ccomplex *cc)
 {
-  int stratum, strata, arcnum, i, d, dcusp;
+  int stratum, strata, arcnum, i, dcusp;
+  //int d;
   struct ccomplexface *vecpt;
   struct region *r;
   struct borderlist *bl;
@@ -1771,7 +1774,7 @@ fundamental_fillfaces (struct ccomplex *cc)
     for (a = s->arcs; a; a = a->next)
     {
       strata = a->regionleft->border->region->f;  // strata with fold lines counting twice
-      d = a->depths[0];
+      //d = a->depths[0];
       parity = 0;
       for (stratum = 0; stratum < strata - 1; stratum++)
       {
