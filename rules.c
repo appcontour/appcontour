@@ -1176,8 +1176,9 @@ void
 taglia_nodo (struct border *b1n, struct sketch *sketch,
              struct border **bleftpt, struct border **brightpt)
 {
-  struct border *b1p, *b2p, *b3p, *b4p, *b2n;
-  struct region *r2, *r4;
+  struct border *b1p, *b2p, *b3p, *b4p;
+  //struct border *b2n;
+  //struct region *r2, *r4;
   struct arc *arc12, *arc23, *arc34, *arc41, *arcleft, *arcright;
   int changes, allowed_changes;
   extern int heisemberg;
@@ -1188,13 +1189,13 @@ taglia_nodo (struct border *b1n, struct sketch *sketch,
   assert (b1n->info);
   
   b2p = gettransborder (b1n);
-  b2n = b2p->next;
+  //b2n = b2p->next;
   b3p = gettransborder (b2p->next);
   b4p = gettransborder (b3p->next);
   b1p = gettransborder (b4p->next);
 
-  r2 = b2p->border->region;
-  r4 = b4p->border->region;
+  //r2 = b2p->border->region;
+  //r4 = b4p->border->region;
 
   /* Se le regioni 2 e 4 sono la stessa regione
    * ci sono tre casi, ma li tratto tutti allo stesso modo
@@ -1660,7 +1661,8 @@ remove_annulus (struct region *r, struct sketch *sketch)
 void
 remove_ear (struct region *r, struct sketch *sketch)
 {
-  struct borderlist *bl, *blext;
+  struct borderlist *bl;
+  //struct borderlist *blext;
   struct border *b, *bext, *bextp, *bextt;
   struct arc *arcear, *arc1, *arc2;
   int cnum, ori, dincr;
@@ -1676,7 +1678,7 @@ remove_ear (struct region *r, struct sketch *sketch)
   bext = gettransborder (b);
   bextp = prevborder (bext);
   assert (bextp != bext);
-  blext = bext->border;
+  //blext = bext->border;
 
   freeborderlist (bl);
   r->border = 0;
