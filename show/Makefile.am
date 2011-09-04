@@ -15,4 +15,4 @@ endif
 showcontour_SOURCES = showcontour.c grcommon.c grcommon.h doptimize.c doptimize.h morseevent.c morseevent.h energy.c xfigexport.c xfigexport.h showcontour.h energy.h $(GLUTGRAPHSOURCE) $(GTKGRAPHSOURCE)
 showcontour_LDADD = ../parser.o @GRAPHIC_LIB@
 
-AM_CFLAGS = -Wall
+AM_CFLAGS = -Wall -DCONTOUR_PATH=\"$(bindir)/contour\"

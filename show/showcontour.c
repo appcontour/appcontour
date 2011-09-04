@@ -20,7 +20,12 @@
 #ifdef HAVE_UNISTD_H
   #include <unistd.h>
   #include <sys/types.h>
+  #include <sys/stat.h>
   #include <sys/wait.h>
+#endif
+
+#ifndef CONTOUR_PATH
+  #define CONTOUR_PATH "/usr/local/bin/contour"
 #endif
 
 #include "showcontour.h"
@@ -114,9 +119,7 @@ main (int argc, char *argv[])
 #ifdef HAVE_UNISTD_H
   int retcode, cpid;
   int pipedes[2];
-  //FILE *tomorsefile;
-  //char buf[1024];
-  //char ch;
+  struct stat statbuf;
 #endif
 
   energyinit ();
@@ -125,6 +128,20 @@ main (int argc, char *argv[])
   if (test == 0) allowrepulsion = 0;
 
 #ifdef HAVE_UNISTD_H
+  if (pipethroughcontour)
+  {
+    retcode = stat (CONTOUR_PATH, &statbuf);
+    if (retcode != 0)
+    {
+      perror (CONTOUR_PATH);
+      exit (555);
+    }
+    if ((statbuf.st_mode & S_IXOTH) == 0)
+    {
+      fprintf (stderr, "Do not have execute permission on %s\n", CONTOUR_PATH);
+      exit (556);
+    }
+  }
   if (pipethroughcontour)
   {
     fprintf (stderr, "reading morse description via contour filter\n");
@@ -141,9 +158,7 @@ main (int argc, char *argv[])
       retcode = dup2 (fileno(filein), 0);
       if (retcode < 0) {perror ("error in dup2"); exit (222);}
 
-//retcode = execl ("/bin/cat", "cat", NULL);
-//TODO: need to check if executable present
-      retcode = execl ("/usr/local/bin/contour", "contour", "any2morse", NULL);
+      retcode = execl (CONTOUR_PATH, "contour", "any2morse", NULL);
 //while ((ch = getchar()) != EOF) printf ("%c", ch);
       //close (pipedes[1]);
       //if (retcode) exit (0);
