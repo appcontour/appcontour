@@ -1007,26 +1007,44 @@ open_description_file (char *arg)
 {
   FILE *infile;
   char examplesfilename[MAXFILELENGTH];
+  char *subdirs[]={".", "immersed", 0};
+  char *exts[]={"morse", "sketch", "knot", 0};
+  int subdirid, extid, len;
 
   infile = fopen (arg, "r");
-  if (infile == 0)
+  if (infile) return (infile);
+  if (! isalnum (arg[0]) || EXAMPLES_DIR[0] == 0 )
   {
-    if (! isalnum (arg[0]) || EXAMPLES_DIR[0] == 0 )
-    {
-      perror ("Cannot open input file");
-      exit (10);
-    }
+    perror ("Cannot open input file");
+    exit (10);
+  }
+  for (subdirid = 0; subdirs[subdirid]; subdirid++)
+  {
     strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
     strncat (examplesfilename, "/", MAXFILELENGTH);
+    if (strcmp(subdirs[subdirid],".") != 0)
+    {
+      strncat (examplesfilename, subdirs[subdirid], MAXFILELENGTH);
+      strncat (examplesfilename, "/", MAXFILELENGTH);
+    }
     strncat (examplesfilename, arg, MAXFILELENGTH);
     infile = fopen (examplesfilename, "r");
-    if (infile == 0)
+    if (infile && quiet == 0) fprintf (stderr, "Reading from file %s\n", examplesfilename);
+    if (infile) return (infile);
+
+    strncat (examplesfilename, ".", MAXFILELENGTH);
+    len = strlen (examplesfilename);
+    for (extid = 0; exts[extid]; extid++)
     {
-      perror ("Cannot open input file");
-      exit (10);
+      examplesfilename[len] = 0;
+      strncat (examplesfilename, exts[extid], MAXFILELENGTH);
+      infile = fopen (examplesfilename, "r");
+      if (infile && quiet == 0) fprintf (stderr, "Reading from file %s\n", examplesfilename);
+      if (infile) return (infile);
     }
   }
-  return (infile);
+  perror ("Cannot open input file");
+  exit (10);
 }
 
 /*
