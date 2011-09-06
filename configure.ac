@@ -5,8 +5,6 @@ AC_PREREQ(2.59)
 AC_INIT(appcontour, 1.2.1, paolini@dmf.unicatt.it)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([contour.c])
-# AC_CONFIG_SRCDIR([show/showcontour.c])
-# AC_CONFIG_SRCDIR([show/rparser.c])
 AC_CONFIG_HEADER([config.h])
 
 #glut="yes"

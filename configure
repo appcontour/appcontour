@@ -2567,8 +2567,6 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 
-# AC_CONFIG_SRCDIR([show/showcontour.c])
-# AC_CONFIG_SRCDIR([show/rparser.c])
 ac_config_headers="$ac_config_headers config.h"
 
 

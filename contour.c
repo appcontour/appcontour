@@ -83,6 +83,7 @@ struct tagged_data user_data;
 
 /* prototipi locali */
 void ccid_isvalidp (int ccid, int count);
+FILE * open_description_file (char *arg);
 
 int
 main (int argc, char *argv[])
@@ -93,13 +94,14 @@ main (int argc, char *argv[])
   int newextregion = 0, fg_type;
   char rule[10], *endch, *envvar;
   FILE *infile = 0;
+  FILE *infile2 = 0;
   struct mendesgraph *mendes;
   struct region *r;
   struct borderlist *bl;
   struct border *bp;
   struct arc *a, *a2;
   struct ccomplex *ccomplex;
-  char examplesfilename[MAXFILELENGTH];
+  int infiles = 1;
 
   user_data.mrnum = user_data.manum = 0;
   globals.rulenames = RULENAMES_NEW;
@@ -273,30 +275,17 @@ main (int argc, char *argv[])
       printf ("\n if file is not given, description is taken from standard input\n");
       exit (0);
     }
-    if (infile)
+    if (infile2)
     {
       printf ("Too many arguments: %s\n", argv[i]);
+      exit (1);
     }
     if (action != ACTION_NONE)
     {
-      infile = fopen (argv[i], "r");
       if (infile == 0)
       {
-        if (! isalnum (argv[i][0]) || EXAMPLES_DIR[0] == 0 )
-        {
-          perror ("Cannot open input file");
-          exit (10);
-        }
-        strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
-        strncat (examplesfilename, "/", MAXFILELENGTH);
-        strncat (examplesfilename, argv[i], MAXFILELENGTH);
-        infile = fopen (examplesfilename, "r");
-        if (infile == 0)
-        {
-          perror ("Cannot open input file");
-          exit (10);
-        }
-      }
+        infile = open_description_file (argv[i]);
+      } else infile2 = open_description_file (argv[i]);
     }
     if (strcmp(argv[i],"applyrule") == 0 || strcmp(argv[i],"rule") == 0)
     {
@@ -348,9 +337,9 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"liststrata") == 0) action = ACTION_LISTSTRATA;
     if (strcmp(argv[i],"addsphere") == 0) action = ACTION_ADDSPHERE;
     if (strcmp(argv[i],"wrap") == 0) action = ACTION_WRAP;
-    if (strcmp(argv[i],"union") == 0) action = ACTION_UNION;
-    if (strcmp(argv[i],"connectedsum") == 0) action = ACTION_CONNECTEDSUM;
-    if (strcmp(argv[i],"sum") == 0) action = ACTION_CONNECTEDSUM;
+    if (strcmp(argv[i],"union") == 0) {action = ACTION_UNION; infiles = 2;}
+    if (strcmp(argv[i],"connectedsum") == 0) {action = ACTION_CONNECTEDSUM; infiles = 2;}
+    if (strcmp(argv[i],"sum") == 0) {action = ACTION_CONNECTEDSUM; infiles = 2;}
     if (strcmp(argv[i],"punchhole") == 0) action = ACTION_PUNCHHOLE;
     if (strcmp(argv[i],"mergearcs") == 0) action = ACTION_MERGEARCS;
     if (strcmp(argv[i],"gluearcs") == 0) action = ACTION_GLUEARCS;
@@ -381,7 +370,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"islabelled") == 0) action = ACTION_ISHUFFMAN;
     if (strcmp(argv[i],"isappcon") == 0) action = ACTION_ISHUFFMAN;
     if (strcmp(argv[i],"iscontour") == 0) action = ACTION_ISCONTOUR;
-    if (strcmp(argv[i],"compare") == 0) action = ACTION_COMPARE;
+    if (strcmp(argv[i],"compare") == 0) {action = ACTION_COMPARE; infiles = 2;}
     if (strcmp(argv[i],"canonify") == 0) action = ACTION_CANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
     if (strcmp(argv[i],"any2morse") == 0) action = ACTION_ANY2MORSE;
@@ -422,7 +411,15 @@ main (int argc, char *argv[])
     }
   }
   if (action == ACTION_NONE) action = ACTION_PRINTSKETCH;
+
   if (infile == 0) infile = stdin;
+
+  if (infiles < 2 && infile2 != 0)
+  {
+    fprintf (stderr, "Too many arguments\n");
+    exit (1);
+  }
+
   srandom (rndseed);
   switch (action)
   {
@@ -993,4 +990,35 @@ ccid_isvalidp (int ccid, int count)
       ccid, count);
     exit (15);
   }
+}
+
+/*
+ * open input description file based on argument on command line
+ */
+
+FILE *
+open_description_file (char *arg)
+{
+  FILE *infile;
+  char examplesfilename[MAXFILELENGTH];
+
+  infile = fopen (arg, "r");
+  if (infile == 0)
+  {
+    if (! isalnum (arg[0]) || EXAMPLES_DIR[0] == 0 )
+    {
+      perror ("Cannot open input file");
+      exit (10);
+    }
+    strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
+    strncat (examplesfilename, "/", MAXFILELENGTH);
+    strncat (examplesfilename, arg, MAXFILELENGTH);
+    infile = fopen (examplesfilename, "r");
+    if (infile == 0)
+    {
+      perror ("Cannot open input file");
+      exit (10);
+    }
+  }
+  return (infile);
 }
