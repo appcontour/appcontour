@@ -37,6 +37,7 @@ getword (FILE *file, char *word, int wordmaxlen)
   {
     *word++ = ch;
     *word = 0;
+    if (ch == EOF) return (TOK_EOF);
     return (TOK_CHAR);
   }
   ungetc (ch, file);

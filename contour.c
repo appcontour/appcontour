@@ -83,7 +83,8 @@ struct tagged_data user_data;
 
 /* prototipi locali */
 void ccid_isvalidp (int ccid, int count);
-FILE * open_description_file (char *arg);
+FILE *open_description_file (char *arg);
+FILE *new_file (FILE *oldfile, FILE *newfile);
 
 int
 main (int argc, char *argv[])
@@ -226,8 +227,8 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--help") == 0)
     {
-      printf ("Usage: %s [options] command [file]\n", argv[0]);
-      printf (" possible operating commands are:\n");
+      printf ("Usage: %s [options] action [file] [file2]\n", argv[0]);
+      printf (" Possible actions:\n");
       printf ("  rule <rule>: apply indicated rule to contour\n");
       printf ("  mergearcs: apply an inverse rule that merges two arcs\n");
       printf ("  wrinkle: apply inverse L (lip) rule\n");
@@ -243,22 +244,25 @@ main (int argc, char *argv[])
       printf ("  evert <int>: make region <int> become the unbounded region\n");
       printf ("  union: disjoint union of two apparent contours\n");
       printf ("  sum: connected sum of two apparent contours\n");
-      printf ("\n possible informational commands are:\n");
+      printf ("\n Possible informational actions:\n");
       printf ("  info, characteristic, rules, iscontour, islabelled, countcc\n");
       printf ("  list[ma|invl|invs|strata]\n");
       printf ("  ccorientation <int>: gives the orientation of a 3D connected component\n");
       printf ("  ccparent <cc>: finds the 3D component that directly contains \"cc\"\n");
       printf ("    0 means that \"cc\" is external\n");
       printf ("  ccordering: show 3D inclusion between the connected components\n");
-      printf ("  compare: lessicographic comparison between two contours, in this\n");
-      printf ("    case the stdin (or file) must contain two descriptions\n");
-      printf ("\n possible conversion and standardization commands are:\n");
+      printf ("  compare: lessicographic comparison between two contours\n");
+      printf ("\n Possible conversion and standardization actions:\n");
       printf ("  print, printmorse, knot2morse, any2morse, canonify\n");
-      printf ("\n cell complex and fundamental group:\n");
+      printf ("\n Cell complex and fundamental group:\n");
       printf ("  cellcomplex, insidecomplex, outsidecomplex\n");
       printf ("  fundamental, insidefundamental, outsidefundamental\n");
       printf ("  abbreviations: fg, ifg, ofg\n");
-      printf ("\n possible options are:\n");
+      printf ("\n File2 can be present only for actions that require two descriptions:\n");
+      printf ("  'compare', 'union', 'sum' actions.\n");
+      printf ("  alternatively for such actions the two descriptions can be contained\n");
+      printf ("  in the same file, typically standard input.\n");
+      printf ("\n Possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
       printf ("  -q: be quiet\n");
@@ -272,7 +276,7 @@ main (int argc, char *argv[])
       printf ("  -r|--region <int>: mark region for specific action\n");
       printf ("  -a|--arc <int>: mark arc for specific action\n");
       printf ("  --oldnames|--newnames: select set of names for rules\n");
-      printf ("\n if file is not given, description is taken from standard input\n");
+      printf ("\n If 'file' is not given, description is taken from standard input\n");
       exit (0);
     }
     if (infile2)
@@ -695,6 +699,7 @@ main (int argc, char *argv[])
     case ACTION_CONNECTEDSUM:
     if ((s1 = readcontour (infile)) == 0) exit (14);
     canonify (s1);
+    infile = new_file (infile, infile2);
     if ((s2 = readcontour (infile)) == 0) exit (14);
     canonify (s2);
     if (action == ACTION_UNION)
@@ -792,6 +797,7 @@ main (int argc, char *argv[])
     case ACTION_COMPARE:
     s1 = readcontour (infile);
     canonify (s1);
+    infile = new_file (infile, infile2);
     s2 = readcontour (infile);
     canonify (s2);
     res = sketchcmp (s1, s2);
@@ -978,7 +984,7 @@ readcontour (FILE *file)
   }
 #endif
   fprintf (stderr, "Only 'morse'/'sketch' formats implemented\n");
-  return (0);
+  exit (2);
 }
 
 void
@@ -1021,4 +1027,26 @@ open_description_file (char *arg)
     }
   }
   return (infile);
+}
+
+/*
+ * a few commands require two descriptions, in which case
+ * the use may indicate two files instead of a single file
+ * containing both descriptions.
+ */
+
+FILE *
+new_file (FILE *oldfile, FILE *newfile)
+{
+  int tok;
+
+  if (newfile == 0) return (oldfile);
+
+  tok = gettoken (oldfile);
+
+  if (tok != TOK_EOF)
+    fprintf (stderr, "Warning: discarding extra information from first description file\n");
+
+  fclose (oldfile);
+  return (newfile);
 }
