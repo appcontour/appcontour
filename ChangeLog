@@ -1,11 +1,13 @@
 2011-09-10: When reading a region description (*.sketch) make sure that the
 	order of arcs and regions is maintained. This is important especially
 	since canonification does not always behave like it should.
+	This modification at least makes canonification idempotent
 	Otherwise it was possible that successive canonifications would
 	swap between two different region descriptions!
 	The example is examples/torus_twist.morse.
-	Still, canonification does not always produce the same
-	representative.
+	Still, unfortunately, canonification does not always produce the same
+	representative, i.e. two equivalent descriptions can produce
+	different "canonical" representatives.
 
 2011-09-06: Better handling of arguments pointing to packaged examples.
 	a command like "contour print <example>" will search the description
