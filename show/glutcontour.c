@@ -128,7 +128,7 @@ glut_toggle_motion (int toggle)
 void
 menu (int value)
 {
-  double time;
+  //double time;
   //FILE *exportfile;
 
   switch (value) {
@@ -145,14 +145,16 @@ menu (int value)
   case MENU_REFINE:
     contour->h /= sqrt(2.0);
     redistributenodes (contour);
-    time = evolve (contour, 0.1, 0.0);
+    //time = evolve (contour, 0.1, 0.0);
+    evolve (contour, 0.1, 0.0);
     redistributenodes (contour);
     break;
 
   case MENU_DEREFINE:
     contour->h *= sqrt(2.0);
     redistributenodes (contour);
-    time = evolve (contour, 0.1, 0.0);
+    //time = evolve (contour, 0.1, 0.0);
+    evolve (contour, 0.1, 0.0);
     redistributenodes (contour);
     break;
 
