@@ -358,7 +358,7 @@ sortarclist (struct arc *arc)
 /*
  * ora vogliamo definire un criterio per riordinare
  * tra di loro gli archi indistinguibili.  Scegliamo
- * di quardare quale arco compare per primo nella
+ * di guardare quale arco compare per primo nella
  * descrizione delle regioni.  Quindi la canonificazione
  * delle regioni deve essere effettuata prima!
  */
