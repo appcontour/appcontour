@@ -123,7 +123,7 @@ int
 readsketch_region (int regionid, struct sketch *sketch, FILE *file)
 {
   struct region *region;
-  struct borderlist *bl;
+  //struct borderlist *bl;
   int tok;
   static int printwarning = 1;
 
@@ -159,7 +159,8 @@ readsketch_region (int regionid, struct sketch *sketch, FILE *file)
   {printf ("colon expected\n"); return (0);}
   while ((tok = gettoken (file)) == TOK_LPAREN)
   {
-    bl = readsketch_bl (region, sketch, file);
+    //bl = readsketch_bl (region, sketch, file);
+    readsketch_bl (region, sketch, file);
     //bl->next = region->border;
     //region->border = bl;
     if (debug) printsketch (sketch);
