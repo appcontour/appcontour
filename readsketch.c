@@ -8,6 +8,10 @@ extern int debug;
 
 static int has_huffman_labelling = 0;
 
+/* local prototypes */
+void revert_arcs_order (struct sketch *s);
+void revert_regions_order (struct sketch *s);
+
 struct sketch *
 readsketch (FILE *file)
 {
@@ -54,6 +58,8 @@ readsketch (FILE *file)
     }
     if (debug) printsketch (sketch);
   }
+  revert_arcs_order (sketch);
+  revert_regions_order (sketch);
   sketch->huffman_labelling = has_huffman_labelling;
   if (sketch->regions->next == 0) {
     fprintf (stderr, "Warning: empty sketch!\n");
@@ -218,4 +224,44 @@ readsketch_bl (struct region *r, struct sketch *sketch, FILE *file)
     printf ("\n");
   }
   return (bl);
+}
+
+/* local functions */
+
+void
+revert_arcs_order (struct sketch *s)
+{
+  struct arc *a, *newlist;
+
+  if (s->arcs == 0 || s->arcs->next == 0) return;
+
+  newlist = 0;
+  while (s->arcs)
+  {
+    a = s->arcs;
+    s->arcs = a->next;
+    a->next = newlist;
+    newlist = a;
+  }
+  s->arcs = newlist;
+  return;
+}
+
+void
+revert_regions_order (struct sketch *s)
+{
+  struct region *r, *newlist;
+
+  if (s->regions == 0 || s->regions->next == 0) return;
+
+  newlist = 0;
+  while (s->regions)
+  {
+    r = s->regions;
+    s->regions = r->next;
+    r->next = newlist;
+    newlist = r;
+  }
+  s->regions = newlist;
+  return;
 }

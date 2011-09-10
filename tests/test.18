@@ -1,0 +1,7 @@
+#
+# test sulla canonificazione.  Deve essere idempotente,
+# anche se purtroppo non produce sempre lo stesso rappresentante
+# per descrizioni equivalenti, come in questo esempio
+#
+./contour canonify examples/torus_twist_c1.sketch
+./contour canonify examples/torus_twist_c2.sketch
