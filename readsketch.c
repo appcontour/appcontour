@@ -9,8 +9,8 @@ extern int debug;
 static int has_huffman_labelling = 0;
 
 /* local prototypes */
-void revert_arcs_order (struct sketch *s);
-void revert_regions_order (struct sketch *s);
+void insert_arc_in_list (struct arc *a, struct arc *list);
+void insert_region_in_list (struct region *region, struct region *list);
 
 struct sketch *
 readsketch (FILE *file)
@@ -58,8 +58,6 @@ readsketch (FILE *file)
     }
     if (debug) printsketch (sketch);
   }
-  revert_arcs_order (sketch);
-  revert_regions_order (sketch);
   sketch->huffman_labelling = has_huffman_labelling;
   if (sketch->regions->next == 0) {
     fprintf (stderr, "Warning: empty sketch!\n");
@@ -84,6 +82,12 @@ readsketch_arc (int arcid, struct sketch *sketch, FILE *file)
     return (0);
   }
   arc->tag = gettokennumber ();
+  if (arc->next && arc->tag > arc->next->tag)
+  {
+    sketch->arcs = arc->next;
+    arc->next = 0;
+    insert_arc_in_list (arc, sketch->arcs);
+  }
   if (debug) printf ("leggo la descrizione dell'arco %d\n", arc->tag);
 
   if ((tok = gettoken (file)) != TOK_COLON)
@@ -136,6 +140,20 @@ readsketch_region (int regionid, struct sketch *sketch, FILE *file)
     return (0);
   }
   region->tag = gettokennumber ();
+  if (sketch->regions->next == region) /* region was inserted in second place */
+  {
+    /* swap first two positions */
+    sketch->regions->next = region->next;
+    region->next = sketch->regions;
+    sketch->regions = region;
+  }
+  assert (sketch->regions == region);
+  if (region->next && region->tag > region->next->tag)
+  {
+    sketch->regions = region->next;
+    region->next = 0;
+    insert_region_in_list (region, sketch->regions);
+  }
   if (debug) printf ("leggo la descrizione della regione %d\n", region->tag);
 
   if ((tok = gettoken (file)) == TOK_LPAREN)
@@ -230,39 +248,39 @@ readsketch_bl (struct region *r, struct sketch *sketch, FILE *file)
 /* local functions */
 
 void
-revert_arcs_order (struct sketch *s)
+insert_arc_in_list (struct arc *arc, struct arc *list)
 {
-  struct arc *a, *newlist;
+  struct arc *a;
 
-  if (s->arcs == 0 || s->arcs->next == 0) return;
-
-  newlist = 0;
-  while (s->arcs)
+  assert (arc->tag > list->tag);
+  for (a = list; a; a = a->next)
   {
-    a = s->arcs;
-    s->arcs = a->next;
-    a->next = newlist;
-    newlist = a;
+    if (a->next == 0 || a->next->tag > arc->tag)
+    {
+      arc->next = a->next;
+      a->next = arc;
+      return;
+    }
   }
-  s->arcs = newlist;
+  assert (0);
   return;
 }
 
 void
-revert_regions_order (struct sketch *s)
+insert_region_in_list (struct region *region, struct region *list)
 {
-  struct region *r, *newlist;
+  struct region *r;
 
-  if (s->regions == 0 || s->regions->next == 0) return;
-
-  newlist = 0;
-  while (s->regions)
+  assert (region->tag > list->tag);
+  for (r = list; r; r = r->next)
   {
-    r = s->regions;
-    s->regions = r->next;
-    r->next = newlist;
-    newlist = r;
+    if (r->next == 0 || r->next->tag > region->tag)
+    {
+      region->next = r->next;
+      r->next = region;
+      return;
+    }
   }
-  s->regions = newlist;
+  assert (0);
   return;
 }
