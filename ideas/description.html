@@ -1,0 +1,206 @@
+<HTML><HEAD><TITLE>Description</TITLE>
+<META content="Microsoft FrontPage 5.0" name=GENERATOR>
+<meta name="Microsoft Theme" content="schlichtjavaview 0111, default">
+<meta name="Microsoft Border" content="tb, default">
+</HEAD>
+<BODY background="../_themes/schlichtjavaview/blbkgnd.gif" bgcolor="#C0C0C0" text="#000000" link="#003399" vlink="#993300" alink="#336633"><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><!--mstheme--><font face="Arial, Arial, Helvetica">
+
+<!--mstheme--></font><table border="0" width="100%">
+		<tr>
+			<td width="87%" valign="top"><!--mstheme--><font face="Arial, Arial, Helvetica">
+<script language="JavaScript"><!--
+MSFPhover = 
+  (((navigator.appName == "Netscape") && 
+  (parseInt(navigator.appVersion) >= 3 )) || 
+  ((navigator.appName == "Microsoft Internet Explorer") && 
+  (parseInt(navigator.appVersion) >= 4 ))); 
+function MSFPpreload(img) 
+{
+  var a=new Image(); a.src=img; return a; 
+}
+// --></script><script language="JavaScript"><!--
+if(MSFPhover) { MSFPnav1n=MSFPpreload("../_derived/home_cmp_schlichtjavaview110_hbtn.gif"); MSFPnav1h=MSFPpreload("../_derived/home_cmp_schlichtjavaview110_hbtn_a.gif"); }
+// --></script><a href="../index.html" language="JavaScript" onmouseover="if(MSFPhover) document['MSFPnav1'].src=MSFPnav1h.src" onmouseout="if(MSFPhover) document['MSFPnav1'].src=MSFPnav1n.src"><img src="../_derived/home_cmp_schlichtjavaview110_hbtn.gif" width="95" height="20" border="0" alt="Home" align="middle" name="MSFPnav1"></a><!--mstheme--></font></td>
+			<td width="13%" align="right" valign="top"><!--mstheme--><font face="Arial, Arial, Helvetica"><b><i><font color="#000080"><a
+				href="http://www.javaview.de">JavaView</a></font></i></b><!--mstheme--></font></td>
+		</tr>
+	</table><!--mstheme--><font face="Arial, Arial, Helvetica">
+
+<!--mstheme--></font></td></tr><!--msnavigation--></table><!--msnavigation--><table dir="ltr" border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top"><!--mstheme--><font face="Arial, Arial, Helvetica">
+<CENTER>
+<H1><!--mstheme--><font color="#000080">Book Knot Simplifier<!--mstheme--></font></H1></CENTER>
+<CENTER>by <BR>Maria Andreeva, Ivan Dynnikov, Sergey Koval, Konrad 
+Polthier, Iskander Taimanov</CENTER>
+<P>Here we offer a set of tools for manipulating knots and links in the 
+three-space by using the three-page presentation of links, which was proposed 
+and developed by I. Dynnikov in [<a href="#1">1</a>][<a href="#2">2</a>][<a 
+href="#3">3</a>].<P>The approach is based on a simple and 
+very well known observation that every link in the three-space is topologically 
+equivalent to a link that lies entirely in a three-page book, i.e. the union of 
+three half-planes with common boundary. Though being not convenient for human 
+perception, this way of presenting links seems to be very efficient for handling 
+knots by computer. It provides a very quick way from a combinatorial description 
+of a link to its three-dimensional presentation. A three-page link admits a lot 
+of transformations that preserve its isotopy class and can be easily found. This 
+fact is used in the knot simplifying tool included herein.<P>This software for 
+knot manipulation and simplification builds on the JavaView library [<a 
+href="#5">5</a>].<H3><!--mstheme--><font color="#000080">Currently available ...<!--mstheme--></font></H3>
+<BLOCKQUOTE><A 
+  href="#download">View a knot 
+  	available on the server</A> 
+  <P><A href="#inputknot">Input your 
+  own knot as a 3D curve or a Gauss code</A> 
+  <P><A href="#simplify">Simplify a 
+  knot</A> 
+  <P><A href="#edit">Edit a 
+  knot</A></P></BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">Tools being developed ...<!--mstheme--></font></H3>
+<BLOCKQUOTE><A 
+  href="#moreedittools">More editing 
+  tools</A> 
+  <P><A href="#convert">Converting 
+  to/from other formats</A> 
+  <P>Comparing and recognizing knots</P></BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">View a knot<A name=download></A><!--mstheme--></font></H3>
+<BLOCKQUOTE>To download a knot from the server click "Choose knot" button. At 
+  the present time, we have a collection of knots presented in <A 
+  href="#jkb">.jkb</A> format, as <A 
+  href="#3D">3D curve</A> (.txt 
+  files), and as a <A href="#gc">Gauss 
+  code</A> (.gc files).<p>Files 31.jkb, 141.jkb, 322.jkb, and 539&nbsp; have been 
+  generated automatically from hand-made (ID) planar diagrams of unknots having 
+  31, 141, 322, and 539 crossings respectively. These unknots were used to test 
+  the simplifier. The unknot with 31 crossings is shown below. </p>
+  <P><IMG 
+  src="figures/unknot31.gif" width="400" height="300"> <br>
+	The unknot with 539 crossings is a satellite of this unknot (see [1] for a 
+  picture). 
+  <P>The source of the knots in TXT format is the Knot-Plot web site created by 
+	Robert Scharein [<a href="#4">4</a>] which contains a collection of knots 
+	and links with small crossing number (less than or equal to 10). The 
+  files with .gc extension contain <A 
+  href="#gc">Gauss codes</A> of the 
+  same links. These codes were generated automatically (SK) from the .txt files.<P>For converting a planar diagram to a three-page diagram the algorithm 
+  described in [<a href="#1">1</a>] is used.</P></BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">Input a knot<A name=inputknot></A><!--mstheme--></font></H3>
+<BLOCKQUOTE>To input your own knot click "Input knot" button and choose a 
+  method of input. Now available methods are by using <A 
+  href="#3D">3D curve</A> or the <A 
+  href="#gc">Gauss code</A>. If you 
+  are already using some other knot presentation with another software, you are 
+  welcome to let us know the specification of the format you are using by 
+  sending e-mail at dynnikov@mech.math.msu.su. Then, we may make it possible to 
+  input a knot in your favorite format.</BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">Simplify a knot<A name=simplify></A><!--mstheme--></font></H3>
+<BLOCKQUOTE>If you press the "Simplify" button, the knot simplifier starts. It 
+  implements an algorithm described in [1]. We shall explain very shortly the 
+  idea of the algorithm. 
+  <P>In the case of the three-page presentation of knots, a natural measure of 
+  complexity is the number of intersection points of the knot with the binding 
+  line of the three-page book. The simplifier performs operations on the knot 
+  that preserve the isotopy class of the knot and tries to make the complexity 
+  as less as possible. Let us consider how this works. Look at the following 
+  three-page knot, which is the trefoil knot in fact. 
+  <P><IMG 
+  src="figures/trefoil1.gif" width="400" height="300"> 
+  <P>Its complexity equals 9. What if we replace the part of the knot marked in 
+  red with the curve marked in blue in the figure below? 
+  <P><IMG 
+  src="figures/trefoil2.gif" width="400" height="300"> 
+  <BR>We obtain a topologically equivalent knot of the same complexity, but now 
+  we obviously can simplify it by contracting the arc connecting the two 
+  rightmost points: 
+  <P><IMG 
+  src="figures/trefoil3.gif" width="400" height="300"> 
+  <BR>After doing that, we obtain a three-page knot of complexity 8. 
+  <P><IMG 
+  src="figures/trefoil4.gif" width="400" height="300"> 
+  <P>The knot simplifier just tries to simplify a given knot by transformations 
+  of this kind. If sufficiently many subsequent trials are not successful, i.e. 
+  the knot is not simplified for a long time, the simplifier stops. More details 
+  about the transformations used in the simplifier see [1]. 
+  <P>At the present state, the simplifier does not search among all three-page 
+  diagrams that can be obtain from the current one by available transforms and 
+  does not make a "canonical" choice. So, if you click the "Simplify" button 
+  again, the picture may change.</P></BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">Edit a knot<A name=edit></A><!--mstheme--></font></H3>
+<BLOCKQUOTE>The only available editing tool for now is cyclic permutation of 
+  vertices on the binding line, which is achieved by pressing the "Vertex 
+  permutation" button. Other editing tools coming soon.</BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">Input a knot as a 3D curve<A name=3D></A><!--mstheme--></font></H3>
+<BLOCKQUOTE>To input a knot presented by a 3D polygon just type coordinates of 
+  all vertices in the order they follow on the knot. Coordinates must be 
+  separated by blank spaces or new lines. <BR>For example the trefoil knot is 
+  presented by a polygon with vertices (0,0,0), (3,0,1), (0,2,0), (1,0,1), 
+  (0,4,0), (4,0,1), (0,1,0), (2,0,1), (0,3,0), (0,0,1). To input it, type <BR>0 
+  0 0 3 0 1 0 2 0 1 0 1 0 4 0 4 0 1 0 1 0 2 0 1 0 3 0 0 0 1 <BR>and click "ok" 
+  button. The Gauss code of the knot appears. Click "ok" button again to see the 
+  three-page picture of the knot. 
+  <P>If your link consists of more than one connected component, separate 
+  records for different components by a blank line. 
+  <P>Warning: at the present state, for converting a 3D polygon to a planar 
+  diagram of a knot, projection along the z-axis is used. If the projection of 
+  your knot along the z-axis is not generic (i.e. two vertices are projected to 
+  the same point, a vertex is projected to an internal point of an edge, or a 
+  triple crossing occurs), then the conversion may fail. 
+<BR>&nbsp;</P></BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">Input the Gauss code of a knot<A name=gc></A><!--mstheme--></font></H3>
+<BLOCKQUOTE>If you have planar diagram of a knot or link you may input it by 
+  typing its Gauss code. The diagram must be connected and have at least one 
+  crossing. We use an encoding a little different from what is usually called 
+  Gauss code, providing additional information that allows to distinguish knots 
+  from their mirror images. To input the link do the following. 
+  <P>For each component, choose an orientation and a starting point. 
+  <P>Assign different indices, which must be natural numbers, to all the 
+  crossings. 
+  <P>For each connected component, go along it starting from the marked point in 
+  the chosen direction, and each time you come through a crossing, write down 
+  the index of the crossing preceded by two symbols: the first one must be + or 
+  - indicating whether you go over or under the crossing, and the second must 
+  be&nbsp; &gt;&nbsp; or&nbsp; &lt;&nbsp; sign indicating whether you see the 
+  arc that you intersect going from left two the right or from right to the 
+  left, respectively. Entries for different crossings must be separated by 
+  spaces. 
+  <P>When you come back to the starting point of the chosen component, proceed 
+  with the next one. Separate entries for different components by keyword 
+  "component". 
+  <P>For example, for the diagram below <BR><IMG 
+  src="figures/Fig8.gif" width="400" height="231"> <BR>you 
+  get the following Gauss code: <BR>-&gt;5 +&lt;6&nbsp; component&nbsp; +&lt;5 
+  -&gt;6 -&gt;4 +&lt;3 -&lt;1 +&gt;2 -&gt;3 +&lt;4 -&lt;2 +&gt;1 
+  <P>This way of inputting links seems to take much time. We are now working on 
+  a better format for input.</P></BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">Description of the .jkb format<A name=jkb></A><!--mstheme--></font></H3>
+<BLOCKQUOTE>Still has to be written...</BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">Editing tools being developed<A name=moreedittools></A><!--mstheme--></font></H3>
+<BLOCKQUOTE>Adding/removing vertices/arcs, coloring components, taking 
+  connected sum, and more.</BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">Converting to/from other formats<A name=convert></A><!--mstheme--></font></H3>
+<BLOCKQUOTE>In order to make the package more convenient for those who want to 
+  use it in their own research&nbsp; we are going to provide converters to and 
+  from all popular formats for presenting knots. In particular, it will be 
+  possible to input a knot as a closure of a braid or a tangle word. If you are 
+  already using some format for presenting knots, please, send the specification 
+  of the format at <a href="mailto:dynnikov@mech.math.msu.su">dynnikov@mech.math.msu.su</a></BLOCKQUOTE>
+<H3><!--mstheme--><font color="#000080">References<!--mstheme--></font></H3>[<a name="1">1</a>] I. A. Dynnikov. Three-page link presentation and an 
+untangling algorithm. <BR>Proc. of the International Conference 
+<I>Low-Dimensional Topology and Combinatorial Group Theory</I>, <BR>Chelyabinsk, 
+July, 31 - August 7, 1999; Kiev, 2000; pp. 112--130. 
+<P>[<a name="2">2</a>] I. A. Dynnikov. Three-page approach to knot theory. Universal semigroup. 
+(Russian) <I>Funktsional'nyi Analiz i Ego Prilozhenija</I>, <B>34</B> (2000), 
+no. 1, 29--40; translation in <I>Functional Analysis and Its Appl</I>. <B>34</B> 
+(2000), no. 1, 24--32. 
+<P>[<a name="3">3</a>] I. A. Dynnikov. Three-page approach to knot theory. Encoding and local 
+moves. (Russian) <BR><I>Funktsional'nyi Analiz i Ego Prilozhenija</I>, <B>33</B> 
+(1999), no. 4, 25--37; translation in <I>Functional Analysis and Its Appl</I>. 
+<B>33</B> (1999), no. 4, 260--269. MR 2000m:57007 
+<P>[<a name="4">4</a>] Robert Scharein Knot-Plot Homepage at <a title="Knot-Plot Homepage" 
+target="_blank" href="http://www.pims.math.ca/knotplot">http://www.pims.math.ca/knotplot</a>.</P> 
+<P>[<a name="5">5</a>] JavaView Homepage at <a href="http://www.javaview.de">
+http://www.javaview.de</a>.</P><!--mstheme--></font><!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><!--mstheme--><font face="Arial, Arial, Helvetica"><!--msthemeseparator--><p align="center"><img src="../_themes/schlichtjavaview/ablrule.gif" width="600" height="10" alt="horizontal rule"></p>
+<p align="center"><nobr><small>© 2000-2003&nbsp;Last modified: 
+21.10.03&nbsp;--- <a
+href="http://www.javaview.de" target="_top">http://www.javaview.de</a> --- Knot
+Book Project</small></nobr></p>
+
+<!--mstheme--></font></td></tr><!--msnavigation--></table></BODY></HTML>
