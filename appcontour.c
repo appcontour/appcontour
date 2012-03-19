@@ -276,7 +276,7 @@ showinfo (struct sketch *sketch)
       sketch->huffman_labelling?1:0);
 
   if (! quiet) printf ("\nProperties of the %s:\n",
-      sketch->huffman_labelling?"3D surface":"2D manifold");
+      sketch->huffman_labelling?"surface (in 3D)":"2D manifold");
   if (sketch->huffman_labelling)
     printf ("Connected comp.:    %d\n", count_connected_components (sketch));
   printf ("Total Euler ch.:    %d\n", euler_characteristic (sketch));
@@ -288,7 +288,7 @@ showinfo (struct sketch *sketch)
   printf ("Crossings:          %d\n", numcrossings);
   printf ("Bennequin:          %.1lf\n", ohmotoinvariant);
 
-  if (! quiet) printf ("\nProperties of the 2D apparent contour:\n");
+  if (! quiet) printf ("\nProperties of the apparent contour:\n");
   printf ("Arcs:               %d\n", numsmallarcs);
   printf ("Extended arcs:      %d\n", numarcs);
   printf ("Link components:    %d\n", numlcomponents);
