@@ -178,7 +178,19 @@ main (int argc, char *argv[])
   grinit(&argc, argv);
 
   tok = gettoken (filein);
-  if (tok != TOK_MORSE) return (0);
+  if (tok != TOK_MORSE)
+  {
+    if (tok == TOK_SKETCH || tok == TOK_KNOT)
+    {
+      fprintf (stderr, "This is a region or knot description, you might want to ");
+      fprintf (stderr, "pipe the description through\n");
+      fprintf (stderr, "the \"contour\" engine by adding the --pipe option ");
+      fprintf (stderr, "to the command line.\n");
+    } else {
+      fprintf (stderr, "This is not a morse/region/knot description of an apparent contour\n");
+    }
+    return (0);
+  }
   tok = gettoken (filein);
   if (tok != TOK_LBRACE) return (0);
 
