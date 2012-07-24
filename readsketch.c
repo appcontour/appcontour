@@ -201,7 +201,7 @@ readsketch_bl (struct region *r, struct sketch *sketch, FILE *file)
   /* la parentesi aperta e' gia stata letta! */
 
   if (debug) printf ("componente connessa\n");
-  bl = newborderlist (r);
+  bl = newborderlist_tail (r);
   while ((tok = gettoken (file)) != TOK_RPAREN)
   {
     if (tok != TOK_PLUS && tok != TOK_MINUS)

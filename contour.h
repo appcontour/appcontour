@@ -277,6 +277,7 @@ void transfer_isles (struct borderlist *bl1, struct borderlist *bl2, int hei);
 struct sketch *newsketch (void);
 struct region *newregion (struct sketch *s);
 struct borderlist *newborderlist (struct region *r);
+struct borderlist *newborderlist_tail (struct region *r);
 struct border *newborder (struct borderlist *bl);
 struct arc *newarc (struct sketch *s);
 

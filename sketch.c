@@ -56,7 +56,7 @@ regioncmp (struct region *r1, struct region *r2)
   if (h2) return (-1);
 
   /* secondo/terzo criterio: confronto dei bordi esterni,
-   * onfronto lessicografico dei bordi dei buchi
+   * confronto lessicografico dei bordi dei buchi
    */
 
   for (h1 = r1->border, h2 = r2->border;
@@ -1412,6 +1412,30 @@ newborderlist (struct region *region)
     region->border->next = bl;
   } else {
     bl->next = region->border;  /* (=0) e' il bordo esterno */
+    region->border = bl;
+  }
+  return (bl);
+}
+
+/* a differenza di newborderlist, il nuovo bordo e' aggiunto
+ * in coda alla lista
+ */
+
+struct borderlist *
+newborderlist_tail (struct region *region)
+{
+  struct borderlist *bl, *bl2;
+
+  bl = (struct borderlist *) malloc (sizeof (struct borderlist));
+  bl->region = region;
+  bl->sponda = 0;
+  bl->next = 0;
+  if (region->border)
+  {
+    for (bl2 = region->border; bl2->next; bl2 = bl2->next);
+    assert (bl2->next == 0);
+    bl2->next = bl;
+  } else {
     region->border = bl;
   }
   return (bl);
