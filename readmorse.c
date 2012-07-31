@@ -554,7 +554,8 @@ getarcinfo (int key, FILE *file,
   int depths[50];
   int depthind = 0, require_rbr = 1;
   struct arc *arc;
-  int cusps_no_d = 0, cusp_as_morse = 0;
+  int cusps_no_d = 0;
+  //int cusp_as_morse = 0;
   int *newdepths;
 
   if (key == KEY_LT || key == KEY_GT)
@@ -564,7 +565,7 @@ getarcinfo (int key, FILE *file,
       else ungettoken (KEY_UP);
     cusps_as_morse_events = 1;
     key = KEY_I;
-    cusp_as_morse = 1;
+    //cusp_as_morse = 1;
     assert (bleft);
     arc = bleft->info;
     assert (arc);
