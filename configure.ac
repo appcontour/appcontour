@@ -1,8 +1,8 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.59)
-AC_INIT(appcontour, 1.3.0, paolini@dmf.unicatt.it)
+AC_PREREQ([2.68])
+AC_INIT([appcontour],[1.3.0],[paolini@dmf.unicatt.it])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([contour.c])
 AC_CONFIG_HEADER([config.h])
@@ -11,17 +11,17 @@ AC_CONFIG_HEADER([config.h])
 #gtk="yes"
 
 AC_ARG_WITH([glut],
-  AC_HELP_STRING([--without-glut], [no glut engine for showcontour]),
+  AS_HELP_STRING([--without-glut],[no glut engine for showcontour]),
   [glut=="no"],
   [with_glut=check])
 
 AC_ARG_WITH([gtk],
-  AC_HELP_STRING([--without-gtk], [no gtk engine for showcontour]),
+  AS_HELP_STRING([--without-gtk],[no gtk engine for showcontour]),
   [gtk="no"],
   [with_gtk=check])
 
 #AC_ARG_WITH([none],
-#  AC_HELP_STRING([--with-none], [no graphic engine for showcontour]),
+#  AS_HELP_STRING([--with-none],[no graphic engine for showcontour]),
 #  nograph="yes"; gtk="no"; glut="no",
 #  nograph="no")
 
