@@ -26,7 +26,7 @@ Arc 2: [0];
 Arc 3: [0];
 Arc 4: [2];
 Region 0 (f = 0): () (-a1 -a2);
-Region 1 (f = 2): (-a3 +a2);
+Region 1 (f = 2): (+a2 -a3);
 Region 2 (f = 2): (+a1 -a4);
 Region 3 (f = 4): (+a3 +a4);
 }
@@ -60,7 +60,7 @@ Arc 2: [0];
 Arc 3: [0];
 Arc 4: [2 1 0 1 2];
 Region 0 (f = 0): () (-a1 -a2);
-Region 1 (f = 2): (-a3 +a2);
+Region 1 (f = 2): (+a2 -a3);
 Region 2 (f = 2): (+a1 -a4);
 Region 3 (f = 4): (+a3 +a4);
 }

@@ -1,9 +1,9 @@
 #
 # test sul calcolo dei gruppi fondamentali
 #
-./contour fundamental examples/torus_2.morse -q
-./contour insidefundamental examples/torus_2.morse -q
-./contour outsidefundamental examples/torus_2.morse -q
+./contour fundamental examples/torus2.morse -q
+./contour insidefundamental examples/torus2.morse -q
+./contour outsidefundamental examples/torus2.morse -q
 #
 # note that in future versions the fundamental group
 # might be printed with a different presentation!

@@ -135,7 +135,7 @@ singlebordercmp (struct border *b1, struct border *b2)
 int
 arccmp (struct arc *a1, struct arc *a2)
 {
-  int i;
+  int i, f1, f2;
 
   /* primo criterio, numero di estremi */
   if (a1->endpoints > a2->endpoints) return (1);
@@ -153,6 +153,14 @@ arccmp (struct arc *a1, struct arc *a2)
     if (a1->depths[i] > a2->depths[i]) return (1);
     if (a1->depths[i] < a2->depths[i]) return (-1);
   }
+
+  /* quarto criterio, confronto dei valori di f sulla sinistra */
+
+  f1 = a1->regionleft->border->region->f;
+  f2 = a2->regionleft->border->region->f;
+
+  if (f1 < f2) return (-1);
+  if (f1 > f2) return (1);
 
   /* altri criteri? */
   return (0);
