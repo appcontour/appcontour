@@ -2593,7 +2593,7 @@ fi
 
 
 #AC_ARG_WITH([none],
-#  AC_HELP_STRING([--with-none], [no graphic engine for showcontour]),
+#  AS_HELP_STRING([--with-none],[no graphic engine for showcontour]),
 #  nograph="yes"; gtk="no"; glut="no",
 #  nograph="no")
 
