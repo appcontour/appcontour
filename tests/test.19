@@ -1,0 +1,13 @@
+#
+# test on supercanonification
+#
+# il risultato di questi due comandi *deve* essere
+# identico
+#
+./contour supercanonify examples/torus_twist_c1.sketch
+./contour supercanonify examples/torus_twist_c2.sketch
+#
+# i seguenti *devono* essere diversi
+#
+./contour supercanonify examples/balls_set1.sketch
+./contour supercanonify examples/balls_set2.sketch

@@ -62,6 +62,8 @@
 #define ACTION_UNION 44
 #define ACTION_CONNECTEDSUM 45
 #define ACTION_ANY2MORSE 46
+#define ACTION_SUBCANONIFY 47
+#define ACTION_SUPERCANONIFY 48
 
 #ifndef EXAMPLES_DIR
   #define EXAMPLES_DIR ""
@@ -376,6 +378,8 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"iscontour") == 0) action = ACTION_ISCONTOUR;
     if (strcmp(argv[i],"compare") == 0) {action = ACTION_COMPARE; infiles = 2;}
     if (strcmp(argv[i],"canonify") == 0) action = ACTION_CANONIFY;
+    if (strcmp(argv[i],"subcanonify") == 0) action = ACTION_SUBCANONIFY;
+    if (strcmp(argv[i],"supercanonify") == 0) action = ACTION_SUPERCANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
     if (strcmp(argv[i],"any2morse") == 0) action = ACTION_ANY2MORSE;
     if (strcmp(argv[i],"printmorse") == 0) action = ACTION_PRINTMORSE;
@@ -791,6 +795,18 @@ main (int argc, char *argv[])
     case ACTION_CANONIFY:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
+    printsketch (sketch);
+    break;
+
+    case ACTION_SUBCANONIFY:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    subcanonify (sketch, 0);
+    printsketch (sketch);
+    break;
+
+    case ACTION_SUPERCANONIFY:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    supercanonify (sketch);
     printsketch (sketch);
     break;
 

@@ -222,6 +222,22 @@ int count_link_components (struct sketch *s);
 int sketch_union (struct sketch *s1, struct sketch *s2);
 int sketch_sum (struct sketch *s1, struct sketch *s2);
 
+void supercanonify (struct sketch *s);
+struct region *dupregions (struct region *r);
+struct borderlist *dupborderlist (struct borderlist *bl, struct region *r);
+struct border *dupborder (struct border *b, struct borderlist *bl);
+struct border *dupborder_opened (struct border *b, struct borderlist *bl);
+void remregions (struct region *r);
+struct region *reorderbytags (struct region *r);
+
+void subcanonify (struct sketch *s, int *iperm);
+struct border *subcanonifyborder (struct border *b, int *iperm);
+struct borderlist *subsortholelist (struct borderlist *hl, int *iperm);
+struct region *subsortregionlist (struct region *region, int *iperm);
+int subbordercmp (struct border *b1, struct border *b2, int *iperm1, int *iperm2);
+int subsinglebordercmp (struct border *b1, struct border *b2, int *iperm1, int *iperm2);
+int subregioncmp (struct region *r1, struct region *r2, int *iperm1, int *iperm2);
+int subregionlistcmp (struct region *r1, struct region *r2, int *iperm1, int *iperm2);
 
 void canonify (struct sketch *s);
 void canonifyarc (struct arc *arc);

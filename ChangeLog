@@ -1,3 +1,11 @@
+2012-08-02: Implemented "supercanonification" command.  It fully checks for
+	the optimal representative among all equivalent region descriptions.
+	Unfortunately the algorithm has exponential complexity, has can
+	be checked with example/simpleknot.knot, for which the complexity
+	has order 12! 6! 6! (of order 10^{15}).
+
+2012-07-30: version increased to 1.3.0.
+
 2011-09-10: When reading a region description (*.sketch) make sure that the
 	order of arcs and regions is maintained. This is important especially
 	since canonification does not always behave like it should.
