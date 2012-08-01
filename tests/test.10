@@ -4,4 +4,4 @@ do
 ./contour printmorse examples/$ex
 done
 ./contour applyrule n3 examples/two_hills.morse | ./contour printmorse
-./contour applyrule t1::1 examples/trifoil.morse
+./contour applyrule t1::1 examples/trefoil.morse
