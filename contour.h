@@ -186,7 +186,8 @@ int sketchcmp (struct sketch *s1, struct sketch *s2);
 int regioncmp (struct region *r1, struct region *r2);
 int bordercmp (struct border *b1, struct border *b2);
 int singlebordercmp (struct border *b1, struct border *b2);
-int arccmp (struct arc *a1, struct arc *a2);
+int arccmp (struct arc *a1, struct arc *a2, int depth);
+int borderarccmp (struct border *b1, struct border *b2, int depth);
 int count_hidden_arcs (struct sketch *s1);
 
 /* prototipi appcontour */
@@ -228,7 +229,7 @@ struct borderlist *dupborderlist (struct borderlist *bl, struct region *r);
 struct border *dupborder (struct border *b, struct borderlist *bl);
 struct border *dupborder_opened (struct border *b, struct borderlist *bl);
 void remregions (struct region *r);
-struct region *reorderbytags (struct region *r);
+struct arc *reorderbytags (struct arc *r);
 
 void subcanonify (struct sketch *s, int *iperm);
 struct border *subcanonifyborder (struct border *b, int *iperm);
@@ -243,8 +244,8 @@ void canonify (struct sketch *s);
 void canonifyarc (struct arc *arc);
 struct border *canonifyborder (struct border *b);
 
-void sortarcs (struct sketch *s);
-struct arc *sortarclist (struct arc *arc);
+void sortarcs (struct sketch *s, int depth);
+struct arc *sortarclist (struct arc *arc, int depth);
 struct arc *sortequivarcs (struct arc *arc);
 struct arc *mergeequivarcs (struct arc *arc, struct arc *rest);
 struct borderlist *sortholelist (struct borderlist *hl);
