@@ -596,7 +596,7 @@ dupregions (struct region *r)
   newr = (struct region *) malloc (sizeof (struct region));
   newr->f = r->f;
   newr->tag = r->tag;
-  newr->strati = r->strati;
+  newr->strati = 0;
   newr->border = dupborderlist (r->border, newr);
   newr->next = dupregions (r->next);
   return (newr);
