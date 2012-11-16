@@ -794,13 +794,14 @@ main (int argc, char *argv[])
 
     case ACTION_CANONIFY:
     if ((sketch = readcontour (infile)) == 0) exit (14);
-    canonify (sketch);
+    supercanonify (sketch);
     printsketch (sketch);
     break;
 
     case ACTION_SUBCANONIFY:
     if ((sketch = readcontour (infile)) == 0) exit (14);
-    subcanonify (sketch, 0);
+    /* subcanonify (sketch, 0); */
+    canonify (sketch);
     printsketch (sketch);
     break;
 
