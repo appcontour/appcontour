@@ -787,7 +787,8 @@ check_lower_plateau (struct polyline *contour, struct line *line)
       bt->line[1-backward2] = l2;
       b->line[i2] = l3;
       b->line[i4] = l2;
-      MVARC_DANGER (l2, l1);
+      //MVARC_DANGER (l2, l1);
+      MVARC (l2, l1, l3->earc);
     } else {
       l = b->line[1];
     }
