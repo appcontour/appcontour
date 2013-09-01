@@ -21,3 +21,9 @@ morse2morse: $(morseobjects)
 $(morseobjects): %.o: %.c morse2morse.h
 	cc $*.c -c -Wall
 
+install:
+	cp visible morse2morse /usr/local/bin
+
+uninstall:
+	rm /usr/local/bin/visible
+	rm /usr/local/bin/morse2morse
