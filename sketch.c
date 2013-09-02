@@ -263,7 +263,7 @@ arccmp (struct arc *a1, struct arc *a2, int depth)
   int i, f1, f2;
   int res;
 
-  /* short-cirtuit: if the pointer are equal they are equal! */
+  /* short-circuit: if the pointers are equal they are equal! */
   if (a1 == a2) return (0);
 
   /* primo criterio, numero di estremi */
