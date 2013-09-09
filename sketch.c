@@ -77,62 +77,6 @@ regioncmp (struct region *r1, struct region *r2)
   return (0);
 }
 
-/*
- * confronto di una lista di regioni
- */
-
-int
-subregionlistcmp (struct region *r1, struct region *r2, int *iperm1, int *iperm2)
-{
-  int res;
-
-  if (r1 == 0 && r2 == 0) return (0);
-  if (r2 == 0) return (-1);
-  if (r1 == 0) return (1);
-
-  if ( (res = subregioncmp (r1, r2, iperm1, iperm2)) != 0 ) return (res);
-  return (subregionlistcmp (r1->next, r2->next, iperm1, iperm2));
-}
-
-/*
- * confronto regioni subordinato ad un ordinamento degli archi
- * basato sul loro tag
- */
-
-int
-subregioncmp (struct region *r1, struct region *r2, int *iperm1, int *iperm2)
-{
-  struct borderlist *h1, *h2;
-  int res;
-
-  /* primo criterio: numero di buchi */
-  for (h1 = r1->border->next, h2 = r2->border->next;
-       h1 && h2; h1 = h1->next, h2 = h2->next);
-  if (h1) return (1);
-  if (h2) return (-1);
-
-  /* secondo/terzo criterio: confronto dei bordi esterni,
-   * confronto lessicografico dei bordi dei buchi
-   */
-
-  for (h1 = r1->border, h2 = r2->border;
-       h1 && h2; h1 = h1->next, h2 = h2->next)
-  {
-    if ((res = subbordercmp (h1->sponda, h2->sponda, iperm1, iperm2)) != 0) return (res);
-  }
-
-  /* quarto criterio: valore di f (e' una informazione che non dipende
-   * dalla rappresentazione)
-   * (Negli esempi testati questo test non cambia nulla, ma in generale
-   * non so.  Nel dubbio lo lascio).
-   */
-
-  if (r1->f > r2->f) return (1);
-  if (r1->f < r2->f) return (-1);
-
-  return (0);
-}
-
 int
 bordercmp (struct border *b1, struct border *b2)
 {
@@ -174,51 +118,6 @@ bordercmp (struct border *b1, struct border *b2)
   return (0);
 }
 
-/*
- * come prima, ma subordinatamente ai "tag" degli archi
- */
-
-int
-subbordercmp (struct border *b1, struct border *b2, int *iperm1, int *iperm2)
-{
-  struct border *bp1, *bp2;
-  int res;
-
-  /* criterio zero: bordo vuoto vince (bordo esterno della regione esterna) */
-
-  if (b1 == 0 && b2 == 0) return (0);
-
-  if (b1 == 0 || b2 == 0)
-  {
-    if (b2 != 0) return (-1);
-    return (1);
-  }
-
-  /* primo criterio, conto il numero di archi */
-
-  assert (b1 && b2);
-  bp1 = b1;
-  bp2 = b2;
-
-  do {
-    bp1 = bp1->next;
-    bp2 = bp2->next;
-  } while (bp1 != b1 && bp2 != b2);
-
-  if (bp1 != b1) return (1);
-  if (bp2 != b2) return (-1);
-
-  /* secondo criterio, confronto lessicografico tra i tratti di bordo */
-  if ((res = subsinglebordercmp (b1, b2, iperm1, iperm2)) != 0) return (res);
-  do {
-    bp1 = bp1->next;
-    bp2 = bp2->next;
-    if ((res = subsinglebordercmp (bp1, bp2, iperm1, iperm2)) != 0) return (res);
-  } while (bp1 != b1 && bp2 != b2);
-
-  return (0);
-}
-
 int
 singlebordercmp (struct border *b1, struct border *b2)
 {
@@ -226,30 +125,6 @@ singlebordercmp (struct border *b1, struct border *b2)
 
   /* primo criterio, confronto i due archi */
   if ((res = arccmp (b1->info, b2->info, 1)) != 0) return (res);
-
-  /* se gli archi sono uguali guardo l'orientazione */
-  if (b1->orientation == b2->orientation) return (0);
-  if (b1->orientation > b2->orientation) return (1);
-  return (-1);
-}
-
-/*
- * confronto subordinato all'ordinamento archi dato da "tag"
- */
-
-int
-subsinglebordercmp (struct border *b1, struct border *b2, int *iperm1, int *iperm2)
-{
-  int tag1, tag2;
-
-  if (b1 == b2) return (0);
-  tag1 = b1->info->tag;
-  tag2 = b2->info->tag;
-  if (iperm1) tag1 = iperm1[tag1];
-  if (iperm2) tag2 = iperm2[tag2];
-
-  /* primo criterio, confronto i due archi */
-  if (tag1 != tag2) return (tag1 < tag2)?(-1):1;
 
   /* se gli archi sono uguali guardo l'orientazione */
   if (b1->orientation == b2->orientation) return (0);
@@ -388,120 +263,10 @@ count_hidden_arcs (struct sketch *s)
   return (count);
 }
 
-/*
- * complete canonification process.  It is based
- * on a comparison among all subcanonifications
- * subordinated to every possible reorderings
- * of indistinguishable arcs
- */
 
-/*
- * local prototypes
- */
 
-int succ (int *ivec, int n);
-int succvinc (int *ivec, int n, int *ipart, int partnum);
+/* XXXXXXXXXXXXXXXXXXX */
 
-void
-supercanonify (struct sketch *sketch)
-{
-  struct arc *arc;
-  int i, *iperm, *ipermopt, *ipart;
-  int res, count;
-  int arcsnum = 0;
-  int partnum = 0;
-  int arccmpdepth = 5;
-  struct sketch sketch2;
-
-  if (sketch->arcs == 0) return;
-
-  if (debug) printf ("canonify arcs...\n");
-  if (sketch->isempty) return;
-  for (arc = sketch->arcs; arc; arc = arc->next)
-  {
-    canonifyarc (arc);
-  }
-
-  if (debug) printf ("sort arcs...\n");
-  sortarcs (sketch, arccmpdepth);
-
-  for (arc = sketch->arcs; arc; arc = arc->next) arcsnum++;
-
-  iperm = (int *) malloc ( (arcsnum + 1) * sizeof(int) );
-  ipermopt = (int *) malloc ( (arcsnum + 1) * sizeof(int) );
-  ipart = (int *) malloc ( (arcsnum + 1) * sizeof(int) );
-
-  for (i = 1; i <= arcsnum; i++) iperm[i] = ipermopt[i] = i;
-
-  ipart[partnum] = 1;
-  if (debug) printf ("computing the equivalence classes for the %d arcs\n", arcsnum);
-  for (arc = sketch->arcs; arc->next; arc = arc->next)
-  {
-    if (arccmp (arc, arc->next, arccmpdepth) == 0)
-    {
-      ipart[partnum]++;
-    } else {
-      partnum++;
-      ipart[partnum] = 1;
-    }
-  }
-  partnum++;
-
-  if (debug)
-  {
-    printf ("partitions:");
-    for (i = 0; i < partnum; i++)
-    {
-      printf (" %d", ipart[i]);
-    }
-    printf ("\n");
-  }
-  /*
-   * duplicate the regions structure of sketch
-   */
-
-  sketch2.arcs = sketch->arcs;
-  sketch2.regions = dupregions (sketch->regions);
-  if (debug > 2)
-  {
-    printf ("original sketch:\n");
-    printsketch (sketch);
-    printf ("duplicated sketch:\n");
-    printsketch (&sketch2);
-  }
-
-  /*
-   * cycle on all permutations consistent with the partitioning
-   * warning: vector iperm is used from index 1 to arcsnum!
-   */
-
-  count = 1;
-  while (succvinc (iperm, arcsnum, ipart, partnum))
-  {
-    if (debug) printf ("permutation number %d\n", count);
-    count++;
-    subcanonify (&sketch2, iperm);
-    res = subregionlistcmp (sketch2.regions, sketch->regions, iperm, ipermopt);
-    if (res < 0)
-    {
-      /* new optimal region description */
-      for (i = 1; i <= arcsnum; i++) ipermopt[i] = iperm[i];
-      subcanonify (sketch, ipermopt);
-    }
-  }
-  if (debug) printf ("checked %d consistent permutations\n", count);
-
-  remregions (sketch2.regions);
-
-  if (debug) printf ("removed duplicated regions\n");
-
-  /*
-   * retagging regions and reordering
-   */
-
-  for (arc = sketch->arcs; arc; arc = arc->next) arc->tag = ipermopt[arc->tag];
-  sketch->arcs = reorderbytags (sketch->arcs);
-}
 
 struct arc *
 reorderbytags (struct arc *a)
@@ -533,53 +298,6 @@ reorderbytags (struct arc *a)
   }
   assert (0);
   return (0);  
-}
-
-int
-succvinc (int *ivec, int n, int *ipart, int partnum)
-{
-  if (partnum <= 1) return succ (ivec, n);
-  if (succvinc (ivec + ipart[0], n - ipart[0], ipart + 1, partnum - 1)) return (1);
-  if (succ(ivec, ipart[0]) == 0) return (0);
-  return (1);
-}
-
-int
-succ (int *ivec, int n)
-{
-  int k, newval;
-  int lower, upper, middle;
-
-  if (n <= 1) return (0);
-  if (succ(ivec+1, n-1)) return (1);
-  /* sono finite le permutazioni che non toccano
-   * il primo elemento, in particolare viene ripristinato
-   * l'ordine iniziale, ora aumento il primo elemento
-   */
-  if (ivec[1] > ivec[n])
-  {
-    /* ho finito... ripristino la permutazione iniziale */
-    newval = ivec[1];
-    for (k = 1; k < n; k++) ivec[k] = ivec[k+1];
-    ivec[n] = newval;
-    return (0);
-  }
-  lower = 1;
-  upper = n;
-  while (upper - lower > 1)
-  {
-    middle = (lower + upper)/2;
-    if (ivec[middle] > ivec[1])
-    {
-      upper = middle;
-    } else {
-      lower = middle;
-    }
-  }
-  newval = ivec[upper];
-  ivec[upper] = ivec[1];
-  ivec[1] = newval;
-  return (1);
 }
 
 /*
@@ -688,49 +406,6 @@ remregions (struct region *rl)
    */
 
   freeregion (rl);
-}
-
-/*
- * canonification process subordinate to a given
- * ordering of the arcs.
- * The ordering of the arcs is induced by their "tag"
- * value, if "iperm" is nonnull, then it works as a
- * permutation vector on the "tag" value:
- *   newtag = iperm[tag]
- *
- */
-
-void
-subcanonify (struct sketch *sketch, int *iperm)
-{
-  struct region *r;
-  struct borderlist *h;
-  int tag;
-
-  if (debug) printf ("subcanonify region borders...\n");
-  for (r = sketch->regions; r; r = r->next)
-  {
-    for (h = r->border; h; h = h->next)
-    {
-      if (h->sponda) h->sponda = subcanonifyborder (h->sponda, iperm);
-    }
-  }
-
-  if (debug) printf ("sort holes for each region...\n");
-  for (r = sketch->regions; r; r = r->next)
-  {
-    r->border->next = subsortholelist (r->border->next, iperm);
-  }
-
-  if (debug) printf ("sort bounded regions...\n");
-  if (sketch->regions->next)
-  {
-    sketch->regions->next = subsortregionlist (sketch->regions->next, iperm);
-    for (tag = 0, r = sketch->regions; r; r = r->next)
-    {
-      r->tag = tag++;
-    }
-  }
 }
 
 void
@@ -849,35 +524,6 @@ canonifyborder (struct border *b)
   bp = b->next;
   do {
     if (bordercmp (bp, bopt) < 0)
-      /* ho trovato un aggancio migliore */
-      bopt = bp;
-    bp = bp->next; 
-  } while (bp != b);
-  return (bopt);
-}
-
-/*
- * la canonificazione del bordo subordinata ad un ordinamento degli
- * archi indotto dal loro "tag" (o una permutazione)
- */
-
-struct border *
-subcanonifyborder (struct border *b, int *iperm)
-{
-  struct border *bp, *bopt;
-
-  if (b->next == b) return (b);  /* una sola componente! */
-
-  /* l'idea e' di chiamare ripetutamente la funzione di
-   * confronto tra bordi passando via via puntatori in punti
-   * diversi, alla ricerca del puntatore che fornisce il 
-   * risultato ottimale
-   */
-
-  bopt = b;
-  bp = b->next;
-  do {
-    if (subbordercmp (bp, bopt, iperm, iperm) < 0)
       /* ho trovato un aggancio migliore */
       bopt = bp;
     bp = bp->next; 
@@ -1037,39 +683,6 @@ sortholelist (struct borderlist *hl)
   return (hopt);
 }
 
-/*
- * sorting subordinato ad un ordinamento degli archi basato sul tag
- */
-
-struct borderlist *
-subsortholelist (struct borderlist *hl, int *iperm)
-{
-  struct borderlist *h, *hopt, *hprev, *hoptprev;
-
-  if (hl == 0 || hl->next == 0) return (hl);
-
-  hopt = hl;
-  hoptprev = 0;
-  hprev = hl;
-  for (h = hl->next; h; h = h->next)
-  {
-    if (subbordercmp (h->sponda, hopt->sponda, iperm, iperm) < 0) 
-    {hopt = h; hoptprev = hprev;}
-    hprev = h;
-  }
-
-  if (hopt == hl)
-  {
-    hl->next = subsortholelist (hl->next, iperm);
-    return (hl);
-  }
-  /* altrimenti hoptprev punta ad hopt */
-  assert (hoptprev);
-  hoptprev->next = hopt->next;     /* rimuovo aopt dalla lista */
-  hopt->next = subsortholelist (hl, iperm);  /* inserisco aopt in testa  */
-  return (hopt);
-}
-
 struct region *
 sortregionlist (struct region *region)
 {
@@ -1096,40 +709,6 @@ sortregionlist (struct region *region)
   assert (roptprev);
   roptprev->next = ropt->next;           /* rimuovo ropt dalla lista */
   ropt->next = sortregionlist (region);  /* inserisco ropt in testa  */
-  return (ropt);
-}
-
-/*
- * riordinamento subordinato ad un ordinamento degli archi
- * basato sul loro "tag"
- */
-
-struct region *
-subsortregionlist (struct region *region, int *iperm)
-{
-  struct region *r, *ropt, *rprev, *roptprev;
-
-  if (region == 0 || region->next == 0) return (region);
-
-  ropt = region;
-  roptprev = 0;
-  rprev = region;
-  for (r = region->next; r; r = r->next)
-  {
-    if (subregioncmp (r, ropt, iperm, iperm) < 0) 
-    {ropt = r; roptprev = rprev;}
-    rprev = r;
-  }
-
-  if (ropt == region)
-  {
-    region->next = subsortregionlist (region->next, iperm);
-    return (region);
-  }
-  /* altrimenti hoptprev punta ad hopt */
-  assert (roptprev);
-  roptprev->next = ropt->next;           /* rimuovo ropt dalla lista */
-  ropt->next = subsortregionlist (region, iperm);  /* inserisco ropt in testa  */
   return (ropt);
 }
 

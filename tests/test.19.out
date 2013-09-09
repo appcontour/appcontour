@@ -5,10 +5,10 @@ Arc 3: [0 1 2);
 Arc 4: [0];
 Arc 5: [0];
 Region 0 (f = 0): () (-a1);
-Region 1 (f = 4): (+a2);
-Region 2 (f = 4): (+a3);
-Region 3 (f = 0): (-a4 -a5);
-Region 4 (f = 2): (+a1) (-a2 +a4 -a3 +a5);
+Region 1 (f = 2): (+a1) (+a4 -a2 +a5 -a3);
+Region 2 (f = 0): (-a4 -a5);
+Region 3 (f = 4): (+a2);
+Region 4 (f = 4): (+a3);
 }
 sketch {
 Arc 1: (0);
@@ -17,10 +17,29 @@ Arc 3: [0 1 2);
 Arc 4: [0];
 Arc 5: [0];
 Region 0 (f = 0): () (-a1);
-Region 1 (f = 4): (+a2);
+Region 1 (f = 2): (+a1) (+a4 -a2 +a5 -a3);
+Region 2 (f = 0): (-a4 -a5);
+Region 3 (f = 4): (+a2);
+Region 4 (f = 4): (+a3);
+}
+sketch {
+Arc 1: (0);
+Arc 2: (0);
+Arc 3: (0);
+Arc 4: (0);
+Arc 5: (0);
+Arc 6: (0);
+Arc 7: (0);
+Arc 8: (0);
+Region 0 (f = 0): () (-a1) (-a2);
+Region 1 (f = 2): (+a1) (-a3) (-a4);
 Region 2 (f = 4): (+a3);
-Region 3 (f = 0): (-a4 -a5);
-Region 4 (f = 2): (+a1) (-a2 +a4 -a3 +a5);
+Region 3 (f = 4): (+a4) (-a5);
+Region 4 (f = 6): (+a5);
+Region 5 (f = 2): (+a2) (-a6) (-a7);
+Region 6 (f = 4): (+a6);
+Region 7 (f = 4): (+a7) (-a8);
+Region 8 (f = 6): (+a8);
 }
 sketch {
 Arc 1: (0);
@@ -32,31 +51,12 @@ Arc 6: (0);
 Arc 7: (0);
 Arc 8: (0);
 Region 0 (f = 0): () (-a1) (-a2);
-Region 1 (f = 4): (+a3);
-Region 2 (f = 4): (+a4);
-Region 3 (f = 6): (+a7);
-Region 4 (f = 6): (+a8);
+Region 1 (f = 2): (+a1) (-a3) (-a4);
+Region 2 (f = 4): (+a3);
+Region 3 (f = 4): (+a4);
+Region 4 (f = 2): (+a2) (-a5) (-a6);
 Region 5 (f = 4): (+a5) (-a7);
-Region 6 (f = 4): (+a6) (-a8);
-Region 7 (f = 2): (+a1) (-a3) (-a5);
-Region 8 (f = 2): (+a2) (-a4) (-a6);
-}
-sketch {
-Arc 1: (0);
-Arc 2: (0);
-Arc 3: (0);
-Arc 4: (0);
-Arc 5: (0);
-Arc 6: (0);
-Arc 7: (0);
-Arc 8: (0);
-Region 0 (f = 0): () (-a1) (-a2);
-Region 1 (f = 4): (+a3);
-Region 2 (f = 4): (+a4);
-Region 3 (f = 6): (+a7);
-Region 4 (f = 6): (+a8);
-Region 5 (f = 4): (+a5) (-a7);
-Region 6 (f = 4): (+a6) (-a8);
-Region 7 (f = 2): (+a1) (-a3) (-a4);
-Region 8 (f = 2): (+a2) (-a5) (-a6);
+Region 6 (f = 6): (+a7);
+Region 7 (f = 4): (+a6) (-a8);
+Region 8 (f = 6): (+a8);
 }
