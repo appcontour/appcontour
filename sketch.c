@@ -776,7 +776,7 @@ canonify (struct sketch *sketch)
     }
   }
 
-  sketch->arcs = sortequivarcs (sketch->arcs);
+  sketch->arcs = sortequivarcs (sketch->arcs, 1);
   /* rinumero gli archi */
   tag = 1;
   for (arc = sketch->arcs; arc; arc = arc->next) arc->tag = tag++;
@@ -951,19 +951,19 @@ sortarclist (struct arc *arc, int depth)
  */
 
 struct arc *
-sortequivarcs (struct arc *arc)
+sortequivarcs (struct arc *arc, int depth)
 {
  /*
   * usiamo un metodo naive con complessita' n^2!
   */
 
   if (arc->next == 0) return (arc);        /* ultimo arco, ovviamente e' ordinato */
-  arc->next = sortequivarcs (arc->next);   /* ordino tutti i successivi */
-  return (mergeequivarcs (arc, arc->next));
+  arc->next = sortequivarcs (arc->next, depth);   /* ordino tutti i successivi */
+  return (mergeequivarcs (arc, arc->next, depth));
 }
 
 struct arc *
-mergeequivarcs (struct arc *arc, struct arc *rest)
+mergeequivarcs (struct arc *arc, struct arc *rest, int depth)
 {
   struct border *b1, *b2, *b;
   struct borderlist *bl1, *bl2, *bl;
@@ -971,7 +971,7 @@ mergeequivarcs (struct arc *arc, struct arc *rest)
 
   arc->next = rest;       /* nell'eventualita' che arc < rest */
   if (rest == 0) return (arc);
-  if (arccmp (arc, rest, 1) != 0) return (arc);
+  if (arccmp (arc, rest, depth) != 0) return (arc);
                    /* l'arco si distingue dai rimanenti, non lo muovo */
   /* ora devo confrontare arc e rest e vedere quale compare prima con
    * orientazione negativa nell'elenco delle regioni.  Non e' difficile
@@ -1004,7 +1004,7 @@ mergeequivarcs (struct arc *arc, struct arc *rest)
       }
     }
   }
-  rest->next = mergeequivarcs (arc, rest->next);
+  rest->next = mergeequivarcs (arc, rest->next, depth);
   return (rest);
 }
 
