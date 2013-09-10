@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "contour.h"
+#include "giovecanonify.h"
 
 extern int debug;
 extern int useoldcanonify;
