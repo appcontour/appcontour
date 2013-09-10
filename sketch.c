@@ -2,6 +2,7 @@
 #include "contour.h"
 
 extern int debug;
+extern int useoldcanonify;
 
 int
 arcmult (struct arc *arc)
@@ -408,8 +409,12 @@ remregions (struct region *rl)
   freeregion (rl);
 }
 
+/*
+ * old canonification procedure
+ */
+
 void
-canonify (struct sketch *sketch)
+oldcanonify (struct sketch *sketch)
 {
   struct arc *arc;
   struct region *r;
@@ -455,6 +460,29 @@ canonify (struct sketch *sketch)
   /* rinumero gli archi */
   tag = 1;
   for (arc = sketch->arcs; arc; arc = arc->next) arc->tag = tag++;
+}
+
+/*
+ * new canonification procedure: first we perform a
+ * "giovecanonify", which is used to obtain a total ordering
+ * of the arcs, which in turn is used in an "old-style" process
+ */
+
+void
+canonify (struct sketch *sketch)
+{
+  if (sketch->isempty) return;
+
+  if (useoldcanonify)
+  {
+    if (debug) printf ("using the old canonification process...\n");
+    oldcanonify (sketch);
+    return;
+  }
+  if (debug) printf ("performing a DFS canonification...\n");
+  giovecanonify (sketch);
+  if (debug) printf ("performing the old canonification...\n");
+  oldcanonify (sketch);
 }
 
 void

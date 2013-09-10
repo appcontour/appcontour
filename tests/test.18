@@ -1,7 +1,15 @@
 #
-# test sulla canonificazione semplice.  Deve essere idempotente,
+# obsoleto... la vecchia procedura di canonificazione e' ora
+# sostituita dalla procedura "giovecanonify", che funziona bene
+#
+# test sulla canonificazione semplice (obsoleta).  Deve essere idempotente,
 # anche se purtroppo non produce sempre lo stesso rappresentante
 # per descrizioni equivalenti, come in questo esempio
 #
-./contour subcanonify examples/torus_twist_c1.sketch
-./contour subcanonify examples/torus_twist_c2.sketch
+./contour --oldcanonify print examples/torus_twist_c1.sketch
+./contour --oldcanonify print examples/torus_twist_c2.sketch
+#
+# la nuova procedura produce lo stesso risultato
+#
+./contour print examples/torus_twist_c1.sketch
+./contour print examples/torus_twist_c2.sketch

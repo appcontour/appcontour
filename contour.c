@@ -63,8 +63,7 @@
 #define ACTION_UNION 44
 #define ACTION_CONNECTEDSUM 45
 #define ACTION_ANY2MORSE 46
-#define ACTION_SUBCANONIFY 47
-#define ACTION_GIOVECANONIFY 48
+#define ACTION_GIOVECANONIFY 47
 
 #ifndef EXAMPLES_DIR
   #define EXAMPLES_DIR ""
@@ -76,6 +75,7 @@ int quiet = 0;
 int verbose = 0;
 int heisemberg = -1;
 int docanonify = 1;
+int useoldcanonify = 0;
 int dorecomputef = 1;
 int doretagregions = 1;
 int finfinity = 0;
@@ -193,6 +193,11 @@ main (int argc, char *argv[])
       docanonify = 0;
       continue;
     }
+    if (strcmp(argv[i],"--oldcanonify") == 0)
+    {
+      useoldcanonify = 1;
+      continue;
+    }
     if (strcmp(argv[i],"--seed") == 0)
     {
       rndseed = atoi (argv[++i]);
@@ -256,7 +261,7 @@ main (int argc, char *argv[])
       printf ("  ccordering: show 3D inclusion between the connected components\n");
       printf ("  compare: lessicographic comparison between two contours\n");
       printf ("\n Possible conversion and standardization actions:\n");
-      printf ("  print, printmorse, knot2morse, any2morse, canonify\n");
+      printf ("  print, printmorse, knot2morse, any2morse, canonify, giovecanonify\n");
       printf ("\n Cell complex and fundamental group:\n");
       printf ("  cellcomplex, insidecomplex, outsidecomplex\n");
       printf ("  fundamental, insidefundamental, outsidefundamental\n");
@@ -271,6 +276,7 @@ main (int argc, char *argv[])
       printf ("  -q: be quiet\n");
       printf ("  -v|--verbose: be more verbose\n");
       printf ("  --nocanonify: do not canonify region description before printing\n");
+      printf ("  --oldcanonify: use the old (version <= 1.3.0) canonification procedure\n");
       printf ("  --transfer_islands|--ti <int_coded_flags>: information on island\n");
       printf ("      location in case of ambiguity (e.g. rule C2)\n");
       printf ("  --finfinity|--fi <int>: value of f at infinity (default 0)\n");
@@ -379,7 +385,6 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"iscontour") == 0) action = ACTION_ISCONTOUR;
     if (strcmp(argv[i],"compare") == 0) {action = ACTION_COMPARE; infiles = 2;}
     if (strcmp(argv[i],"canonify") == 0) action = ACTION_CANONIFY;
-    if (strcmp(argv[i],"subcanonify") == 0) action = ACTION_SUBCANONIFY;
     if (strcmp(argv[i],"giovecanonify") == 0) action = ACTION_GIOVECANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
     if (strcmp(argv[i],"any2morse") == 0) action = ACTION_ANY2MORSE;
@@ -794,12 +799,6 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_CANONIFY:
-    if ((sketch = readcontour (infile)) == 0) exit (14);
-    giovecanonify (sketch);
-    printsketch (sketch);
-    break;
-
-    case ACTION_SUBCANONIFY:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     printsketch (sketch);

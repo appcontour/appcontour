@@ -1,5 +1,5 @@
-./contour applyrule n2 <examples/sphere_behind_torus.morse
-./contour applyrule n3 <examples/sphere_infrontof_torus.morse
-./contour applyrule n4 <examples/two_rings.morse | ./contour applyrule n2 | ./contour applyrule n3 | ./contour applyrule n1
-./contour applyrule n4 <examples/torus2.morse
-./contour applyrule N5 <examples/three_spheres.morse | ./contour applyrule N5:6 | ./contour applyrule N1 | ./contour applyrule N1 | ./contour applyrule N1
+./contour applyrule k1 <examples/sphere_behind_torus.morse
+./contour applyrule k1b <examples/sphere_infrontof_torus.morse
+./contour applyrule k0:2 <examples/two_rings.morse | ./contour applyrule k1 | ./contour applyrule k1b | ./contour applyrule k2
+./contour applyrule k0 <examples/torus2.morse
+./contour applyrule t <examples/three_spheres.morse | ./contour applyrule t:5 | ./contour applyrule k2 | ./contour applyrule k2 | ./contour applyrule k2
