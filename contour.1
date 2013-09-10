@@ -79,8 +79,7 @@ sketch (this is also shown by "testallrules").
 interest in understanding whether two sketches are actually the
 same sketch.  Appropriate "canonification" will ensure that two
 "region" descriptions of the same sketch will produce the same
-"canonic" representation.  Unfortunately this is not achieved
-completely...
+"canonic" representation.  This is guaranteed since version 2.0.0
 
 - comparing to sketches.  This is done in a more-or-less lessicographic
 way.  This is only meaningful after canonification (which is authomatically
@@ -93,8 +92,8 @@ will produce one of the following answers:
 - s1 < s2
 - s1 = s2
 
-The answer "s1 = s2" is NOT proved to be true, although we do not
-know an example of the contrary at the moment.
+The answer "s1 = s2" means that the two sketches are the same (possibly different
+region description).
 
 - counting connected components.  The program is capable of counting
 the number of connected components of the 3D scene (the number of
