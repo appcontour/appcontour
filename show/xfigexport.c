@@ -44,7 +44,8 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
   struct line *line, *l, *last, *markline;
   struct vertex *v, *a, *b, *arrowa, *arrowb;
   struct rarc *arc;
-  double maxx, maxy, minx, miny, xmed, ymed, zoomx, zoomy, zoom;
+  double maxx, maxy, minx, miny, zoomx, zoomy, zoom;
+  //double xmed, ymed;
   int count, markcount, w, st, cap_style, plotarrow;
   double arrowwidth, arrowheight;
   double stv, arrowthick;
@@ -73,8 +74,8 @@ xfig_export (struct polyline *contour, FILE *file, struct grflags *grflags)
     if (minx > v->x) minx = v->x;
     if (miny > v->y) miny = v->y;
   }
-  xmed = (maxx + minx)/2.0;
-  ymed = (maxy + miny)/2.0;
+  //xmed = (maxx + minx)/2.0;
+  //ymed = (maxy + miny)/2.0;
   zoomx = XFIGMAXX/(maxx - minx);
   zoomy = XFIGMAXY/(maxy - miny);
   zoom = zoomx;

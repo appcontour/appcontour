@@ -1,3 +1,14 @@
+2013-09-10: Version 2.0.0. Implemented "giovecanonify".  This is finally a
+	*good* canonification process (its complexity is n^2, which is not
+	optimal but good enough).
+	Suggested by Giovanni Paolini, it is based on a natural DFS traversing
+	strategy for the graph that only depends on the choice of one of the
+	external arcs (for each connected component).
+	This now can completely substitute the previous canonification and makes
+	the "supercanonify" obsolete.
+	The new "--oldcanonify" option can now be used to force the use of the
+	old canonification process (for compatibility reasons).
+
 2012-08-02: Implemented "supercanonification" command.  It fully checks for
 	the optimal representative among all equivalent region descriptions.
 	Unfortunately the algorithm has exponential complexity, has can
