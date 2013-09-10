@@ -127,7 +127,7 @@ giovecanonifyblist (struct borderlist *bl)
 
   blrest = giovecanonifyblist (bl->next);
   bl->next = 0;
-  
+
   bl->sponda = giovecanonifyhole (bl->sponda);
   return (gioveinsertholeinblist (bl, blrest));
 }
@@ -319,6 +319,7 @@ giove_normalize_common (struct border *entrypoint, int canonify_holes)
   savedmark = rmarks[extregion->tag];
 
   cr = crossriver (entrypoint);
+  rmarks[extregion->tag] = 1;
   giove_normalize_dfs (cr, canonify_holes);
 
   reset_marks (entrypoint, rmarks);
