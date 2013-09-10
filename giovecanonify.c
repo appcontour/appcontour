@@ -313,14 +313,22 @@ giove_normalize_common (struct border *entrypoint, int canonify_holes)
 {
   int savedmark;
   struct region *extregion;
-  struct border *cr;
+  struct border *bb, *cr;
 
   extregion = entrypoint->border->region;
+  if (debug) printf ("Normalize hole, extregion %d, arc %d with flag %d\n",
+              extregion->tag, entrypoint->info->tag, canonify_holes);
   savedmark = rmarks[extregion->tag];
 
-  cr = crossriver (entrypoint);
   rmarks[extregion->tag] = 1;
-  giove_normalize_dfs (cr, canonify_holes);
+
+  bb = entrypoint;
+  do
+  {
+    cr = crossriver (bb);
+    giove_normalize_dfs (cr, canonify_holes);
+    bb = bb->next;
+  } while (bb != entrypoint);
 
   reset_marks (entrypoint, rmarks);
   rmarks[extregion->tag] = savedmark;
@@ -337,6 +345,7 @@ giove_normalize_dfs (struct border *b, int canonify_holes)
   if (rmarks[region->tag]) return;
   rmarks[region->tag] = 1;
 
+  if (debug) printf ("DFS: entering region %d through arc %d\n", region->tag, b->info->tag);
   b->border->sponda = b;
   if (canonify_holes) region->border->next = giovecanonifyblist (region->border->next);
 
@@ -451,13 +460,18 @@ void
 reset_marks (struct border *b, short int *marks)
 {
   int tag;
-  struct border *cr;
+  struct border *bb, *cr;
 
   tag = b->border->region->tag;
   marks[tag] = 0;
 
-  cr = crossriver (b);
-  reset_marks_dfs (cr, marks);
+  bb = b;
+  do
+  {
+    cr = crossriver (bb);
+    reset_marks_dfs (cr, marks);
+    bb = bb->next;
+  } while (bb != b);
 }
 
 void
