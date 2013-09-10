@@ -85,7 +85,7 @@ giovecanonify (struct sketch *s)
   assert (bl->isexternal && bl->sponda == 0);
 
   tag = 0; for (r = extregion; r; r = r->next) r->tag = tag++;
-  assert (s->regioncount == tag);
+  s->regioncount = tag;  // sometimes this is not correct, e.g. contour removehole ...
   regioncount = s->regioncount;
   rmarks = (short int *) malloc (regioncount*sizeof(short int));
   rmarks2 = (short int *) malloc (regioncount*sizeof(short int));
