@@ -236,8 +236,8 @@ struct border *canonifyborder (struct border *b);
 
 void sortarcs (struct sketch *s);
 struct arc *sortarclist (struct arc *arc);
-struct arc *sortequivarcs (struct arc *arc, int depth);
-struct arc *mergeequivarcs (struct arc *arc, struct arc *rest, int depth);
+struct arc *sortequivarcs (struct arc *arc);
+struct arc *mergeequivarcs (struct arc *arc, struct arc *rest);
 struct borderlist *sortholelist (struct borderlist *hl);
 struct region *sortregionlist (struct region *region);
 

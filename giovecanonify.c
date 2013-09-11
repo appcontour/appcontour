@@ -104,7 +104,7 @@ giovecanonify (struct sketch *s)
   giove_sort_regions (s);
   /* rinumero le regioni */
   tag = 0; for (r = s->regions; r; r = r->next) r->tag = tag++;
-  s->arcs = sortequivarcs (s->arcs, 0);
+  s->arcs = sortequivarcs (s->arcs);
   /* rinumero gli archi */
   tag = 1; for (arc = s->arcs; arc; arc = arc->next) arc->tag = tag++;
   return;
