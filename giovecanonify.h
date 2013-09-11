@@ -12,6 +12,7 @@ struct list_of_borders {
  */
 
 void giovecanonify (struct sketch *s);
+void giovepostcanonify (struct sketch *s);
 struct borderlist *giovecanonifyblist (struct borderlist *bl);
 struct border *giovecanonifyhole (struct border *entrypoint);
 struct borderlist *gioveinsertholeinblist (struct borderlist *blhole, struct borderlist *bl);

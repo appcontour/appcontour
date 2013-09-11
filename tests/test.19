@@ -11,3 +11,7 @@
 #
 ./contour giovecanonify examples/balls_set1.sketch
 ./contour giovecanonify examples/balls_set2.sketch
+#
+# canonizzazione senza rinumerazione delle regioni/archi
+#
+./contour --dontrenumber giovecanonify examples/torus_twist_c1.sketch

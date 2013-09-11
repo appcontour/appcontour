@@ -80,6 +80,7 @@ int dorecomputef = 1;
 int doretagregions = 1;
 int finfinity = 0;
 int mendesge = HGE_TEXT;
+static int renumber = 1;
 
 struct global_data globals;
 struct tagged_data user_data;
@@ -198,6 +199,11 @@ main (int argc, char *argv[])
       useoldcanonify = 1;
       continue;
     }
+    if (strcmp(argv[i],"--dontrenumber") == 0)
+    {
+      renumber = 0;
+      continue;
+    }
     if (strcmp(argv[i],"--seed") == 0)
     {
       rndseed = atoi (argv[++i]);
@@ -277,6 +283,7 @@ main (int argc, char *argv[])
       printf ("  -v|--verbose: be more verbose\n");
       printf ("  --nocanonify: do not canonify region description before printing\n");
       printf ("  --oldcanonify: use the old (version <= 1.3.0) canonification procedure\n");
+      printf ("  --dontrenumber: do not renumber regions and arcs after giovecanonify\n");
       printf ("  --transfer_islands|--ti <int_coded_flags>: information on island\n");
       printf ("      location in case of ambiguity (e.g. rule C2)\n");
       printf ("  --finfinity|--fi <int>: value of f at infinity (default 0)\n");
@@ -807,6 +814,7 @@ main (int argc, char *argv[])
     case ACTION_GIOVECANONIFY:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     giovecanonify (sketch);
+    if (renumber) giovepostcanonify (sketch);
     printsketch (sketch);
     break;
 

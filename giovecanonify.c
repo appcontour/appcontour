@@ -77,7 +77,6 @@ giovecanonify (struct sketch *s)
   if (debug) printf ("canonify arcs...\n");
   if (s->isempty) return;
   for (arc = s->arcs; arc; arc = arc->next) canonifyarc (arc);
-  sortarcs (s);
 
   extregion = s->regions;
   bl = extregion->border;
@@ -101,13 +100,24 @@ giovecanonify (struct sketch *s)
   free (rmarks);
   free (rmarks2);
 
+  //giovepostcanonify (s);
+  return;
+}
+
+void
+giovepostcanonify (struct sketch *s)
+{
+  int tag;
+  struct arc *arc;
+  struct region *r;
+
   giove_sort_regions (s);
   /* rinumero le regioni */
   tag = 0; for (r = s->regions; r; r = r->next) r->tag = tag++;
+  sortarcs (s);
   s->arcs = sortequivarcs (s->arcs);
   /* rinumero gli archi */
   tag = 1; for (arc = s->arcs; arc; arc = arc->next) arc->tag = tag++;
-  return;
 }
 
 /*

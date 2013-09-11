@@ -410,6 +410,7 @@ canonify (struct sketch *sketch)
   }
   if (debug) printf ("performing a DFS canonification...\n");
   giovecanonify (sketch);
+  giovepostcanonify (sketch);  /* reorder regions and arcs */
   if (debug) printf ("performing the old canonification...\n");
   oldcanonify (sketch);
 }
