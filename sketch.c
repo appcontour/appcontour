@@ -110,11 +110,10 @@ bordercmp (struct border *b1, struct border *b2)
   if (bp2 != b2) return (-1);
 
   /* secondo criterio, confronto lessicografico tra i tratti di bordo */
-  if ((res = singlebordercmp (b1, b2)) != 0) return (res);
   do {
+    if ((res = singlebordercmp (bp1, bp2)) != 0) return (res);
     bp1 = bp1->next;
     bp2 = bp2->next;
-    if ((res = singlebordercmp (bp1, bp2)) != 0) return (res);
   } while (bp1 != b1 && bp2 != b2);
 
   return (0);
@@ -126,7 +125,7 @@ singlebordercmp (struct border *b1, struct border *b2)
   int res;
 
   /* primo criterio, confronto i due archi */
-  if ((res = arccmp (b1->info, b2->info, 1)) != 0) return (res);
+  if ((res = arccmp (b1->info, b2->info, 0)) != 0) return (res);
 
   /* se gli archi sono uguali guardo l'orientazione */
   if (b1->orientation == b2->orientation) return (0);
