@@ -137,7 +137,6 @@ int
 arccmp (struct arc *a1, struct arc *a2, int depth)
 {
   int i, f1, f2;
-  int res;
 
   /* short-circuit: if the pointers are equal they are equal! */
   if (a1 == a2) return (0);
@@ -173,77 +172,7 @@ arccmp (struct arc *a1, struct arc *a2, int depth)
   if (f1 < f2) return (-1);
   if (f1 > f2) return (1);
 
-  if (depth-- <= 0) return (0);
   /* altri criteri? */
-  res = borderarccmp (a1->regionleft, a2->regionleft, depth);
-  if (res != 0) return (res);
-  res = borderarccmp (a1->regionright, a2->regionright, depth);
-  return (res);
-}
-
-int
-borderarccmp (struct border *b1, struct border *b2, int depth)
-{
-  struct border *b1pt, *b2pt;
-  int l1 = 0;
-  int l2 = 0;
-  int res;
-  struct borderlist *bl1, *bl2;
-  int isext1, isext2, isextr1, isextr2;
-
-  /*
-   * intrinsic comparison of two borders taking into account also
-   * the starting pointer
-   */
-
-  /*
-   * primo criterio: lunghezza del bordo
-   */
-  for (b1pt = b1->next; b1pt != b1; b1pt = b1pt->next) l1++;
-  for (b2pt = b2->next; b2pt != b2; b2pt = b2pt->next) l2++;
-
-  if (l1 != l2) return ( (l1 < l2)?(-1):1 );
-
-  /*
-   * secondo criterio: controllo quale sta nel bordo esterno
-   */
-
-  bl1 = b1->border;
-  bl2 = b2->border;
-  isext1 = (bl1->region->border == bl1);
-  isext2 = (bl2->region->border == bl2);
-
-  if (isext1 != isext2)
-  {
-    if (isext1) return (-1);
-    return (1);
-  }
-
-  isextr1 = (bl1->region->border == 0);
-  isextr2 = (bl2->region->border == 0);
-
-  if (isextr1 != isextr2)
-  {
-    if (isextr1) return (-1);
-    return (1);
-  }
-
-  if (depth-- <= 0) return (0);
-
-  /*
-   * controllo in profondita' su tutti gli archi
-   */
-
-  for (b1pt = b1->next, b2pt = b2->next; b1pt != b1; b1pt = b1pt->next, b2pt = b2pt->next)
-  {
-    if (b1pt->orientation != b2pt->orientation)
-    {
-      return ( (b1pt->orientation < 0)?(-1):1 );
-    }
-    res = arccmp (b1pt->info, b2pt->info, depth);
-    if (res) return (res);
-  }
-
   return (0);
 }
 
@@ -429,7 +358,7 @@ oldcanonify (struct sketch *sketch)
   }
 
   if (debug) printf ("sort arcs...\n");
-  sortarcs (sketch, 1);
+  sortarcs (sketch);
 
   if (debug) printf ("canonify region borders...\n");
   for (r = sketch->regions; r; r = r->next)
@@ -571,7 +500,7 @@ canonifyborder (struct border *b)
  */
 
 void
-sortarcs (struct sketch *s, int depth)
+sortarcs (struct sketch *s)
 {
   struct arc *arc;
   int tag = 1;
@@ -580,14 +509,14 @@ sortarcs (struct sketch *s, int depth)
  /*
   * usiamo un metodo naive con complessita' n^2!
   */
-  s->arcs = sortarclist (s->arcs, depth);
+  s->arcs = sortarclist (s->arcs);
 
   for (arc = s->arcs; arc; arc = arc->next)
     arc->tag = tag++;
 }
 
 struct arc *
-sortarclist (struct arc *arc, int depth)
+sortarclist (struct arc *arc)
 {
   struct arc *a, *aopt, *aprev, *aoptprev;
 
@@ -599,20 +528,20 @@ sortarclist (struct arc *arc, int depth)
   aprev = arc;
   for (a = arc->next; a; a = a->next)
   {
-    if (arccmp (a, aopt, depth) < 0) {aopt = a; aoptprev = aprev;}
+    if (arccmp (a, aopt, 1) < 0) {aopt = a; aoptprev = aprev;}
     aprev = a;
   }
 
   if (debug) printf ("arco ottimale trovato: %d\n", aopt->tag);
   if (aopt == arc)
   {
-    arc->next = sortarclist (arc->next, depth);
+    arc->next = sortarclist (arc->next);
     return (arc);
   }
   /* altrimenti aoptprev punta ad aopt */
   assert (aoptprev);
   aoptprev->next = aopt->next;     /* rimuovo aopt dalla lista */
-  aopt->next = sortarclist (arc, depth);  /* inserisco aopt in testa  */
+  aopt->next = sortarclist (arc);  /* inserisco aopt in testa  */
   return (aopt);
 }
 

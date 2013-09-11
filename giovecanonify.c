@@ -77,7 +77,7 @@ giovecanonify (struct sketch *s)
   if (debug) printf ("canonify arcs...\n");
   if (s->isempty) return;
   for (arc = s->arcs; arc; arc = arc->next) canonifyarc (arc);
-  sortarcs (s, 0);
+  sortarcs (s);
 
   extregion = s->regions;
   bl = extregion->border;
