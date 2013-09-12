@@ -346,9 +346,6 @@ void
 oldcanonify (struct sketch *sketch)
 {
   struct arc *arc;
-  struct region *r;
-  struct borderlist *h;
-  int tag;
 
   if (debug) printf ("canonify arcs...\n");
   if (sketch->isempty) return;
@@ -359,6 +356,26 @@ oldcanonify (struct sketch *sketch)
 
   if (debug) printf ("sort arcs...\n");
   sortarcs (sketch);
+
+  /* from now on the procedure is moved into compat_canonify */
+  compat_canonify (sketch);
+  return;
+}
+
+/*
+ * compatibility post canonification
+ * mimics old procedure on the just-obtained DFS canonification
+ */
+
+void
+compat_canonify (struct sketch *sketch)
+{
+  struct arc *arc;
+  struct region *r;
+  struct borderlist *h;
+  int tag;
+
+  if (sketch->isempty) return;
 
   if (debug) printf ("canonify region borders...\n");
   for (r = sketch->regions; r; r = r->next)
@@ -410,9 +427,10 @@ canonify (struct sketch *sketch)
   }
   if (debug) printf ("performing a DFS canonification...\n");
   giovecanonify (sketch);
+  if (debug) printf ("renumbering regions/arcs...\n");
   giovepostcanonify (sketch);  /* reorder regions and arcs */
   if (debug) printf ("performing the old canonification...\n");
-  oldcanonify (sketch);
+  compat_canonify (sketch);
 }
 
 void

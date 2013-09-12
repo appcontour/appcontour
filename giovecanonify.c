@@ -100,7 +100,6 @@ giovecanonify (struct sketch *s)
   free (rmarks);
   free (rmarks2);
 
-  //giovepostcanonify (s);
   return;
 }
 

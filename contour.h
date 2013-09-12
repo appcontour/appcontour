@@ -231,6 +231,7 @@ struct arc *reorderbytags (struct arc *r);
 
 void canonify (struct sketch *s);
 void oldcanonify (struct sketch *s);
+void compat_canonify (struct sketch *s);
 void canonifyarc (struct arc *arc);
 struct border *canonifyborder (struct border *b);
 
