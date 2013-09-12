@@ -1,3 +1,6 @@
+2013-09-12: Version 2.0.1. Cleanup of various parts related to the introduction
+	of the new canonization procedure.
+
 2013-09-10: Version 2.0.0. Implemented "giovecanonify".  This is finally a
 	*good* canonification process (its complexity is n^2, which is not
 	optimal but good enough).
