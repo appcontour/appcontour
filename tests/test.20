@@ -1,0 +1,12 @@
+#
+# comparison test
+#
+# These are two different region descriptions of the same
+# apparent contour
+#
+./contour compare examples/torus_twist_c1.sketch examples/torus_twist_c2.sketch
+#
+# These are region descriptions of two *not equivalent* apparent
+# contours
+#
+./contour compare examples/occhi1.sketch examples/occhi2.sketch

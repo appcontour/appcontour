@@ -37,10 +37,49 @@ sketchcmp (struct sketch *s1, struct sketch *s2)
   for (r1 = s1->regions->next, r2 = s2->regions->next;
        r1 && r2; r1 = r1->next, r2 = r2->next)
   {
-    if ((res = regioncmp (r1, r2)) != 0) return (res);
+    if ((res = regiontotcmp (r1, r2)) != 0) return (res);
   }
 
-  if ((res = regioncmp (s1->regions, s2->regions)) != 0) return (res);
+  if ((res = regiontotcmp (s1->regions, s2->regions)) != 0) return (res);
+
+  return (0);
+}
+
+/*
+ * region comparison based on a total ordering of
+ * the arcs, which in turn requires a preliminar
+ * canonification in order to work properly
+ */
+int
+regiontotcmp (struct region *r1, struct region *r2)
+{
+  struct borderlist *h1, *h2;
+  int res;
+
+  /* primo criterio: numero di buchi */
+  for (h1 = r1->border->next, h2 = r2->border->next;
+       h1 && h2; h1 = h1->next, h2 = h2->next);
+  if (h1) return (1);
+  if (h2) return (-1);
+
+  /* secondo/terzo criterio: confronto dei bordi esterni,
+   * confronto lessicografico dei bordi dei buchi
+   */
+
+  for (h1 = r1->border, h2 = r2->border;
+       h1 && h2; h1 = h1->next, h2 = h2->next)
+  {
+    if ((res = bordertotcmp (h1->sponda, h2->sponda)) != 0) return (res);
+  }
+
+  /* quarto criterio: valore di f (e' una informazione che non dipende
+   * dalla rappresentazione)
+   * (Negli esempi testati questo test non cambia nulla, ma in generale
+   * non so.  Nel dubbio lo lascio).
+   */
+
+  if (r1->f > r2->f) return (1);
+  if (r1->f < r2->f) return (-1);
 
   return (0);
 }
@@ -75,6 +114,46 @@ regioncmp (struct region *r1, struct region *r2)
 
   if (r1->f > r2->f) return (1);
   if (r1->f < r2->f) return (-1);
+
+  return (0);
+}
+
+int
+bordertotcmp (struct border *b1, struct border *b2)
+{
+  struct border *bp1, *bp2;
+  int res;
+
+  /* criterio zero: bordo vuoto vince (bordo esterno della regione esterna) */
+
+  if (b1 == 0 && b2 == 0) return (0);
+
+  if (b1 == 0 || b2 == 0)
+  {
+    if (b2 != 0) return (-1);
+    return (1);
+  }
+
+  /* primo criterio, conto il numero di archi */
+
+  assert (b1 && b2);
+  bp1 = b1;
+  bp2 = b2;
+
+  do {
+    bp1 = bp1->next;
+    bp2 = bp2->next;
+  } while (bp1 != b1 && bp2 != b2);
+
+  if (bp1 != b1) return (1);
+  if (bp2 != b2) return (-1);
+
+  /* secondo criterio, confronto lessicografico tra i tratti di bordo */
+  do {
+    if ((res = singlebordertotcmp (bp1, bp2)) != 0) return (res);
+    bp1 = bp1->next;
+    bp2 = bp2->next;
+  } while (bp1 != b1 && bp2 != b2);
 
   return (0);
 }
@@ -120,6 +199,20 @@ bordercmp (struct border *b1, struct border *b2)
 }
 
 int
+singlebordertotcmp (struct border *b1, struct border *b2)
+{
+  int res;
+
+  /* primo criterio, confronto i due archi */
+  if ((res = arctotcmp (b1->info, b2->info, 0)) != 0) return (res);
+
+  /* se gli archi sono uguali guardo l'orientazione */
+  if (b1->orientation == b2->orientation) return (0);
+  if (b1->orientation > b2->orientation) return (1);
+  return (-1);
+}
+
+int
 singlebordercmp (struct border *b1, struct border *b2)
 {
   int res;
@@ -131,6 +224,38 @@ singlebordercmp (struct border *b1, struct border *b2)
   if (b1->orientation == b2->orientation) return (0);
   if (b1->orientation > b2->orientation) return (1);
   return (-1);
+}
+
+int
+arctotcmp (struct arc *a1, struct arc *a2, int depth)
+{
+  int i;
+
+  /* short-circuit: if the pointers are equal they are equal! */
+  if (a1 == a2) return (0);
+
+  /* primo criterio, numero di estremi */
+  if (a1->endpoints > a2->endpoints) return (1);
+  if (a1->endpoints < a2->endpoints) return (-1);
+
+  /* secondo criterio, numero di cuspidi */
+  if (a1->cusps > a2->cusps) return (1);
+  if (a1->cusps < a2->cusps) return (-1);
+
+  /* terzo criterio, confronto lessicografico delle profondita' */
+
+  assert (a1->dvalues == a2->dvalues);
+  for (i = 0; i < a1->dvalues; i++)
+  {
+    if (a1->depths[i] > a2->depths[i]) return (1);
+    if (a1->depths[i] < a2->depths[i]) return (-1);
+  }
+
+  if (a1->tag > a2->tag) return (1);
+  if (a1->tag < a2->tag) return (-1);
+
+  /* altri criteri? */
+  return (0);
 }
 
 int

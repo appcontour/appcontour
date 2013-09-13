@@ -184,9 +184,13 @@ int apply_mergearcs (struct sketch *s, struct region *r,
 
 int sketchcmp (struct sketch *s1, struct sketch *s2);
 int regioncmp (struct region *r1, struct region *r2);
+int regiontotcmp (struct region *r1, struct region *r2);
 int bordercmp (struct border *b1, struct border *b2);
+int bordertotcmp (struct border *b1, struct border *b2);
 int singlebordercmp (struct border *b1, struct border *b2);
+int singlebordertotcmp (struct border *b1, struct border *b2);
 int arccmp (struct arc *a1, struct arc *a2, int depth);
+int arctotcmp (struct arc *a1, struct arc *a2, int depth);
 int count_hidden_arcs (struct sketch *s1);
 
 /* prototipi appcontour */
