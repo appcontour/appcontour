@@ -237,7 +237,11 @@ then
   exit 1
 fi
 
-nnumber=`which number`
+#
+# number command is contained in the "bsd-games" package
+# and converts a number to english words, like one, two, three,...
+#
+nnumber=`which number 2>/dev/null`
 if [ "$?" != "0" ]
 then
   nnumber=""

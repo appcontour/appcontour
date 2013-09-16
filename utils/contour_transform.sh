@@ -109,7 +109,7 @@ then
   removemorse="1"
 fi
 
-mosse=100
+mosse=8
 if [ -n "$2" ]
 then
   mosse=$2
