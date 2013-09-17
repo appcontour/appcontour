@@ -276,7 +276,7 @@ showinfo (struct sketch *sketch)
       sketch->huffman_labelling?1:0);
 
   if (! quiet) printf ("\nProperties of the %s:\n",
-      sketch->huffman_labelling?"surface (in 3D)":"2D manifold");
+      sketch->huffman_labelling?"embedded surface":"2D manifold");
   if (sketch->huffman_labelling)
     printf ("Connected comp.:    %d\n", count_connected_components (sketch));
   printf ("Total Euler ch.:    %d\n", euler_characteristic (sketch));
