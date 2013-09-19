@@ -64,7 +64,7 @@ function appiattisci
   do
     bfile=`basename $file`
 #    echo "Moving $dir/$file as number $counter"
-    cntr=`printf "%05d" $counter`
+    cntr=`printf "%07d" $counter`
     mv $dir/$file $dest/${cntr}_$bfile
   done
   counter=$[ $counter + 1 ]
