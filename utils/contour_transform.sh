@@ -15,7 +15,7 @@ function incasella
   cmpfile=`ls $dir/${pattern}* 2>/dev/null | tail -1`
   if [ -n "$cmpfile" ]
   then
-    cat $nuovofile $cmpfile | contour compare 2>/dev/null >/dev/null
+    cat $nuovofile $cmpfile | $ccontour compare 2>/dev/null >/dev/null
     res=$?
     case $res in
       0) mv $nuovofile $dir
@@ -86,10 +86,35 @@ then
   exit 1
 fi
 
+ccontour=`which contour`
+if [ "$?" != "0" ]
+then
+  echo "Cannot find contour software! Check your installation"
+  exit 1
+fi
+
 esempio=$1
 if [ ! -f "$esempio" ]
 then
-  echo "non trovo il file $esempio"
+  esempiopath=`$ccontour filepath $esempio`
+  status=$?
+  if [ "$status" != "0" ]
+  then
+    if [ "$status" = "10" ]
+    then
+      echo "Cannot find file $esempio"
+      exit $status
+    else
+      echo "Unknown error code $status from $ccontour filepath $esempio"
+      exit 11
+    fi
+  fi
+  esempio=${esempiopath}
+fi
+
+if [ ! -f "$esempio" ]
+then
+  echo "Cannot find file $esempio"
   exit 2
 fi
 
@@ -104,7 +129,7 @@ then
     echo "file $morsefile already exists, cannot proceed"
     exit 2
   fi
-  contour knot2morse $esempio >$morsefile
+  $ccontour knot2morse $esempio >$morsefile
   esempio="$morsefile"
   removemorse="1"
 fi
@@ -130,17 +155,17 @@ then
 fi
 
 basta=""
-if contour print $esempio 2>/dev/null | grep -q "\[no info"
+if $ccontour print $esempio 2>/dev/null | grep -q "\[no info"
 then
   basta="1"
   echo "Some informations on arcs are missing for $esempio:"
-  contour print $esempio
+  $ccontour print $esempio
 fi
 
-if ! contour isappcon $esempio 2>/dev/null >/dev/null 
+if ! $ccontour isappcon $esempio 2>/dev/null >/dev/null 
 then
   basta="1"
-  contour isappcon $esempio
+  $ccontour isappcon $esempio
 fi
 
 if [ -e deposito ]
@@ -168,7 +193,7 @@ mkdir deposito
 mkdir $fatti
 
 #cp $esempio deposito/$nomeesempio
-contour print $esempio >deposito/$nomeesempio
+$ccontour print $esempio >deposito/$nomeesempio
 
 #
 # ci deve essere un deposito da cui pescare gli sketch da
@@ -189,14 +214,14 @@ do
     if [ -z "$rr" ]
     then
 #      echo "Trasformo $file..."
-      rules=`contour testallrules <$file 2>/dev/null | tail -1`
+      rules=`$ccontour testallrules <$file 2>/dev/null | tail -1`
 
 #      echo rules=$rules
       for r in $rules
       do
         rmod=`echo $r | tr ":" "-"`
         echo "Transforming $file with rule $r"
-        contour applyrule $r <$file 2>/dev/null >$file.$rmod
+        $ccontour applyrule $r <$file 2>/dev/null >$file.$rmod
         incasella $file.$rmod $nomeesempio .albero
       done
     fi
