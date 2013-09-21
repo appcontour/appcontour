@@ -64,6 +64,7 @@
 #define ACTION_CONNECTEDSUM 45
 #define ACTION_ANY2MORSE 46
 #define ACTION_GIOVECANONIFY 47
+#define ACTION_FILEPATH 48
 
 #ifndef EXAMPLES_DIR
   #define EXAMPLES_DIR ""
@@ -89,6 +90,7 @@ struct tagged_data user_data;
 void ccid_isvalidp (int ccid, int count);
 FILE *open_description_file (char *arg);
 FILE *new_file (FILE *oldfile, FILE *newfile);
+static char examplesfilename[MAXFILELENGTH];
 
 int
 main (int argc, char *argv[])
@@ -306,6 +308,10 @@ main (int argc, char *argv[])
       {
         infile = open_description_file (argv[i]);
       } else infile2 = open_description_file (argv[i]);
+      if (action == ACTION_FILEPATH)
+      {
+         printf ("%s\n", examplesfilename);
+      }
     }
     if (strcmp(argv[i],"applyrule") == 0 || strcmp(argv[i],"rule") == 0)
     {
@@ -411,6 +417,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"insidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"ofg") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"outsidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"filepath") == 0) action = ACTION_FILEPATH;
     if (strcmp(argv[i],"evert") == 0)
     {
       action = ACTION_EVERT;
@@ -434,6 +441,11 @@ main (int argc, char *argv[])
   if (action == ACTION_NONE) action = ACTION_PRINTSKETCH;
 
   if (infile == 0) infile = stdin;
+  if (action == ACTION_FILEPATH)
+  {
+    if (infile == stdin) printf ("<stdin>\n");
+    exit (0);
+  }
 
   if (infiles < 2 && infile2 != 0)
   {
@@ -1030,11 +1042,11 @@ FILE *
 open_description_file (char *arg)
 {
   FILE *infile;
-  char examplesfilename[MAXFILELENGTH];
   char *subdirs[]={".", "immersed", 0};
   char *exts[]={"morse", "sketch", "knot", 0};
   int subdirid, extid, len;
 
+  strncpy (examplesfilename, arg, MAXFILELENGTH);
   infile = fopen (arg, "r");
   if (infile) return (infile);
   if (! isalnum (arg[0]) || EXAMPLES_DIR[0] == 0 )
@@ -1073,7 +1085,7 @@ open_description_file (char *arg)
 
 /*
  * a few commands require two descriptions, in which case
- * the use may indicate two files instead of a single file
+ * the user may indicate two files instead of a single file
  * containing both descriptions.
  */
 

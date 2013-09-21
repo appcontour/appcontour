@@ -1,6 +1,51 @@
 #!/bin/bash
 #
-example=$1
+origexample=$1
+example=${origexample}
+
+searchdirs="/usr/local/share/appcontour/examples /usr/share/appcontour/examples"
+extensions=".morse .sketch .knot"
+
+if [ ! -f "$example" ]
+then
+  # first search in current directory
+  for ext in $extensions
+  do
+    if [ -f ${example}${ext} ]
+    then
+      example=${example}${ext}
+      break
+    fi
+  done
+fi
+if [ ! -f "$example" ]
+then
+  for d in $searchdirs
+  do
+    if [ -f ${d}/${example} ]
+    then
+      example=${d}/${example}
+      break
+    fi
+    for ext in $extensions
+    do
+      if [ -f ${d}/${example}${ext} ]
+      then
+        example=${d}/${example}${ext}
+        break
+      fi
+    done
+    if [ -f "$example" ]
+    then
+      break
+    fi
+  done
+fi
+
+if [ "$example" != "$origexample" ]
+then
+  echo "Found matching file: $example"
+fi
 
 #ns="--oldnames"
 ns="--newnames"

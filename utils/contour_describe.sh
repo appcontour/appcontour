@@ -247,12 +247,15 @@ then
   nnumber=""
 fi
 
-if [ ! -f $file ]
+$ccontour ishuffman $file -q 2>/dev/null
+status=$?
+if [ "$status" = "10" ]
 then
-  echo "Cannot find file $1"
+  echo "Cannot find file $file"
+  exit $status
 fi
 
-if ! $ccontour ishuffman $file -q 2>/dev/null
+if [ "$status" != "0" ]
 then
   if [ -n "$zork" ]
   then

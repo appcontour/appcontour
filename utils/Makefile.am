@@ -1,4 +1,4 @@
-dist_bin_SCRIPTS = contour_interact.sh pykig.filter kig.filter contour_describe.sh
+dist_bin_SCRIPTS = contour_interact.sh pykig.filter kig.filter contour_describe.sh contour_transform.sh
 
-EXTRA_DIST = analyze.sh checkmorse.sh checkordering.sh contour_transform.sh contour_createpng.sh contour_purgetransformations.sh
+EXTRA_DIST = analyze.sh checkmorse.sh checkordering.sh contour_createpng.sh contour_purgetransformations.sh
 
