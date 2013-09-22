@@ -141,7 +141,7 @@ function zorkdescribe ()
       fi
       if [ -n "$zork" ]
       then
-        echo -n " a ${description[$o]}"
+        echo -n " a ${longdescription[$o]}"
       else
         echo " ${description[$o]}"
       fi
@@ -171,6 +171,7 @@ function zorkdescribe ()
 
 declare -a holes
 declare -a description
+declare -a longdescription
 declare -a objwithgivenholes
 declare -a digits
 declare -a counter
@@ -320,12 +321,27 @@ do
       adj="${adjective[$idx]} $adj"
       ldigits=$[ $ldigits - 1 ]
     done
+    longdescr=""
     case $nholes in
       0)
         descr="sphere"
         ;;
       1)
         descr="torus"
+        ifg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour ifg -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
+        ofg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour ofg -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
+        if [ -n "$ofg" -a -z "$ifg" ]
+        then
+          longdescr="torus (apparently knotted)"
+        fi
+        if [ -n "$ifg" -a -z "$ofg" ]
+        then
+          longdescr="torus (with an apparently knotted hole)"
+        fi
+        if [ -n "$ifg" -a -n "$ofg" ]
+        then
+          longdescr="mysteriously tangled torus"
+        fi
         ;;
       *)
         theholes=`mynumber $nholes`
@@ -335,11 +351,14 @@ do
     if [ -n "$adj" ]
     then
       descr="$adj $descr"
+      if [ -n "$longdescr" ]; then longdescr="$adj $longdescr"; fi
     fi
   else
     descr="component #$comp, genus $nholes"
   fi
   description[$comp]="$descr"
+  longdescription[$comp]="$descr"
+  if [ -n "$longdescr" ]; then longdescription[$comp]="$longdescr"; fi
   count=$[ $count + 1 ]
   counter[$nholes]=$count
 done
