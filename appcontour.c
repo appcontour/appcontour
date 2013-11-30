@@ -225,7 +225,7 @@ void
 showinfo (struct sketch *sketch)
 {
   int numarcs, numsmallarcs, nums1s, numcusps, numregions, numcrossings;
-  int numarcsend1, numholes, twiceohmotoinvariant, poscusps;
+  int numarcsend1, numholes, twiceohmotoinvariant, poscusps, embposcusps;
   int numlcomponents;
   int i, d, dmin;
   double ohmotoinvariant;
@@ -234,7 +234,7 @@ showinfo (struct sketch *sketch)
   struct borderlist *bl;
 
   numarcs = numsmallarcs = numcusps = nums1s = numarcsend1 = 0;
-  poscusps = 0;
+  poscusps = embposcusps = 0;
   for (arc = sketch->arcs; arc; arc = arc->next)
   {
     numarcs++;
@@ -248,6 +248,7 @@ showinfo (struct sketch *sketch)
       for (i = 0; i < arc->cusps; i++)
       {
         dmin = arc->depths[i];
+        if ((dmin % 2) == 0) embposcusps++;
         if ((d = arc->depths[i+1]) < dmin) dmin = d;
         if ((dmin % 2) == 0) poscusps++;
       }
@@ -284,7 +285,10 @@ showinfo (struct sketch *sketch)
   if (! quiet) printf ("\nFirst order Vassiliev invariants:\n");
   printf ("Cusps:              %d\n", numcusps);
   if (sketch->huffman_labelling)
+  {
     printf ("Positive cusps:     %d\n", poscusps);
+    printf ("Positively embedded cusps: %d\n", embposcusps);
+  }
   printf ("Crossings:          %d\n", numcrossings);
   printf ("Bennequin:          %.1lf\n", ohmotoinvariant);
 
