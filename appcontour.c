@@ -285,10 +285,7 @@ showinfo (struct sketch *sketch)
   if (! quiet) printf ("\nFirst order Vassiliev invariants:\n");
   printf ("Cusps:              %d\n", numcusps);
   if (sketch->huffman_labelling)
-  {
     printf ("Positive cusps:     %d\n", poscusps);
-    printf ("Positively embedded cusps: %d\n", embposcusps);
-  }
   printf ("Crossings:          %d\n", numcrossings);
   printf ("Bennequin:          %.1lf\n", ohmotoinvariant);
 
@@ -298,6 +295,8 @@ showinfo (struct sketch *sketch)
   printf ("Link components:    %d\n", numlcomponents);
   printf ("Loops:              %d\n", nums1s);
   printf ("Nodes (cusps+cross):%d\n", numcusps + numcrossings);
+  if (sketch->huffman_labelling)
+    printf ("Positively embedded cusps: %d\n", embposcusps);
   printf ("Regions:            %d\n", numregions);
   printf ("Connected comp.:    %d\n", numholes);
 
