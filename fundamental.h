@@ -2,6 +2,7 @@
  * definitions for the computation of the fundamental group
  */
 
+#define FG_UNDEF (-2)
 #define FG_SURFACE 0
 #define FG_INTERNAL 1
 #define FG_EXTERNAL (-1)
@@ -107,6 +108,7 @@ struct presentationrule {
  */
 
 void compute_fundamental (struct ccomplex *cc);
+int complex_characteristic (struct ccomplex *cc);
 struct presentation *compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc);
 void print_presentation (struct presentation *p);
 int simplify_presentation (struct presentation *p);

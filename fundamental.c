@@ -2127,3 +2127,16 @@ cellcomplex_checkconsistency (struct ccomplex *cc)
   return (1);
 }
 
+/*
+ * compute the Euler characteristic of a cell complex
+ */
+
+int
+complex_characteristic (struct ccomplex *cc)
+{
+  if (debug) cellcomplex_checkconsistency (cc);
+  if (debug) printf ("Nodes: %d, arcs: %d, faces: %d\n", cc->nodenum, cc->arcnum, cc->facenum);
+
+  return (cc->nodenum - cc->arcnum + cc->facenum);
+}
+

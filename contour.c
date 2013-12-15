@@ -98,7 +98,8 @@ main (int argc, char *argv[])
   struct sketch *sketch, *s1, *s2;
   int ori = 0, i, count, action=ACTION_NONE, res, ccid = 0;
   unsigned int rndseed = 0;
-  int newextregion = 0, fg_type;
+  int newextregion = 0;
+  int fg_type = FG_UNDEF;
   char rule[10], *endch, *envvar;
   FILE *infile = 0;
   FILE *infile2 = 0;
@@ -274,6 +275,8 @@ main (int argc, char *argv[])
       printf ("  cellcomplex, insidecomplex, outsidecomplex\n");
       printf ("  fundamental, insidefundamental, outsidefundamental\n");
       printf ("  abbreviations: fg, ifg, ofg\n");
+      printf ("  scharacteristic, icharacteristic, ocharacteristic\n");
+      printf ("  abbreviations: sch, ich, och\n");
       printf ("\n File2 can be present only for actions that require two descriptions:\n");
       printf ("  'compare', 'union', 'sum' actions.\n");
       printf ("  alternatively for such actions the two descriptions can be contained\n");
@@ -417,6 +420,12 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"insidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"ofg") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"outsidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"scharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"sch") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"icharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
+    if (strcmp(argv[i],"ich") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
+    if (strcmp(argv[i],"ocharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"och") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"filepath") == 0) action = ACTION_FILEPATH;
     if (strcmp(argv[i],"evert") == 0)
     {
@@ -866,8 +875,31 @@ main (int argc, char *argv[])
 
     case ACTION_CHARACTERISTIC:
     if ((sketch = readcontour (infile)) == 0) exit (14);
-    if (quiet) printf ("%d\n", euler_characteristic (sketch));
-      else printf ("Euler characteristic: %d\n", euler_characteristic (sketch));
+    if (fg_type == FG_UNDEF)
+    {
+      if (quiet) printf ("%d\n", euler_characteristic (sketch));
+        else printf ("Euler characteristic: %d\n", euler_characteristic (sketch));
+      break;
+    }
+    ccomplex = compute_cellcomplex (sketch, fg_type);
+    res = complex_characteristic (ccomplex);
+    if (quiet) printf ("%d\n", complex_characteristic (ccomplex));
+    else {
+      switch (fg_type)
+      {
+        case FG_SURFACE:
+          printf ("Euler characteristic (via cell complex): %d\n", res);
+        break;
+
+        case FG_INTERNAL:
+          printf ("Euler characteristic of inside (via cell complex): %d\n", res);
+        break;
+
+        case FG_EXTERNAL:
+          printf ("Euler characteristic of outside (via cell complex): %d\n", res);
+        break;
+      }
+    }
     break;
 
     case ACTION_INFO:
