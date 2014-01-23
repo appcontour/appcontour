@@ -260,6 +260,7 @@ int *concatenate_depths (struct arc *arcleft, struct arc *arcright);
 
 int arcmult (struct arc *arc);
 void postprocesssketch (struct sketch *s);
+void make_extregion_first (struct sketch *s);
 void computefvalue (struct sketch *s, struct region *extregion, int finfinity);
 int adjust_isexternalinfo (struct sketch *s);
 int iei_process_region (struct region *r);

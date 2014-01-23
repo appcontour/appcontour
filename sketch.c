@@ -834,24 +834,7 @@ postprocesssketch (struct sketch *sketch)
   //free_connected_components (sketch);
   if (debug) printf ("1: porta la regione esterna in prima posizione\n");
 
-  if (sketch->regions->border->sponda)
-  {
-    /* la regione esterna non si trova in prima posizione, devo
-     * cercarla e portarla in prima posizione
-     */
-    assert (sketch->regions->next);
-    for (region = sketch->regions; region->next; region = region->next)
-    {
-      if (region->next->border->sponda == 0)
-      {
-        extregion = region->next;
-        region->next = extregion->next;
-        extregion->next = sketch->regions;
-        sketch->regions = extregion;
-        break;
-      }
-    }
-  }
+  make_extregion_first (sketch);
 
   if (debug && doretagregions) printf ("2: rinumero gli archi e le regioni\n");
   if (debug && !doretagregions) printf ("2: rinumero gli archi\n");
@@ -915,6 +898,31 @@ postprocesssketch (struct sketch *sketch)
   if (debug) printf ("6: controllo correttezza bordo esterno\n");
 
   assert (adjust_isexternalinfo (sketch) == 0);
+}
+
+void
+make_extregion_first (struct sketch *sketch)
+{
+  struct region *region, *extregion;
+
+  if (sketch->regions->border->sponda)
+  {
+    /* la regione esterna non si trova in prima posizione, devo
+     * cercarla e portarla in prima posizione
+     */
+    assert (sketch->regions->next);
+    for (region = sketch->regions; region->next; region = region->next)
+    {
+      if (region->next->border->sponda == 0)
+      {
+        extregion = region->next;
+        region->next = extregion->next;
+        extregion->next = sketch->regions;
+        sketch->regions = extregion;
+        break;
+      }
+    }
+  }
 }
 
 void

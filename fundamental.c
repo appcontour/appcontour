@@ -28,7 +28,8 @@ compute_fundamental (struct ccomplex *cc)
   ccnum = find_spanning_tree (cc);
   if (debug) printf ("Found %d connected components\n", ccnum);
 
-  assert (ccnum >= 1);
+  if (ccnum == 0 && !quiet) printf ("Empty set, there is no fundamental group.\n");
+  assert (ccnum >= 0);
 
   for (cccc = cc->cc; cccc; cccc = cccc->next)
   {
