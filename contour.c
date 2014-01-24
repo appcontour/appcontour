@@ -725,6 +725,7 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     res = put_in_s1 (sketch);
+    make_extregion_first (sketch);
     dorecomputef = 0;
     if (docanonify) postprocesssketch (sketch);
     if (docanonify) canonify (sketch);
