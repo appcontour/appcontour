@@ -4,6 +4,6 @@
 <a,b,c; acACbAB>
 <a,b; >
 <a,b; >
-<a,b; abAB, abAB>
-<a,b; ababABAB, ababABAB>
-<a,b,c; abABcAC, abABcAC>
+<a,b; abAB>
+<a,b; ababABAB>
+<a,b,c; abABcAC>

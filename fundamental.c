@@ -144,6 +144,7 @@ int sp_removeemptyrules (struct presentation *p);
 int sp_simplifyword (struct presentation *p);
 int sp_rotate_to_canonical (struct presentation *p);
 int sp_rotate_to_canonical_single (struct presentationrule *r, int tryrevert);
+int sp_findduplicatewords (struct presentation *p);
 int sp_tryeliminatevariable (struct presentation *p);
 struct presentationrule *sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int optsublen);
 
@@ -175,6 +176,7 @@ simplify_presentation2 (struct presentation *p)
     goon += sp_eliminatevar (p);
     goon += sp_simplifyword (p);
     goon += sp_rotate_to_canonical (p);
+    goon += sp_findduplicatewords (p);
     goon += sp_removeemptyrules (p);
     count += goon;
   }
@@ -434,6 +436,44 @@ sp_rotate_to_canonical_single (struct presentationrule *r, int tryrevert)
   }
  
   return (count + sp_rotate_to_canonical_single (r, 0));
+}
+
+/*
+ * A better simplification would be to find the largest
+ * common sequence between two words, if it is long enough
+ * we can decrease the length of the longest word.
+ *
+ * Simply removing duplicate words works for the simple
+ * examples that we tested.
+ */
+
+int
+sp_findduplicatewords (struct presentation *p)
+{
+  struct presentationrule *r, *s;
+  int count = 0;
+  int i, equal;
+
+  for (r = p->rules; r; r = r->next)
+  {
+    if (r->next == 0) break;
+    for (s = r->next; s; s = s->next)
+    {
+      if (r->length == 0) continue;
+      if (r->length != s->length) continue;
+      equal = 1;
+      for (i = 0; i < r->length; i++)
+      {
+        if (r->var[i] != s->var[i]) {equal = 0; break;}
+      }
+      if (equal)
+      {
+        count++;
+        s->length = 0;
+      }
+    }
+  }
+  return (count);
 }
 
 int
