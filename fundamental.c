@@ -143,7 +143,7 @@ void sp_do_eliminatevar (struct presentation *p, int);
 int sp_removeemptyrules (struct presentation *p);
 int sp_simplifyword (struct presentation *p);
 int sp_rotate_to_canonical (struct presentation *p);
-int sp_rotate_to_canonical_single (struct presentationrule *r);
+int sp_rotate_to_canonical_single (struct presentationrule *r, int tryrevert);
 int sp_tryeliminatevariable (struct presentation *p);
 struct presentationrule *sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int optsublen);
 
@@ -336,13 +336,13 @@ sp_rotate_to_canonical (struct presentation *p)
 
   for (r = p->rules; r; r = r->next)
   {
-    count += sp_rotate_to_canonical_single (r);
+    count += sp_rotate_to_canonical_single (r, 1);
   }
   return (count);
 }
 
 int
-sp_rotate_to_canonical_single (struct presentationrule *r)
+sp_rotate_to_canonical_single (struct presentationrule *r, int tryrevert)
 {
   int count = 0;
   int i, j, iopt, p1, p2;
@@ -372,7 +372,7 @@ sp_rotate_to_canonical_single (struct presentationrule *r)
       }
       if (r->var[p2] != r->var[p1])
       {
-        if (r->var[p2] < r->var[p1]) iopt = i;
+        if (abs(r->var[p2]) < abs(r->var[p1])) iopt = i;
         break;
       }
     }
@@ -390,34 +390,33 @@ sp_rotate_to_canonical_single (struct presentationrule *r)
     }
   }
 
-  // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  return (count);
-  // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  if (tryrevert == 0) return (count);
 
   /* is there a better inverse? */
   betterinverse = 0;
   for (i = 0; i < r->length; i++)
   {
     /* compare word with the inverse starting from i */
-    /* remember to mentally change sign of var or reverted (inverse) */
+    /* remember to mentally change sign of var of reverted (inverse) */
     for (j = 0; j < r->length; j++)
     {
-      // p1 = i;
+      // p1 = j;
       p2 = (i - j + r->length)%r->length;
-      if (r->var[p2]*r->var[i] > 0)
+      if (r->var[p2]*r->var[j] > 0)
       {
         if (r->var[p2] < 0) betterinverse = 1;
         break;
       }
-      if (r->var[p2] + r->var[i] != 0)
+      if (r->var[p2] + r->var[j] != 0)
       {
-        if (r->var[i] + r->var[p2] > 0) betterinverse = 1;
+        if (abs(r->var[p2]) < abs(r->var[j])) betterinverse = 1;
         break;
       }
     }
   }
 
   if (betterinverse == 0) return (count);
+
   count++;
   /* invert! */
  
@@ -434,7 +433,7 @@ sp_rotate_to_canonical_single (struct presentationrule *r)
     r->var[i] = -jsaved;
   }
  
-  return (count + sp_rotate_to_canonical_single (r));
+  return (count + sp_rotate_to_canonical_single (r, 0));
 }
 
 int
