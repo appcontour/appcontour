@@ -142,6 +142,8 @@ int sp_eliminatevar (struct presentation *p);
 void sp_do_eliminatevar (struct presentation *p, int);
 int sp_removeemptyrules (struct presentation *p);
 int sp_simplifyword (struct presentation *p);
+int sp_rotate_to_canonical (struct presentation *p);
+int sp_rotate_to_canonical_single (struct presentationrule *r);
 int sp_tryeliminatevariable (struct presentation *p);
 struct presentationrule *sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int optsublen);
 
@@ -172,6 +174,7 @@ simplify_presentation2 (struct presentation *p)
     goon = 0;
     goon += sp_eliminatevar (p);
     goon += sp_simplifyword (p);
+    goon += sp_rotate_to_canonical (p);
     goon += sp_removeemptyrules (p);
     count += goon;
   }
@@ -323,6 +326,115 @@ sp_simplifyword (struct presentation *p)
     }
   }
   return (count);
+}
+
+int
+sp_rotate_to_canonical (struct presentation *p)
+{
+  struct presentationrule *r;
+  int count = 0;
+
+  for (r = p->rules; r; r = r->next)
+  {
+    count += sp_rotate_to_canonical_single (r);
+  }
+  return (count);
+}
+
+int
+sp_rotate_to_canonical_single (struct presentationrule *r)
+{
+  int count = 0;
+  int i, j, iopt, p1, p2;
+  int firstvar, jsaved;
+  int betterinverse;
+
+  if (r->length <= 0) return (0);  /* already canonical */
+  if (r->length == 1)
+  {
+    if (r->var[0] > 0) return (0); /* already canonical */
+    r->var[0] = -r->var[0];        /* invert single variable */
+    return (1);
+  }
+
+  iopt = 0;
+  for (i = 1; i < r->length; i++)
+  {
+    /* lexicographical comparison */
+    for (j = 0; j < r->length; j++)
+    {
+      p1 = (iopt + j)%r->length;
+      p2 = (i + j)%r->length;
+      if (r->var[p2]*r->var[p1] < 0)  /* different sign */
+      {
+        if (r->var[p2] > 0) iopt = i; /* positive wins */
+        break;
+      }
+      if (r->var[p2] != r->var[p1])
+      {
+        if (r->var[p2] < r->var[p1]) iopt = i;
+        break;
+      }
+    }
+  }
+
+  if (iopt > 0)
+  {
+    count++;
+    for (i = 0; i < iopt; i++)
+    {
+      firstvar = r->var[0];
+      for (j = 1; j < r->length; j++)
+        r->var[j-1] = r->var[j];
+      r->var[r->length - 1] = firstvar;
+    }
+  }
+
+  // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  return (count);
+  // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+  /* is there a better inverse? */
+  betterinverse = 0;
+  for (i = 0; i < r->length; i++)
+  {
+    /* compare word with the inverse starting from i */
+    /* remember to mentally change sign of var or reverted (inverse) */
+    for (j = 0; j < r->length; j++)
+    {
+      // p1 = i;
+      p2 = (i - j + r->length)%r->length;
+      if (r->var[p2]*r->var[i] > 0)
+      {
+        if (r->var[p2] < 0) betterinverse = 1;
+        break;
+      }
+      if (r->var[p2] + r->var[i] != 0)
+      {
+        if (r->var[i] + r->var[p2] > 0) betterinverse = 1;
+        break;
+      }
+    }
+  }
+
+  if (betterinverse == 0) return (count);
+  count++;
+  /* invert! */
+ 
+  for (i = 0, j = r->length - 1; i <= j; i++, j--)
+  {
+    /* exchange and invert i and j */
+    if (i == j)
+    {
+      r->var[i] = -r->var[i];
+      continue;
+    }
+    jsaved = r->var[j];
+    r->var[j] = -r->var[i];
+    r->var[i] = -jsaved;
+  }
+ 
+  return (count + sp_rotate_to_canonical_single (r));
 }
 
 int
