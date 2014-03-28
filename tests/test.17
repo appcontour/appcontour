@@ -10,3 +10,7 @@
 # 
 ./contour insidefundamental examples/painted_klein_bottle.morse -q
 ./contour outsidefundamental examples/painted_klein_bottle.morse -q
+./contour outsidefundamental examples/genus_2_linked.morse -q
+./contour outsidefundamental examples/linked_rings.knot -q
+./contour outsidefundamental examples/linked_rings_twice.knot -q
+./contour outsidefundamental examples/embrace.knot -q

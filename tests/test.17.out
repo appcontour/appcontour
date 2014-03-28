@@ -1,5 +1,9 @@
-<a,b; baBA>
+<a,b; abAB>
 <a; >
 <a; >
-<a,b,c; cACbABa>
+<a,b,c; acACbAB>
 <a,b; >
+<a,b; >
+<a,b; abAB, abAB>
+<a,b; ababABAB, ababABAB>
+<a,b,c; abABcAC, abABcAC>
