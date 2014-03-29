@@ -12,6 +12,7 @@
 
 extern int debug;
 extern int quiet;
+extern int verbose;
 
 void
 compute_fundamental (struct ccomplex *cc)
@@ -38,6 +39,7 @@ compute_fundamental (struct ccomplex *cc)
     if (debug) print_presentation (cccc->p);
     simplify_presentation (cccc->p);
     print_presentation (cccc->p);
+    if (verbose) print_exponent_matrix (cccc->p);
   }
 }
 
@@ -602,6 +604,34 @@ print_presentation (struct presentation *p)
     }
   }
   printf (">\n");
+}
+
+/*
+ * print exponent matrix
+ */
+
+void
+print_exponent_matrix (struct presentation *p)
+{
+  struct presentationrule *r;
+  int i, j, sum;
+
+  printf ("Exponent sum matrix:\n");
+  for (i = 1; i <= p->gennum; i++)
+  {
+    printf ("[");
+    for (r = p->rules; r; r = r->next)
+    {
+      sum = 0;
+      for (j = 0; j < r->length; j++)
+      {
+        if (abs(r->var[j]) != i) continue;
+        if (r->var[j] > 0) sum++; else sum--;
+      }
+      printf ("%3d", sum);
+    }
+    printf ("]\n");
+  }
 }
 
 /*

@@ -14,3 +14,4 @@
 ./contour outsidefundamental examples/linked_rings.knot -q
 ./contour outsidefundamental examples/linked_rings_twice.knot -q
 ./contour outsidefundamental examples/embrace.knot -q
+./contour ofg examples/borromeanrings.knot -q
