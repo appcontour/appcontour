@@ -676,7 +676,7 @@ getarcinfo (int key, FILE *file,
     if (orientation*bleft->orientation < 0)
         fprintf (stderr, "INCOMPATIBLE orientation for arc %d\n", arc->tag);
       else
-        if (verbose) fprintf (stderr, "duplicate orientation for arc %d\n", arc->tag);
+        if (verbose >= 2) fprintf (stderr, "duplicate orientation for arc %d\n", arc->tag);
     orientation = bleft->orientation;
     // return (ORIENT_EMPTY);
   }

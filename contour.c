@@ -184,7 +184,7 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"-v") == 0 || strcmp(argv[i],"--verbose") == 0)
     {
-      verbose = 1;
+      verbose++;
       continue;
     }
     if (strcmp(argv[i],"--debug") == 0)
