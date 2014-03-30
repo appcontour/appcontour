@@ -642,16 +642,30 @@ print_exponent_matrix (struct presentation *p)
  * interact with user about finitely presented group
  */ 
 
+struct presentationrule *find_nth_relator (struct presentation *p, int n);
+void nielsen_invrel (struct presentationrule *r);
+void rotate_relator (struct presentationrule *r, int rots);
+struct presentationrule *nielsen_exchange_relators (struct presentationrule *list,
+  struct presentationrule *r1,
+  struct presentationrule *r2);
+
 void
 fg_interactive (struct presentation *p)
 {
+  struct presentationrule *r, *r1, *r2;
   char commandline[100];
   char *chpt, *cmd;
+  int m, n, nsaved, rots;
+  int print = 1;
 
-  print_presentation (p);
-  print_exponent_matrix (p);
   while (1)
   {
+    if (print)
+    {
+      print_presentation (p);
+      print_exponent_matrix (p);
+    }
+    print = 0;
     printf ("--> ");
     if (fgets (commandline, 99, stdin) == 0) break;
     chpt = commandline;
@@ -663,12 +677,136 @@ fg_interactive (struct presentation *p)
       printf ("Valid commands:\n");
       printf (" quit\n");
       printf (" help\n");
+      printf (" negcol <n>\n");
+      printf (" xchcol <m> <n>\n");
+      printf (" rotcol <n> <rots>\n");
+      continue;
+    }
+    if (strcasecmp (cmd, "negcol") == 0)
+    {
+      n = atoi (chpt);
+      r = find_nth_relator(p, n);
+      if (r == 0) {printf ("Invalid column number %d\n", n); continue;}
+      nielsen_invrel (r);
+      print = 1;
+      continue;
+    }
+    if (strcasecmp (cmd, "rotcol") == 0)
+    {
+      n = (int) strtol (chpt, &chpt, 10);
+      rots = (int) strtol (chpt, &chpt, 10);
+      r = find_nth_relator(p, n);
+      if (r == 0) {printf ("Invalid column number %d\n", n); continue;}
+      rotate_relator (r, rots);
+      print = 1;
+      continue;
+    }
+    if (strcasecmp (cmd, "xchcol") == 0)
+    {
+      m = (int) strtol (chpt, &chpt, 10);
+      n = (int) strtol (chpt, &chpt, 10);
+      if (n < m) {nsaved = n; n = m; m = nsaved;}
+      r1 = find_nth_relator(p, m);
+      r2 = find_nth_relator(p, n);
+      if (r1 == 0 || r2 == 0) {printf ("Invalid column number %d or %d\n", m, n); continue;}
+      if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
+      p->rules = nielsen_exchange_relators (p->rules, r1, r2);
+      print = 1;
       continue;
     }
     if (*cmd == 0) continue;
     if (*cmd == EOF) break;
     printf ("Invalid command: %s\n", cmd);
   }
+}
+
+/*
+ * find relator by column number
+ */
+
+struct presentationrule *
+find_nth_relator (struct presentation *p, int n)
+{
+  int i;
+  struct presentationrule *r;
+
+  if (n <= 0) return (0);
+  for (i = 1, r = p->rules; i < n && r; i++, r = r->next);
+  return (r);
+}
+
+void
+nielsen_invrel (struct presentationrule *r)
+{
+  int i, j, saved;
+
+  if (r->length == 0) return;
+  for (i = 0, j = r->length - 1; i <= j; i++, j--)
+  {
+    if (i == j) {r->var[i] = -r->var[i]; continue;}
+    saved = r->var[i];
+    r->var[i] = -r->var[j];
+    r->var[j] = -saved;
+  }
+}
+
+void
+rotate_relator (struct presentationrule *r, int rots)
+{
+  int i, j;
+  int saved;
+
+  if (r->length <= 1) return;
+  while (rots < 0) rots += r->length;
+  if (rots == 0) return;
+  for (i = 0; i < rots; i++)
+  {
+    saved = r->var[0];
+    for (j = 1; j < r->length; j++)
+    {
+      r->var[j-1] = r->var[j];
+    }
+    r->var[r->length - 1] = saved;
+  }
+}
+
+struct presentationrule *
+nielsen_exchange_relators (struct presentationrule *list,
+                           struct presentationrule *r1,
+                           struct presentationrule *r2)
+{
+  struct presentationrule *r, *r1next, *r2next;
+  assert (list != r2);
+  assert (list && r1 && r2);
+
+  if (list != r1)
+  {
+    list->next = nielsen_exchange_relators (list->next, r1, r2);
+    return (list);
+  }
+
+  /* r1 is the first element */
+  r1next = r1->next;
+  r2next = r2->next;
+
+  if (r1next == r2)
+  {
+    r1->next = r2next;
+    r2->next = r1;
+    return (r2);
+  }
+  for (r = r1; r; r = r->next)
+  {
+    if (r->next == r2)
+    {
+      r->next = r1;
+      break;
+    }
+  }
+  r1->next = r2next;
+  r2->next = r1next;
+
+  return (r2);
 }
 
 /*
