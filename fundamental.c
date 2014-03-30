@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <string.h>
 #include "contour.h"
 #include "fundamental.h"
 
@@ -13,6 +14,7 @@
 extern int debug;
 extern int quiet;
 extern int verbose;
+extern int interactive;
 
 void
 compute_fundamental (struct ccomplex *cc)
@@ -38,6 +40,7 @@ compute_fundamental (struct ccomplex *cc)
     cccc->p = compute_fundamental_single (cc, cccc);
     if (debug) print_presentation (cccc->p);
     simplify_presentation (cccc->p);
+    if (interactive) fg_interactive (cccc->p);
     print_presentation (cccc->p);
     if (verbose) print_exponent_matrix (cccc->p);
   }
@@ -632,6 +635,39 @@ print_exponent_matrix (struct presentation *p)
       printf ("%3d", sum);
     }
     printf ("]\n");
+  }
+}
+
+/*
+ * interact with user about finitely presented group
+ */ 
+
+void
+fg_interactive (struct presentation *p)
+{
+  char commandline[100];
+  char *chpt, *cmd;
+
+  print_presentation (p);
+  print_exponent_matrix (p);
+  while (1)
+  {
+    printf ("--> ");
+    if (fgets (commandline, 99, stdin) == 0) break;
+    chpt = commandline;
+    while (*chpt && isspace (*chpt)) chpt++;
+    cmd = strsep (&chpt, " \t\n");
+    if (strcasecmp (cmd, "quit") == 0) break;
+    if (strcasecmp (cmd, "help") == 0)
+    {
+      printf ("Valid commands:\n");
+      printf (" quit\n");
+      printf (" help\n");
+      continue;
+    }
+    if (*cmd == 0) continue;
+    if (*cmd == EOF) break;
+    printf ("Invalid command: %s\n", cmd);
   }
 }
 

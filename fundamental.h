@@ -112,6 +112,7 @@ int complex_characteristic (struct ccomplex *cc);
 struct presentation *compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc);
 void print_presentation (struct presentation *p);
 void print_exponent_matrix (struct presentation *p);
+void fg_interactive (struct presentation *p);
 int simplify_presentation (struct presentation *p);
 void free_presentation (struct presentation *p);
 int complex_melt (struct ccomplex *cc);

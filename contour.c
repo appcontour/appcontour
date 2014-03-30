@@ -74,6 +74,7 @@
 int debug = 0;
 int quiet = 0;
 int verbose = 0;
+int interactive = 0;
 int heisemberg = -1;
 int docanonify = 1;
 int useoldcanonify = 0;
@@ -185,6 +186,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"-v") == 0 || strcmp(argv[i],"--verbose") == 0)
     {
       verbose++;
+      continue;
+    }
+    if (strcmp(argv[i],"-i") == 0 || strcmp(argv[i],"--interactive") == 0)
+    {
+      interactive++;
       continue;
     }
     if (strcmp(argv[i],"--debug") == 0)
