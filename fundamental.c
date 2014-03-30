@@ -495,6 +495,7 @@ sp_removeemptyrules (struct presentation *p)
       {
         if (pr) pr->next = r->next;
          else p->rules = r->next;
+	free (r);
         goon++;
         count++;
         break;
