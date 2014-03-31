@@ -1,0 +1,22 @@
+#
+# wikipedia example
+#
+# by computing the fundamental group and interactively
+# simplifying it, we get the free group <a; >
+#
+# so by the unknotting theorem this is the unknot
+#
+#
+# interaction can be obtained with "contour -i ofg wikipediaknot
+#
+knot {
+  ^  ^  ^    ;
+|  X   X  |  ;
+ x  X  ^ | | ;
+| x  x  | x  ;
+|| ||  X | | ;
+| || x  X  | ;
+ X U  X  X   ;
+|   U  U  |  ;
+     U       ;
+}
