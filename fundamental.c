@@ -685,11 +685,16 @@ fg_interactive (struct presentation *p)
       printf ("Valid commands:\n");
       printf (" quit\n");
       printf (" help\n");
+      printf ("Column transformations:\n");
       printf (" negcol <n>\n");
       printf (" xchcol <m> <n>\n");
       printf (" addcol <m> <n> : add col n to col m (right mult)\n");
       printf (" subcol <m> <n> : subtract col n to col m (right mult with inverse)\n");
-      printf (" rotcol <n> <rots>\n");
+      printf ("Row transformations:\n");
+      printf ("Relators and simplification:\n");
+      printf (" rotrel <n> <rots> : rotate relator <n> left <rots> times\n");
+      printf (" simplify     : simplify relators and drop empty relators\n");
+      printf (" fullsimplify : perform a complete simplification (might change signs\n");
       print = 0;
       continue;
     }
@@ -742,6 +747,17 @@ fg_interactive (struct presentation *p)
       if (r1 == 0 || r2 == 0) {printf ("Invalid column number %d or %d\n", m, n); continue;}
       if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
       p->rules = nielsen_exchange_relators (p->rules, r1, r2);
+      continue;
+    }
+    if (strcasecmp (cmd, "simplify") == 0)
+    {
+      sp_simplifyword (p);
+      sp_removeemptyrules (p);
+      continue;
+    }
+    if (strcasecmp (cmd, "fullsimplify") == 0)
+    {
+      simplify_presentation (p);
       continue;
     }
     print = 0;
@@ -846,11 +862,59 @@ nielsen_mulright (struct presentation *p,
                   struct presentationrule *r2,
                   int expon)
 {
-  printf ("NON IMPLEMENTATO\n");
+  int i, j, k, totlen;
+  struct presentationrule *r, *rr;
+
+  assert (p && r1 && r2);
+  if (expon == 0) return;
+
+  totlen = r1->length + abs(expon)*r2->length;
+
+  r = (struct presentationrule *) malloc (sizeof (struct presentationrule) + totlen*sizeof(int));
+  r->next = r1->next;
+  r->length = totlen;
+
+  for (i = 0; i < r1->length; i++)
+  {
+    r->var[i] = r1->var[i];
+  }
+  assert (i == r1->length);
+
+  for (k = 0; k < abs(expon); k++)
+  {
+    for (j = 0; j < r2->length; j++)
+    {
+      if (expon > 0)
+      {
+        r->var[i++] = r2->var[j];
+      } else {
+        r->var[i++] = - r2->var[r2->length - j - 1];
+      }
+    }
+  }
+  assert (i == r->length);
+
+  r->next = r1->next;
+  if (p->rules == r1)
+  {
+    p->rules = r;
+  } else {
+    for (rr = p->rules; rr; rr = rr->next)
+    {
+      if (rr->next == r1)
+      {
+        rr->next = r;
+        break;
+      }
+    }
+  }
+
+  free (r1);
+  return;
 }
 
 /*
- * procedures for the semplification of the cell complex
+ * procedures for the simplification of the cell complex
  */
 
 int
