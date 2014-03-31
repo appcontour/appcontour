@@ -39,6 +39,7 @@ compute_fundamental (struct ccomplex *cc)
     if (ccnum > 1 && !quiet) printf ("\nConnected component %d:\n", cccc->tag);
     cccc->p = compute_fundamental_single (cc, cccc);
     if (debug) print_presentation (cccc->p);
+    if (interactive >= 2) fg_interactive (cccc->p);
     simplify_presentation (cccc->p);
     if (interactive) fg_interactive (cccc->p);
     print_presentation (cccc->p);
@@ -642,12 +643,19 @@ print_exponent_matrix (struct presentation *p)
  * interact with user about finitely presented group
  */ 
 
+/* local prototipes */
+
 struct presentationrule *find_nth_relator (struct presentation *p, int n);
 void nielsen_invrel (struct presentationrule *r);
 void rotate_relator (struct presentationrule *r, int rots);
 struct presentationrule *nielsen_exchange_relators (struct presentationrule *list,
-  struct presentationrule *r1,
-  struct presentationrule *r2);
+                         struct presentationrule *r1,
+                         struct presentationrule *r2);
+void nielsen_mulright (struct presentation *p,
+                       struct presentationrule *r1,
+                       struct presentationrule *r2, int expon);
+
+/* user interaction */
 
 void
 fg_interactive (struct presentation *p)
@@ -665,7 +673,7 @@ fg_interactive (struct presentation *p)
       print_presentation (p);
       print_exponent_matrix (p);
     }
-    print = 0;
+    print = 1;
     printf ("--> ");
     if (fgets (commandline, 99, stdin) == 0) break;
     chpt = commandline;
@@ -679,7 +687,10 @@ fg_interactive (struct presentation *p)
       printf (" help\n");
       printf (" negcol <n>\n");
       printf (" xchcol <m> <n>\n");
+      printf (" addcol <m> <n> : add col n to col m (right mult)\n");
+      printf (" subcol <m> <n> : subtract col n to col m (right mult with inverse)\n");
       printf (" rotcol <n> <rots>\n");
+      print = 0;
       continue;
     }
     if (strcasecmp (cmd, "negcol") == 0)
@@ -688,7 +699,6 @@ fg_interactive (struct presentation *p)
       r = find_nth_relator(p, n);
       if (r == 0) {printf ("Invalid column number %d\n", n); continue;}
       nielsen_invrel (r);
-      print = 1;
       continue;
     }
     if (strcasecmp (cmd, "rotcol") == 0)
@@ -698,7 +708,28 @@ fg_interactive (struct presentation *p)
       r = find_nth_relator(p, n);
       if (r == 0) {printf ("Invalid column number %d\n", n); continue;}
       rotate_relator (r, rots);
-      print = 1;
+      continue;
+    }
+    if (strcasecmp (cmd, "addcol") == 0)
+    {
+      m = (int) strtol (chpt, &chpt, 10);
+      n = (int) strtol (chpt, &chpt, 10);
+      r1 = find_nth_relator(p, m);
+      r2 = find_nth_relator(p, n);
+      if (r1 == 0 || r2 == 0) {printf ("Invalid column number %d or %d\n", m, n); continue;}
+      if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
+      nielsen_mulright (p, r1, r2, 1);
+      continue;
+    }
+    if (strcasecmp (cmd, "subcol") == 0)
+    {
+      m = (int) strtol (chpt, &chpt, 10);
+      n = (int) strtol (chpt, &chpt, 10);
+      r1 = find_nth_relator(p, m);
+      r2 = find_nth_relator(p, n);
+      if (r1 == 0 || r2 == 0) {printf ("Invalid column number %d or %d\n", m, n); continue;}
+      if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
+      nielsen_mulright (p, r1, r2, -1);
       continue;
     }
     if (strcasecmp (cmd, "xchcol") == 0)
@@ -711,9 +742,9 @@ fg_interactive (struct presentation *p)
       if (r1 == 0 || r2 == 0) {printf ("Invalid column number %d or %d\n", m, n); continue;}
       if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
       p->rules = nielsen_exchange_relators (p->rules, r1, r2);
-      print = 1;
       continue;
     }
+    print = 0;
     if (*cmd == 0) continue;
     if (*cmd == EOF) break;
     printf ("Invalid command: %s\n", cmd);
@@ -807,6 +838,15 @@ nielsen_exchange_relators (struct presentationrule *list,
   r2->next = r1next;
 
   return (r2);
+}
+
+void
+nielsen_mulright (struct presentation *p,
+                  struct presentationrule *r1,
+                  struct presentationrule *r2,
+                  int expon)
+{
+  printf ("NON IMPLEMENTATO\n");
 }
 
 /*
