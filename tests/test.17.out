@@ -7,4 +7,4 @@
 <a,b; abAB>
 <a,b; ababABAB>
 <a,b,c; abABcAC>
-<a,b,c; aBCbcACBcb, acACbcaCAB, acAbaBCbAB>
+<a,b,c; acACbcaCAB, acAbaBCbAB>

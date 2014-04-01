@@ -154,6 +154,9 @@ int sp_rotate_to_canonical_single (struct presentationrule *r, int tryrevert);
 int sp_findduplicatewords (struct presentation *p);
 int sp_tryeliminatevariable (struct presentation *p);
 struct presentationrule *sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int optsublen);
+void nielsen_mulright (struct presentation *p,
+                       struct presentationrule *r1,
+                       struct presentationrule *r2, int expon);
 
 int
 simplify_presentation (struct presentation *p)
@@ -182,13 +185,13 @@ simplify_presentation2 (struct presentation *p)
     goon = 0;
     goon += sp_eliminatevar (p);
     goon += sp_simplifyword (p);
-    //goon += sp_findcommonsubstring (p, 1);
-    goon += sp_rotate_to_canonical (p);
-    goon += sp_findduplicatewords (p);
+    goon += sp_findcommonsubstring (p, 1);
+    //goon += sp_rotate_to_canonical (p);
+    //goon += sp_findduplicatewords (p);
     goon += sp_removeemptyrules (p);
     count += goon;
   }
-  //count += sp_rotate_to_canonical (p);
+  count += sp_rotate_to_canonical (p);
   return (count);
 }
 
@@ -465,9 +468,8 @@ sp_findcommonsubstring (struct presentation *p, int bidirectional)
 {
   int goon;
   int count = 0;
-  struct presentationrule *r1, *r2;
+  struct presentationrule *r1, *r2, *lr, *sr;
 
-printf ("NOT WORKING YET!!!\n");
   goon = 1;
   while (goon)
   {
@@ -476,7 +478,21 @@ printf ("NOT WORKING YET!!!\n");
     {
       for (r2 = r1->next; r2; r2 = r2->next)
       {
-        goon = sp_fcs_r1r2 (r1, r2, bidirectional, 1);  //XXXXXXXXX
+        lr = r1;
+        sr = r2;
+        if (r1->length < r2->length) {lr = r2; sr = r1;}
+        goon = sp_fcs_r1r2 (lr, sr, bidirectional, sr->length/2 + 1);
+        if (goon)
+        {
+          assert (2*abs(goon) > sr->length);
+          count++;
+          if (goon > 0)
+          {
+            nielsen_mulright (p, lr, sr, -1);
+          } else {
+            nielsen_mulright (p, lr, sr, 1);
+          }
+        }
         if (goon) break;
       }
       if (goon) break;
@@ -495,6 +511,8 @@ printf ("NOT WORKING YET!!!\n");
  * the common part is at the end.
  * if matching is reverse, then the matching part in r2
  * is at the beginning.
+ * returns length of common subsequence (negative if reversed
+ * in r2) if rotation takes place, otherwise return 0
  */
 
 int
@@ -505,7 +523,7 @@ sp_fcs_r1r2 (struct presentationrule *r1,
   //struct presentationrule *rsave;
   int i, j, k, ik, jk, iopt, jopt, direction;
   int saved, numofrot, kmax = 0;
-  int minlen;
+  int minlen, retcode;
 
   minlen = r1->length;
   if (r2->length < minlen) minlen = r2->length;
@@ -557,7 +575,8 @@ sp_fcs_r1r2 (struct presentationrule *r1,
     }
   }
 
-  printf ("********* kmax = %d; i = %d, j = %d, direction = %d\n", kmax, iopt, jopt, direction);
+  //printf ("********* kmax = %d; i = %d, j = %d, direction = %d\n", kmax, iopt, jopt, direction);
+  retcode = 0;
   if (kmax >= kminforrotation)
   {
     /* perform rotation */
@@ -571,9 +590,13 @@ sp_fcs_r1r2 (struct presentationrule *r1,
         r1->var[k-1] = r1->var[k];
       r1->var[r1->length - 1] = saved;
     }
+    retcode = -kmax;
     numofrot = (jopt - kmax + r2->length + 1)%r2->length;
     if (direction > 0)
+    {
+      retcode = kmax;
       numofrot = (jopt + kmax)%r2->length;
+    }
     for (j = 0; j < numofrot; j++)
     {
       saved = r2->var[0];
@@ -583,7 +606,7 @@ sp_fcs_r1r2 (struct presentationrule *r1,
     }
   }
 
-  return (kmax);
+  return (retcode);
 }
 
 int
@@ -784,9 +807,6 @@ void rotate_relator (struct presentationrule *r, int rots);
 struct presentationrule *nielsen_exchange_relators (struct presentationrule *list,
                          struct presentationrule *r1,
                          struct presentationrule *r2);
-void nielsen_mulright (struct presentation *p,
-                       struct presentationrule *r1,
-                       struct presentationrule *r2, int expon);
 
 /* user interaction */
 
@@ -798,6 +818,7 @@ fg_interactive (struct presentation *p)
   char *chpt, *cmd;
   int m, n, nsaved, rots;
   int print = 1;
+  int kmax, direction;
 
   while (1)
   {
@@ -826,8 +847,7 @@ fg_interactive (struct presentation *p)
       printf ("Row transformations:\n");
       printf ("Relators and simplification:\n");
       printf (" rotrel <n> <rots> : rotate relator <n> left <rots> times\n");
-      printf (" simplify     : simplify relators and drop empty relators\n");
-      printf (" fullsimplify : perform a complete simplification (might change signs\n");
+      printf (" simplify : perform a complete simplification (might change signs\n");
       printf (" test r1 r2: find common substring\n");
       print = 0;
       continue;
@@ -885,13 +905,12 @@ fg_interactive (struct presentation *p)
     }
     if (strcasecmp (cmd, "simplify") == 0)
     {
-      sp_simplifyword (p);
-      sp_removeemptyrules (p);
+      simplify_presentation (p);
       continue;
     }
-    if (strcasecmp (cmd, "fullsimplify") == 0)
+    if (strcasecmp (cmd, "common") == 0)
     {
-      simplify_presentation (p);
+      sp_findcommonsubstring (p, 1);
       continue;
     }
     if (strcasecmp (cmd, "test") == 0)
@@ -902,7 +921,14 @@ fg_interactive (struct presentation *p)
       r2 = find_nth_relator(p, n);
       if (r1 == 0 || r2 == 0) {printf ("Invalid column number %d or %d\n", m, n); continue;}
       if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
-      sp_fcs_r1r2 (r1, r2, 1, 1);
+      direction = 1;
+      kmax = sp_fcs_r1r2 (r1, r2, 1, 1);
+      if (kmax < 0)
+      {
+        direction = -1;
+        kmax = -kmax;
+      }
+      if (kmax) printf ("found common subsequence of length %d, direction = %d\n", kmax, direction);
       continue;
     }
     print = 0;
@@ -1055,6 +1081,7 @@ nielsen_mulright (struct presentation *p,
   }
 
   free (r1);
+  sp_simplifyword (p);
   return;
 }
 
