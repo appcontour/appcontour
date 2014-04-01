@@ -148,6 +148,7 @@ int sp_eliminatevar (struct presentation *p);
 void sp_do_eliminatevar (struct presentation *p, int);
 int sp_removeemptyrules (struct presentation *p);
 int sp_simplifyword (struct presentation *p);
+int sp_findcommonsubstring (struct presentation *p, int bidirectional);
 int sp_rotate_to_canonical (struct presentation *p);
 int sp_rotate_to_canonical_single (struct presentationrule *r, int tryrevert);
 int sp_findduplicatewords (struct presentation *p);
@@ -181,11 +182,13 @@ simplify_presentation2 (struct presentation *p)
     goon = 0;
     goon += sp_eliminatevar (p);
     goon += sp_simplifyword (p);
+    //goon += sp_findcommonsubstring (p, 1);
     goon += sp_rotate_to_canonical (p);
     goon += sp_findduplicatewords (p);
     goon += sp_removeemptyrules (p);
     count += goon;
   }
+  //count += sp_rotate_to_canonical (p);
   return (count);
 }
 
@@ -453,6 +456,136 @@ sp_rotate_to_canonical_single (struct presentationrule *r, int tryrevert)
  * examples that we tested.
  */
 
+int sp_fcs_r1r2 (struct presentationrule *r1,
+                 struct presentationrule *r2, 
+                 int bidirectional, int kminforrotation);
+
+int
+sp_findcommonsubstring (struct presentation *p, int bidirectional)
+{
+  int goon;
+  int count = 0;
+  struct presentationrule *r1, *r2;
+
+printf ("NOT WORKING YET!!!\n");
+  goon = 1;
+  while (goon)
+  {
+    goon = 0;
+    for (r1 = p->rules; r1; r1 = r1->next)
+    {
+      for (r2 = r1->next; r2; r2 = r2->next)
+      {
+        goon = sp_fcs_r1r2 (r1, r2, bidirectional, 1);  //XXXXXXXXX
+        if (goon) break;
+      }
+      if (goon) break;
+    }
+    if (goon) sp_simplifyword (p);
+    count += goon;
+  }
+  return (count);
+}
+
+/*
+ * find the longest common subsequence in r1 and r2 (also in
+ * reverse if bidirectional = 1)
+ * if the length of the common subsequence is not less than
+ * kminforrotation then also rotate the two strings such that
+ * the common part is at the end.
+ * if matching is reverse, then the matching part in r2
+ * is at the beginning.
+ */
+
+int
+sp_fcs_r1r2 (struct presentationrule *r1,
+             struct presentationrule *r2, 
+             int bidirectional, int kminforrotation)
+{
+  //struct presentationrule *rsave;
+  int i, j, k, ik, jk, iopt, jopt, direction;
+  int saved, numofrot, kmax = 0;
+  int minlen;
+
+  minlen = r1->length;
+  if (r2->length < minlen) minlen = r2->length;
+  //if (r1->length < r2->length)
+  //{
+  //  rsave = r1;
+  //  r1 = r2;
+  //  r2 = rsave;
+  //}
+  for (i = 0; i < r1->length; i++)
+  {
+    for (j = 0; j < r2->length; j++)
+    {
+      for (k = 0; k <= minlen; k++)
+      {
+        ik = (i + k) % r1->length;
+        jk = (j + k) % r2->length;
+        if (k == minlen || r1->var[ik] != r2->var[jk])
+        { /* sottostringa uguale di lunghezza k */
+          if (k > kmax) /* migliore della precedente */
+          {
+            iopt = i;
+            jopt = j;
+            kmax = k;
+            direction = 1;
+          }
+          break;
+        }
+      }
+      if (bidirectional)
+      {
+        for (k = 0; k <= minlen; k++)
+        {
+          ik = (i + k) % r1->length;
+          jk = (j - k + r2->length) % r2->length;
+          if (k == minlen || r1->var[ik] != - r2->var[jk])
+          { /* sottostringa inversa uguale di lunghezza k */
+            if (k > kmax) /* migliore della precedente */
+            {
+              iopt = i;
+              jopt = j;
+              kmax = k;
+              direction = -1;
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  printf ("********* kmax = %d; i = %d, j = %d, direction = %d\n", kmax, iopt, jopt, direction);
+  if (kmax >= kminforrotation)
+  {
+    /* perform rotation */
+    /* r1: actual start iopt, should be r1->length - kmax */
+    /* rotate left iopt - r1->length + kmax times */
+    numofrot = (iopt + kmax)%r1->length;
+    for (i = 0; i < numofrot; i++)
+    {
+      saved = r1->var[0];
+      for (k = 1; k < r1->length; k++)
+        r1->var[k-1] = r1->var[k];
+      r1->var[r1->length - 1] = saved;
+    }
+    numofrot = (jopt - kmax + r2->length + 1)%r2->length;
+    if (direction > 0)
+      numofrot = (jopt + kmax)%r2->length;
+    for (j = 0; j < numofrot; j++)
+    {
+      saved = r2->var[0];
+      for (k = 1; k < r2->length; k++)
+        r2->var[k-1] = r2->var[k];
+      r2->var[r2->length - 1] = saved;
+    }
+  }
+
+  return (kmax);
+}
+
 int
 sp_findduplicatewords (struct presentation *p)
 {
@@ -695,6 +828,7 @@ fg_interactive (struct presentation *p)
       printf (" rotrel <n> <rots> : rotate relator <n> left <rots> times\n");
       printf (" simplify     : simplify relators and drop empty relators\n");
       printf (" fullsimplify : perform a complete simplification (might change signs\n");
+      printf (" test r1 r2: find common substring\n");
       print = 0;
       continue;
     }
@@ -758,6 +892,17 @@ fg_interactive (struct presentation *p)
     if (strcasecmp (cmd, "fullsimplify") == 0)
     {
       simplify_presentation (p);
+      continue;
+    }
+    if (strcasecmp (cmd, "test") == 0)
+    {
+      m = (int) strtol (chpt, &chpt, 10);
+      n = (int) strtol (chpt, &chpt, 10);
+      r1 = find_nth_relator(p, m);
+      r2 = find_nth_relator(p, n);
+      if (r1 == 0 || r2 == 0) {printf ("Invalid column number %d or %d\n", m, n); continue;}
+      if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
+      sp_fcs_r1r2 (r1, r2, 1, 1);
       continue;
     }
     print = 0;
