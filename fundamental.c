@@ -809,6 +809,8 @@ struct presentationrule *nielsen_exchange_relators (struct presentationrule *lis
                          struct presentationrule *r2);
 void nielsen_invgen (struct presentation *p, int n);
 void nielsen_exchange_generators (struct presentation *p, int m, int n);
+void nielsen_xisabtok (struct presentation *p, int m, int n, int k);
+struct presentationrule *nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk);
 
 /* user interaction */
 
@@ -849,6 +851,8 @@ fg_interactive (struct presentation *p)
       printf ("Row transformations:\n");
       printf (" negrow <n>\n");
       printf (" xchrow <m> <n>\n");
+      printf (" addrow <m> <n> : add row n to row m\n");
+      printf (" subrow <m> <n> : subtract row n to row m\n");
       printf ("Relators and simplification:\n");
       printf (" rotrel <n> <rots> : rotate relator <n> left <rots> times\n");
       printf (" simplify : perform a complete simplification (might change signs\n");
@@ -927,6 +931,28 @@ fg_interactive (struct presentation *p)
       if (n <= 0 || n > p->gennum) {printf ("Invalid row number %d\n", n); continue;}
       if (m == n) {printf ("Same row %d = %d\n", m, n); continue;}
       nielsen_exchange_generators (p, m, n);
+      print = 1;
+      continue;
+    }
+    if (strcasecmp (cmd, "addrow") == 0)
+    {
+      m = (int) strtol (chpt, &chpt, 10);
+      n = (int) strtol (chpt, &chpt, 10);
+      if (m <= 0 || m > p->gennum) {printf ("Invalid row number %d\n", m); continue;}
+      if (n <= 0 || n > p->gennum) {printf ("Invalid row number %d\n", n); continue;}
+      if (m == n) {printf ("Same row %d = %d\n", m, n); continue;}
+      nielsen_xisabtok (p, n, m, -1);
+      print = 1;
+      continue;
+    }
+    if (strcasecmp (cmd, "subrow") == 0)
+    {
+      m = (int) strtol (chpt, &chpt, 10);
+      n = (int) strtol (chpt, &chpt, 10);
+      if (m <= 0 || m > p->gennum) {printf ("Invalid row number %d\n", m); continue;}
+      if (n <= 0 || n > p->gennum) {printf ("Invalid row number %d\n", n); continue;}
+      if (m == n) {printf ("Same row %d = %d\n", m, n); continue;}
+      nielsen_xisabtok (p, n, m, 1);
       print = 1;
       continue;
     }
@@ -1158,6 +1184,88 @@ nielsen_exchange_generators (struct presentation *p, int m, int n)
       }
     }
   }
+}
+
+void
+nielsen_xisabtok (struct presentation *p, int m, int n, int k)
+{
+  int posk, signk;
+
+  assert (m > 0 && m <= p->gennum);
+  assert (n > 0 && n <= p->gennum);
+  assert (m != n);
+
+  if (k == 0) return;
+
+  signk = 1;
+  posk = k;
+  if (k < 0) {signk = -1; posk = -k;}
+
+  p->rules = nielsen_xisabtokl (p->rules, m, n, posk, signk);
+
+  sp_simplifyword (p);
+
+  return;
+}
+
+struct presentationrule *
+nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk)
+{
+  int i, j, kk, numvarm;
+  struct presentationrule *newr;
+
+  assert (posk > 0);
+  assert (signk == 1 || signk == -1);
+  if (r == 0) return (0);
+
+  /* devo calcolare la nuova lunghezza
+   * che aumenta di k*s dove s e' il numero di
+   * occorrenze della variabile m
+   */
+
+  numvarm = 0;
+  for (i = 0; i < r->length; i++)
+  {
+    if (abs(r->var[i]) == m) numvarm++;
+  }
+  if (numvarm == 0)
+  {
+    r->next = nielsen_xisabtokl (r->next, m, n, posk, signk);
+    return (r);
+  }
+  newr = (struct presentationrule *) malloc (sizeof (struct presentationrule)
+                                       + sizeof(int)*(r->length + posk*numvarm));
+
+  for (i = 0, j = 0; i < r->length; i++)
+  {
+    if (abs(r->var[i]) != m)
+    {
+      newr->var[j++] = r->var[i];
+      continue;
+    }
+    if (r->var[i] > 0)
+    {
+      newr->var[j++] = r->var[i];
+      for (kk = 0; kk < posk; kk++)
+      {
+        newr->var[j++] = - signk*n;
+      }
+    } else {
+      for (kk = 0; kk < posk; kk++)
+      {
+        newr->var[j++] = signk*n;
+      }
+      newr->var[j++] = r->var[i];
+    }
+  }
+  newr->length = j;
+  assert (j == r->length + numvarm);
+
+  newr->next = r->next;
+  r->next = 0;
+  free (r);
+  newr->next = nielsen_xisabtokl (newr->next, m, n, posk, signk);
+  return (newr);
 }
 
 /*
