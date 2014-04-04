@@ -65,6 +65,7 @@
 #define ACTION_ANY2MORSE 46
 #define ACTION_GIOVECANONIFY 47
 #define ACTION_FILEPATH 48
+#define ACTION_AFUNDAMENTAL 49
 
 #ifndef EXAMPLES_DIR
   #define EXAMPLES_DIR ""
@@ -287,6 +288,8 @@ main (int argc, char *argv[])
       printf ("  cellcomplex, insidecomplex, outsidecomplex\n");
       printf ("  fundamental, insidefundamental, outsidefundamental\n");
       printf ("  abbreviations: fg, ifg, ofg\n");
+      printf ("  abelianizedfundamental, insideabelianizedfundamental, outsideabelianizedfundamental\n");
+      printf ("  abbreviations: afg, iafg, oafg\n");
       printf ("  scharacteristic, icharacteristic, ocharacteristic\n");
       printf ("  abbreviations: sch, ich, och\n");
       printf ("\n File2 can be present only for actions that require two descriptions:\n");
@@ -433,6 +436,12 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"insidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"ofg") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"outsidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"afg") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"abelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"iafg") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_INTERNAL;}
+    if (strcmp(argv[i],"insideabelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_INTERNAL;}
+    if (strcmp(argv[i],"oafg") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"outsideabelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"scharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_SURFACE;}
     if (strcmp(argv[i],"sch") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_SURFACE;}
     if (strcmp(argv[i],"icharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
@@ -1002,7 +1011,16 @@ main (int argc, char *argv[])
     ccomplex = compute_cellcomplex (sketch, fg_type);
     count = complex_collapse (ccomplex);
     if (debug) printf ("%d pairs of cells collapsed\n", count);
-    compute_fundamental (ccomplex);
+    compute_fundamental (ccomplex, 0);
+    break;
+
+    case ACTION_AFUNDAMENTAL:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    if (docanonify) canonify (sketch);
+    ccomplex = compute_cellcomplex (sketch, fg_type);
+    count = complex_collapse (ccomplex);
+    if (debug) printf ("%d pairs of cells collapsed\n", count);
+    compute_fundamental (ccomplex, 1);
     break;
 
     default:

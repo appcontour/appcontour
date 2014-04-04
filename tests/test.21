@@ -1,0 +1,16 @@
+#
+# computation of rank and invariant factors of the
+# commutator quotient of the fundamental group
+#
+
+./contour afg examples/mendes.morse -q
+./contour afg examples/genus_2.morse -q
+./contour afg examples/internalknot.morse -q
+./contour iafg examples/internalknot.morse -q
+./contour oafg examples/internalknot.morse -q
+./contour oafg examples/embrace.knot -q
+./contour oafg examples/genus_2_linked.morse -q
+./contour oafg examples/borromeanrings.knot -q
+./contour oafg examples/linked_rings.knot -q
+./contour afg examples/disjoint_spheres.morse -q
+./contour oafg examples/twohollowsphere.morse -q

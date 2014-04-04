@@ -18,7 +18,7 @@ extern int interactive;
 extern int preabelian;
 
 void
-compute_fundamental (struct ccomplex *cc)
+compute_fundamental (struct ccomplex *cc, int abelianized)
 {
   int ccnum;
   //int count;
@@ -44,8 +44,14 @@ compute_fundamental (struct ccomplex *cc)
     simplify_presentation (cccc->p);
     if (preabelian) topreabelian (cccc->p);
     if (interactive) fg_interactive (cccc->p);
-    print_presentation (cccc->p);
-    if (verbose) print_exponent_matrix (cccc->p);
+    if (abelianized == 0)
+    {
+      print_presentation (cccc->p);
+      if (verbose) print_exponent_matrix (cccc->p);
+    } else {
+      print_invariant_factors (cccc->p); 
+      if (verbose) print_exponent_matrix (cccc->p);
+    }
   }
 }
 
@@ -769,6 +775,54 @@ print_presentation (struct presentation *p)
     }
   }
   printf (">\n");
+}
+
+/*
+ * print invariant factors
+ */
+
+void
+print_invariant_factors (struct presentation *p)
+{
+  struct presentationrule *r;
+  int sum, ones, rank, matrixrank;
+  int i;
+
+  topreabelian (p);
+
+  ones = 0;
+  matrixrank = 0;
+  for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  {
+    sum = get_exp_sum (r, i);
+    if (abs(sum) == 1) ones++;
+    if (sum) matrixrank = i;
+  }
+  rank = p->gennum - matrixrank;
+
+  if (matrixrank == ones)
+  {
+    /* torsion free */
+    if (quiet) printf ("rank: %d\n", rank);
+      else {
+      if (rank) printf ("Torsion-free abelian group of rank %d\n", rank);
+        else printf ("Trivial group\n");
+    }
+    return;
+  }
+
+  printf ("Abelian group of rank %d with torsion; invariant factors:", rank);
+
+  for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  {
+    sum = get_exp_sum (r, i);
+    if (abs(sum) == 1) continue;
+    if (sum == 0) break;
+    printf (" %d", abs(sum));
+  }
+  printf ("\n");
+
+  return;
 }
 
 /*

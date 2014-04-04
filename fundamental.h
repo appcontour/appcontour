@@ -107,10 +107,11 @@ struct presentationrule {
  * prototypes
  */
 
-void compute_fundamental (struct ccomplex *cc);
+void compute_fundamental (struct ccomplex *cc, int abelianized);
 int complex_characteristic (struct ccomplex *cc);
 struct presentation *compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc);
 void print_presentation (struct presentation *p);
+void print_invariant_factors (struct presentation *p);
 void print_exponent_matrix (struct presentation *p);
 void fg_interactive (struct presentation *p);
 int simplify_presentation (struct presentation *p);
