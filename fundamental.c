@@ -157,6 +157,8 @@ struct presentationrule *sp_do_substitute (struct presentationrule *r, int subva
 void nielsen_mulright (struct presentation *p,
                        struct presentationrule *r1,
                        struct presentationrule *r2, int expon);
+int preabelian_step (struct presentation *p, int row, struct presentationrule *rcol);
+int get_exp_sum (struct presentationrule *r, int n);
 
 int
 simplify_presentation (struct presentation *p)
@@ -775,7 +777,7 @@ void
 print_exponent_matrix (struct presentation *p)
 {
   struct presentationrule *r;
-  int i, j, sum;
+  int i, sum;
 
   printf ("Exponent sum matrix:\n");
   for (i = 1; i <= p->gennum; i++)
@@ -783,12 +785,7 @@ print_exponent_matrix (struct presentation *p)
     printf ("[");
     for (r = p->rules; r; r = r->next)
     {
-      sum = 0;
-      for (j = 0; j < r->length; j++)
-      {
-        if (abs(r->var[j]) != i) continue;
-        if (r->var[j] > 0) sum++; else sum--;
-      }
+      sum = get_exp_sum (r, i);
       printf ("%3d", sum);
     }
     printf ("]\n");
@@ -823,7 +820,7 @@ fg_interactive (struct presentation *p)
   int m, n, nsaved, rots;
   int print = 1;
   int autorot = 1;
-  int kmax, direction;
+  int count, kmax, direction;
 
   while (1)
   {
@@ -858,6 +855,7 @@ fg_interactive (struct presentation *p)
       printf (" rotrel <n> <rots> : rotate relator <n> left <rots> times\n");
       printf (" simplify : perform a complete simplification (might change signs\n");
       printf (" test r1 r2: find common substring\n");
+      printf (" preabelian: perform a preabelian step\n");
       printf (" auto 0/1: disable/enable automatic rotation before addcol/subcol\n");
       continue;
     }
@@ -977,6 +975,16 @@ fg_interactive (struct presentation *p)
       if (m == n) {printf ("Same row %d = %d\n", m, n); continue;}
       nielsen_xisabtok (p, n, m, 1);
       print = 1;
+      continue;
+    }
+    if (strcasecmp (cmd, "preabelian") == 0)
+    {
+      count = preabelian_step (p, 1, p->rules);
+      if (count)
+      {
+        printf ("%d modifications\n", count);
+        print = 1;
+      } else printf ("Nothing done\n");
       continue;
     }
     print = 1;
@@ -1289,6 +1297,100 @@ nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk
   free (r);
   newr->next = nielsen_xisabtokl (newr->next, m, n, posk, signk);
   return (newr);
+}
+
+/*
+ * transformation of a presentation to a preabelian form
+ */
+
+int
+preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
+{
+  int sum, pivot, optval, optrow, nmulrow;
+  int i, isdivisor, divisor;
+  struct presentationrule *r, *optrcol, *nmulrcol;
+
+  if (row > p->gennum || rcol == 0) return (0);
+  /* scan the exponent submatrix */
+
+  pivot = get_exp_sum (rcol, row);
+  optval = abs(pivot);
+  isdivisor = 1;
+  nmulrow = optrow = 0;
+  nmulrcol = optrcol = 0;
+
+  for (i = row; i <= p->gennum; i++)
+  {
+    for (r = rcol; r; r = r->next)
+    {
+      sum = get_exp_sum (r, i);
+      if (sum)
+      {
+        if (optval == 0 || abs(sum) < optval)
+        {
+          optval = abs(sum);
+          optrow = i;
+          optrcol = r;
+        }
+        if ( (abs(pivot) > 0 && (abs(sum) % abs(pivot)) != 0) ||
+             (abs(pivot) == 0 && sum != 0) )
+        { /* element is not a multiple of pivot */
+          isdivisor = 0;
+          nmulrow = i;
+          nmulrcol = r;
+        }
+      }
+    }
+  }
+  if (optrow)
+  {
+    assert (optrcol);
+    assert (optrow != row || optrcol != rcol);
+    printf ("Found optimal value at row %d\n", optrow);
+    /* exchange rows and columns */
+    if (optrow != row) nielsen_exchange_generators (p, row, optrow);
+    if (optrcol != rcol) p->rules = nielsen_exchange_relators (p->rules, rcol, optrcol);
+    return (1);
+  }
+  /* at this point we have the minimum value at the pivot position */
+  /* working on the first column... */
+  for (i = row+1; i <= p->gennum; i++)
+  {
+    sum = get_exp_sum (rcol, i);
+    /* Euclid's division between sum and pivot */
+    if (sum)
+    {
+      assert (pivot);
+      divisor = abs(sum)/abs(pivot);
+      /* if same sign, then subtract, else add */
+      if ((sum > 0 && pivot > 0) || (sum < 0 && pivot < 0)) divisor = -divisor;
+      nielsen_xisabtok (p, row, i, -divisor);
+      printf ("  Row %d times %d added to row %d\n", row, divisor, i);
+      return (1);
+    }
+  }
+  if (isdivisor == 0)
+  {
+    assert (nmulrcol);
+    printf ("Found nonmultiple value at row %d\n", nmulrow);
+  }
+  printf ("DA IMPLEMENTARE\n");
+  return (0);
+}
+
+int
+get_exp_sum (struct presentationrule *r, int n)
+{
+  int sum = 0;
+  int j;
+
+  for (j = 0; j < r->length; j++)
+  {
+    if (abs(r->var[j]) != n) continue;
+    if (r->var[j] > 0) sum++; else sum--;
+  }
+
+  return (sum);
 }
 
 /*
