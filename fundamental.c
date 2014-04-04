@@ -822,6 +822,7 @@ fg_interactive (struct presentation *p)
   char *chpt, *cmd;
   int m, n, nsaved, rots;
   int print = 1;
+  int autorot = 1;
   int kmax, direction;
 
   while (1)
@@ -857,7 +858,16 @@ fg_interactive (struct presentation *p)
       printf (" rotrel <n> <rots> : rotate relator <n> left <rots> times\n");
       printf (" simplify : perform a complete simplification (might change signs\n");
       printf (" test r1 r2: find common substring\n");
+      printf (" auto 0/1: disable/enable automatic rotation before addcol/subcol\n");
       continue;
+    }
+    if (strcasecmp (cmd, "auto") == 0)
+    {
+      n = atoi (chpt);
+      if (n == 0 && autorot == 0) {printf ("Auto is already off\n"); continue;}
+      if (n == 1 && autorot == 1) {printf ("Auto is already on\n"); continue;}
+      if (n < 0 || n > 1) {printf ("Invalid value %d\n", n); continue;}
+      autorot = n;
     }
     if (strcasecmp (cmd, "negcol") == 0)
     {
@@ -886,6 +896,14 @@ fg_interactive (struct presentation *p)
       r2 = find_nth_relator(p, n);
       if (r1 == 0 || r2 == 0) {printf ("Invalid column number %d or %d\n", m, n); continue;}
       if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
+      if (autorot)
+      {
+        nielsen_invrel (r2);
+        kmax = sp_fcs_r1r2 (r1, r2, 0, 1);
+        nielsen_invrel (r2);
+        printf ("Found common substring of length %d\n", kmax);
+        //print_presentation (p);
+      }
       nielsen_mulright (p, r1, r2, 1);
       print = 1;
       continue;
@@ -898,6 +916,11 @@ fg_interactive (struct presentation *p)
       r2 = find_nth_relator(p, n);
       if (r1 == 0 || r2 == 0) {printf ("Invalid column number %d or %d\n", m, n); continue;}
       if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
+      if (autorot)
+      {
+        kmax = sp_fcs_r1r2 (r1, r2, 0, 1);
+        printf ("Found common substring of length %d\n", kmax);
+      }
       nielsen_mulright (p, r1, r2, -1);
       print = 1;
       continue;
