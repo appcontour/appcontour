@@ -81,6 +81,7 @@ int useoldcanonify = 0;
 int dorecomputef = 1;
 int doretagregions = 1;
 int finfinity = 0;
+int preabelian = 0;
 int mendesge = HGE_TEXT;
 static int renumber = 1;
 
@@ -232,6 +233,11 @@ main (int argc, char *argv[])
       finfinity = atoi (argv[++i]);
       continue;
     }
+    if (strcmp(argv[i],"--preabelian") == 0)
+    {
+      preabelian++;
+      continue;
+    }
     if (strcmp(argv[i],"--mendes_ge") == 0 ||
         strcmp(argv[i],"--mge") == 0)
     {
@@ -303,6 +309,7 @@ main (int argc, char *argv[])
       printf ("  -r|--region <int>: mark region for specific action\n");
       printf ("  -a|--arc <int>: mark arc for specific action\n");
       printf ("  --oldnames|--newnames: select set of names for rules\n");
+      printf ("  --preabelian: compute preabelian presentation of fundamental group\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
       exit (0);
     }

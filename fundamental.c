@@ -15,6 +15,7 @@ extern int debug;
 extern int quiet;
 extern int verbose;
 extern int interactive;
+extern int preabelian;
 
 void
 compute_fundamental (struct ccomplex *cc)
@@ -41,6 +42,7 @@ compute_fundamental (struct ccomplex *cc)
     if (debug) print_presentation (cccc->p);
     if (interactive >= 2) fg_interactive (cccc->p);
     simplify_presentation (cccc->p);
+    if (preabelian) topreabelian (cccc->p);
     if (interactive) fg_interactive (cccc->p);
     print_presentation (cccc->p);
     if (verbose) print_exponent_matrix (cccc->p);
@@ -808,6 +810,7 @@ void nielsen_invgen (struct presentation *p, int n);
 void nielsen_exchange_generators (struct presentation *p, int m, int n);
 void nielsen_xisabtok (struct presentation *p, int m, int n, int k);
 struct presentationrule *nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk);
+void addcommutator (struct presentation *p, int m, int n);
 
 /* user interaction */
 
@@ -856,6 +859,7 @@ fg_interactive (struct presentation *p)
       printf (" simplify : perform a complete simplification (might change signs\n");
       printf (" test r1 r2: find common substring\n");
       printf (" preabelian: perform a preabelian step\n");
+      printf (" commute <m> <n>: add a commutator for variables m and n\n");
       printf (" auto 0/1: disable/enable automatic rotation before addcol/subcol\n");
       continue;
     }
@@ -985,6 +989,17 @@ fg_interactive (struct presentation *p)
         printf ("%d modifications\n", count);
         print = 1;
       } else printf ("Nothing done\n");
+      continue;
+    }
+    if (strcasecmp (cmd, "commute") == 0)
+    {
+      m = (int) strtol (chpt, &chpt, 10);
+      n = (int) strtol (chpt, &chpt, 10);
+      if (m <= 0 || m > p->gennum) {printf ("Invalid row number %d\n", m); continue;}
+      if (n <= 0 || n > p->gennum) {printf ("Invalid row number %d\n", n); continue;}
+      if (m == n) {printf ("Same row %d = %d\n", m, n); continue;}
+      addcommutator (p, m, n);
+      print = 1;
       continue;
     }
     print = 1;
@@ -1290,7 +1305,7 @@ nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk
     }
   }
   newr->length = j;
-  assert (j == r->length + numvarm);
+  assert (j == r->length + posk*numvarm);
 
   newr->next = r->next;
   r->next = 0;
@@ -1302,6 +1317,12 @@ nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk
 /*
  * transformation of a presentation to a preabelian form
  */
+
+void
+topreabelian (struct presentation *p)
+{
+  while (preabelian_step (p, 1, p->rules));
+}
 
 int
 preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
@@ -1346,7 +1367,7 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
   {
     assert (optrcol);
     assert (optrow != row || optrcol != rcol);
-    printf ("Found optimal value at row %d\n", optrow);
+    if (interactive || verbose) printf ("Found optimal value at row %d\n", optrow);
     /* exchange rows and columns */
     if (optrow != row) nielsen_exchange_generators (p, row, optrow);
     if (optrcol != rcol) p->rules = nielsen_exchange_relators (p->rules, rcol, optrcol);
@@ -1357,25 +1378,60 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
   for (i = row+1; i <= p->gennum; i++)
   {
     sum = get_exp_sum (rcol, i);
-    /* Euclid's division between sum and pivot */
     if (sum)
     {
       assert (pivot);
+      /* Euclid's division between sum and pivot */
       divisor = abs(sum)/abs(pivot);
+      assert (divisor);
       /* if same sign, then subtract, else add */
       if ((sum > 0 && pivot > 0) || (sum < 0 && pivot < 0)) divisor = -divisor;
       nielsen_xisabtok (p, row, i, -divisor);
-      printf ("  Row %d times %d added to row %d\n", row, divisor, i);
+      if (interactive || verbose) printf ("  Row %d times %d added to row %d\n", row, divisor, i);
       return (1);
     }
   }
+  /* if we are here, the first column is zero */
+  /* working on the first row... */
+  for (r = rcol->next; r; r = r->next)
+  {
+    sum = get_exp_sum (r, row);
+    if (sum)
+    {
+      assert (pivot);
+      /* Euclid's division between sum and pivot */
+      divisor = abs(sum)/abs(pivot);
+      assert (divisor);
+      /* if same sign, then subtract, else add */
+      if ((sum > 0 && pivot > 0) || (sum < 0 && pivot < 0)) divisor = -divisor;
+      if (divisor > 0) nielsen_invrel (rcol);
+      sp_fcs_r1r2 (r, rcol, 0, 1);
+      if (divisor > 0) nielsen_invrel (rcol);
+      nielsen_mulright (p, r, rcol, divisor);
+      if (interactive || verbose) printf ("  Column %p times %d added to column %p\n", rcol, divisor, r);
+      return (1);
+    }
+  }
+  /* if we are here, the first column and first row are zero */
   if (isdivisor == 0)
   {
     assert (nmulrcol);
-    printf ("Found nonmultiple value at row %d\n", nmulrow);
+    /* add column nmulrcol to first column */
+    nielsen_invrel (nmulrcol);
+    sp_fcs_r1r2 (rcol, nmulrcol, 0, 1);
+    nielsen_invrel (nmulrcol);
+    nielsen_mulright (p, rcol, nmulrcol, 1);
+    if (interactive || verbose) printf ("Found nonmultiple value at row %d, column %p\n", nmulrow, nmulrcol);
+    return (1);
   }
-  printf ("DA IMPLEMENTARE\n");
-  return (0);
+  /* if we are here, the first column and first row are zero and all other elements are multiple */
+  if (pivot < 0)
+  {
+    nielsen_invgen (p, row);
+    if (interactive || verbose) printf ("Inverted generator %d\n", row);
+    return (1);
+  }
+  return (preabelian_step (p, row + 1, rcol->next));
 }
 
 int
@@ -1391,6 +1447,40 @@ get_exp_sum (struct presentationrule *r, int n)
   }
 
   return (sum);
+}
+
+void
+addcommutator (struct presentation *p, int m, int n)
+{
+  struct presentationrule *r, *rr;
+
+  assert (m > 0 && m <= p->gennum);
+  assert (n > 0 && n <= p->gennum);
+  if (m == n) return;
+
+  r = (struct presentationrule *) malloc (sizeof (struct presentationrule) +
+        4*sizeof(int));
+
+  r->length = 4;
+  r->var[0] = m;
+  r->var[1] = n;
+  r->var[2] = -m;
+  r->var[3] = -n;
+  r->next = 0;
+
+  if (p->rules == 0)
+  {
+    p->rules = r;
+    return;
+  }
+  for (rr = p->rules; rr; rr = rr->next)
+  {
+    if (rr->next == 0)
+    {
+      rr->next = r;
+      return;
+    }
+  }
 }
 
 /*

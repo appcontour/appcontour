@@ -114,6 +114,7 @@ void print_presentation (struct presentation *p);
 void print_exponent_matrix (struct presentation *p);
 void fg_interactive (struct presentation *p);
 int simplify_presentation (struct presentation *p);
+void topreabelian (struct presentation *p);
 void free_presentation (struct presentation *p);
 int complex_melt (struct ccomplex *cc);
 int complex_facemelt (struct ccomplex *cc);
