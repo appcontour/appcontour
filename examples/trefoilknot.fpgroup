@@ -1,0 +1,7 @@
+#
+# presentation of the fundamental group of
+# the trefoil knot
+#
+fpgroup {
+<x, y; xxYYY>
+}

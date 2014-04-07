@@ -66,6 +66,7 @@
 #define ACTION_GIOVECANONIFY 47
 #define ACTION_FILEPATH 48
 #define ACTION_AFUNDAMENTAL 49
+#define ACTION_READFG 50
 
 #ifndef EXAMPLES_DIR
   #define EXAMPLES_DIR ""
@@ -84,6 +85,7 @@ int doretagregions = 1;
 int finfinity = 0;
 int preabelian = 0;
 int mendesge = HGE_TEXT;
+int viacc = 0;
 static int renumber = 1;
 
 struct global_data globals;
@@ -102,7 +104,7 @@ main (int argc, char *argv[])
   int ori = 0, i, count, action=ACTION_NONE, res, ccid = 0;
   unsigned int rndseed = 0;
   int newextregion = 0;
-  int fg_type = FG_UNDEF;
+  int fg_type = FG_SURFACE;
   char rule[10], *endch, *envvar;
   FILE *infile = 0;
   FILE *infile2 = 0;
@@ -113,6 +115,7 @@ main (int argc, char *argv[])
   struct arc *a, *a2;
   struct ccomplex *ccomplex;
   int infiles = 1;
+  struct presentation *p;
 
   user_data.mrnum = user_data.manum = 0;
   globals.rulenames = RULENAMES_NEW;
@@ -203,6 +206,21 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--nocanonify") == 0)
     {
       docanonify = 0;
+      continue;
+    }
+    if (strcmp(argv[i],"--inside") == 0)
+    {
+      fg_type = FG_INTERNAL;
+      continue;
+    }
+    if (strcmp(argv[i],"--outside") == 0)
+    {
+      fg_type = FG_EXTERNAL;
+      continue;
+    }
+    if (strcmp(argv[i],"--surface") == 0)
+    {
+      fg_type = FG_SURFACE;
       continue;
     }
     if (strcmp(argv[i],"--oldcanonify") == 0)
@@ -313,6 +331,8 @@ main (int argc, char *argv[])
       printf ("  -a|--arc <int>: mark arc for specific action\n");
       printf ("  --oldnames|--newnames: select set of names for rules\n");
       printf ("  --preabelian: compute preabelian presentation of fundamental group\n");
+      printf ("  --inside|--outside: apply command to the inside/outside of surface\n");
+      printf ("      works for cell complex and fundamental group computations\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
       exit (0);
     }
@@ -426,28 +446,30 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"frontback") == 0) action = ACTION_FRONTBACK;
     if (strcmp(argv[i],"leftright") == 0) action = ACTION_LEFTRIGHT;
     if (strcmp(argv[i],"mendes") == 0) action = ACTION_MENDES;
-    if (strcmp(argv[i],"cellcomplex") == 0) {action = ACTION_CELLCOMPLEX; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"cellcomplex") == 0) action = ACTION_CELLCOMPLEX;
     if (strcmp(argv[i],"insidecomplex") == 0) {action = ACTION_CELLCOMPLEX; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"outsidecomplex") == 0) {action = ACTION_CELLCOMPLEX; fg_type=FG_EXTERNAL;}
-    if (strcmp(argv[i],"fg") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_SURFACE;}
-    if (strcmp(argv[i],"fundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_SURFACE;}
-    if (strcmp(argv[i],"sfundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"fg") == 0) action = ACTION_FUNDAMENTAL;
+    if (strcmp(argv[i],"fundamental") == 0) action = ACTION_FUNDAMENTAL;
+    if (strcmp(argv[i],"sfundamental") == 0) action = ACTION_FUNDAMENTAL;
     if (strcmp(argv[i],"ifg") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"insidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"ofg") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"outsidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
-    if (strcmp(argv[i],"afg") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_SURFACE;}
-    if (strcmp(argv[i],"abelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"afg") == 0) action = ACTION_AFUNDAMENTAL;
+    if (strcmp(argv[i],"abelianizedfundamental") == 0) action = ACTION_AFUNDAMENTAL;
     if (strcmp(argv[i],"iafg") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"insideabelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"oafg") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"outsideabelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_EXTERNAL;}
-    if (strcmp(argv[i],"scharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_SURFACE;}
-    if (strcmp(argv[i],"sch") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_SURFACE;}
+    if (strcmp(argv[i],"scharacteristic") == 0) {action = ACTION_CHARACTERISTIC; viacc = 1;}
+    if (strcmp(argv[i],"sch") == 0) action = ACTION_CHARACTERISTIC;
     if (strcmp(argv[i],"icharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"ich") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"ocharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"och") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"readfg") == 0) action = ACTION_READFG;
+    if (strcmp(argv[i],"readfpg") == 0) action = ACTION_READFG;
     if (strcmp(argv[i],"filepath") == 0) action = ACTION_FILEPATH;
     if (strcmp(argv[i],"evert") == 0)
     {
@@ -900,11 +922,16 @@ main (int argc, char *argv[])
 
     case ACTION_CHARACTERISTIC:
     if ((sketch = readcontour (infile)) == 0) exit (14);
-    if (fg_type == FG_UNDEF)
+    if (fg_type == FG_SURFACE && viacc == 0)
     {
       if (quiet) printf ("%d\n", euler_characteristic (sketch));
         else printf ("Euler characteristic: %d\n", euler_characteristic (sketch));
       break;
+    }
+    if (appcontourcheck (sketch, 1, 0) == 0)
+    {
+      fprintf (stderr, "This sketch is NOT a labelled apparent contour.\n");
+      exit (13);
     }
     ccomplex = compute_cellcomplex (sketch, fg_type);
     res = complex_characteristic (ccomplex);
@@ -1021,6 +1048,14 @@ main (int argc, char *argv[])
     count = complex_collapse (ccomplex);
     if (debug) printf ("%d pairs of cells collapsed\n", count);
     compute_fundamental (ccomplex, 1);
+    break;
+
+    case ACTION_READFG:
+    p = (struct presentation *) malloc (sizeof (struct presentation));
+    read_group_presentation (infile, p);
+    if (preabelian) topreabelian (p);
+    if (interactive) fg_interactive (p);
+    print_presentation (p);
     break;
 
     default:

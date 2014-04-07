@@ -138,6 +138,7 @@ gettoken (FILE *file)
   if (strcmp(tokenword,"_") == 0) return (KEY_UNDERSCORE);
   if (strcmp(tokenword,"morse") == 0) return (TOK_MORSE);
   if (strcmp(tokenword,"sketch") == 0) return (TOK_SKETCH);
+  if (strcmp(tokenword,"fpgroup") == 0) return (TOK_FPGROUP);
   if (strcmp(tokenword,"knot") == 0) return (TOK_KNOT);
   if (strcmp(tokenword,"tag") == 0) return (TOK_TAG);
   if (strcasecmp(tokenword,"arc") == 0) return (TOK_ARC);

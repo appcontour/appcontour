@@ -1252,6 +1252,12 @@ tag_connected_components (struct sketch *sketch)
 
   if (sketch->cc_tagged) return (0);
 
+  if (appcontourcheck (sketch, 1, 0) == 0)
+  {
+    fprintf (stderr, "This sketch is NOT a labelled apparent contour.\n");
+    exit (13);
+  }
+
   for (r = sketch->regions; r; r = r->next)
   {
     if (r->f < 0) fneg++;

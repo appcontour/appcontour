@@ -1556,6 +1556,7 @@ void
 read_group_presentation (FILE *file, struct presentation *p)
 {
   int tok;
+  int wantrightbrace = 0;
   char generator_names[MAXGENERATORS];
 
   remove_all_relators (p);
@@ -1563,9 +1564,16 @@ read_group_presentation (FILE *file, struct presentation *p)
 
   tok = gettoken (file);
 
+  if (tok == TOK_FPGROUP)
+  {
+    tok = gettoken (file);
+    if (tok == TOK_LBRACE) wantrightbrace = 1;
+      else ungettoken (tok);
+  }
+  tok = gettoken (file);
   if (tok != KEY_LT)
   {
-    printf ("'<' expected\n");
+    printf ("'<' expected, got token %d instead\n", tok);
     return;
   }
 
@@ -1587,6 +1595,15 @@ read_group_presentation (FILE *file, struct presentation *p)
     return;
   }
 
+  if (wantrightbrace)
+  {
+    tok = gettoken (file);
+    if (tok != TOK_RBRACE)
+    {
+      printf ("Expected right brace at end\n");
+      ungettoken (tok);
+    }
+  }
   return;
 }
 

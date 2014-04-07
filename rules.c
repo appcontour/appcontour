@@ -119,6 +119,11 @@ testallrules (struct sketch *sketch)
   int ru14, rcount, exitcode = 0;
   int res;
 
+  if (appcontourcheck (sketch, 1, 0) == 0)
+  {
+    fprintf (stderr, "This sketch is NOT a labelled apparent contour.\n");
+    exit (13);
+  }
   printf ("Rules that apply:\n");
   if (sketch->isempty) { printf ("\n"); return (1); }
   for (ru14 = 1; ru14 <=4; ru14++)
