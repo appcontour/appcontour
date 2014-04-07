@@ -8,6 +8,7 @@
 #include <string.h>
 #include "contour.h"
 #include "fundamental.h"
+#include "parser.h"
 
 #define MAXGENERATORS 26
 
@@ -1056,6 +1057,12 @@ fg_interactive (struct presentation *p)
       print = 1;
       continue;
     }
+    if (strcasecmp (cmd, "read") == 0)
+    {
+      read_group_presentation (stdin, p);
+      print = 1;
+      continue;
+    }
     print = 1;
     if (strcasecmp (cmd, "simplify") == 0)
     {
@@ -1535,6 +1542,144 @@ addcommutator (struct presentation *p, int m, int n)
       return;
     }
   }
+}
+
+/*
+ * reading a group presentation from stdin
+ */
+
+/* local prototypes */
+int read_generators_list (FILE *file, char *gennames, int maxgennum);
+struct presentationrule *read_relators_list (FILE *file, char *generator_names, int gennum);
+
+void
+read_group_presentation (FILE *file, struct presentation *p)
+{
+  int tok;
+  char generator_names[MAXGENERATORS];
+
+  remove_all_relators (p);
+  p->gennum = 0;
+
+  tok = gettoken (file);
+
+  if (tok != KEY_LT)
+  {
+    printf ("'<' expected\n");
+    return;
+  }
+
+  p->gennum = read_generators_list (file, generator_names, MAXGENERATORS);
+
+  tok = gettoken (file);
+  if (tok != TOK_SEMICOLON)
+  {
+    printf ("Invalid syntax, tok = %d; semicolon expected\n", tok);
+    return;
+  }
+
+  p->rules = read_relators_list (file, generator_names, p->gennum);
+
+  tok = gettoken (file);
+  if (tok != KEY_GT)
+  {
+    printf ("Invalid syntax, tok = %d; rangle expected\n", tok);
+    return;
+  }
+
+  return;
+}
+
+int
+read_generators_list (FILE *file, char *gennames, int maxgennum)
+{
+  int tok;
+  char buf[10];
+
+  skipblanks (file);
+  tok = getword (file, buf, 8);
+
+  if (tok == TOK_ID)
+  {
+    if (strlen (buf) == 0) return (0);
+    if (*buf < 'a' || *buf > 'z' || strlen (buf) != 1)
+    {
+      printf ("Generators must be a single lower-case letter\n");
+      return (0);
+    }
+    *gennames++ = *buf;
+    tok = gettoken (file);
+    if (tok == TOK_COMMA) return (read_generators_list (file, gennames, maxgennum-1) + 1);
+    ungettoken (tok);
+    return (1);
+  }
+  ungettoken (tok);
+  return (0);
+}
+
+#define BUFSIZE 200
+
+struct presentationrule *
+read_relators_list (FILE *file, char *generator_names, int gennum)
+{
+  int i, j, tok;
+  int sign;
+  char buf[BUFSIZE + 1];
+  struct presentationrule *r;
+
+  skipblanks (file);
+  tok = getword (file, buf, BUFSIZE);
+
+  if (tok == TOK_ID)
+  {
+    r = (struct presentationrule *) malloc (sizeof (struct presentationrule) +
+           strlen(buf)*sizeof(int));
+    r->length = strlen(buf);
+    r->next = 0;
+    for (i = 0; i < r->length; i++)
+    {
+      sign = 1;
+      if (buf[i] >= 'A' && buf[i] <= 'Z')
+      {
+        sign = -1;
+        buf[i] += 'a' - 'A';
+      }
+      r->var[i] = 0;  //XXX per ora!
+      for (j = 0; j < gennum; j++)
+      {
+        if (buf[i] == generator_names[j]) r->var[i] = sign*(j + 1);
+      }
+      if (r->var[i] == 0)
+      {
+        r->length = 0;
+        printf ("Cannot find generator: %c\n", buf[i]);
+      }
+    }
+    tok = gettoken (file);
+    if (tok == TOK_COMMA)
+    {
+      r->next = read_relators_list (file, generator_names, gennum);
+      return (r);
+    }
+    ungettoken (tok);
+    return (r);
+  }
+  ungettoken (tok);
+
+  return (0);
+}
+
+void
+remove_all_relators (struct presentation *p)
+{
+  struct presentationrule *r;
+
+  r = p->rules;
+  if (r == 0) return;
+
+  p->rules = r->next;
+  free (r);
+  remove_all_relators (p);
 }
 
 /*

@@ -61,4 +61,5 @@ void ungettoken (int);
 int gettokennumber (void);
 void skipblanks (FILE *file);
 char mygetchar (FILE *file);
+int getword (FILE *file, char *word, int wordmaxlen);
 

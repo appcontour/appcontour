@@ -96,7 +96,7 @@ gettoken (FILE *file)
   }
   skipblanks (file);
   if (getword (file, tokenword, 80) == TOK_EOF) return (TOK_EOF);
-//printf ("word = %s\n", word);
+//printf ("word = %s\n", tokenword);
   if (strcmp(tokenword,"{") == 0) return (TOK_LBRACE);
   if (strcmp(tokenword,"}") == 0) return (TOK_RBRACE);
   if (strcmp(tokenword,"(") == 0) return (TOK_LPAREN);
