@@ -913,7 +913,8 @@ fg_interactive (struct presentation *p)
       printf (" rotrel <n> <rots> : rotate relator <n> left <rots> times\n");
       printf (" simplify : perform a complete simplification (might change signs\n");
       printf (" test r1 r2: find common substring\n");
-      printf (" preabelian: perform a preabelian step\n");
+      printf (" preabelian: transform to preabelian presentation\n");
+      printf (" preabelianstep: perform a preabelian step\n");
       printf (" commute <m> <n>: add a commutator for variables m and n\n");
       printf (" auto 0/1: disable/enable automatic rotation before addcol/subcol\n");
       continue;
@@ -1036,7 +1037,7 @@ fg_interactive (struct presentation *p)
       print = 1;
       continue;
     }
-    if (strcasecmp (cmd, "preabelian") == 0)
+    if (strcasecmp (cmd, "preabelianstep") == 0)
     {
       count = preabelian_step (p, 1, p->rules);
       if (count)
@@ -1044,6 +1045,12 @@ fg_interactive (struct presentation *p)
         printf ("%d modifications\n", count);
         print = 1;
       } else printf ("Nothing done\n");
+      continue;
+    }
+    if (strcasecmp (cmd, "preabelian") == 0)
+    {
+      topreabelian (p);
+      print = 1;
       continue;
     }
     if (strcasecmp (cmd, "commute") == 0)
@@ -1567,10 +1574,12 @@ read_group_presentation (FILE *file, struct presentation *p)
   if (tok == TOK_FPGROUP)
   {
     tok = gettoken (file);
-    if (tok == TOK_LBRACE) wantrightbrace = 1;
-      else ungettoken (tok);
+    if (tok == TOK_LBRACE)
+    {
+      wantrightbrace = 1;
+      tok = gettoken (file);
+    }
   }
-  tok = gettoken (file);
   if (tok != KEY_LT)
   {
     printf ("'<' expected, got token %d instead\n", tok);
