@@ -40,20 +40,33 @@ compute_fundamental (struct ccomplex *cc, int abelianized)
   {
     if (ccnum > 1 && !quiet) printf ("\nConnected component %d:\n", cccc->tag);
     cccc->p = compute_fundamental_single (cc, cccc);
-    if (debug) print_presentation (cccc->p);
-    if (interactive >= 2) fg_interactive (cccc->p);
-    simplify_presentation (cccc->p);
-    if (preabelian) topreabelian (cccc->p);
-    if (interactive) fg_interactive (cccc->p);
-    if (abelianized == 0)
-    {
-      print_presentation (cccc->p);
-      if (verbose) print_exponent_matrix (cccc->p);
-    } else {
-      print_invariant_factors (cccc->p); 
-      if (verbose) print_exponent_matrix (cccc->p);
-    }
+    if (abelianized) abelianized_fundamental_group (cccc->p);
+      else fundamental_group (cccc->p);
   }
+}
+
+void
+fundamental_group (struct presentation *p)
+{
+  if (debug) print_presentation (p);
+  if (interactive >= 2) fg_interactive (p);
+  simplify_presentation (p);
+  if (preabelian) topreabelian (p);
+  if (interactive) fg_interactive (p);
+  print_presentation (p);
+  if (verbose) print_exponent_matrix (p);
+}
+
+void
+abelianized_fundamental_group (struct presentation *p)
+{
+  if (debug) print_presentation (p);
+  if (interactive >= 2) fg_interactive (p);
+  simplify_presentation (p);
+  if (preabelian) topreabelian (p);
+  if (interactive) fg_interactive (p);
+  print_invariant_factors (p);
+  if (verbose) print_exponent_matrix (p);
 }
 
 /*

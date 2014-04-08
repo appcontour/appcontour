@@ -66,7 +66,6 @@
 #define ACTION_GIOVECANONIFY 47
 #define ACTION_FILEPATH 48
 #define ACTION_AFUNDAMENTAL 49
-#define ACTION_READFG 50
 
 #ifndef EXAMPLES_DIR
   #define EXAMPLES_DIR ""
@@ -101,7 +100,7 @@ int
 main (int argc, char *argv[])
 {
   struct sketch *sketch, *s1, *s2;
-  int ori = 0, i, count, action=ACTION_NONE, res, ccid = 0;
+  int tok, ori = 0, i, count, action=ACTION_NONE, res, ccid = 0;
   unsigned int rndseed = 0;
   int newextregion = 0;
   int fg_type = FG_SURFACE;
@@ -468,8 +467,6 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"ich") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"ocharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"och") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
-    if (strcmp(argv[i],"readfg") == 0) action = ACTION_READFG;
-    if (strcmp(argv[i],"readfpg") == 0) action = ACTION_READFG;
     if (strcmp(argv[i],"filepath") == 0) action = ACTION_FILEPATH;
     if (strcmp(argv[i],"evert") == 0)
     {
@@ -1033,29 +1030,23 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_FUNDAMENTAL:
-    if ((sketch = readcontour (infile)) == 0) exit (14);
-    if (docanonify) canonify (sketch);
-    ccomplex = compute_cellcomplex (sketch, fg_type);
-    count = complex_collapse (ccomplex);
-    if (debug) printf ("%d pairs of cells collapsed\n", count);
-    compute_fundamental (ccomplex, 0);
-    break;
-
     case ACTION_AFUNDAMENTAL:
-    if ((sketch = readcontour (infile)) == 0) exit (14);
-    if (docanonify) canonify (sketch);
-    ccomplex = compute_cellcomplex (sketch, fg_type);
-    count = complex_collapse (ccomplex);
-    if (debug) printf ("%d pairs of cells collapsed\n", count);
-    compute_fundamental (ccomplex, 1);
-    break;
-
-    case ACTION_READFG:
-    p = (struct presentation *) malloc (sizeof (struct presentation));
-    read_group_presentation (infile, p);
-    if (preabelian) topreabelian (p);
-    if (interactive) fg_interactive (p);
-    print_presentation (p);
+    tok = gettoken (infile);
+    ungettoken (tok);
+    if (tok == TOK_FPGROUP)
+    {
+      p = (struct presentation *) malloc (sizeof (struct presentation));
+      read_group_presentation (infile, p);
+      if (action == ACTION_FUNDAMENTAL) fundamental_group (p);
+      if (action == ACTION_AFUNDAMENTAL) abelianized_fundamental_group (p);
+    } else {
+      if ((sketch = readcontour (infile)) == 0) exit (14);
+      if (docanonify) canonify (sketch);
+      ccomplex = compute_cellcomplex (sketch, fg_type);
+      count = complex_collapse (ccomplex);
+      if (debug) printf ("%d pairs of cells collapsed\n", count);
+      compute_fundamental (ccomplex, (action == ACTION_FUNDAMENTAL)?0:1);
+    }
     break;
 
     default:
