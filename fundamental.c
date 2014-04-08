@@ -962,7 +962,7 @@ fg_interactive (struct presentation *p)
       print = 1;
       continue;
     }
-    if (strcasecmp (cmd, "rotcol") == 0)
+    if (strcasecmp (cmd, "rotrel") == 0)
     {
       n = (int) strtol (chpt, &chpt, 10);
       rots = (int) strtol (chpt, &chpt, 10);
