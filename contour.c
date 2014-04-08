@@ -14,6 +14,7 @@
 #include "parser.h"
 #include "mendes.h"
 #include "fundamental.h"
+#include "alexander.h"
 #include "giovecanonify.h"
 
 #ifndef EXAMPLES_DIR
@@ -410,6 +411,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"insideabelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"oafg") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"outsideabelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"alexander") == 0) action = ACTION_ALEXANDER;
     if (strcmp(argv[i],"scharacteristic") == 0) {action = ACTION_CHARACTERISTIC; viacc = 1;}
     if (strcmp(argv[i],"sch") == 0) action = ACTION_CHARACTERISTIC;
     if (strcmp(argv[i],"icharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
@@ -980,14 +982,25 @@ main (int argc, char *argv[])
 
     case ACTION_FUNDAMENTAL:
     case ACTION_AFUNDAMENTAL:
+    case ACTION_ALEXANDER:
     tok = gettoken (infile);
     ungettoken (tok);
     if (tok == TOK_FPGROUP)
     {
       p = (struct presentation *) malloc (sizeof (struct presentation));
       read_group_presentation (infile, p);
-      if (action == ACTION_FUNDAMENTAL) fundamental_group (p);
-      if (action == ACTION_AFUNDAMENTAL) abelianized_fundamental_group (p);
+      switch (action)
+      {
+        case ACTION_FUNDAMENTAL:
+          fundamental_group (p);
+          break;
+        case ACTION_AFUNDAMENTAL:
+          abelianized_fundamental_group (p);
+          break;
+        case ACTION_ALEXANDER:
+          alexander (p);
+          break;
+      }
     } else {
       if ((sketch = readcontour (infile)) == 0) exit (14);
       if (docanonify) canonify (sketch);

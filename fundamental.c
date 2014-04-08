@@ -8,6 +8,7 @@
 #include <string.h>
 #include "contour.h"
 #include "fundamental.h"
+#include "alexander.h"
 #include "parser.h"
 
 #define MAXGENERATORS 26
@@ -40,8 +41,19 @@ compute_fundamental (struct ccomplex *cc, int action)
   {
     if (ccnum > 1 && !quiet) printf ("\nConnected component %d:\n", cccc->tag);
     cccc->p = compute_fundamental_single (cc, cccc);
-    if (action == ACTION_AFUNDAMENTAL) abelianized_fundamental_group (cccc->p);
-      else fundamental_group (cccc->p);
+    switch (action)
+    {
+      case ACTION_FUNDAMENTAL:
+        fundamental_group (cccc->p);
+        break;
+      case ACTION_AFUNDAMENTAL:
+        abelianized_fundamental_group (cccc->p);
+        break;
+      case ACTION_ALEXANDER:
+        simplify_presentation (cccc->p);
+        alexander (cccc->p);
+        break;
+    }
   }
 }
 
@@ -180,7 +192,6 @@ void nielsen_mulright (struct presentation *p,
                        struct presentationrule *r1,
                        struct presentationrule *r2, int expon);
 int preabelian_step (struct presentation *p, int row, struct presentationrule *rcol);
-int get_exp_sum (struct presentationrule *r, int n);
 
 int
 simplify_presentation (struct presentation *p)
@@ -922,6 +933,8 @@ fg_interactive (struct presentation *p)
       printf (" xchrow <m> <n>\n");
       printf (" addrow <m> <n> : add row n to row m\n");
       printf (" subrow <m> <n> : subtract row n to row m\n");
+      printf ("Alexander polynomial:\n");
+      printf (" alexander : compute Alexander polynomial\n");
       printf ("Relators and simplification:\n");
       printf (" rotrel <n> <rots> : rotate relator <n> left <rots> times\n");
       printf (" simplify : perform a complete simplification (might change signs\n");
@@ -1064,6 +1077,11 @@ fg_interactive (struct presentation *p)
     {
       topreabelian (p);
       print = 1;
+      continue;
+    }
+    if (strcasecmp (cmd, "alexander") == 0)
+    {
+      alexander (p);
       continue;
     }
     if (strcasecmp (cmd, "commute") == 0)

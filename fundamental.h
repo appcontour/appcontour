@@ -120,6 +120,7 @@ int simplify_presentation (struct presentation *p);
 void topreabelian (struct presentation *p);
 void remove_all_relators (struct presentation *p);
 void read_group_presentation (FILE *file, struct presentation *p);
+int get_exp_sum (struct presentationrule *r, int n);
 int complex_melt (struct ccomplex *cc);
 int complex_facemelt (struct ccomplex *cc);
 int complex_faceremovekink (struct ccomplex *cc);

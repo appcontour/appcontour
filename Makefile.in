@@ -99,7 +99,8 @@ am_contour_OBJECTS = contour.$(OBJEXT) readsketch.$(OBJEXT) \
 	readmorse.$(OBJEXT) rules.$(OBJEXT) sketch.$(OBJEXT) \
 	parser.$(OBJEXT) appcontour.$(OBJEXT) printmorse.$(OBJEXT) \
 	knot2morse.$(OBJEXT) mendes.$(OBJEXT) invrules.$(OBJEXT) \
-	fundamental.$(OBJEXT) giovecanonify.$(OBJEXT)
+	fundamental.$(OBJEXT) alexander.$(OBJEXT) \
+	giovecanonify.$(OBJEXT)
 contour_OBJECTS = $(am_contour_OBJECTS)
 contour_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -513,7 +514,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = show utils examples
-contour_SOURCES = contour.c readsketch.c readmorse.c rules.c sketch.c parser.c appcontour.c printmorse.c knot2morse.c mendes.c invrules.c fundamental.c giovecanonify.c contour.h parser.h mendes.h fundamental.h giovecanonify.h
+contour_SOURCES = contour.c readsketch.c readmorse.c rules.c sketch.c parser.c appcontour.c printmorse.c knot2morse.c mendes.c invrules.c fundamental.c alexander.c giovecanonify.c contour.h parser.h mendes.h fundamental.h alexander.h giovecanonify.h
 EXTRA_DIST = tests/test.* BUGS utils/*.sh TODO
 AM_CFLAGS = -Wall -DEXAMPLES_DIR=\"$(pkgdatadir)/examples\"
 # man1_MANS = contour.1
@@ -626,6 +627,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alexander.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/appcontour.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/contour.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fundamental.Po@am__quote@
