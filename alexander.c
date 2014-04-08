@@ -99,6 +99,7 @@ alexander (struct presentation *p)
 
   determinant = laurent_compute_determinant (matrix, matrixrank);
 
+  laurent_canonify (determinant);
   if (!quiet) printf ("Alexander polynomial (up to t -> 1/t):\n");
   print_laurentpoly (determinant);
   printf ("\n");
@@ -259,6 +260,62 @@ laurent_negate (struct laurentpoly *term)
 }
 
 /*
+ * canonify with respect to t->1/t
+ */
+
+void
+laurent_canonify (struct laurentpoly *l)
+{
+  int k, kk, minexp, maxexp;
+
+printf ("in canonify\n");
+  if (l == 0) return;
+
+  minexp = l->minexpon;
+  maxexp = minexp + l->stemdegree;
+
+  if (minexp + maxexp < 0)
+  {
+    laurent_t_to_oneovert (l);
+    return;
+  }
+
+  /* The degrees are balanced, making lexicographic comparison */
+
+  for (k = 0, kk = l->stemdegree; k < kk; k++, kk--)
+  {
+    if (l->stem[k] > l->stem[kk])
+    {
+      laurent_t_to_oneovert (l);
+      return;
+    }
+  }
+  return;
+}
+
+/*
+ * transform t->1/t
+ */
+
+void
+laurent_t_to_oneovert (struct laurentpoly *l)
+{
+  int k, kk, saved;
+
+  if (l == 0) return;
+
+  l->minexpon = -(l->minexpon + l->stemdegree);
+
+  for (k = 0, kk = l->stemdegree; k < kk; k++, kk--)
+  {
+    saved = l->stem[k];
+    l->stem[k] = l->stem[kk];
+    l->stem[kk] = saved;
+  }
+  return;
+}
+
+/*
  * duplicate a laurent polynomial
  */
 
@@ -289,13 +346,51 @@ laurent_dup (struct laurentpoly *l)
 struct laurentpoly *
 laurent_add (struct laurentpoly *a1, struct laurentpoly *a2)
 {
-  //struct laurentpoly *res;
+  int minexp, maxexp, k;
+  struct laurentpoly *res;
 
   if (a1 == 0) return (laurent_dup(a2));
   if (a2 == 0) return (laurent_dup(a1));
 
-  printf ("SOMMA DI POLINOMI NON IMPLEMENTATA!\n");
-  return (0);
+  minexp = a1->minexpon;
+  if (a2->minexpon < minexp) minexp = a2->minexpon;
+
+  maxexp = a1->minexpon + a1->stemdegree;
+  if (a2->minexpon + a2->stemdegree > maxexp) maxexp = a2->minexpon + a2->stemdegree;
+
+  res = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) +
+           (maxexp - minexp + 1)*sizeof(int));
+
+  assert (a1->denom == a2->denom);
+  res->denom = a1->denom;
+  res->minexpon = minexp;
+  res->stemdegree = maxexp - minexp;
+
+  for (k = 0; k <= res->stemdegree; k++) res->stem[k] = 0;
+
+  for (k = 0; k <= a1->stemdegree; k++) res->stem[k + a1->minexpon - minexp] = a1->stem[k];
+  for (k = 0; k <= a2->stemdegree; k++) res->stem[k + a2->minexpon - minexp] += a2->stem[k];
+
+  /* normalize */
+
+  while (res->stem[0] == 0)
+  {
+    if (res->stemdegree == 0)
+    {
+      free (res);
+      return (0);
+    }
+    for (k = 0; k < res->stemdegree; k++) res->stem[k] = res->stem[k+1];
+    res->stemdegree--;
+  }
+
+  while (res->stem[res->stemdegree] == 0)
+  {
+    assert (res->stemdegree > 0);
+    res->stemdegree--;
+  }
+
+  return (res);
 }
 
 /*
