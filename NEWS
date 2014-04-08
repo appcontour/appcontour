@@ -1,3 +1,19 @@
+2014-04-08: Computation of the Alexander polynomial for a finitely presented
+	group with infinite ciclic commutator quotient, in the case where
+	the structural matrix is square (n-1 relators for n generators in the
+	preabelian presentation.
+
+2014-03-31: New basic simplification procedure for finitely presented
+	groups allow to totally simplify the Ochiai unknot example.
+	Added the possibility to directly read a finitely presented group
+	from file (an example is added in examples/trefoilknot.fpgroup),
+	and to process it with all commands that can deal with fundamental
+	groups.
+	Interactive mode with option "-i".
+	Computation of the preabelian presentation.
+	Computation of the invariant factors of the abelianized of a
+	finitely presented group.
+
 2011-03-25: It is now possible to compute the fundamental group of
 	the surface (not very interesting), of the internal solid set
 	(much more interesting) and of the external set.
