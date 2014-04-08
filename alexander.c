@@ -279,6 +279,8 @@ laurent_canonify (struct laurentpoly *l)
     return;
   }
 
+  if (minexp + maxexp > 0) return;
+
   /* The degrees are balanced, making lexicographic comparison */
 
   for (k = 0, kk = l->stemdegree; k < kk; k++, kk--)
