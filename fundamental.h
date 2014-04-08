@@ -107,7 +107,7 @@ struct presentationrule {
  * prototypes
  */
 
-void compute_fundamental (struct ccomplex *cc, int abelianized);
+void compute_fundamental (struct ccomplex *cc, int action);
 void fundamental_group (struct presentation *p);
 void abelianized_fundamental_group (struct presentation *p);
 int complex_characteristic (struct ccomplex *cc);

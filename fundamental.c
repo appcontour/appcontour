@@ -19,7 +19,7 @@ extern int interactive;
 extern int preabelian;
 
 void
-compute_fundamental (struct ccomplex *cc, int abelianized)
+compute_fundamental (struct ccomplex *cc, int action)
 {
   int ccnum;
   //int count;
@@ -40,7 +40,7 @@ compute_fundamental (struct ccomplex *cc, int abelianized)
   {
     if (ccnum > 1 && !quiet) printf ("\nConnected component %d:\n", cccc->tag);
     cccc->p = compute_fundamental_single (cc, cccc);
-    if (abelianized) abelianized_fundamental_group (cccc->p);
+    if (action == ACTION_AFUNDAMENTAL) abelianized_fundamental_group (cccc->p);
       else fundamental_group (cccc->p);
   }
 }

@@ -16,57 +16,6 @@
 #include "fundamental.h"
 #include "giovecanonify.h"
 
-#define ACTION_NONE 0
-#define ACTION_PRINTSKETCH 1
-#define ACTION_COMPARE 2
-#define ACTION_ISCONTOUR 3
-#define ACTION_CANONIFY 4
-#define ACTION_APPLYRULE 5
-#define ACTION_COUNTCC 6
-#define ACTION_EXTRACTCC 7
-#define ACTION_TESTALLRULES 8
-#define ACTION_KNOT2MORSE 9
-#define ACTION_PRINTMORSE 10
-#define ACTION_CHARACTERISTIC 11
-#define ACTION_REMOVECC 12
-#define ACTION_INFO 13
-#define ACTION_FRONTBACK 14
-#define ACTION_LEFTRIGHT 15
-#define ACTION_EVERT 16
-#define ACTION_MENDES 17
-#define ACTION_ISHUFFMAN 18
-#define ACTION_MERGEARCS 19
-#define ACTION_LISTMA 20
-#define ACTION_WRINKLE 21
-#define ACTION_LISTWR 22
-#define ACTION_SWALLOWTAIL 23
-#define ACTION_LISTST 24
-#define ACTION_PUNCTURE 25
-#define ACTION_LISTPU 26
-#define ACTION_ADDSPHERE 27
-#define ACTION_PUNCHHOLE 28
-#define ACTION_LISTSTRATA 29
-#define ACTION_LISTHOLES 30
-#define ACTION_REMOVEHOLE 31
-#define ACTION_LISTSPHERES 32
-#define ACTION_REMOVESPHERE 33
-#define ACTION_GLUEARCS 34
-#define ACTION_PINCHNECK 35
-#define ACTION_CCORIENTATION 36
-#define ACTION_FINDCCPARENT 37
-#define ACTION_CCORDERING 38
-#define ACTION_CCCHILDS 39
-#define ACTION_WRAP 40
-#define ACTION_3DEVERT 41
-#define ACTION_CELLCOMPLEX 42
-#define ACTION_FUNDAMENTAL 43
-#define ACTION_UNION 44
-#define ACTION_CONNECTEDSUM 45
-#define ACTION_ANY2MORSE 46
-#define ACTION_GIOVECANONIFY 47
-#define ACTION_FILEPATH 48
-#define ACTION_AFUNDAMENTAL 49
-
 #ifndef EXAMPLES_DIR
   #define EXAMPLES_DIR ""
 #endif
@@ -1045,7 +994,7 @@ main (int argc, char *argv[])
       ccomplex = compute_cellcomplex (sketch, fg_type);
       count = complex_collapse (ccomplex);
       if (debug) printf ("%d pairs of cells collapsed\n", count);
-      compute_fundamental (ccomplex, (action == ACTION_FUNDAMENTAL)?0:1);
+      compute_fundamental (ccomplex, action);
     }
     break;
 
