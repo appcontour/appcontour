@@ -1,5 +1,7 @@
 2014-04-08: Version 2.1.0. Various improvements concerning the fundamental groups
 	including the computation of the Alexander polynomial for tubular knots.
+	However the computation of the Alexander polynomial seems wrong on the
+	Kinoshita-Terasaka knot (http://en.wikipedia.org/wiki/Kinoshita-Terasaka_knot)
 
 2013-09-12: Version 2.0.1. Cleanup of various parts related to the introduction
 	of the new canonization procedure.
