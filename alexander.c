@@ -268,7 +268,6 @@ laurent_canonify (struct laurentpoly *l)
 {
   int k, kk, minexp, maxexp;
 
-printf ("in canonify\n");
   if (l == 0) return;
 
   minexp = l->minexpon;
