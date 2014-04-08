@@ -227,7 +227,6 @@ laurent_compute_determinant (struct laurentpoly ***matrix, int n)
       }
     }
 
-printf ("X\n");
     subdeterminant = laurent_compute_determinant (submatrix, n-1);
     product = laurent_mul (subdeterminant, firstcolumn[i]);
     if (subdeterminant) free (subdeterminant);
@@ -306,14 +305,31 @@ laurent_add (struct laurentpoly *a1, struct laurentpoly *a2)
 struct laurentpoly *
 laurent_mul (struct laurentpoly *f1, struct laurentpoly *f2)
 {
+  int i, j;
+  int resstemdegree;
+  struct laurentpoly *res;
+
   if (f1 == 0 || f2 == 0) return (0);
 
-  printf ("MOLTIPLICAZIONE DI POLINOMI NON IMPLEMENTATA!\n");
-  print_laurentpoly (f1);
-  printf ("\n");
-  print_laurentpoly (f2);
-  printf ("\n");
-  return (0);
+  resstemdegree = f1->stemdegree + f2->stemdegree;
+
+  res = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) +
+          (resstemdegree + 1)*sizeof (int));
+  res->denom = f1->denom * f2->denom;
+  res->minexpon = f1->minexpon + f2->minexpon;
+  res->stemdegree = resstemdegree;
+
+  for (i = 0; i <= resstemdegree; i++) res->stem[i] = 0;
+
+  for (i = 0; i <= f1->stemdegree; i++)
+  {
+    for (j = 0; j <= f2->stemdegree; j++)
+    {
+      res->stem[i + j] += f1->stem[i]*f2->stem[j];
+    }
+  }
+
+  return (res);
 }
 
 /*
