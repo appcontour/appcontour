@@ -169,6 +169,20 @@ function zorkdescribe ()
   done
 }
 
+function getalexander ()
+{
+  comp=$1
+  file=$2
+  sideopt=$3
+
+  alexander=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour alexander $sideopt -q 2>/dev/null`
+  alexander=`echo $alexander | tr -d ' '`
+  alexander=${alexander#+}
+
+  if [ "$alexander" = "1" ]; then alexander=""; fi
+  echo $alexander
+}
+
 declare -a holes
 declare -a description
 declare -a longdescription
@@ -322,21 +336,33 @@ do
       ldigits=$[ $ldigits - 1 ]
     done
     longdescr=""
+    ialexander=""
+    oalexander=""
     case $nholes in
       0)
         descr="sphere"
         ;;
       1)
         descr="torus"
-        ifg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour ifg -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
-        ofg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour ofg -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
+        ifg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour fg --inside -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
+        ofg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour fg --outside -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
+        if [ -n "$ofg" ]; then oalexander=`getalexander $comp $file --outside`; fi
+        if [ -n "$ifg" ]; then ialexander=`getalexander $comp $file --inside`; fi
         if [ -n "$ofg" -a -z "$ifg" ]
         then
           longdescr="torus (apparently knotted)"
+          if [ -n "$oalexander" ]
+          then
+            longdescr="knotted torus"
+          fi
         fi
         if [ -n "$ifg" -a -z "$ofg" ]
         then
           longdescr="torus (with an apparently knotted hole)"
+          if [ -n "$ialexander" ]
+          then
+            longdescr="torus with a knotted hole"
+          fi
         fi
         if [ -n "$ifg" -a -n "$ofg" ]
         then
@@ -358,6 +384,17 @@ do
   fi
   description[$comp]="$descr"
   longdescription[$comp]="$descr"
+  if [ -n "$longdescr" ]
+  then
+    if [ -n "$oalexander" ]
+    then
+      longdescr="${longdescr}, you can read \"Alexander: $oalexander\" written on it"
+    fi
+    if [ -n "$ialexander" ]
+    then
+      longdescr="${longdescr}, you can read \"Alexander: $ialexander\" written in the inside"
+    fi
+  fi
   if [ -n "$longdescr" ]; then longdescription[$comp]="$longdescr"; fi
   count=$[ $count + 1 ]
   counter[$nholes]=$count
