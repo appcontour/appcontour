@@ -18,6 +18,7 @@ void print_laurentpoly (struct laurentpoly *l);
 struct laurentpoly *laurent_add (struct laurentpoly *add1, struct laurentpoly *add2);
 struct laurentpoly *laurent_mul (struct laurentpoly *fact1, struct laurentpoly *fact2);
 void laurent_negate (struct laurentpoly *term);
+struct laurentpoly *laurent_normalize (struct laurentpoly *l);
 struct laurentpoly *laurent_dup (struct laurentpoly *l);
 void laurent_canonify (struct laurentpoly *l);
 void laurent_t_to_oneovert (struct laurentpoly *l);

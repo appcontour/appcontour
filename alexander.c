@@ -183,6 +183,13 @@ laurent_get_exp_sum (struct presentationrule *r, int n, int gconj)
     }
   }
 
+  assert (l);
+  if (laurent_normalize(l) == 0)
+  {
+    free (l);
+    return (0);
+  }
+  assert (l && l->stem[0]);
   return (l);
 }
 
@@ -380,24 +387,46 @@ laurent_add (struct laurentpoly *a1, struct laurentpoly *a2)
 
   /* normalize */
 
-  while (res->stem[0] == 0)
+  if (res && laurent_normalize (res) == 0)
   {
-    if (res->stemdegree == 0)
-    {
-      free (res);
-      return (0);
-    }
-    for (k = 0; k < res->stemdegree; k++) res->stem[k] = res->stem[k+1];
-    res->stemdegree--;
-  }
-
-  while (res->stem[res->stemdegree] == 0)
-  {
-    assert (res->stemdegree > 0);
-    res->stemdegree--;
+    free (res);
+    res = 0;
   }
 
   return (res);
+}
+
+/*
+ * normalize a laurent polynomial
+ * such that first and last element in
+ * stem are nonzero
+ * returns 0 if the laurent polynomial
+ * is identically zero
+ */
+
+struct laurentpoly *
+laurent_normalize (struct laurentpoly *l)
+{
+  int k;
+
+  if (l == 0) return (0);
+
+  while (l->stem[0] == 0)
+  {
+    if (l->stemdegree == 0)
+    {
+      return (0);
+    }
+    for (k = 0; k < l->stemdegree; k++) l->stem[k] = l->stem[k+1];
+    l->stemdegree--;
+  }
+
+  while (l->stem[l->stemdegree] == 0)
+  {
+    assert (l->stemdegree > 0);
+    l->stemdegree--;
+  }
+  return (l);
 }
 
 /*
@@ -445,6 +474,7 @@ print_laurentpoly (struct laurentpoly *l)
 
   if (l == 0) {printf ("0"); return;}
   assert (l->denom == 1);
+  assert (l->stem[0]);
   for (i = 0; i <= l->stemdegree; i++)
   {
     expon = i + l->minexpon;
