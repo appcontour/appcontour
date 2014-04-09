@@ -1,0 +1,15 @@
+#
+# http://katlas.math.toronto.edu/wiki/7_7
+# NOTE: our alexander polynomial differs from
+# that in atlas!!!
+#
+knot {
+ ^    ^  ;
+|   X  | ;
+||  ^ || ;
+| X  X | ;
+ x | X | ;
+| X | U  ;
+| X |    ;
+ U U     ;
+}

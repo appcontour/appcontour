@@ -1,0 +1,12 @@
+#
+# http://katlas.math.toronto.edu/wiki/4_1
+#
+knot {
+  ^   ^   ;
+|   X   | ;
+|   X   | ;
+ x   |  | ;
+ x  |  |  ;
+| U   |   ;
+   U      ;
+}
