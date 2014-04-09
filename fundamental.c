@@ -1420,6 +1420,7 @@ nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk
 void
 topreabelian (struct presentation *p)
 {
+  if (verbose) printf ("Computing preabelian presentation...\n");
   while (preabelian_step (p, 1, p->rules));
 }
 

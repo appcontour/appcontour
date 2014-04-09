@@ -26,6 +26,8 @@ alexander (struct presentation *p)
 
   topreabelian (p);
 
+  if (verbose) print_presentation (p);
+
   for (r = p->rules; r; r = r->next) numcols++;
   rank = 0;
   matrixrank = 0;
@@ -63,8 +65,6 @@ alexander (struct presentation *p)
     matrix[j] = (struct laurentpoly **) malloc (matrixrank*sizeof(struct laurentpoly *));
   }
 
-  if (verbose) print_presentation (p);
-
   /*
    * fill matrix
    */
@@ -84,6 +84,7 @@ alexander (struct presentation *p)
 
   if (verbose)
   {
+    printf ("Matrix entries:\n");
     for (i = 0; i < matrixrank; i++)
     {
       for (j = 0; j < numcols; j++)
@@ -99,6 +100,12 @@ alexander (struct presentation *p)
 
   determinant = laurent_compute_determinant (matrix, matrixrank);
 
+  if (verbose)
+  {
+    printf ("Determinant of matrix (before canonization): ");
+    print_laurentpoly (determinant);
+    printf ("\n");
+  }
   laurent_canonify (determinant);
   if (!quiet) printf ("Alexander polynomial (up to t -> 1/t):\n");
   print_laurentpoly (determinant);
@@ -266,31 +273,30 @@ laurent_negate (struct laurentpoly *term)
 void
 laurent_canonify (struct laurentpoly *l)
 {
-  int k, kk, minexp, maxexp;
+  int k, kk, sign;
 
   if (l == 0) return;
 
-  minexp = l->minexpon;
-  maxexp = minexp + l->stemdegree;
+  assert (l->stem[0]);
+  assert (l->stem[l->stemdegree]);
+  if (l->stem[0] < 0) laurent_negate (l);
 
-  if (minexp + maxexp < 0)
-  {
-    laurent_t_to_oneovert (l);
-    return;
-  }
+  sign = 1;
+  if (l->stem[l->stemdegree] < 0) sign = -1;
 
-  if (minexp + maxexp > 0) return;
-
-  /* The degrees are balanced, making lexicographic comparison */
+  /* Making lexicographic comparison */
 
   for (k = 0, kk = l->stemdegree; k < kk; k++, kk--)
   {
-    if (l->stem[k] > l->stem[kk])
+    if (l->stem[k] > sign*l->stem[kk])
     {
       laurent_t_to_oneovert (l);
+      if (l->stem[0] < 0) laurent_negate (l);
+      l->minexpon = 0;
       return;
     }
   }
+  l->minexpon = 0; // we are interested only to the stem
   return;
 }
 
