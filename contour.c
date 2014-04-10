@@ -248,7 +248,7 @@ main (int argc, char *argv[])
       printf ("  ccparent <cc>: finds the 3D component that directly contains \"cc\"\n");
       printf ("    0 means that \"cc\" is external\n");
       printf ("  ccordering: show 3D inclusion between the connected components\n");
-      printf ("  compare: lessicographic comparison between two contours\n");
+      printf ("  compare: lexicographic comparison between two contours\n");
       printf ("\n Possible conversion and standardization actions:\n");
       printf ("  print, printmorse, knot2morse, any2morse, canonify, giovecanonify\n");
       printf ("\n Cell complex and fundamental group:\n");

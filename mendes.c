@@ -816,7 +816,7 @@ l_mendes_reorder_n (int *start, int num, struct mendesgraph *h)
 
 /*
  * the first ordering key is the number of couples (region,stratum)
- * compose each mendes node, otherwise the ordering is lessicographical
+ * compose each mendes node, otherwise the ordering is lexicographical
  */
 
 int
