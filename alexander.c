@@ -419,6 +419,7 @@ laurent_normalize (struct laurentpoly *l)
     }
     for (k = 0; k < l->stemdegree; k++) l->stem[k] = l->stem[k+1];
     l->stemdegree--;
+    l->minexpon++;
   }
 
   while (l->stem[l->stemdegree] == 0)
