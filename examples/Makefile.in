@@ -227,7 +227,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 examplesdatadir = $(pkgdatadir)/examples
-nobase_dist_examplesdata_DATA = *.morse *.knot *.sketch *.fpgroup immersed/*.morse failing_examples/*.morse knots/*.knot
+nobase_dist_examplesdata_DATA = *.morse *.knot *.sketch *.fpgroup immersed/*.morse failing_examples/*.morse knots/*.knot links/*.knot
 all: all-am
 
 .SUFFIXES:

@@ -1,0 +1,10 @@
+#
+# the famous whitehead link
+#
+knot {
+ ^ ^ ^  ;
+| X X | ;
+|| x || ;
+| X X | ;
+ U U U  ;
+}
