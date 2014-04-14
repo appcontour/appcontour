@@ -17,12 +17,10 @@ alexander (struct presentation *p)
 {
   extern int verbose, quiet;
   struct presentationrule *r;
-  struct laurentpoly *l, *determinant;
-  int i, j, sum, rank, matrixrank;
+  struct laurentpoly *determinant;
+  int i, sum, rank, matrixrank;
   int numcols = 0;
   int gconj;
-  struct laurentpoly **matrixcolumn;
-  struct laurentpoly ***matrix;
 
   topreabelian (p);
 
@@ -44,7 +42,14 @@ alexander (struct presentation *p)
     }
   }
   rank = p->gennum - matrixrank;
-  if (rank != 1)
+  if (rank > 1)
+  {
+    printf ("Cannot compute Alexander polynomial for groups with rank %d\n", rank);
+//    return (0);
+    rank = 1;
+    matrixrank = p->gennum - rank;
+  }
+  if (rank < 1)
   {
     printf ("Cannot compute Alexander polynomial for groups with rank %d\n", rank);
     return (0);
@@ -53,16 +58,144 @@ alexander (struct presentation *p)
 
   if (verbose) printf ("Matrix has %d rows and %d columns\n", matrixrank, numcols);
 
-  if (matrixrank != numcols)
+  if (matrixrank < numcols)
   {
     printf ("Cannot compute Alexander polynomial because there are too many relators\n");
     return (0);
   }
 
+  if (matrixrank > numcols)
+  {
+    printf ("Cannot compute Alexander polynomial because there are too few relators\n");
+    return (0);
+  }
+
+  determinant = laurent_eliminate_one_indeterminate (p, gconj);
+
+  laurent_canonify (determinant);
+  if (!quiet) printf ("Alexander polynomial (up to t -> 1/t):\n");
+  print_laurentpoly (determinant);
+  printf ("\n");
+  return (1);
+}
+
+/*
+ * corank one (experimental)
+ */
+
+int
+corank_one_alexander (struct presentation *p)
+{
+  extern int verbose, quiet;
+  struct presentationrule *r;
+  struct laurentpoly *determinant;
+  int i, sum, rank, matrixrank;
+  int deriv, val, e;
+  int numcols = 0;
+  int gconj;
+
+  topreabelian (p);
+
+  if (verbose) print_presentation (p);
+
+  for (r = p->rules; r; r = r->next) numcols++;
+  rank = 0;
+  matrixrank = 0;
+  for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  {
+    sum = get_exp_sum (r, i);
+    assert (sum >= 0);
+    if (sum) matrixrank = i;
+      else gconj = i;
+    if (sum && sum != 1)
+    {
+      printf ("Cannot compute corank one Alexander polynomial for groups with torsion\n");
+      return (0);
+    }
+  }
+  rank = p->gennum - matrixrank;
+  if (rank <= 1)
+  {
+    printf ("Cannot compute corank one Alexander polynomial for groups with rank %d\n", rank);
+    return (0);
+  }
+  if (rank > 2)
+  {
+    printf ("Cannot compute corank one Alexander polynomial for groups with rank %d\n", rank);
+    return (0);
+  }
+  rank = 1;
+  matrixrank = p->gennum - rank;
+  gconj = p->gennum;
+
+  if (verbose) printf ("Matrix has %d rows and %d columns\n", matrixrank, numcols);
+
+  if (matrixrank < numcols)
+  {
+    printf ("Cannot compute Alexander polynomial because there are too many relators\n");
+    return (0);
+  }
+
+  determinant = laurent_eliminate_one_indeterminate (p, gconj);
+
+  laurent_canonify (determinant);
+
+  if (verbose)
+  {
+    printf ("Determinant of matrix (before canonization): ");
+    print_laurentpoly (determinant);
+    printf ("\n");
+  }
+
+  /* calcolo della derivata in t=1 */
+
+  deriv = 0;
+  val = 0;
+  if (determinant != 0)
+  {
+    for (i = 0; i <= determinant->stemdegree; i++)
+    {
+      e = i + determinant->minexpon;
+      deriv += e*determinant->stem[i];
+      val += determinant->stem[i];
+    }
+  }
+  printf ("Value in 1: %d, deriv = %d\n", val, deriv);
+  if (!quiet) printf ("Alexander polynomial (up to t -> 1/t):\n");
+  print_laurentpoly (determinant);
+  printf ("\n");
+  return (1);
+}
+
+/*
+ *
+ */
+
+struct laurentpoly *
+laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
+{
+  extern int verbose;
+  struct presentationrule *r;
+  struct laurentpoly *l, *determinant;
+  struct laurentpoly **matrixcolumn;
+  struct laurentpoly ***matrix;
+  int numcols = 0;
+  int numrows;
+  int i, ii, j;
+
+  assert (eliminate >= 1);
+  assert (eliminate <= p->gennum);
+
+  for (r = p->rules; r; r = r->next) numcols++;
+  numrows = p->gennum - 1;
+  assert (numcols <= numrows);
+
+  if (numcols < numrows) return (0);
+
   matrix = (struct laurentpoly ***) malloc (numcols*sizeof(struct laurentpoly **));
   for (j = 0; j < numcols; j++)
   {
-    matrix[j] = (struct laurentpoly **) malloc (matrixrank*sizeof(struct laurentpoly *));
+    matrix[j] = (struct laurentpoly **) malloc (numrows*sizeof(struct laurentpoly *));
   }
 
   /*
@@ -72,9 +205,10 @@ alexander (struct presentation *p)
   for (j = 0, r = p->rules; r; j++, r = r->next)
   {
     matrixcolumn = matrix[j];
-    for (i = 1; i <= matrixrank; i++)
+    for (i = 1, ii = 0; i <= p->gennum; i++)
     {
-      matrixcolumn[i-1] = laurent_get_exp_sum (r, i, gconj);
+      if (i == eliminate) continue;
+      matrixcolumn[ii++] = laurent_get_exp_sum (r, i, eliminate);
     }
   }
 
@@ -85,7 +219,7 @@ alexander (struct presentation *p)
   if (verbose)
   {
     printf ("Matrix entries:\n");
-    for (i = 0; i < matrixrank; i++)
+    for (i = 0; i < numrows; i++)
     {
       for (j = 0; j < numcols; j++)
       {
@@ -98,18 +232,7 @@ alexander (struct presentation *p)
     }
   }
 
-  determinant = laurent_compute_determinant (matrix, matrixrank);
-
-  if (verbose)
-  {
-    printf ("Determinant of matrix (before canonization): ");
-    print_laurentpoly (determinant);
-    printf ("\n");
-  }
-  laurent_canonify (determinant);
-  if (!quiet) printf ("Alexander polynomial (up to t -> 1/t):\n");
-  print_laurentpoly (determinant);
-  printf ("\n");
+  determinant = laurent_compute_determinant (matrix, numcols);
 
   /*
    * free allocated space
@@ -118,7 +241,7 @@ alexander (struct presentation *p)
   for (j = 0; j < numcols; j++)
   {
     matrixcolumn = matrix[j];
-    for (i = 0; i < matrixrank; i++)
+    for (i = 0; i < numrows; i++)
     {
       l = matrixcolumn[i];
       if (l) free (l);
@@ -127,7 +250,7 @@ alexander (struct presentation *p)
   }
   free (matrix);
 
-  return (1);
+  return (determinant);
 }
 
 /*

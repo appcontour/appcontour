@@ -935,6 +935,7 @@ fg_interactive (struct presentation *p)
       printf (" subrow <m> <n> : subtract row n to row m\n");
       printf ("Alexander polynomial:\n");
       printf (" alexander : compute Alexander polynomial\n");
+      printf (" corank1 : links... (experimental)\n");
       printf ("Relators and simplification:\n");
       printf (" rotrel <n> <rots> : rotate relator <n> left <rots> times\n");
       printf (" simplify : perform a complete simplification (might change signs\n");
@@ -1082,6 +1083,11 @@ fg_interactive (struct presentation *p)
     if (strcasecmp (cmd, "alexander") == 0)
     {
       alexander (p);
+      continue;
+    }
+    if (strcasecmp (cmd, "corank1") == 0)
+    {
+      corank_one_alexander (p);
       continue;
     }
     if (strcasecmp (cmd, "commute") == 0)
