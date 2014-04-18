@@ -254,11 +254,15 @@ main (int argc, char *argv[])
       printf ("\n Cell complex and fundamental group:\n");
       printf ("  cellcomplex, insidecomplex, outsidecomplex\n");
       printf ("  fundamental, insidefundamental, outsidefundamental\n");
-      printf ("  abbreviations: fg, ifg, ofg\n");
+      printf ("   abbreviations: fg, ifg, ofg\n");
+      printf ("  alexander: compute Alexander polynomial of fundamental group\n");
+      printf ("  linkingnumber: compute linking number from fundamental group\n");
       printf ("  abelianizedfundamental, insideabelianizedfundamental, outsideabelianizedfundamental\n");
-      printf ("  abbreviations: afg, iafg, oafg\n");
+      printf ("   abbreviations: afg, iafg, oafg\n");
       printf ("  scharacteristic, icharacteristic, ocharacteristic\n");
-      printf ("  abbreviations: sch, ich, och\n");
+      printf ("   abbreviations: sch, ich, och\n");
+      printf ("  specific options: --inside, --outside, --surface[default]\n");
+      printf ("   indicate which part of space to consider.  E.g. \"ifg\" is equivalent to \"fg --inside\"\n");
       printf ("\n File2 can be present only for actions that require two descriptions:\n");
       printf ("  'compare', 'union', 'sum' actions.\n");
       printf ("  alternatively for such actions the two descriptions can be contained\n");
@@ -412,6 +416,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"oafg") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"outsideabelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"alexander") == 0) action = ACTION_ALEXANDER;
+    if (strcmp(argv[i],"linkingnumber") == 0) action = ACTION_LINKINGNUMBER;
     if (strcmp(argv[i],"scharacteristic") == 0) {action = ACTION_CHARACTERISTIC; viacc = 1;}
     if (strcmp(argv[i],"sch") == 0) action = ACTION_CHARACTERISTIC;
     if (strcmp(argv[i],"icharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
@@ -983,6 +988,7 @@ main (int argc, char *argv[])
     case ACTION_FUNDAMENTAL:
     case ACTION_AFUNDAMENTAL:
     case ACTION_ALEXANDER:
+    case ACTION_LINKINGNUMBER:
     tok = gettoken (infile);
     ungettoken (tok);
     if (tok == TOK_FPGROUP)
@@ -999,6 +1005,9 @@ main (int argc, char *argv[])
           break;
         case ACTION_ALEXANDER:
           alexander (p);
+          break;
+        case ACTION_LINKINGNUMBER:
+          linkingnumber (p);
           break;
       }
     } else {

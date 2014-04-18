@@ -12,6 +12,7 @@ struct laurentpoly {
 /* prototypes */
 
 int alexander (struct presentation *p);
+int linkingnumber (struct presentation *p);
 int corank_one_alexander (struct presentation *p);
 struct laurentpoly *laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate);
 struct laurentpoly *laurent_get_exp_sum (struct presentationrule *r, int g, int gconj);

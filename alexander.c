@@ -80,6 +80,93 @@ alexander (struct presentation *p)
 }
 
 /*
+ * compute the linking number of a two-component link
+ */
+
+int
+linkingnumber (struct presentation *p)
+{
+  extern int verbose, quiet;
+  struct presentationrule *r;
+  struct laurentpoly *determinant;
+  int i, sum, rank, matrixrank;
+  int deriv, val, e;
+  int numcols = 0;
+  int gconj;
+
+  topreabelian (p);
+
+  if (verbose) print_presentation (p);
+
+  for (r = p->rules; r; r = r->next) numcols++;
+  rank = 0;
+  matrixrank = 0;
+  for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  {
+    sum = get_exp_sum (r, i);
+    assert (sum >= 0);
+    if (sum) matrixrank = i;
+    if (sum && sum != 1)
+    {
+      printf ("Cannot compute corank one Alexander polynomial for groups with torsion\n");
+      return (0);
+    }
+  }
+  rank = p->gennum - matrixrank;
+  if (rank <= 1)
+  {
+    printf ("Cannot compute linking number for groups with rank %d\n", rank);
+    return (0);
+  }
+  if (rank > 2)
+  {
+    printf ("Cannot compute linking number for groups with rank %d\n", rank);
+    return (0);
+  }
+  rank = 1;
+  matrixrank = p->gennum - rank;
+  gconj = p->gennum;
+
+  if (verbose) printf ("Matrix has %d rows and %d columns\n", matrixrank, numcols);
+
+  if (matrixrank < numcols)
+  {
+    printf ("Cannot compute linking number because there are too many relators\n");
+    return (0);
+  }
+
+  determinant = laurent_eliminate_one_indeterminate (p, gconj);
+
+  //laurent_canonify (determinant);
+
+  if (verbose)
+  {
+    printf ("Determinant of matrix: ");
+    print_laurentpoly (determinant);
+    printf ("\n");
+  }
+
+  /* linking number is the derivative in t=1 */
+
+  deriv = 0;
+  val = 0;
+  if (determinant != 0)
+  {
+    for (i = 0; i <= determinant->stemdegree; i++)
+    {
+      e = i + determinant->minexpon;
+      deriv += e*determinant->stem[i];
+      val += determinant->stem[i];
+    }
+  }
+  if (val != 0) printf ("Warning: Value in 1 is %d, should be zero.\n", val);
+  deriv = abs(deriv);
+  if (quiet) printf ("%d\n", deriv);
+   else printf ("Linking number is %d\n", deriv);
+  return (1);
+}
+
+/*
  * corank one (experimental)
  */
 

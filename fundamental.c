@@ -53,6 +53,13 @@ compute_fundamental (struct ccomplex *cc, int action)
         simplify_presentation (cccc->p);
         alexander (cccc->p);
         break;
+      case ACTION_LINKINGNUMBER:
+        simplify_presentation (cccc->p);
+        linkingnumber (cccc->p);
+        break;
+      default:
+        printf ("Invalid action: %d\n", action);
+        break;
     }
   }
 }

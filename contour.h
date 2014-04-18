@@ -56,6 +56,7 @@
 #define ACTION_FILEPATH 48
 #define ACTION_AFUNDAMENTAL 49
 #define ACTION_ALEXANDER 50
+#define ACTION_LINKINGNUMBER 51
 
 struct global_data {
   int rulenames;
