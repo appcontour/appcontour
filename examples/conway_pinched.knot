@@ -1,0 +1,16 @@
+#
+# example of nontrivial knot with trivial Alexander polynomial
+#
+knot {
+  ^   ^   ^     ;
+|   X   X  |    ;
+| |   x   y     ;
+|  X   |  h     ;
+|  X    X  |    ;
+|  |  U  | |    ;
+|  |  ^  | |    ;
+|   x   x  |    ;
+|   x   x  |    ;
+|  | |  x  |    ;
+  U   U   U     ;
+}

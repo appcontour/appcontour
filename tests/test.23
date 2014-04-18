@@ -1,0 +1,8 @@
+#
+# computing the Alexander polynomial and linking number
+#
+
+./contour --outside alexander examples/embrace.knot -q
+./contour --outside alexander examples/genus_2.morse -q
+./contour --outside alexander examples/genus_2_linked.morse -q
+./contour --outside alexander examples/conway_pinched.knot -q
