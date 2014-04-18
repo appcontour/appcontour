@@ -263,7 +263,8 @@ void print_connected_component_childs (int ccid, struct sketch *sketch);
 int tag_connected_components (struct sketch *sketch);
 int free_connected_components (struct sketch *sketch);
 
-int extract_connected_component (int ccid, struct sketch *sketch);
+int extract_connected_components (int ncc, int *ccids, struct sketch *sketch);
+//int extract_connected_component (int ccid, struct sketch *sketch);
 int remove_connected_component (int ccid, struct sketch *sketch);
 
 int add_s1 (struct sketch *s, struct region *r,
@@ -370,4 +371,7 @@ int any2morse (FILE *file);
 /* printmorse */
 void printmorse (struct sketch *sketch);
 int morse_ohmoto (struct sketch *sketch);
+
+/* contour */
+void ccid_isvalidp (int ncc, int *ccids, int count);
 

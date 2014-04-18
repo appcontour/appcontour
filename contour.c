@@ -21,6 +21,7 @@
   #define EXAMPLES_DIR ""
 #endif
 #define MAXFILELENGTH 2000
+#define NCCMAX 100
 
 int debug = 0;
 int quiet = 0;
@@ -41,16 +42,16 @@ struct global_data globals;
 struct tagged_data user_data;
 
 /* prototipi locali */
-void ccid_isvalidp (int ccid, int count);
 FILE *open_description_file (char *arg);
 FILE *new_file (FILE *oldfile, FILE *newfile);
 static char examplesfilename[MAXFILELENGTH];
+int readintlistsub1 (int nccmax, int *ccids, char *s);
 
 int
 main (int argc, char *argv[])
 {
   struct sketch *sketch, *s1, *s2;
-  int tok, ori = 0, i, count, action=ACTION_NONE, res, ccid = 0;
+  int tok, ori = 0, i, count, action=ACTION_NONE, res, ncc = 1, ccids[NCCMAX];
   unsigned int rndseed = 0;
   int newextregion = 0;
   int fg_type = FG_SURFACE;
@@ -66,6 +67,7 @@ main (int argc, char *argv[])
   int infiles = 1;
   struct presentation *p;
 
+  ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
   globals.rulenames = RULENAMES_NEW;
   if ((envvar = getenv ("APPCONTOUR_OLDNAMES")) && *envvar) 
@@ -318,35 +320,36 @@ main (int argc, char *argv[])
       action = ACTION_EXTRACTCC;
       i++;
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
-      ccid = atoi (argv[i]) - 1;
+      ncc = readintlistsub1 (NCCMAX, ccids, argv[i]);
+      //*ccids = atoi (argv[i]) - 1;
     }
     if (strcmp(argv[i],"removecc") == 0)
     {
       action = ACTION_REMOVECC;
       i++;
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
-      ccid = atoi (argv[i]) - 1;
+      *ccids = atoi (argv[i]) - 1;
     }
     if (strcmp(argv[i],"ccorientation") == 0)
     {
       action = ACTION_CCORIENTATION;
       i++;
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
-      ccid = atoi (argv[i]) - 1;
+      *ccids = atoi (argv[i]) - 1;
     }
     if (strcmp(argv[i],"ccparent") == 0)
     {
       action = ACTION_FINDCCPARENT;
       i++;
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
-      ccid = atoi (argv[i]) - 1;
+      *ccids = atoi (argv[i]) - 1;
     }
     if (strcmp(argv[i],"ccchilds") == 0)
     {
       action = ACTION_CCCHILDS;
       i++;
       if (i >= argc) {fprintf (stderr, "specify a cc id\n"); exit (11);}
-      ccid = atoi (argv[i]) - 1;
+      *ccids = atoi (argv[i]) - 1;
     }
     if (strcmp(argv[i],"listholes") == 0) action = ACTION_LISTHOLES;
     if (strcmp(argv[i],"removehole") == 0) action = ACTION_REMOVEHOLE;
@@ -752,7 +755,8 @@ main (int argc, char *argv[])
     case ACTION_EXTRACTCC:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
-    res = extract_connected_component (ccid, sketch);
+    //res = extract_connected_component (*ccids, sketch);
+    res = extract_connected_components (ncc, ccids, sketch);
     printsketch (sketch);
     if (res == 0) exit (15);
     break;
@@ -761,8 +765,9 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     count = count_connected_components (sketch);
-    ccid_isvalidp (ccid, count);
-    res = remove_connected_component (ccid, sketch);
+    ccid_isvalidp (ncc, ccids, count);
+    assert (ncc == 1);
+    res = remove_connected_component (*ccids, sketch);
     printsketch (sketch);
     if (res == 0) exit (15);
     break;
@@ -771,11 +776,12 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     count = count_connected_components (sketch);
-    ccid_isvalidp (ccid, count);
-    res = connected_component_orientation (ccid, sketch);
+    ccid_isvalidp (ncc, ccids, count);
+    assert (ncc == 1);
+    res = connected_component_orientation (*ccids, sketch);
     if (res == 0) exit (15);
     if (quiet) printf ("%c\n", (res == 1)?'+':'-');
-      else printf ("Component %d is %s oriented\n", ccid+1,
+      else printf ("Component %d is %s oriented\n", *ccids+1,
                     (res == 1)?"positively":"negatively");
     break;
 
@@ -783,8 +789,9 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     count = count_connected_components (sketch);
-    ccid_isvalidp (ccid, count);
-    res = find_connected_component_parent (ccid, sketch);
+    ccid_isvalidp (ncc, ccids, count);
+    assert (ncc == 1);
+    res = find_connected_component_parent (*ccids, sketch);
     res++;
     if (quiet) printf ("%d\n", res);
       else
@@ -798,8 +805,9 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     canonify (sketch);
     //count = count_connected_components (sketch);
-    //ccid_isvalidp (ccid, count);
-    print_connected_component_childs (ccid, sketch);
+    //ccid_isvalidp (ncc, ccids, count);
+    assert (ncc == 1);
+    print_connected_component_childs (*ccids, sketch);
     break;
 
     case ACTION_CCORDERING:
@@ -1087,13 +1095,18 @@ readcontour (FILE *file)
 }
 
 void
-ccid_isvalidp (int ccid, int count)
+ccid_isvalidp (int ncc, int *ccids, int count)
 {
-  if (ccid >= count || ccid < 0)
+  int i;
+
+  for (i = 0; i < ncc; i++)
   {
-    fprintf (stderr, "Invalid cc id: %d, valid range:[1,%d]\n",
-      ccid, count);
-    exit (15);
+    if (ccids[i] >= count || ccids[i] < 0)
+    {
+      fprintf (stderr, "Invalid cc id: %d, valid range:[1,%d]\n",
+        ccids[i] + 1, count);
+      exit (15);
+    }
   }
 }
 
@@ -1166,4 +1179,29 @@ new_file (FILE *oldfile, FILE *newfile)
 
   fclose (oldfile);
   return (newfile);
+}
+
+/*
+ * read a list of comma-separated integers
+ */
+
+int
+readintlistsub1 (int nccmax, int *ccids, char *s)
+{
+  int i = 0;
+  char *spt;
+
+  spt = s;
+  while (1)
+  {
+    assert (i < nccmax);
+    ccids[i++] = (int) strtol (s, &spt, 10) - 1;
+    if (*spt == ',')
+    {
+      s = spt + 1;
+      continue;
+    }
+    if (s == spt) return (i-1);
+    return (i);
+  }
 }

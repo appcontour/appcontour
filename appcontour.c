@@ -863,6 +863,29 @@ int join_consecutive_arcs (struct sketch *sketch);
 int list_strati (struct sketch *sketch);    /* for debugging purposes */
 
 int
+extract_connected_components (int ncc, int *ccids, struct sketch *sketch)
+{
+  int ccnum, i, j;
+  int remove;
+  int res = 1;
+
+  ccnum = count_connected_components (sketch);
+  ccid_isvalidp (ncc, ccids, ccnum);
+
+  for (i = 0; i < ccnum; i++)
+  {
+    remove = 1;
+    for (j = 0; j < ncc; j++) if (i == ccids[j]) remove = 0;
+    if (remove)
+    {
+      if (remove_connected_component (i, sketch) == 0) res = 0;
+    }
+  }
+  return (res);
+}
+
+/*
+int
 extract_connected_component (int ccid, struct sketch *sketch)
 {
   int ccnum, i;
@@ -879,6 +902,7 @@ extract_connected_component (int ccid, struct sketch *sketch)
   }
   return (1);
 }
+ */
 
 int
 remove_connected_component (int ccid, struct sketch *sketch)
