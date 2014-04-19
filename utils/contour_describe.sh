@@ -169,6 +169,68 @@ function zorkdescribe ()
   done
 }
 
+function zorkdescribepairs ()
+{
+  for comp1 in `seq $cc`
+  do
+    if [ "${holes[$comp1]}" != 1 ]; then continue; fi
+    parent1=`$ccontour -q ccparent $comp1 $file 2>/dev/null`
+    for comp2 in `seq $comp1 $cc`
+    do
+      if [ "$comp1" = "$comp2" ]; then continue; fi
+      if [ "${holes[$comp2]}" != 1 ]; then continue; fi
+      # sono fratelli? sono padre/figlio?
+      parent2=`$ccontour -q ccparent $comp2 $file 2>/dev/null`
+      fgoption=""
+      if [ "$parent1" = "$parent2" ]
+      then
+        fgoption="--outside"
+      fi
+      if [ "$comp1" = "$parent2" ]
+      then
+        fgoption="--inside"
+      fi
+      if [ "$comp2" = "$parent1" ]
+      then
+        fgoption="--inside"
+      fi
+      if [ -z "$fgoption" ]; then continue; fi
+      fg=`$ccontour -q extractcc $comp1,$comp2 $file 2>/dev/null | $ccontour -q fg $fgoption 2>/dev/null`
+      relators=`echo $fg | cut -f2 -d';' | cut -f1 -d'>'`
+      relators=`echo $relators`
+      if [ -z "$relators" ]
+      then
+        echo "The ${description[$comp1]} and the ${description[$comp2]} are not linked."
+        continue
+      fi
+      linking=`$ccontour -q extractcc $comp1,$comp2 $file 2>/dev/null | $ccontour -q linkingnumber $fgoption 2>/dev/null`
+      if [ "$linking" = "0" ]
+      then
+        echo "The ${description[$comp1]} is apparently linked with the ${description[$comp2]}."
+        continue
+      fi
+      case $linking in
+        1)
+        times="once"
+        ;;
+
+        2)
+        times="twice"
+        ;;
+
+        3)
+        times="three times"
+        ;;
+
+        *)
+        times="many times"
+        ;;
+      esac
+      echo "The ${description[$comp1]} is linked $times to the ${description[$comp2]}."
+    done
+  done
+}
+
 function getalexander ()
 {
   comp=$1
@@ -299,7 +361,7 @@ do
   # echo "component $comp, ${holes[$comp]} holes"
   if [ -z "$lista" ]
   then
-    lista="${holes[$comp]}"
+    lista="${holes[$comp]}:$orientation"
   else
     lista="${lista}#${holes[$comp]}:$orientation"
   fi
@@ -445,6 +507,7 @@ fi
 if [ -z "$orient" ]
 then
   zorkdescribe 0
+  zorkdescribepairs
 else
   if [ "$cc" -gt "1" ]
   then
