@@ -82,7 +82,7 @@ alexander (struct presentation *p)
 
     case 2:
     determinant2 = laurent_eliminate_two_indeterminates (p, gconj2, gconj);
-    //laurent_canonify2 (determinant);
+    laurent_canonify2 (determinant2);
     printf ("*** Warning: canonization procedure not yet implemented ***\n");
     if (!quiet) printf ("Alexander polynomial (CAVEAT):\n");
     print_laurentpoly2 (determinant2, 'u', 'v');
@@ -764,7 +764,7 @@ laurent_canonify (struct laurentpoly *l)
 
   assert (l->stem[0]);
   assert (l->stem[l->stemdegree]);
-  if (l->stem[0] < 0) laurent_negate (l);
+  //if (l->stem[0] < 0) laurent_negate (l);
 
   sign = 1;
   if (l->stem[l->stemdegree] < 0) sign = -1;
@@ -783,6 +783,38 @@ laurent_canonify (struct laurentpoly *l)
   }
   l->minexpon = 0; // we are interested only to the stem
   return;
+}
+
+/*
+ * laurent_canonify2
+ * for now simply shift exponents to minimal nonnegative
+ */
+
+void
+laurent_canonify2 (struct laurentpoly2 *l)
+{
+  int i, minexpon1;
+  struct laurentpoly *l1;
+
+  if (l == 0) return;
+
+  assert (l->stem[0]);
+
+  l->minexpon = 0;
+
+  minexpon1 = (l->stem[0])->minexpon;
+  for (i = 0; i <= l->stemdegree; i++)
+  {
+    l1 = l->stem[i];
+    if (l1 == 0) continue;
+    if (l1->minexpon < minexpon1) minexpon1 = l1->minexpon;
+  }
+  for (i = 0; i <= l->stemdegree; i++)
+  {
+    l1 = l->stem[i];
+    if (l1 == 0) continue;
+    l1->minexpon -= minexpon1;
+  }
 }
 
 /*

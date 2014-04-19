@@ -40,6 +40,7 @@ struct laurentpoly2 *laurent_normalize2 (struct laurentpoly2 *l);
 struct laurentpoly *laurent_dup (struct laurentpoly *l);
 struct laurentpoly2 *laurent_dup2 (struct laurentpoly2 *l);
 void laurent_canonify (struct laurentpoly *l);
+void laurent_canonify2 (struct laurentpoly2 *l);
 void laurent_t_to_oneovert (struct laurentpoly *l);
 void free_laurentpoly2 (struct laurentpoly2 *l);
 struct laurentpoly *laurentpoly_addmonom (struct laurentpoly *l, int expon, int coef);
