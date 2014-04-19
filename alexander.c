@@ -1125,7 +1125,8 @@ print_laurentpoly (struct laurentpoly *l, char indet)
 void
 print_laurentpoly2 (struct laurentpoly2 *l, char indet1, char indet2)
 {
-  int i, expon;
+  int i, j, expon, expon1;
+  struct laurentpoly *l1;
 
   if (l == 0) {printf ("0"); return;}
   assert (l->denom == 1);
@@ -1133,18 +1134,35 @@ print_laurentpoly2 (struct laurentpoly2 *l, char indet1, char indet2)
   for (i = 0; i <= l->stemdegree; i++)
   {
     expon = i + l->minexpon;
-    if (l->stem[i])
+    if ((l1 = l->stem[i]) != 0)
     {
-      printf ("+ [");
-      print_laurentpoly (l->stem[i], indet1);
-      printf ("]");
-      if (expon != 0)
+      for (j = 0; j <= l1->stemdegree; j++)
       {
-        printf ("%c", indet2);
-        if (expon != 1)
+        expon1 = j + l1->minexpon;
+        if (l1->stem[j] == 0) continue;
+        if (abs(l1->stem[j]) != 1 || ((expon1 == 0)&&(expon == 0)))
         {
-          if (expon > 0) printf ("^%d", expon);
-            else printf ("^(%d)", expon);
+          printf ("%+d", l1->stem[j]);
+        } else {
+          if (l1->stem[j] > 0) printf ("+"); else printf ("-");
+        }
+        if (expon1 != 0)
+        {
+          printf ("%c", indet1);
+          if (expon1 != 1)
+          {
+            if (expon1 > 0) printf ("^%d", expon1);
+             else printf ("^(%d)", expon1);
+          }
+        }
+        if (expon != 0)
+        {
+          printf ("%c", indet2);
+          if (expon != 1)
+          {
+            if (expon > 0) printf ("^%d", expon);
+             else printf ("^(%d)", expon);
+          }
         }
       }
     }

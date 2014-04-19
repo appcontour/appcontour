@@ -257,6 +257,7 @@ function getalexander ()
   alexander=${alexander#+}
 
   if [ "$alexander" = "1" ]; then alexander=""; fi
+  if [ "$alexander" = "-1" ]; then alexander=""; fi
   if [ "$alexander" = "[+1]" ]; then alexander=""; fi
   if [ "$alexander" = "[1]" ]; then alexander=""; fi
   if [ "$alexander" = "[-1]" ]; then alexander=""; fi

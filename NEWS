@@ -1,3 +1,6 @@
+2014-04-19: Computation of the Alexander polynomial in two indeterminates for
+	surfaces of genus 2.  No canonification procedure is implemented at the moment.
+
 2014-04-18: The linking number of a two-component link can be computed (this
 	is a conjecture) from the fundamental group of the complement by
 	working as if computing the alexander polinomial with one indeterminate
