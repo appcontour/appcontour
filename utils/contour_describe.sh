@@ -182,6 +182,7 @@ function zorkdescribepairs ()
       # sono fratelli? sono padre/figlio?
       parent2=`$ccontour -q ccparent $comp2 $file 2>/dev/null`
       fgoption=""
+      parent=""
       if [ "$parent1" = "$parent2" ]
       then
         fgoption="--outside"
@@ -189,10 +190,14 @@ function zorkdescribepairs ()
       if [ "$comp1" = "$parent2" ]
       then
         fgoption="--inside"
+        parent=$comp1
+        child=$comp2
       fi
       if [ "$comp2" = "$parent1" ]
       then
         fgoption="--inside"
+        parent=$comp2
+        child=$comp1
       fi
       if [ -z "$fgoption" ]; then continue; fi
       fg=`$ccontour -q extractcc $comp1,$comp2 $file 2>/dev/null | $ccontour -q fg $fgoption 2>/dev/null`
@@ -206,7 +211,12 @@ function zorkdescribepairs ()
       linking=`$ccontour -q extractcc $comp1,$comp2 $file 2>/dev/null | $ccontour -q linkingnumber $fgoption 2>/dev/null`
       if [ "$linking" = "0" ]
       then
-        echo "The ${description[$comp1]} is apparently linked with the ${description[$comp2]}."
+        if [ -n "$parent" ]
+        then
+          echo "The ${description[$child]} is apparently linked inside the ${description[$parent]}."
+        else
+          echo "The ${description[$comp1]} is apparently linked with the ${description[$comp2]}."
+        fi
         continue
       fi
       case $linking in
@@ -226,7 +236,12 @@ function zorkdescribepairs ()
         times="many times"
         ;;
       esac
-      echo "The ${description[$comp1]} is linked $times to the ${description[$comp2]}."
+      if [ -n "$parent" ]
+      then
+        echo "The ${description[$child]} is linked $times into the ${description[$parent]}."
+      else
+        echo "The ${description[$comp1]} is linked $times to the ${description[$comp2]}."
+      fi
     done
   done
 }
@@ -237,11 +252,15 @@ function getalexander ()
   file=$2
   sideopt=$3
 
-  alexander=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour alexander $sideopt -q 2>/dev/null`
+  alexander=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour alexander $sideopt -q 2>/dev/null | grep -iv warning`
   alexander=`echo $alexander | tr -d ' '`
   alexander=${alexander#+}
 
   if [ "$alexander" = "1" ]; then alexander=""; fi
+  if [ "$alexander" = "[+1]" ]; then alexander=""; fi
+  if [ "$alexander" = "[1]" ]; then alexander=""; fi
+  if [ "$alexander" = "[-1]" ]; then alexander=""; fi
+  if [ "$alexander" = "-[+1]" ]; then alexander=""; fi
   echo $alexander
 }
 
@@ -275,7 +294,7 @@ material[7]="bronze"
 material[8]="plastic"
 material[9]="sandstone"
 
-zork=""
+zork="1"
 orient=""
 
 while getopts "zno" option
@@ -429,6 +448,33 @@ do
         if [ -n "$ifg" -a -n "$ofg" ]
         then
           longdescr="mysteriously tangled torus"
+        fi
+        ;;
+      2)
+        descr="double torus"
+        ifg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour fg --inside -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
+        ofg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour fg --outside -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
+        if [ -n "$ofg" ]; then oalexander=`getalexander $comp $file --outside`; fi
+        if [ -n "$ifg" ]; then ialexander=`getalexander $comp $file --inside`; fi
+        if [ -n "$ofg" -a -z "$ifg" ]
+        then
+          longdescr="double torus (apparently knotted)"
+          if [ -n "$oalexander" ]
+          then
+            longdescr="knotted double torus"
+          fi
+        fi
+        if [ -n "$ifg" -a -z "$ofg" ]
+        then
+          longdescr="doble torus (with an apparently knotted hole)"
+          if [ -n "$ialexander" ]
+          then
+            longdescr="double torus with knotted holes"
+          fi
+        fi
+        if [ -n "$ifg" -a -n "$ofg" ]
+        then
+          longdescr="mysteriously tangled double torus"
         fi
         ;;
       *)
