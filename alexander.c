@@ -45,6 +45,13 @@ alexander (struct presentation *p)
   rank = p->gennum - matrixrank;
   if (rank > 2)
   {
+    if (matrixrank == 0 && numcols == 0)
+    {
+      /* special case, trivial polynomial */
+      if (!quiet) printf ("Alexander polynomial (special rank=%d case):\n", rank);
+      printf ("1\n");
+      return (1);
+    }
     printf ("Cannot compute Alexander polynomial for groups with rank %d\n", rank);
     return (0);
   }
