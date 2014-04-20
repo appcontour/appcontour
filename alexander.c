@@ -211,7 +211,6 @@ corank_one_alexander (struct presentation *p)
     sum = get_exp_sum (r, i);
     assert (sum >= 0);
     if (sum) matrixrank = i;
-      else gconj = i;
     if (sum && sum != 1)
     {
       printf ("Cannot compute corank one Alexander polynomial for groups with torsion\n");
