@@ -1,0 +1,3 @@
+contour wrap coil.knot | contour punchhole -r 1:0 
+contour wrap selflink.knot | contour punchhole -r 1:0 
+
