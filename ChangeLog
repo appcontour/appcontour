@@ -1,3 +1,5 @@
+2014-04-20: Version 2.2.0. Alexander polynomial in two indeterminates.
+
 2014-04-08: Version 2.1.0. Various improvements concerning the fundamental groups
 	including the computation of the Alexander polynomial for tubular knots.
 	provided examples include:
