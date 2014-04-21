@@ -34,6 +34,7 @@ int dorecomputef = 1;
 int doretagregions = 1;
 int finfinity = 0;
 int preabelian = 0;
+int simplify = 1;
 int mendesge = HGE_TEXT;
 int viacc = 0;
 static int renumber = 1;
@@ -157,6 +158,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--nocanonify") == 0)
     {
       docanonify = 0;
+      continue;
+    }
+    if (strcmp(argv[i],"--nosimplify") == 0)
+    {
+      simplify = 0;
       continue;
     }
     if (strcmp(argv[i],"--inside") == 0)
@@ -288,6 +294,7 @@ main (int argc, char *argv[])
       printf ("  --preabelian: compute preabelian presentation of fundamental group\n");
       printf ("  --inside|--outside: apply command to the inside/outside of surface\n");
       printf ("      works for cell complex and fundamental group computations\n");
+      printf ("  --nosimplify: do not simplify the presentation of the fundamental group\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
       exit (0);
     }

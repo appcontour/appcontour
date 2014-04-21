@@ -18,6 +18,7 @@ extern int quiet;
 extern int verbose;
 extern int interactive;
 extern int preabelian;
+extern int simplify;
 
 void
 compute_fundamental (struct ccomplex *cc, int action)
@@ -67,9 +68,9 @@ compute_fundamental (struct ccomplex *cc, int action)
 void
 fundamental_group (struct presentation *p)
 {
-  if (debug) print_presentation (p);
+  if (verbose >= 2) print_presentation (p);
   if (interactive >= 2) fg_interactive (p);
-  simplify_presentation (p);
+  if (simplify) simplify_presentation (p);
   if (preabelian) topreabelian (p);
   if (interactive) fg_interactive (p);
   print_presentation (p);
