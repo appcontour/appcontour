@@ -1,0 +1,21 @@
+#
+# unknot diagram by Morwen Thistlethwaite
+# (wikipedia: Unknot)
+#
+knot {
+ ^ ^;
+| X |;
+^ | X ^ |;
+|||| X ||;
+| ^ X || ^ | X;
+|| X || X X ||;
+X ||| X X U |;
+|||| U X ||;
+||| U |||;
+|| X ||;
+||| U |;
+|| X;
+|| X;
+| U |;
+  U;
+}
