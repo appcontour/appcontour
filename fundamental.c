@@ -1442,6 +1442,7 @@ int
 preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
 {
   int sum, pivot, optval, optrow, nmulrow;
+  int icol, optcol, nmulcol;
   int i, isdivisor, divisor;
   struct presentationrule *r, *optrcol, *nmulrcol;
 
@@ -1453,10 +1454,11 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
   isdivisor = 1;
   nmulrow = optrow = 0;
   nmulrcol = optrcol = 0;
+  optcol = nmulcol = 0;
 
   for (i = row; i <= p->gennum; i++)
   {
-    for (r = rcol; r; r = r->next)
+    for (r = rcol, icol = row; r; r = r->next, icol++)
     {
       sum = get_exp_sum (r, i);
       if (sum)
@@ -1466,6 +1468,7 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
           optval = abs(sum);
           optrow = i;
           optrcol = r;
+          optcol = icol;
         }
         if ( (abs(pivot) > 0 && (abs(sum) % abs(pivot)) != 0) ||
              (abs(pivot) == 0 && sum != 0) )
@@ -1473,6 +1476,7 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
           isdivisor = 0;
           nmulrow = i;
           nmulrcol = r;
+          nmulcol = icol;
         }
       }
     }
@@ -1481,7 +1485,12 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
   {
     assert (optrcol);
     assert (optrow != row || optrcol != rcol);
-    if (interactive || verbose) printf ("Found optimal value at row %d\n", optrow);
+    if (interactive || verbose)
+    {
+      printf ("Found optimal value at row %d, col %d\n", optrow, optcol);
+      if (optrow != row) printf ("  Exchange row %d with row %d\n", row, optrow);
+      if (optrcol != rcol) printf ("  Exchange col %d with col %d\n", row, optcol);
+    }
     /* exchange rows and columns */
     if (optrow != row) nielsen_exchange_generators (p, row, optrow);
     if (optrcol != rcol) p->rules = nielsen_exchange_relators (p->rules, rcol, optrcol);
@@ -1507,7 +1516,7 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
   }
   /* if we are here, the first column is zero */
   /* working on the first row... */
-  for (r = rcol->next; r; r = r->next)
+  for (r = rcol->next, icol = row + 1; r; r = r->next, icol++)
   {
     sum = get_exp_sum (r, row);
     if (sum)
@@ -1522,7 +1531,7 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
       sp_fcs_r1r2 (r, rcol, 0, 1);
       if (divisor > 0) nielsen_invrel (rcol);
       nielsen_mulright (p, r, rcol, divisor);
-      if (interactive || verbose) printf ("  Column %p times %d added to column %p\n", rcol, divisor, r);
+      if (interactive || verbose) printf ("  Column %d times %d added to column %d\n", row, divisor, icol);
       return (1);
     }
   }
@@ -1542,7 +1551,7 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
   if (pivot < 0)
   {
     nielsen_invgen (p, row);
-    if (interactive || verbose) printf ("Inverted generator %d\n", row);
+    if (interactive || verbose) printf ("  Inverted generator %d\n", row);
     return (1);
   }
   return (preabelian_step (p, row + 1, rcol->next));

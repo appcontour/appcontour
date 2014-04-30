@@ -1,3 +1,110 @@
+2014.04.30
+
+Polinomio di Alexander in due indeterminate.  Il calcolo teorico
+oppure il codice e' sbagliato:
+
+===================================
+$ contour -i -v fg --nosimplify
+fpgroup {<a,b,c; CBCBAbcabccabcb>}
+Finitely presented group with 3 generators
+<a,b,c; CBCBAbcabccabcb>
+Exponent sum matrix:
+[  1]
+[  2]
+[  2]
+--> alexander
+Computing preabelian presentation...
+  Row 1 times -2 added to row 2
+  Row 1 times -2 added to row 3
+Finitely presented group with 3 generators
+<a,b,c; CBCbccAbcaCCBccaCCBcb>
+Matrix has 1 rows and 1 columns
+Matrix entries:
+-1+v+uv; 
+*** Warning: canonization procedure not yet implemented ***
+Alexander polynomial (CAVEAT):
+-1+v+uv
+--> quit
+===================================
+$ contour -i -v fg --nosimplify
+fpgroup {<a,b,c; CBCBAbcabccabcb>}
+Finitely presented group with 3 generators
+<a,b,c; CBCBAbcabccabcb>
+Exponent sum matrix:
+[  1]
+[  2]
+[  2]
+--> addrow 1 3
+Finitely presented group with 3 generators
+<a,b,c; ACBACBAbcaabcacaabcab>
+Exponent sum matrix:
+[  3]
+[  2]
+[  2]
+--> alexander
+Computing preabelian presentation...
+Found optimal value at row 2, col 1
+  Exchange row 1 with row 2
+  Row 1 times -1 added to row 2
+Found optimal value at row 2, col 1
+  Exchange row 1 with row 2
+  Row 1 times -2 added to row 2
+  Row 1 times -2 added to row 3
+Finitely presented group with 3 generators
+<a,b,c; bbccACaCCBccACaCCBccAbbbccAcaCCBBaCCbccAcaCCBBcaCCBBaCCbccAcaCCbccA>
+Matrix has 1 rows and 1 columns
+Matrix entries:
++u^(-2)v^(-1)-u^(-1)v^(-1)+u^(-1)-2+u+v-u^3v^2+u^3v^3; 
+*** Warning: canonization procedure not yet implemented ***
+Alexander polynomial (CAVEAT):
++1-u+uv-2u^2v+u^3v+u^2v^2-u^5v^3+u^5v^4
+--> quit
+===================================
+
+il primo fpgroup si puo' ottenere da "embrace":
+$ contour -i -v ofg embrace
+Reading from file /usr/local/share/appcontour/examples/embrace.knot
+reading knot description
+Finitely presented group with 3 generators
+<a,b,c; abABcAC>
+Exponent sum matrix:
+[ -1]
+[  0]
+[  0]
+--> negrow
+Invalid row number 0
+--> negrow 1
+Finitely presented group with 3 generators
+<a,b,c; AbaBcaC>
+Exponent sum matrix:
+[  1]
+[  0]
+[  0]
+--> addrow 2 1
+Finitely presented group with 3 generators
+<a,b,c; BAbacabC>
+Exponent sum matrix:
+[  1]
+[  1]
+[  0]
+--> addrow 2 1
+Finitely presented group with 3 generators
+<a,b,c; BBAbabcabbC>
+Exponent sum matrix:
+[  1]
+[  2]
+[  0]
+--> addrow 3 2
+Finitely presented group with 3 generators
+<a,b,c; CBCBAbcabccabcb>
+Exponent sum matrix:
+[  1]
+[  2]
+[  2]
+--> quit
+ 
+----------------------------------------------------------------
+
 2010.10.14
 
 MENDES GRAPH
