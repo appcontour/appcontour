@@ -1,0 +1,9 @@
+#
+# Rolfsen, link 2^2_1
+#
+knot {
+ ^ ^  ;
+| x | ;
+| x | ;
+ U U  ;
+}

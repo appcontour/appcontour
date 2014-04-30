@@ -1,0 +1,10 @@
+#
+# Rolfsen, link 5^2_1
+#
+knot {
+ ^ ^ ^ ;
+| X X |;
+|| x ||;
+| X X |;
+ U U U ;  
+}

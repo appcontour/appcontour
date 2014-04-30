@@ -1,0 +1,11 @@
+#
+# Rolfsen, link 6^2_1
+#
+knot {
+ ^ ^ ;
+| X |;
+ x x ;
+ x x ;
+| X |;
+ U U ;
+}

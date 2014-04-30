@@ -1,0 +1,24 @@
+#
+# wikipedia example
+#
+# modificato come segue:
+#
+#16c16
+#< || | x  | x  ;
+#---
+#> | x  x  | x  ;
+#
+# in modo da avere due componenti
+# con gruppo fondamentale con tre generatori
+#
+knot {
+  ^  ^  ^    ;
+|  X   X  |  ;
+ x  X  ^ | | ;
+|| | x  | x  ;
+|| ||  X | | ;
+| || x  X  | ;
+ X U  X  X   ;
+|   U  U  |  ;
+     U       ;
+}

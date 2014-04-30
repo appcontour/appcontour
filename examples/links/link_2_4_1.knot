@@ -1,0 +1,10 @@
+#
+# Rolfsen, link 4^2_1
+#
+knot {
+ ^ ^  ;
+| X | ;
+ x x  ;
+| X | ;
+ U U  ;
+}
