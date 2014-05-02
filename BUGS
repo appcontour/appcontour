@@ -1,5 +1,9 @@
 2014.04.30
 
+UPDATE: effettivamente il problema e' concettuale... e probabilmente
+sara' necessario calcolare l'ideale generato da un certo numero
+di polinomi (determinanti dei minori nxn di una matrice nx(n+2).
+
 Polinomio di Alexander in due indeterminate.  Il calcolo teorico
 oppure il codice e' sbagliato:
 
@@ -71,8 +75,6 @@ Exponent sum matrix:
 [ -1]
 [  0]
 [  0]
---> negrow
-Invalid row number 0
 --> negrow 1
 Finitely presented group with 3 generators
 <a,b,c; AbaBcaC>
