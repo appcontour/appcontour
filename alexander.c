@@ -285,7 +285,7 @@ corank_one_alexander (struct presentation *p)
 struct laurentpoly *
 laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
 {
-  extern int verbose;
+  extern int verbose, debug;
   struct presentationrule *r;
   struct laurentpoly *l, *determinant;
   struct laurentpoly **matrixcolumn;
@@ -320,6 +320,16 @@ laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
     {
       if (i == eliminate) continue;
       matrixcolumn[ii++] = laurent_get_exp_sum (r, i, eliminate);
+    }
+  }
+
+  if (debug)
+  {
+    for (j = 0, r = p->rules; r; j++, r = r->next)
+    {
+      printf ("extra row, entry %d: ", j+1);
+      print_laurentpoly (laurent_get_exp_sum (r, eliminate, eliminate), 't');
+      printf ("\n");
     }
   }
 
@@ -371,7 +381,7 @@ laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
 struct laurentpoly2 *
 laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2)
 {
-  extern int verbose;
+  extern int verbose, debug;
   struct presentationrule *r;
   struct laurentpoly2 *l, *determinant;
   struct laurentpoly2 **matrixcolumn;
@@ -408,6 +418,19 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2)
     {
       if (i == e1 || i == e2) continue;
       matrixcolumn[ii++] = laurent_get_exp_sum2 (r, i, e1, e2);
+    }
+  }
+
+  if (debug)
+  {
+    for (j = 1, r = p->rules; r; j++, r = r->next)
+    {
+      printf ("Extra row 1, entry %d: ", j);
+      print_laurentpoly2 (laurent_get_exp_sum2 (r, e1, e1, e2), 'u', 'v');
+      printf ("\n");
+      printf ("Extra row 2, entry %d: ", j);
+      print_laurentpoly2 (laurent_get_exp_sum2 (r, e2, e1, e2), 'u', 'v');
+      printf ("\n");
     }
   }
 
@@ -467,18 +490,16 @@ laurent_get_exp_sum (struct presentationrule *r, int n, int gconj)
   runningexp = 0;
   minexp = INT_MAX;
   maxexp = INT_MIN;
+  assert (gconj > 0);
   for (k = 0; k < r->length; k++)
   {
-    if (abs(r->var[k]) == gconj)
-    {
-      if (r->var[k] > 0) runningexp++;
-        else runningexp--;
-    }
+    if (r->var[k] == -gconj) runningexp--;
     if (abs(r->var[k]) == n)
     {
       if (runningexp < minexp) minexp = runningexp;
       if (runningexp > maxexp) maxexp = runningexp;
     }
+    if (r->var[k] == gconj) runningexp++;
   }
 
   if (minexp > maxexp) return (0);
@@ -492,17 +513,14 @@ laurent_get_exp_sum (struct presentationrule *r, int n, int gconj)
   runningexp = 0;
   for (k = 0; k < r->length; k++)
   {
-    if (abs(r->var[k]) == gconj)
-    {
-      if (r->var[k] > 0) runningexp++;
-        else runningexp--;
-    }
+    if (r->var[k] == -gconj) runningexp--;
     if (abs(r->var[k]) == n)
     {
       d = runningexp - minexp;
       if (r->var[k] > 0) l->stem[d]++;
         else l->stem[d]--;
     }
+    if (r->var[k] == gconj) runningexp++;
   }
 
   assert (l);
@@ -527,21 +545,14 @@ laurent_get_exp_sum2 (struct presentationrule *r, int n, int e1, int e2)
   int re1, re2, minexp1, minexp2, maxexp1, maxexp2;
   struct laurentpoly2 *l;
 
+  assert (e1 > 0 && e2 > 0);
   re1 = re2 = 0;
   minexp1 = minexp2 = INT_MAX;
   maxexp1 = maxexp2 = INT_MIN;
   for (k = 0; k < r->length; k++)
   {
-    if (abs(r->var[k]) == e1)
-    {
-      if (r->var[k] > 0) re1++;
-        else re1--;
-    }
-    if (abs(r->var[k]) == e2)
-    {
-      if (r->var[k] > 0) re2++;
-        else re2--;
-    }
+    if (r->var[k] == -e1) re1--;
+    if (r->var[k] == -e2) re2--;
     if (abs(r->var[k]) == n)
     {
       if (re1 < minexp1) minexp1 = re1;
@@ -549,6 +560,8 @@ laurent_get_exp_sum2 (struct presentationrule *r, int n, int e1, int e2)
       if (re1 > maxexp1) maxexp1 = re1;
       if (re2 > maxexp2) maxexp2 = re2;
     }
+    if (r->var[k] == e1) re1++;
+    if (r->var[k] == e2) re2++;
   }
 
   if (minexp1 > maxexp1 || minexp2 > maxexp2) return (0);
@@ -563,22 +576,16 @@ laurent_get_exp_sum2 (struct presentationrule *r, int n, int e1, int e2)
   re1 = re2 = 0;
   for (k = 0; k < r->length; k++)
   {
-    if (abs(r->var[k]) == e1)
-    {
-      if (r->var[k] > 0) re1++;
-        else re1--;
-    }
-    if (abs(r->var[k]) == e2)
-    {
-      if (r->var[k] > 0) re2++;
-        else re2--;
-    }
+    if (r->var[k] == -e1) re1--;
+    if (r->var[k] == -e2) re2--;
     if (abs(r->var[k]) == n)
     {
       d = re2 - minexp2;
       if (r->var[k] > 0) l->stem[d] = laurentpoly_addmonom (l->stem[d], re1, 1);
         else l->stem[d] = laurentpoly_addmonom (l->stem[d], re1, -1);
     }
+    if (r->var[k] == e1) re1++;
+    if (r->var[k] == e2) re2++;
   }
 
   assert (l);
