@@ -1,5 +1,9 @@
 2014-04-19: Computation of the Alexander polynomial in two indeterminates for
 	surfaces of genus 2.  No canonification procedure is implemented at the moment.
+	(2014-05-03) This revealed more tricky than expected, due to the presence of
+	the commutator of the two generators in the commutator subgroup.
+	Hopefully fixed by sometimes displaying a list of polynomials generating
+	the Alexander ideal (not always principal).
 
 2014-04-18: The linking number of a two-component link can be computed (this
 	is a conjecture) from the fundamental group of the complement by
