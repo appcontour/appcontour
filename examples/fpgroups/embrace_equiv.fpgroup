@@ -1,0 +1,10 @@
+#
+# this presentation is equivalent (via Tietse moves)
+# to the presentation of the "embrace" group <a,b,c; abABcAC>
+#
+# it leads to a tricky definition of the Alexander ideal
+# with extra commutator terms
+#
+fpgroup {
+<a,b,c; bbccACaCCBccACaCCBccAbbbccAcaCCBBaCCbccAcaCCBBcaCCBBaCCbccAcaCCbccA>
+}
