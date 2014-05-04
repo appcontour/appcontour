@@ -2,15 +2,16 @@
 # computing the Alexander polynomial and linking number
 #
 
-./contour --outside alexander examples/knots/knot_0_1.knot -q
-./contour --outside alexander examples/knots/knot_3_1.knot -q
-./contour --outside alexander examples/knots/knot_6_2.knot -q
-./contour --outside alexander examples/knots/knot_6_3.knot -q
-./contour --outside alexander examples/knots/knot_7_6.knot -q
-./contour --outside alexander examples/kinoshita_terasaka.knot -q
-./contour --outside alexander examples/conway.knot -q
-./contour --outside linkingnumber examples/two_rings.knot -q
-./contour --outside linkingnumber examples/linked_rings.knot -q
-./contour --outside linkingnumber examples/linked_rings_twice.knot -q
-./contour --outside linkingnumber examples/links/link_2_6_2.knot -q
-./contour --outside linkingnumber examples/links/link_2_6_3.knot -q
+./contour --out alexander examples/knots/knot_0_1.knot -q
+./contour --out alexander examples/knots/knot_3_1.knot -q
+./contour --out alexander examples/knots/knot_6_2.knot -q
+./contour --out alexander examples/knots/knot_6_3.knot -q
+./contour --out alexander examples/knots/knot_7_6.knot -q
+./contour --out alexander examples/kinoshita_terasaka.knot -q
+./contour --out alexander examples/conway.knot -q
+./contour --out linkingnumber examples/two_rings.knot -q
+./contour --out linkingnumber examples/linked_rings.knot -q
+./contour --out linkingnumber examples/linked_rings_twice.knot -q
+./contour --out linkingnumber examples/ochiai_mod_to_link.knot -q
+./contour --out linkingnumber examples/links/link_2_6_2.knot -q
+./contour --out linkingnumber examples/links/link_2_6_3.knot -q

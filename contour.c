@@ -165,12 +165,12 @@ main (int argc, char *argv[])
       simplify = 0;
       continue;
     }
-    if (strcmp(argv[i],"--inside") == 0)
+    if (strcmp(argv[i],"--inside") == 0 || strcmp(argv[i],"--in") == 0)
     {
       fg_type = FG_INTERNAL;
       continue;
     }
-    if (strcmp(argv[i],"--outside") == 0)
+    if (strcmp(argv[i],"--outside") == 0 || strcmp(argv[i],"--out") == 0)
     {
       fg_type = FG_EXTERNAL;
       continue;
@@ -269,7 +269,7 @@ main (int argc, char *argv[])
       printf ("   abbreviations: afg, iafg, oafg\n");
       printf ("  scharacteristic, icharacteristic, ocharacteristic\n");
       printf ("   abbreviations: sch, ich, och\n");
-      printf ("  specific options: --inside, --outside, --surface[default]\n");
+      printf ("  specific options: --in, --out, --surface[default]\n");
       printf ("   indicate which part of space to consider.  E.g. \"ifg\" is equivalent to \"fg --inside\"\n");
       printf ("\n File2 can be present only for actions that require two descriptions:\n");
       printf ("  'compare', 'union', 'sum' actions.\n");
@@ -292,7 +292,7 @@ main (int argc, char *argv[])
       printf ("  -a|--arc <int>: mark arc for specific action\n");
       printf ("  --oldnames|--newnames: select set of names for rules\n");
       printf ("  --preabelian: compute preabelian presentation of fundamental group\n");
-      printf ("  --inside|--outside: apply command to the inside/outside of surface\n");
+      printf ("  --in|--out: apply command to the inside/outside of surface\n");
       printf ("      works for cell complex and fundamental group computations\n");
       printf ("  --nosimplify: do not simplify the presentation of the fundamental group\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
