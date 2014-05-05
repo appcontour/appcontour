@@ -31,7 +31,7 @@ struct laurentpoly2 *laurent_common_factor2 (struct presentationrule *r, int x1,
 struct laurentpoly *laurent_compute_determinant (struct laurentpoly ***matrix, int n);
 struct laurentpoly2 *laurent_compute_determinant2 (struct laurentpoly2 ***matrix, int n);
 struct laurentpoly2 *laurent_minor_determinant2 (struct laurentpoly2 ***matrix, int n,
-                          struct laurentpoly2 **extrarow, int row_to_substitute);
+                          int row_to_substitute);
 void print_laurentpoly (struct laurentpoly *l, char indet);
 void print_laurentpoly2 (struct laurentpoly2 *l, char indet1, char indet2);
 struct laurentpoly *laurent_add (struct laurentpoly *add1, struct laurentpoly *add2);

@@ -2,6 +2,30 @@
 # this presentation is equivalent (via Tietse moves)
 # to the presentation of the "embrace" group <a,b,c; abABcAC>
 #
+# $ contour -i -v ofg embrace
+# Finitely presented group with 3 generators
+# <a,b,c; abABcAC>
+# --> negrow 1
+# <a,b,c; AbaBcaC>
+# --> addrow 2 1
+# <a,b,c; BAbacabC>
+# --> addrow 2 1
+# <a,b,c; BBAbabcabbC>
+# --> addrow 3 2
+# <a,b,c; CBCBAbcabccabcb>
+# --> addrow 1 3
+# <a,b,c; ACBACBAbcaabcacaabcab>
+# Computing preabelian presentation...
+# Found optimal value at row 2, col 1
+#   Exchange row 1 with row 2
+#   Row 1 times -1 added to row 2
+# Found optimal value at row 2, col 1
+#   Exchange row 1 with row 2
+#   Row 1 times -2 added to row 2
+#   Row 1 times -2 added to row 3
+# Finitely presented group with 3 generators
+# <a,b,c; bbccACaCCBccACaCCBccAbbbccAcaCCBBaCCbccAcaCCBBcaCCBBaCCbccAcaCCbccA>
+#
 # it leads to a tricky definition of the Alexander ideal
 # with extra commutator terms
 #
