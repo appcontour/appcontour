@@ -66,6 +66,13 @@ struct global_data {
 #define MAPTMAX 4
 #define MSPTMAX 4
 
+#define FOXD_UNDEF (-1000)
+#define FOXD_MINVALID (-999)
+#define FOXD_KNOT 1
+#define FOXD_LINK 1
+#define FOXD_GENUS2 2
+#define FOXD_GENUS3 3
+
 struct tagged_data {
   int mrnum;
   int region[MRPTMAX];

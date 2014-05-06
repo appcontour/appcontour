@@ -5,6 +5,6 @@
 ./contour --outside alexander examples/embrace.knot -q
 ./contour --outside alexander examples/genus_2.morse -q
 ./contour --outside alexander examples/genus_2_linked.morse -q
-./contour sum examples/trefoilknot.knot examples/internalknot.morse | ./contour --out alexander
-./contour sum examples/trefoilknot.knot examples/internalknot.morse | ./contour --in alexander
+./contour sum examples/trefoilknot.knot examples/internalknot.morse | ./contour --out alexander -q
+./contour sum examples/trefoilknot.knot examples/internalknot.morse | ./contour --in alexander -q
 

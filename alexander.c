@@ -15,13 +15,15 @@
 int
 alexander (struct presentation *p)
 {
-  extern int verbose, quiet;
+  extern int verbose, quiet, foxd;
   struct presentationrule *r;
   struct laurentpoly *determinant;
   struct laurentpoly2 *determinant2;
   struct laurentpoly2 **extradeterminants;
   int i, sum, rank, matrixrank, deficiency;
   int numcols = 0;
+  int printdvalue = 0;
+  int foxdtoolarge = 0;
   int gconj, gconj2;
 
   topreabelian (p);
@@ -29,7 +31,43 @@ alexander (struct presentation *p)
   if (verbose) print_presentation (p);
 
   for (r = p->rules; r; r = r->next) numcols++;
+  /* foxd is the index of the Alexander ideal (dth Alexander ideal) */
   deficiency = p->gennum - numcols;
+  if (foxd < 0 && foxd >= FOXD_MINVALID)
+  {
+    if (!quiet) printf ("Trivial zero ideal for negative d:\n");
+    printf ("0\n");
+    return (1);
+  }
+  if (foxd == 0)
+  {
+    printf ("Computation of order ideal not implemented\n");
+    return (0);
+  }
+  if (foxd == FOXD_UNDEF)
+  {
+    printdvalue = 1;
+    foxd = deficiency;
+    if (foxd < 1) foxd = 1;
+  }
+  if (printdvalue)
+  {
+    if (quiet) printf ("d = %d\n", foxd);
+     else printf ("Computing Alexander ideal for d = %d:\n", foxd);
+  }
+  if (foxd >= p->gennum)
+  {
+    if (!quiet) printf ("Trivial whole ring ideal:\n");
+    printf ("1\n");
+    return (1);
+  }
+  if (foxd < deficiency)
+  {
+    /* Jacobian matrix has too low rank */
+    if (!quiet) printf ("Alexander polynomial (special large deficiency case):\n");
+    printf ("0\n");
+    return (1);
+  }
   rank = 0;
   matrixrank = 0;
   for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
@@ -47,13 +85,14 @@ alexander (struct presentation *p)
   rank = p->gennum - matrixrank;
   if (rank > 2)
   {
-    if (matrixrank == 0 && numcols == 0)
-    {
-      /* special case, trivial polynomial */
-      if (!quiet) printf ("Alexander polynomial (special rank=%d case):\n", rank);
-      printf ("1\n");
-      return (1);
-    }
+    assert (numcols > 0 && matrixrank > 0);
+    //if (matrixrank == 0 && numcols == 0)
+    //{
+    //  /* special case, trivial polynomial */
+    //  if (!quiet) printf ("Alexander polynomial (special rank=%d case):\n", rank);
+    //  printf ("1\n");
+    //  return (1);
+    //}
     printf ("Cannot compute Alexander polynomial for groups with rank %d\n", rank);
     return (0);
   }
@@ -81,15 +120,30 @@ alexander (struct presentation *p)
 
   switch (rank)
   {
-    case 1:
-    determinant = laurent_eliminate_one_indeterminate (p, gconj);
-    laurent_canonify (determinant);
-    if (!quiet) printf ("Alexander polynomial (up to t -> 1/t):\n");
-    print_laurentpoly (determinant, 't');
-    printf ("\n");
+    case 1:  /* case of knot groups */
+    switch (foxd)
+    {
+      case 1:  /* this is the most interesting */
+      determinant = laurent_eliminate_one_indeterminate (p, gconj);
+      laurent_canonify (determinant);
+      if (!quiet) printf ("Alexander polynomial (up to t -> 1/t):\n");
+      print_laurentpoly (determinant, 't');
+      printf ("\n");
+      break;
+
+      default:
+      foxdtoolarge++;
+      break;
+    }
     break;
 
     case 2:
+    if (foxd > deficiency)
+    {
+      foxdtoolarge++;
+      break;
+    }
+    assert (foxd == deficiency);
     determinant2 = laurent_eliminate_two_indeterminates (p, gconj2, gconj, &extradeterminants);
     printf ("*** Warning: canonization procedure not yet implemented ***\n");
     if (extradeterminants)
@@ -134,6 +188,11 @@ alexander (struct presentation *p)
     return (0);
   }
 
+  if (foxdtoolarge)
+  {
+    printf ("Unable to compute higer d = %d Alexander ideal.\n", foxd);
+    return (0);
+  }
   return (1);
 }
 
@@ -453,6 +512,12 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
    * *** Warning: canonization procedure not yet implemented ***
    * Alexander polynomial:
    * 0
+   *
+   * This problem is solved by allowing the user to explicitly require a value for
+   * the index "d" used by R.H. Fox to select one of the Alexander ideals.
+   *
+   * If no indication is given, then "contour" selects a default value and prints the
+   * value selected on output, to avoid confusion.
    */
 
   numrows = p->gennum - 1;

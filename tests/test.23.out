@@ -1,12 +1,13 @@
+d = 2
 *** Warning: canonization procedure not yet implemented ***
 -1+u+v
+d = 2
+1
+d = 2
+1
+d = 2
 *** Warning: canonization procedure not yet implemented ***
-+1
-*** Warning: canonization procedure not yet implemented ***
-+1
-*** Warning: canonization procedure not yet implemented ***
-Alexander polynomial:
 +1-v+v^2
+d = 2
 *** Warning: canonization procedure not yet implemented ***
-Alexander polynomial:
 +1-u+u^2

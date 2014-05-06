@@ -211,11 +211,14 @@ function zorkdescribepairs ()
       linking=`$ccontour -q extractcc $comp1,$comp2 $file 2>/dev/null | $ccontour -q linkingnumber $fgoption 2>/dev/null`
       if [ "$linking" = "0" ]
       then
+        alexander=`getalexanderlink2 $comp1 $comp2 $file $fgoption`
+        apparently="linked"
+        if [ -z "$alexander" ]; then apparently="apparently linked"; fi
         if [ -n "$parent" ]
         then
-          echo "The ${description[$child]} is apparently linked inside the ${description[$parent]}."
+          echo "The ${description[$child]} is $apparently inside the ${description[$parent]}."
         else
-          echo "The ${description[$comp1]} is apparently linked with the ${description[$comp2]}."
+          echo "The ${description[$comp1]} is $apparently with the ${description[$comp2]}."
         fi
         continue
       fi
@@ -250,18 +253,38 @@ function getalexander ()
 {
   comp=$1
   file=$2
-  sideopt=$3
+  foxd=$3
+  sideopt=$4
 
-  alexander=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour alexander $sideopt -q 2>/dev/null | grep -iv warning`
+  if [ -z "$foxd" ]; then foxd=1; fi
+  alexander=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour alexander --foxd $foxd $sideopt -q 2>/dev/null | grep -iv warning`
   alexander=`echo $alexander | tr -d ' '`
   alexander=${alexander#+}
-
   if [ "$alexander" = "1" ]; then alexander=""; fi
   if [ "$alexander" = "-1" ]; then alexander=""; fi
   if [ "$alexander" = "[+1]" ]; then alexander=""; fi
   if [ "$alexander" = "[1]" ]; then alexander=""; fi
   if [ "$alexander" = "[-1]" ]; then alexander=""; fi
   if [ "$alexander" = "-[+1]" ]; then alexander=""; fi
+  echo $alexander
+}
+
+function getalexanderlink2 ()
+{
+  comp1=$1
+  comp2=$2
+  file=$3
+  sideopt=$4
+
+  alexander=`$ccontour extractcc $comp1,$comp2 $file 2>/dev/null | $ccontour alexander --foxd 1 $sideopt -q 2>/dev/null | grep -iv warning`
+  alexander=`echo $alexander | tr -d ' '`
+  alexander=${alexander#+}
+  if [ "$alexander" = "0" ]; then alexander=""; fi
+  if [ "$alexander" = "-0" ]; then alexander=""; fi
+  if [ "$alexander" = "[+0]" ]; then alexander=""; fi
+  if [ "$alexander" = "[0]" ]; then alexander=""; fi
+  if [ "$alexander" = "[-0]" ]; then alexander=""; fi
+  if [ "$alexander" = "-[+0]" ]; then alexander=""; fi
   echo $alexander
 }
 
@@ -428,8 +451,8 @@ do
         descr="torus"
         ifg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour fg --inside -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
         ofg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour fg --outside -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
-        if [ -n "$ofg" ]; then oalexander=`getalexander $comp $file --outside`; fi
-        if [ -n "$ifg" ]; then ialexander=`getalexander $comp $file --inside`; fi
+        if [ -n "$ofg" ]; then oalexander=`getalexander $comp $file $nholes --outside`; fi
+        if [ -n "$ifg" ]; then ialexander=`getalexander $comp $file $nholes --inside`; fi
         if [ -n "$ofg" -a -z "$ifg" ]
         then
           longdescr="torus (apparently knotted)"
@@ -455,8 +478,8 @@ do
         descr="double torus"
         ifg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour fg --inside -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
         ofg=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour fg --outside -q 2>/dev/null | tr -d ' ' | cut -f2 -d';' | cut -f1 -d'>'`
-        if [ -n "$ofg" ]; then oalexander=`getalexander $comp $file --outside`; fi
-        if [ -n "$ifg" ]; then ialexander=`getalexander $comp $file --inside`; fi
+        if [ -n "$ofg" ]; then oalexander=`getalexander $comp $file $nholes --outside`; fi
+        if [ -n "$ifg" ]; then ialexander=`getalexander $comp $file $nholes --inside`; fi
         if [ -n "$ofg" -a -z "$ifg" ]
         then
           longdescr="double torus (apparently knotted)"

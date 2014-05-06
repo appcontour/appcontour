@@ -37,6 +37,7 @@ int preabelian = 0;
 int simplify = 1;
 int mendesge = HGE_TEXT;
 int viacc = 0;
+int foxd = FOXD_UNDEF;
 static int renumber = 1;
 
 struct global_data globals;
@@ -188,6 +189,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--dontrenumber") == 0)
     {
       renumber = 0;
+      continue;
+    }
+    if (strcmp(argv[i],"--foxd") == 0)
+    {
+      foxd = atoi (argv[++i]);
       continue;
     }
     if (strcmp(argv[i],"--seed") == 0)
