@@ -1,0 +1,13 @@
+#
+# knotted genus 3 surface
+#
+knot {
+  ^  ^     ;
+ | x  h    ;
+ || X   |  ;
+ h U h ^ | ;
+|  X  X || ;
+ x  || x | ;
+| U   y U  ;
+   U       ;
+}
