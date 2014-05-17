@@ -35,6 +35,7 @@ int doretagregions = 1;
 int finfinity = 0;
 int preabelian = 0;
 int simplify = 1;
+int nobasecanonify = 0;
 int mendesge = HGE_TEXT;
 int viacc = 0;
 int foxd = FOXD_UNDEF;
@@ -164,6 +165,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--nosimplify") == 0)
     {
       simplify = 0;
+      continue;
+    }
+    if (strcmp(argv[i],"--nobasecanonify") == 0)
+    {
+      nobasecanonify = 1;
       continue;
     }
     if (strcmp(argv[i],"--inside") == 0 || strcmp(argv[i],"--in") == 0)
@@ -301,6 +307,7 @@ main (int argc, char *argv[])
       printf ("  --in|--out: apply command to the inside/outside of surface\n");
       printf ("      works for cell complex and fundamental group computations\n");
       printf ("  --nosimplify: do not simplify the presentation of the fundamental group\n");
+      printf ("  --nobasecanonify: do not base-canonify Alexander polynomial in two indeterminates\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
       exit (0);
     }

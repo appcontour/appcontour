@@ -46,6 +46,7 @@ struct laurentpoly *laurent_dup (struct laurentpoly *l);
 struct laurentpoly2 *laurent_dup2 (struct laurentpoly2 *l);
 void laurent_canonify (struct laurentpoly *l);
 void laurent_canonify2 (struct laurentpoly2 *l);
+int canonify_ideal2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets, int extranum);
 void laurent_t_to_oneovert (struct laurentpoly *l);
 void free_laurentpoly2 (struct laurentpoly2 *l);
 struct laurentpoly *laurentpoly_addmonom (struct laurentpoly *l, int expon, int coef);
@@ -53,3 +54,9 @@ struct laurentpoly *laurentpoly_addmonom (struct laurentpoly *l, int expon, int 
 int laurent_sum_coefficients (struct laurentpoly *l);
 struct laurentpoly *laurent_sum_coefficients2 (struct laurentpoly2 *l);
 struct laurentpoly *laurent_sum_each_coefficient2 (struct laurentpoly2 *l);
+int laurent_suppdim2 (struct laurentpoly2 *l);
+int base_canonify2 (struct laurentpoly2 **lpt);
+int base_canonify2_onedim (struct laurentpoly2 **lpt);
+int base_canonify2_twodim (struct laurentpoly2 **lpt);
+
+int mcd (int a, int b);
