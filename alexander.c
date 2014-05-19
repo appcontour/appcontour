@@ -1315,7 +1315,125 @@ base_canonify2_onedim (struct laurentpoly2 **ppt)
 int
 base_canonify2_twodim (struct laurentpoly2 **ppt)
 {
+  struct laurentpoly2 *origp, *newp;
   extern int verbose;
+  int x1[2], x2[2], x3[2], du2, dv2, du3, dv3;
+  int origtotdegree, newtotdegree, optdegree;
+  int i;
+  int xiu[3], xiv[3], sumxiu, sumxiv, amin, amax, bmin, bmax;
+  int area2;  // area of the triangle with those vertices
+  int a, b, c, d, bm[2][2];
+
+  origp = *ppt;
+  assert (origp);
+  assert (origp->stem[0]);
+  origtotdegree = laurent2_totdegree (origp);
+
+  laurent_getthree2 (*ppt, x1, x2, x3);
+
+  /* translate x1 to the origin */
+  du2 = x2[0] - x1[0];
+  dv2 = x2[1] - x1[1];
+  du3 = x3[0] - x1[0];
+  dv3 = x3[1] - x1[1];
+  area2 = du2*dv3 - du3*dv2;
+  if (area2 < 0)
+  {
+    du2 = x3[0] - x1[0];
+    dv2 = x3[1] - x1[1];
+    du3 = x2[0] - x1[0];
+    dv3 = x2[1] - x1[1];
+    area2 = du2*dv3 - du3*dv2;
+  }
+
+  if (verbose > 1)
+  {
+    printf ("total degree of original translated polynomial: %d\n", origtotdegree);
+    printf ("three non-aligned points in the support:\n");
+    printf ("  [u,v]=[%d,%d],[%d,%d],[%d,%d]\n", x1[0], x1[1], x2[0], x2[1], x3[0], x3[1]);
+    printf ("twice area of triangle: %d\n", area2);
+  }
+
+  /* computing xi[0], xi[1], xi[2]: edges of the "octant" cone */
+  xiu[0] = dv2 - dv3;
+  xiv[0] = du3 - du2;
+  xiu[1] = dv3;
+  xiv[1] = -du3;
+  xiu[2] = -dv2;
+  xiv[2] = du2;
+  sumxiu = xiu[0] + xiu[1] + xiu[2];
+  sumxiv = xiv[0] + xiv[1] + xiv[2];
+
+  /*
+   * computing bounds for matrix B entries
+   * f*amin <= a,c <= f*amax
+   * f*bmin <= b,d <= f*bmax
+   *
+   * where f = origtotdegree/area2
+   */
+  amin = amax = bmin = bmax = 0;
+  if (sumxiu < amin) amin = sumxiu;
+  if (sumxiu > amax) amax = sumxiu;
+  if (sumxiv < bmin) bmin = sumxiv;
+  if (sumxiv > bmax) bmax = sumxiv;
+
+  for (i = 0; i < 3; i++)
+  {
+    if (xiu[i] < amin) amin = xiu[i];
+    if (xiu[i] > amax) amax = xiu[i];
+    if (xiv[i] < bmin) bmin = xiv[i];
+    if (xiv[i] > bmax) bmax = xiv[i];
+    if (sumxiu - xiu[i] < amin) amin = sumxiu - xiu[i];
+    if (sumxiu - xiu[i] > amax) amax = sumxiu - xiu[i];
+    if (sumxiv - xiv[i] < bmin) bmin = sumxiv - xiv[i];
+    if (sumxiv - xiv[i] > bmax) bmax = sumxiv - xiv[i];
+  }
+
+  if (verbose)
+  {
+    printf ("Bound on matrix entry 'a' (and 'c'): ");
+    printf ("%d*%d <= %d*a <= %d*%d\n", origtotdegree, amin, area2, origtotdegree, amax);
+    printf ("Bound on matrix entry 'b' (and 'd'): ");
+    printf ("%d*%d <= %d*b <= %d*%d\n", origtotdegree, bmin, area2, origtotdegree, bmax);
+  }
+
+  /* walk through feasible base-change matrices */
+
+  optdegree = origtotdegree;
+  for (a = amin/area2 ; a <= amax/area2; a++)
+  {
+    for (b = bmin/area2; b <= bmax/area2; b++)
+    {
+      for (c = amin/area2; c <= amax/area2; c++)
+      {
+        for (d = bmin/area2; d <= bmax/area2; d++)
+        {
+          if (abs (a*d - b*c) != 1) continue;
+          bm[0][0] = a;
+          bm[0][1] = b;
+          bm[1][0] = c;
+          bm[1][1] = d;
+          newp = laurent_dup2 (origp);
+          newp = base_change2 (newp, bm);
+          newtotdegree = laurent2_totdegree (newp);
+          laurent_canonify2 (newp);
+          if (newtotdegree > optdegree) continue;
+          if (newtotdegree < optdegree)
+          {
+            if (verbose > 1) printf ("Decreasing optdegree from %d to %d\n", optdegree, newtotdegree);
+            optdegree = newtotdegree;
+          }
+          if (verbose > 1)
+          {
+            printf ("Found feasible matrix: [%d %d; %d %d]\n", a, b, c, d);
+            printf ("New polynomial: ");
+            print_laurentpoly2 (newp, 'u', 'v');
+            printf ("\n");
+          }
+        }
+      }
+    }
+  }
 
   if (verbose) printf ("Canonization procedure for two-dimensional support not yet implemented!\n");
   return (0);
@@ -1367,6 +1485,78 @@ laurent_suppdim2 (struct laurentpoly2 *p)
     if (dx*ddy != dy*ddx) return (2);
   }
   return (1);
+}
+
+/*
+ * get three non-aligned points in the support
+ */
+
+void
+laurent_getthree2 (struct laurentpoly2 *p, int *x1, int *x2, int *x3)
+{
+  struct laurentpoly *l1, *l2;
+  int dirfound = 0;
+  int k, origv, origu, dv, du, ddv, ddu;
+
+  assert (p != 0);
+  assert (p->stemdegree > 0); // two different exponents for v
+
+  l1 = p->stem[0];
+  assert (l1);
+  if (l1->stemdegree > 0)     // two different exponents for u
+  {
+    assert (l1->stem[0] && l1->stem[l1->stemdegree]);
+    x1[0] = l1->minexpon;     // u exponent of first point
+    x2[0] = l1->minexpon + l1->stemdegree;  // u exponent of second point
+    x1[1] = x2[1] = p->minexpon;  // v exponent of first and second point
+    l2 = p->stem[p->stemdegree];
+    assert (l2);
+    assert (l2->stem[0]);
+    x3[0] = l2->minexpon;
+    x3[1] = p->minexpon + p->stemdegree;
+    return;
+  }
+  origv = 0;  // must add offset p->minexpon
+  origu = l1->minexpon;
+  x1[0] = origu;
+  x1[1] = origv + p->minexpon;
+
+  for (k = 1; k <= p->stemdegree; k++)
+  {
+    if (p->stem[k] == 0) continue;
+    l1 = p->stem[k];
+    if (l1->stemdegree > 0)
+    {
+      assert (l1->stem[0] && l1->stem[l1->stemdegree]);
+      x1[0] = l1->minexpon;     // u exponent of first point
+      x2[0] = l1->minexpon + l1->stemdegree;  // u exponent of second point
+      x1[1] = x2[1] = p->minexpon + k;  // v exponent of first and second point
+      l2 = p->stem[0];
+      assert (l2->stem[0]);
+      x3[0] = l2->minexpon;
+      x3[1] = p->minexpon;
+      return;
+    }
+    if (dirfound == 0)
+    {
+      x2[0] = l1->minexpon;
+      x2[1] = k + p->minexpon;
+      dv = k - origv;
+      du = l1->minexpon - origu;
+      dirfound = 1;
+      continue;
+    }
+    ddv = k - origv;
+    ddu = l1->minexpon - origu;
+    /* check if (dv,du) and (ddv,ddu) have same direction */
+    if (dv*ddu != du*ddv)
+    {
+      x3[0] = l1->minexpon;
+      x3[1] = k + p->minexpon;
+      return;
+    }
+  }
+  assert (0);
 }
 
 /*
@@ -1977,6 +2167,36 @@ base_change2 (struct laurentpoly2 *l, int matrixb[2][2])
   free_laurentpoly2 (l);
 
   return (newl);
+}
+
+/*
+ * get total degre (after shift) of a laurentpoly2
+ */
+
+int
+laurent2_totdegree (struct laurentpoly2 *l)
+{
+  struct laurentpoly *lu;
+  int minexpv, minexpu, maxtotdegree, totdegree;
+  int iv;
+
+  if (l == 0) return (-1);
+  assert (l->stem[0]);
+  minexpv = l->minexpon;
+  lu = l->stem[0];
+  minexpu = lu->minexpon;
+  assert (lu->stem[lu->stemdegree]);
+  maxtotdegree = minexpv + minexpu + lu->stemdegree;
+  for (iv = 1; iv <= l->stemdegree; iv++)
+  {
+    lu = l->stem[iv];
+    if (lu == 0) continue;
+    if (lu->minexpon < minexpu) minexpu = lu->minexpon;
+    assert (lu->stem[lu->stemdegree]);
+    totdegree = minexpv + iv + lu->minexpon + lu->stemdegree;
+    if (totdegree > maxtotdegree) maxtotdegree = totdegree;
+  }
+  return (maxtotdegree - minexpu - minexpv);
 }
 
 /*

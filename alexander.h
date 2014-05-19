@@ -54,11 +54,13 @@ int laurent_sum_coefficients (struct laurentpoly *l);
 struct laurentpoly *laurent_sum_coefficients2 (struct laurentpoly2 *l);
 struct laurentpoly *laurent_sum_each_coefficient2 (struct laurentpoly2 *l);
 int laurent_suppdim2 (struct laurentpoly2 *l);
+void laurent_getthree2 (struct laurentpoly2 *l, int *x1, int *x2, int *x3);
 int base_canonify2 (struct laurentpoly2 **lpt);
 int base_canonify2_onedim (struct laurentpoly2 **lpt);
 int base_canonify2_twodim (struct laurentpoly2 **lpt);
 void shuffle_poly2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets, int extranum);
 struct laurentpoly2 *base_change2 (struct laurentpoly2 *l, int matrixb[2][2]);
+int laurent2_totdegree (struct laurentpoly2 *l);
 
 int mcd (int a, int b);
 void base_random (int matrixb[2][2]);
