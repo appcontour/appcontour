@@ -1294,7 +1294,6 @@ base_canonify2_onedim (struct laurentpoly2 **ppt)
   p->minexpon = 0;
   p->stemdegree = 0;
   p->stem[0] = newp1;
-printf ("dx = %d, dy = %d\n", dx, dy);
  
   return (1);
 }
