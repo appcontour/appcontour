@@ -39,6 +39,7 @@ int nobasecanonify = 0;
 int mendesge = HGE_TEXT;
 int viacc = 0;
 int foxd = FOXD_UNDEF;
+int shuffle = 0;
 static int renumber = 1;
 
 struct global_data globals;
@@ -172,6 +173,11 @@ main (int argc, char *argv[])
       nobasecanonify = 1;
       continue;
     }
+    if (strcmp(argv[i],"--shuffle") == 0)
+    {
+      shuffle = 1;
+      continue;
+    }
     if (strcmp(argv[i],"--inside") == 0 || strcmp(argv[i],"--in") == 0)
     {
       fg_type = FG_INTERNAL;
@@ -299,7 +305,7 @@ main (int argc, char *argv[])
       printf ("      location in case of ambiguity (e.g. rule C2)\n");
       printf ("  --finfinity|--fi <int>: value of f at infinity (default 0)\n");
       printf ("  --seed <int>: initialize random number generator\n");
-      printf ("      e.g. for Mendes graph graphic presentation\n");
+      printf ("      e.g. for Mendes graph graphic presentation or for random base change\n");
       printf ("  -r|--region <int>: mark region for specific action\n");
       printf ("  -a|--arc <int>: mark arc for specific action\n");
       printf ("  --oldnames|--newnames: select set of names for rules\n");
@@ -308,6 +314,7 @@ main (int argc, char *argv[])
       printf ("      works for cell complex and fundamental group computations\n");
       printf ("  --nosimplify: do not simplify the presentation of the fundamental group\n");
       printf ("  --nobasecanonify: do not base-canonify Alexander polynomial in two indeterminates\n");
+      printf ("  --shuffle: random change of base for Alexander ideal in two indeterminates\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
       exit (0);
     }
