@@ -1203,9 +1203,11 @@ laurent_canonify2 (struct laurentpoly2 *l)
 int
 canonify_ideal2 (struct laurentpoly2 **wpt, struct laurentpoly2 **wi, int winum)
 {
-  if (wi) return (0);  // for now do not try to canonify
+  if ((*wpt != 0) && (wi!= 0)) return (0);  // for now do not try to canonify
+  if (winum > 1) return (0);
 
-  return (base_canonify2 (wpt));
+  if (*wpt) return (base_canonify2 (wpt));
+  return (base_canonify2 (wi));
 }
 
 /*
