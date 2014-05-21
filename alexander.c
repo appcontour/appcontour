@@ -1317,7 +1317,7 @@ base_canonify2_onedim (struct laurentpoly2 **ppt)
 int
 base_canonify2_twodim (struct laurentpoly2 **ppt)
 {
-  struct laurentpoly2 *origp, *newp;
+  struct laurentpoly2 *origp, *newp, *optp;
   extern int verbose;
   int x1[2], x2[2], x3[2], du2, dv2, du3, dv3;
   int origtotdegree, newtotdegree, optdegree;
@@ -1329,6 +1329,8 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
   origp = *ppt;
   assert (origp);
   assert (origp->stem[0]);
+  laurent_canonify2 (origp);
+  optp = laurent_dup2 (origp);
   origtotdegree = laurent2_totdegree (origp);
 
   laurent_getthree2 (*ppt, x1, x2, x3);
@@ -1410,11 +1412,12 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
       {
         for (d = bmin/area2; d <= bmax/area2; d++)
         {
-          if (abs (a*d - b*c) != 1) continue;
+          struct laurentpoly2 *tempp;
           bm[0][0] = a;
           bm[0][1] = b;
           bm[1][0] = c;
           bm[1][1] = d;
+          if (isinvertible_base(bm) == 0) continue;
           newp = laurent_dup2 (origp);
           newp = base_change2 (newp, bm);
           newtotdegree = laurent2_totdegree (newp);
@@ -1422,14 +1425,26 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
           if (newtotdegree > optdegree) continue;
           if (newtotdegree < optdegree)
           {
+            tempp = newp;
+            newp = optp;
+            optp = tempp;
             if (verbose > 1) printf ("Decreasing optdegree from %d to %d\n", optdegree, newtotdegree);
             optdegree = newtotdegree;
+          } else {
+            if (laurent2_lexicocompare (newp, optp) < 0)
+            {
+              if (verbose > 1) printf ("same totdegree, but better comparison\n");
+              tempp = newp;
+              newp = optp;
+              optp = tempp;
+            }
           }
+          free_laurentpoly2 (newp);
           if (verbose > 1)
           {
             printf ("Found feasible matrix: [%d %d; %d %d]\n", a, b, c, d);
             printf ("New polynomial: ");
-            print_laurentpoly2 (newp, 'u', 'v');
+            print_laurentpoly2 (optp, 'u', 'v');
             printf ("\n");
           }
         }
@@ -1437,8 +1452,50 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
     }
   }
 
-  if (verbose) printf ("Canonization procedure for two-dimensional support not yet implemented!\n");
-  return (0);
+  free_laurentpoly2 (origp);
+  laurent2_canonifysign (optp);
+  *ppt = optp;
+  //if (verbose) printf ("Canonization procedure for two-dimensional support not yet implemented!\n");
+  return (1);
+}
+
+/*
+ * canonify sign such that either p(1,1) > 0
+ * or the first nonzero coefficient is positive
+ */
+
+void
+laurent2_canonifysign (struct laurentpoly2 *p)
+{
+  int val11 = 0;
+  int kv, ku;
+  struct laurentpoly *pu;
+
+  if (p == 0) return;
+
+  /* evaluate in (1,1) */
+  for (kv = 0; kv <= p->stemdegree; kv++)
+  {
+    pu = p->stem[kv];
+    if (pu == 0) continue;
+    for (ku = 0; ku <= pu->stemdegree; ku++) val11 += pu->stem[ku];
+  }
+
+  if (val11 > 0) return;
+
+  if (val11 == 0)
+  {
+    assert ((p->stem[0])->stem[0] != 0);
+    if ((p->stem[0])->stem[0] > 0) return;
+  }
+
+  /* if here change sign */
+  for (kv = 0; kv <= p->stemdegree; kv++)
+  {
+    pu = p->stem[kv];
+    if (pu == 0) continue;
+    for (ku = 0; ku <= pu->stemdegree; ku++) pu->stem[ku] = -pu->stem[ku];
+  }
 }
 
 /*
@@ -2145,7 +2202,7 @@ base_change2 (struct laurentpoly2 *l, int matrixb[2][2])
   c = matrixb[1][0];
   d = matrixb[1][1];
 
-  assert (abs(a*d - b*c) == 1);
+  assert (isinvertible_base(matrixb));
 
   if (l == 0) return (0);
 
@@ -2199,6 +2256,76 @@ laurent2_totdegree (struct laurentpoly2 *l)
     if (totdegree > maxtotdegree) maxtotdegree = totdegree;
   }
   return (maxtotdegree - minexpu - minexpv);
+}
+
+/*
+ * lexicographic comparison between two laurent polynomials
+ * assumptions:
+ * 1. They are canonified by monomial multiplication
+ * 2. They have the same total degree
+ * comparison changes sign of poly if first monomial is negative
+ */
+
+int
+laurent2_lexicocompare (struct laurentpoly2 *p1, struct laurentpoly2 *p2)
+{
+  int sign1 = 1, sign2 = 1;
+  int k, ku;
+  struct laurentpoly *pu1, *pu2;
+
+  if (p1 == 0 && p2 == 0) return (0);
+  if (p1 == 0) return (-1);
+  if (p2 == 0) return (1);
+
+  if ((p1->stem[0])->stem[0] < 0) sign1 = -1;
+  if ((p2->stem[0])->stem[0] < 0) sign2 = -1;
+
+  /* first test: degree with respect to v */
+
+  if (p1->stemdegree < p2->stemdegree) return (-1);
+  if (p1->stemdegree > p2->stemdegree) return (1);
+
+  /* second test: lexicographic degree in u */
+
+  for (k = p1->stemdegree; k >= 0; k--)
+  {
+    pu1 = p1->stem[k];
+    pu2 = p2->stem[k];
+    if (pu1 == 0 && pu2 == 0) continue;
+    if (pu1 == 0) return (-1);
+    if (pu2 == 0) return (1);
+    if (pu1->minexpon + pu1->stemdegree < pu2->minexpon + pu2->stemdegree) return (-1);
+    if (pu1->minexpon + pu1->stemdegree > pu2->minexpon + pu2->stemdegree) return (1);
+  }
+
+  /* third test: lexicographic minexpon in u */
+
+  for (k = 0; k <= p1->stemdegree; k++)
+  {
+    pu1 = p1->stem[k];
+    pu2 = p2->stem[k];
+    if (pu1 == 0) continue;
+    if (pu1->minexpon > pu2->minexpon) return (-1);
+    if (pu1->minexpon < pu2->minexpon) return (1);
+  }
+
+  /* finally full lexicographic comparison */
+
+  for (k = 0; k <= p1->stemdegree; k++)
+  {
+    pu1 = p1->stem[k];
+    pu2 = p2->stem[k];
+
+    for (ku = 0; ku <= pu1->stemdegree; ku++)
+    {
+      if (abs(pu1->stem[ku]) < abs(pu2->stem[ku])) return (-1);
+      if (abs(pu1->stem[ku]) > abs(pu2->stem[ku])) return (1);
+      if (pu1->stem[ku] == 0) continue;
+      if (sign1*pu1->stem[ku] > sign2*pu2->stem[ku]) return (-1);
+      if (sign1*pu1->stem[ku] < sign2*pu2->stem[ku]) return (1);
+    }
+  }
+  return (0);
 }
 
 /*
@@ -2272,7 +2399,22 @@ base_random (int b[2][2])
         b[i][j] = (rand() % (2*B_RAND_MAX)) - B_RAND_MAX;
       }
     }
-    if (abs (b[0][0]*b[1][1] - b[0][1]*b[1][0]) == 1) break;
+    if (isinvertible_base (b)) break;
   }
   return;
+}
+
+/*
+ * check if determinant is +- 1
+ */
+
+int
+isinvertible_base (int b[2][2])
+{
+  int det;
+
+  det = b[0][0]*b[1][1] - b[0][1]*b[1][0];
+
+  if (abs(det) == 1) return (1);
+  return (0);
 }
