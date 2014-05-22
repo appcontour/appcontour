@@ -2162,7 +2162,7 @@ laurent_sum_each_coefficient2 (struct laurentpoly2 *l)
 }
 
 /*
- * compute the MDC of two integers
+ * compute the MCD of two integers
  */
 
 int
