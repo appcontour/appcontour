@@ -1321,7 +1321,7 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
   extern int verbose;
   int x1[2], x2[2], x3[2], du2, dv2, du3, dv3;
   int origtotdegree, newtotdegree, optdegree;
-  int i;
+  int i, k;
   int xiu[3], xiv[3], sumxiu, sumxiv, amin, amax, bmin, bmax;
   int area2;  // area of the triangle with those vertices
   int a, b, c, d, bm[2][2];
@@ -1404,52 +1404,55 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
   /* walk through feasible base-change matrices */
 
   optdegree = origtotdegree;
-  for (a = optdegree*amin/area2 ; a <= optdegree*amax/area2; a++)
+  for (k = 0; k <= optdegree; k++)
   {
-    for (b = optdegree*bmin/area2; b <= optdegree*bmax/area2; b++)
+    for (a = k*amin/area2 ; a <= k*amax/area2; a++)
     {
-      for (c = optdegree*amin/area2; c <= optdegree*amax/area2; c++)
+      for (b = k*bmin/area2; b <= k*bmax/area2; b++)
       {
-        for (d = optdegree*bmin/area2; d <= optdegree*bmax/area2; d++)
+        for (c = k*amin/area2; c <= k*amax/area2; c++)
         {
-          struct laurentpoly2 *tempp;
-          bm[0][0] = a;
-          bm[0][1] = b;
-          bm[1][0] = c;
-          bm[1][1] = d;
-          if (isinvertible_base(bm) == 0) continue;
-          newp = laurent_dup2 (origp);
-          newp = base_change2 (newp, bm);
-          newtotdegree = laurent2_totdegree (newp);
-          laurent_canonify2 (newp);
-          if (newtotdegree > optdegree)
+          for (d = k*bmin/area2; d <= k*bmax/area2; d++)
           {
-            free_laurentpoly2 (newp);
-            continue;
-          }
-          if (newtotdegree < optdegree)
-          {
-            tempp = newp;
-            newp = optp;
-            optp = tempp;
-            if (verbose > 1) printf ("Decreasing optdegree from %d to %d\n", optdegree, newtotdegree);
-            optdegree = newtotdegree;
-          } else {
-            if (laurent2_lexicocompare (newp, optp) < 0)
+            struct laurentpoly2 *tempp;
+            bm[0][0] = a;
+            bm[0][1] = b;
+            bm[1][0] = c;
+            bm[1][1] = d;
+            if (isinvertible_base(bm) == 0) continue;
+            newp = laurent_dup2 (origp);
+            newp = base_change2 (newp, bm);
+            newtotdegree = laurent2_totdegree (newp);
+            laurent_canonify2 (newp);
+            if (newtotdegree > optdegree)
             {
-              if (verbose > 1) printf ("same totdegree, but better comparison\n");
+              free_laurentpoly2 (newp);
+              continue;
+            }
+            if (newtotdegree < optdegree)
+            {
               tempp = newp;
               newp = optp;
               optp = tempp;
+              if (verbose > 1) printf ("Decreasing optdegree from %d to %d\n", optdegree, newtotdegree);
+              optdegree = newtotdegree;
+            } else {
+              if (laurent2_lexicocompare (newp, optp) < 0)
+              {
+                if (verbose > 1) printf ("same totdegree, but better comparison\n");
+                tempp = newp;
+                newp = optp;
+                optp = tempp;
+              }
             }
-          }
-          free_laurentpoly2 (newp);
-          if (verbose > 1)
-          {
-            printf ("Found feasible matrix: [%d %d; %d %d]\n", a, b, c, d);
-            printf ("New polynomial: ");
-            print_laurentpoly2 (optp, 'u', 'v');
-            printf ("\n");
+            free_laurentpoly2 (newp);
+            if (verbose > 1)
+            {
+              printf ("Found feasible matrix: [%d %d; %d %d]\n", a, b, c, d);
+              printf ("New polynomial: ");
+              print_laurentpoly2 (optp, 'u', 'v');
+              printf ("\n");
+            }
           }
         }
       }
@@ -2387,7 +2390,7 @@ shuffle_poly2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets, int e
  * generate a random element in GL(2,Z)
  */
 
-#define B_RAND_MAX 20
+#define B_RAND_MAX 25
 
 void
 base_random (int b[2][2])
