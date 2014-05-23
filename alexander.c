@@ -85,7 +85,7 @@ alexander (struct presentation *p)
   rank = p->gennum - matrixrank;
   if (rank > 2)
   {
-    assert (numcols > 0 && matrixrank > 0);
+    assert (matrixrank > 0 || numcols > 0);
     //if (matrixrank == 0 && numcols == 0)
     //{
     //  /* special case, trivial polynomial */
