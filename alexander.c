@@ -2387,7 +2387,7 @@ shuffle_poly2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets, int e
  * generate a random element in GL(2,Z)
  */
 
-#define B_RAND_MAX 50
+#define B_RAND_MAX 20
 
 void
 base_random (int b[2][2])
