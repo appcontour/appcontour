@@ -1404,13 +1404,13 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
   /* walk through feasible base-change matrices */
 
   optdegree = origtotdegree;
-  for (a = amin/area2 ; a <= amax/area2; a++)
+  for (a = optdegree*amin/area2 ; a <= optdegree*amax/area2; a++)
   {
-    for (b = bmin/area2; b <= bmax/area2; b++)
+    for (b = optdegree*bmin/area2; b <= optdegree*bmax/area2; b++)
     {
-      for (c = amin/area2; c <= amax/area2; c++)
+      for (c = optdegree*amin/area2; c <= optdegree*amax/area2; c++)
       {
-        for (d = bmin/area2; d <= bmax/area2; d++)
+        for (d = optdegree*bmin/area2; d <= optdegree*bmax/area2; d++)
         {
           struct laurentpoly2 *tempp;
           bm[0][0] = a;
@@ -1422,7 +1422,11 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
           newp = base_change2 (newp, bm);
           newtotdegree = laurent2_totdegree (newp);
           laurent_canonify2 (newp);
-          if (newtotdegree > optdegree) continue;
+          if (newtotdegree > optdegree)
+          {
+            free_laurentpoly2 (newp);
+            continue;
+          }
           if (newtotdegree < optdegree)
           {
             tempp = newp;
