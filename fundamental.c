@@ -759,12 +759,15 @@ print_presentation (struct presentation *p)
 {
   struct presentationrule *r;
   int generator, rulenum, i, g;
+  extern int outformat;
   char var;
 
+  if (outformat == OUTFORMAT_APPCONTOUR) printf ("fpgroup {\n");
   if (p->gennum == 0)
   {
     if (quiet) printf ("<>\n");
      else printf ("Trivial group\n<>\n");
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
     return;
   }
   for (rulenum = 0, r = p->rules; r; r = r->next) rulenum++;
@@ -808,6 +811,7 @@ print_presentation (struct presentation *p)
     }
   }
   printf (">\n");
+  if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
 }
 
 /*

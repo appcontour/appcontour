@@ -305,6 +305,7 @@ main (int argc, char *argv[])
       printf ("  --version: print program version\n");
       printf ("  -q: be quiet\n");
       printf ("  -v|--verbose: be more verbose\n");
+      printf ("  -Q: use appcontour input syntax for fundamental groups and Alexander polynomials\n");
       printf ("  --nocanonify: do not canonify region description before printing\n");
       printf ("  --oldcanonify: use the old (version <= 1.3.0) canonification procedure\n");
       printf ("  --dontrenumber: do not renumber regions and arcs after giovecanonify\n");
