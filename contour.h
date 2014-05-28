@@ -73,6 +73,9 @@ struct global_data {
 #define FOXD_GENUS2 2
 #define FOXD_GENUS3 3
 
+#define OUTFORMAT_DEFAULT 0
+#define OUTFORMAT_APPCONTOUR 1
+
 struct tagged_data {
   int mrnum;
   int region[MRPTMAX];

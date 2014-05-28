@@ -25,6 +25,7 @@
 
 int debug = 0;
 int quiet = 0;
+int outformat = 0;
 int verbose = 0;
 int interactive = 0;
 int heisemberg = -1;
@@ -137,6 +138,12 @@ main (int argc, char *argv[])
     {
       printf ("%s version %s\n", argv[0], PACKAGE_VERSION);
       return (0);
+    }
+    if (strcmp(argv[i],"-Q") == 0)
+    {
+      quiet = 1;
+      outformat = OUTFORMAT_APPCONTOUR;
+      continue;
     }
     if (strcmp(argv[i],"-q") == 0)
     {
