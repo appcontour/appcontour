@@ -15,7 +15,7 @@
 int
 alexander (struct presentation *p)
 {
-  extern int verbose, quiet, foxd, shuffle;
+  extern int verbose, quiet, foxd, shuffle, outformat;
   struct presentationrule *r;
   struct laurentpoly *determinant;
   struct laurentpoly2 *determinant2;
@@ -33,14 +33,18 @@ alexander (struct presentation *p)
   for (r = p->rules; r; r = r->next) numcols++;
   /* foxd is the index of the Alexander ideal (dth Alexander ideal) */
   deficiency = p->gennum - numcols;
+  if (foxd != FOXD_UNDEF && outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d\n#\n", foxd);
   if (foxd < 0 && foxd >= FOXD_MINVALID)
   {
     if (!quiet) printf ("Trivial zero ideal for negative d:\n");
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
     printf ("0\n");
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
     return (1);
   }
   if (foxd == 0)
   {
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
     printf ("Computation of order ideal not implemented\n");
     return (0);
   }
@@ -49,8 +53,9 @@ alexander (struct presentation *p)
     printdvalue = 1;
     foxd = deficiency;
     if (foxd < 1) foxd = 1;
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d\n#\n", foxd);
   }
-  if (printdvalue)
+  if (printdvalue && outformat != OUTFORMAT_APPCONTOUR)
   {
     if (quiet) printf ("d = %d\n", foxd);
      else printf ("Computing Alexander ideal for d = %d:\n", foxd);
@@ -58,14 +63,18 @@ alexander (struct presentation *p)
   if (foxd >= p->gennum)
   {
     if (!quiet) printf ("Trivial whole ring ideal:\n");
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
     printf ("1\n");
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
     return (1);
   }
   if (foxd < deficiency)
   {
     /* Jacobian matrix has too low rank */
     if (!quiet) printf ("Alexander polynomial (special large deficiency case):\n");
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
     printf ("0\n");
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
     return (1);
   }
   rank = 0;
@@ -78,6 +87,8 @@ alexander (struct presentation *p)
       else gconj = i;
     if (sum && sum != 1)
     {
+      if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
+      if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
       printf ("Cannot compute Alexander polynomial for groups with torsion\n");
       return (0);
     }
@@ -93,11 +104,13 @@ alexander (struct presentation *p)
     //  printf ("1\n");
     //  return (1);
     //}
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
     printf ("Cannot compute Alexander polynomial for groups with rank %d\n", rank);
     return (0);
   }
   if (rank < 1)
   {
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
     printf ("Cannot compute Alexander polynomial for groups with rank %d\n", rank);
     return (0);
   }
@@ -108,12 +121,14 @@ alexander (struct presentation *p)
 
   if (matrixrank < numcols && deficiency != 1)  /* deficiency == 1: link */
   {
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
     printf ("Cannot compute Alexander polynomial because there are too many relators\n");
     return (0);
   }
 
   if (matrixrank > numcols)
   {
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
     printf ("Cannot compute Alexander polynomial because there are too few relators\n");
     return (0);
   }
@@ -121,6 +136,7 @@ alexander (struct presentation *p)
   switch (rank)
   {
     case 1:  /* case of knot groups */
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander(t) {\n");
     switch (foxd)
     {
       case 1:  /* this is the most interesting */
@@ -135,6 +151,7 @@ alexander (struct presentation *p)
       foxdtoolarge++;
       break;
     }
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
     break;
 
     case 2:
@@ -145,6 +162,7 @@ alexander (struct presentation *p)
     }
     assert (foxd == deficiency);
     determinant2 = laurent_eliminate_two_indeterminates (p, gconj2, gconj, &extradeterminants);
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("ideal(u,v) {\n");
     extradets = 1;
     if (deficiency == 2) extradets = numcols;
     if (extradeterminants == 0) extradets = 0;
@@ -197,6 +215,7 @@ alexander (struct presentation *p)
       print_laurentpoly2 (determinant2, 'u', 'v');
       printf ("\n");
     }
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
     break;
 
     default:
