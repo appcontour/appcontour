@@ -1615,7 +1615,6 @@ addcommutator (struct presentation *p, int m, int n)
  */
 
 /* local prototypes */
-int read_generators_list (FILE *file, char *gennames, int maxgennum);
 struct presentationrule *read_relators_list (FILE *file, char *generator_names, int gennum);
 
 void

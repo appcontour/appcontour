@@ -150,3 +150,5 @@ void cellcomplex_printnodes (struct ccomplex *cc, int verbose);
 void cellcomplex_printfaces (struct ccomplex *cc, int verbose);
 int onarc2narc (int);
 int cellcomplex_checkconsistency (struct ccomplex *cc);
+
+int read_generators_list (FILE *file, char *gennames, int maxgennum);

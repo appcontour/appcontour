@@ -14,19 +14,34 @@ struct laurentpoly2 {
   struct laurentpoly *stem[];
 };
 
+#define IDEAL_MAX_GENERATORS_NUM 10
+
+/*
+ * if indets == 0, then val holds the constant value
+ * if indets == 1, then l1[l1num] is a vector with
+ * generators of the ideal (for now l1num must be 1)
+ * if indets == 2, then l2[l2num] is a vector with
+ * generic generators, whereas fl2[fl2num] is a vector
+ * with generators that must be multiplied by the
+ * fundamental ideal
+ */
+
 struct alexanderideal {
   int indets;
-  int extranum;
+  int l1num;
+  int l2num;
+  int fl2num;
   int val;
-  struct laurentpoly *l1;
-  struct laurentpoly2 *l2;
-  struct laurentpoly2 *extradets[];
+  struct laurentpoly *l1[IDEAL_MAX_GENERATORS_NUM];
+  struct laurentpoly2 *l2[IDEAL_MAX_GENERATORS_NUM];
+  struct laurentpoly2 *fl2[IDEAL_MAX_GENERATORS_NUM];
 };
 
 /* prototypes */
 
 int alexander (struct presentation *p);
 int alexander_fromideal (struct alexanderideal *ai);
+int printout_constant_ideal (char *msg, int val);
 int linkingnumber (struct presentation *p);
 int linkingnumber_fromideal (struct alexanderideal *ai);
 int corank_one_alexander (struct presentation *p);

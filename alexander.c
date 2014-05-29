@@ -35,13 +35,7 @@ alexander (struct presentation *p)
   deficiency = p->gennum - numcols;
   if (foxd != FOXD_UNDEF && outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d\n#\n", foxd);
   if (foxd < 0 && foxd >= FOXD_MINVALID)
-  {
-    if (!quiet) printf ("Trivial zero ideal for negative d:\n");
-    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
-    printf ("0\n");
-    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
-    return (1);
-  }
+    return (printout_constant_ideal ("Trivial zero ideal for negative d:\n", 0));
   if (foxd == 0)
   {
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
@@ -61,22 +55,10 @@ alexander (struct presentation *p)
      else printf ("Computing Alexander ideal for d = %d:\n", foxd);
   }
   if (foxd >= p->gennum)
-  {
-    if (!quiet) printf ("Trivial whole ring ideal:\n");
-    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
-    printf ("1\n");
-    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
-    return (1);
-  }
+    return (printout_constant_ideal ("Trivial whole ring ideal:\n", 1));
   if (foxd < deficiency)
-  {
     /* Jacobian matrix has too low rank */
-    if (!quiet) printf ("Alexander polynomial (special large deficiency case):\n");
-    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
-    printf ("0\n");
-    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
-    return (1);
-  }
+    return (printout_constant_ideal ("Alexander polynomial (special large deficiency case):\n", 0));
   rank = 0;
   matrixrank = 0;
   for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
@@ -144,7 +126,7 @@ alexander (struct presentation *p)
       laurent_canonify (determinant);
       if (!quiet) printf ("Alexander polynomial (up to t -> 1/t):\n");
       print_laurentpoly (determinant, 't');
-      printf ("\n");
+      printf (";\n");
       break;
 
       default:
@@ -196,7 +178,7 @@ alexander (struct presentation *p)
       if (deficiency == 2)
       {
         print_laurentpoly2 (determinant2, 'u', 'v');
-        printf ("\n");
+        printf (";\n");
       }
       for (j = 0; j < extradets; j++)
       {
@@ -205,14 +187,14 @@ alexander (struct presentation *p)
         {
           printf ("F: ");
           print_laurentpoly2 (extradeterminants[j], 'u', 'v');
-          printf ("\n");
+          printf (";\n");
         } else {
           printf ("(");
           print_laurentpoly2 (extradeterminants[j], 'u', 'v');
-          printf (") (u - 1)\n");
+          printf (") (u - 1);\n");
           printf ("(");
           print_laurentpoly2 (extradeterminants[j], 'u', 'v');
-          printf (") (v - 1)\n");
+          printf (") (v - 1);\n");
         }
       }
       if (quiet && outformat != OUTFORMAT_APPCONTOUR) printf ("]\n");
@@ -221,7 +203,7 @@ alexander (struct presentation *p)
       laurent_canonify2 (determinant2);
       if (!quiet) printf ("Alexander polynomial:\n");
       print_laurentpoly2 (determinant2, 'u', 'v');
-      printf ("\n");
+      printf (";\n");
     }
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
     break;
@@ -248,6 +230,21 @@ alexander_fromideal (struct alexanderideal *ai)
 {
   printf ("Not implemented\n");
   return (0);
+}
+
+/*
+ * printout of a constant ideal
+ */
+
+int
+printout_constant_ideal (char *msg, int val)
+{
+  extern int quiet, outformat;
+
+  if (!quiet) printf ("%s", msg);
+  if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n%d;\n}\n", val);
+    else printf ("%d;\n", val);
+  return (1);
 }
 
 /*
@@ -314,7 +311,7 @@ linkingnumber (struct presentation *p)
   {
     printf ("Determinant of matrix: ");
     print_laurentpoly (determinant, 't');
-    printf ("\n");
+    printf (";\n");
   }
 
   /* linking number is the derivative in t=1 */
@@ -412,7 +409,7 @@ corank_one_alexander (struct presentation *p)
   {
     printf ("Determinant of matrix (before canonization): ");
     print_laurentpoly (determinant, 't');
-    printf ("\n");
+    printf (";\n");
   }
 
   /* calcolo della derivata in t=1 */
@@ -431,7 +428,7 @@ corank_one_alexander (struct presentation *p)
   printf ("Value in 1: %d, deriv = %d\n", val, deriv);
   if (!quiet) printf ("Alexander polynomial (up to t -> 1/t):\n");
   print_laurentpoly (determinant, 't');
-  printf ("\n");
+  printf (";\n");
   return (1);
 }
 
@@ -486,7 +483,7 @@ laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
     {
       printf ("extra row, entry %d: ", j+1);
       print_laurentpoly (laurent_get_exp_sum (r, eliminate, eliminate), 't');
-      printf ("\n");
+      printf (";\n");
     }
   }
 
@@ -619,16 +616,16 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
     {
       printf ("Extra row 1, entry %d: ", j);
       print_laurentpoly2 (laurent_get_exp_sum2 (r, e1, e1, e2), 'u', 'v');
-      printf ("\n");
+      printf (";\n");
       printf ("Extra row 2, entry %d: ", j);
       print_laurentpoly2 (laurent_get_exp_sum2 (r, e2, e1, e2), 'u', 'v');
-      printf ("\n");
+      printf (";\n");
       printf ("Fox mixed derivative, entry %d: ", j);
       print_laurentpoly2 (laurent_mixed_derivative2 (r, e1, e2), 'u', 'v');
-      printf ("\n");
+      printf (";\n");
       printf ("Common factor, entry %d: ", j);
       print_laurentpoly2 (matrix[j-1][numrows-1], 'u', 'v');
-      printf ("\n");
+      printf (";\n");
     }
   }
 
@@ -1500,7 +1497,7 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
               printf ("Found feasible matrix: [%d %d; %d %d]\n", a, b, c, d);
               printf ("New polynomial: ");
               print_laurentpoly2 (optp, 'u', 'v');
-              printf ("\n");
+              printf (";\n");
             }
           }
         }
@@ -2483,6 +2480,28 @@ isinvertible_base (int b[2][2])
 struct alexanderideal *
 read_alexander_ideal (FILE *file)
 {
+  char indet_names[2];
+  struct alexanderideal *ai;
+  int tok;
+
+  tok = gettoken (file);
+
+  assert (tok == TOK_ALEXANDER || tok == TOK_IDEAL);
+
+  tok = gettoken (file);
+  assert (tok == TOK_LPAREN);
+  ai = (struct alexanderideal *) malloc (sizeof (struct alexanderideal));
+
+  ai->indets = read_generators_list (file, indet_names, 2);
+
+printf ("indets: %d\n", ai->indets);
+  tok = gettoken (file);
+  assert (tok == TOK_RPAREN);
+
+  tok = gettoken (file);
+  assert (tok == TOK_LBRACE);
+
   printf ("Reading an Alexander ideal from file is not yet implemented!\n");
   return (0);
 }
+
