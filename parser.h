@@ -65,4 +65,4 @@ int gettokennumber (void);
 void skipblanks (FILE *file);
 char mygetchar (FILE *file);
 int getword (FILE *file, char *word, int wordmaxlen);
-
+int get_unsignedmonomial2 (FILE *file, char indet_names[2], int *coefpt, int *exp1pt, int *exp2pt);

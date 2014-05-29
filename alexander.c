@@ -2473,6 +2473,37 @@ isinvertible_base (int b[2][2])
 }
 
 /*
+ * read a laurent polynomial in two indets
+ */
+
+struct laurentpoly2 *
+read_laurentpoly2 (FILE *file, char indet_names[2])
+{
+  int tok, sign, coef, exp1, exp2;
+  struct laurentpoly2 *l2 = 0;
+
+  tok = gettoken (file);
+
+  if (tok == TOK_SEMICOLON) return (l2);
+
+  sign = 1;
+  if (tok == TOK_MINUS) sign = -1;
+  if (tok != TOK_PLUS && tok != TOK_MINUS) ungettoken (tok);
+  while (get_unsignedmonomial2 (file, indet_names, &coef, &exp1, &exp2))
+  {
+    coef = sign*coef;
+    l2 = laurentpoly2_addmonom (l2, exp1, exp2, coef);
+    tok = gettoken (file);
+    if (tok == TOK_SEMICOLON) return (l2);
+    assert (tok == TOK_PLUS || tok == TOK_MINUS);
+    sign = 1;
+    if (tok == TOK_MINUS) sign = -1;
+  }
+  assert (0);
+  return (l2);
+}
+
+/*
  * read an alexander ideal from file
  * return number of indeterminates
  */
@@ -2482,7 +2513,9 @@ read_alexander_ideal (FILE *file)
 {
   char indet_names[2];
   struct alexanderideal *ai;
-  int tok;
+  struct laurentpoly2 *l2;
+  int tok, ffound;
+  char buf[2];
 
   tok = gettoken (file);
 
@@ -2491,17 +2524,50 @@ read_alexander_ideal (FILE *file)
   tok = gettoken (file);
   assert (tok == TOK_LPAREN);
   ai = (struct alexanderideal *) malloc (sizeof (struct alexanderideal));
-
+  ai->l1num = ai->l2num = ai->fl2num = 0;
+  ai->val = 0;
   ai->indets = read_generators_list (file, indet_names, 2);
 
-printf ("indets: %d\n", ai->indets);
   tok = gettoken (file);
   assert (tok == TOK_RPAREN);
 
   tok = gettoken (file);
   assert (tok == TOK_LBRACE);
 
-  printf ("Reading an Alexander ideal from file is not yet implemented!\n");
-  return (0);
+  switch (ai->indets)
+  {
+    case 2:
+      while (1)
+      {
+        ffound = 0;
+        skipblanks (file);
+        tok = getword (file, buf, 1);
+        if (*buf == 'F')
+        {
+          assert (strlen (buf) == 1);
+          tok = gettoken (file);
+          assert (tok == TOK_COLON);
+          ffound = 1;
+        } else ungettoken (tok);
+        l2 = read_laurentpoly2 (file, indet_names);
+        if (ffound)
+        {
+          ai->fl2[ai->fl2num++] = l2;
+        } else {
+          ai->l2[ai->l2num++] = l2;
+        }
+        tok = gettoken (file);
+        ungettoken (tok);
+        if (tok == TOK_RBRACE) break;
+      }
+    break;
+
+    default:
+    printf ("Reading an Alexander ideal from file is not yet implemented!\n");
+    free (ai);
+    return (0);
+  }
+
+  return (ai);
 }
 

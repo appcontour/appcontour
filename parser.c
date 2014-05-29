@@ -156,3 +156,52 @@ gettokennumber ()
 {
   return (atoi(tokenword));
 }
+
+/*
+ *
+ */
+
+int
+get_factor2 (FILE *file, char indet_names[2], int *coefpt, int *exp1pt, int *exp2pt)
+{
+  int tok, flagsaved;
+  char word[2];
+
+  *coefpt = 1;
+  *exp1pt = *exp2pt = 0;
+
+  tok = gettoken (file);
+  if (tok == ISNUMBER)
+  {
+    *coefpt = gettokennumber ();
+    return (1);
+  }
+
+  flagsaved = onecharword;
+  onecharword = 1;
+  tok = getword (file, word, 1);
+
+  if (tok != TOK_CHAR)
+  {
+    ungettoken (tok);
+  }
+  onecharword = flagsaved;
+  /* XXXXXXXXXXXXXXXXXXXX */
+}
+
+int
+get_unsignedmonomial2 (FILE *file, char indet_names[2], int *coefpt, int *exp1pt, int *exp2pt)
+{
+  int coef, exp1, exp2;
+
+  *coefpt = 1;
+  *exp1pt = *exp2pt = 0;
+
+  while (get_factor2 (file, indet_names, &coef, &exp1, &exp2))
+  {
+    *coefpt *= coef;
+    *exp1pt += exp1;
+    *exp2pt += exp2;
+  }
+  return (1);
+}
