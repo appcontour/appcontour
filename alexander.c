@@ -240,6 +240,17 @@ alexander (struct presentation *p)
 }
 
 /*
+ * We start from an ideal...
+ */
+
+int
+alexander_fromideal (struct alexanderideal *ai)
+{
+  printf ("Not implemented\n");
+  return (0);
+}
+
+/*
  * compute the linking number of a two-component link
  */
 
@@ -324,6 +335,17 @@ linkingnumber (struct presentation *p)
   if (quiet) printf ("%d\n", deriv);
    else printf ("Linking number is %d\n", deriv);
   return (1);
+}
+
+/*
+ * linking number computed from Alexander ideal
+ */
+
+int
+linkingnumber_fromideal (struct alexanderideal *ai)
+{
+  printf ("Not implemented!\n");
+  return (0);
 }
 
 /*
@@ -2450,5 +2472,17 @@ isinvertible_base (int b[2][2])
   det = b[0][0]*b[1][1] - b[0][1]*b[1][0];
 
   if (abs(det) == 1) return (1);
+  return (0);
+}
+
+/*
+ * read an alexander ideal from file
+ * return number of indeterminates
+ */
+
+struct alexanderideal *
+read_alexander_ideal (FILE *file)
+{
+  printf ("Reading an Alexander ideal from file is not yet implemented!\n");
   return (0);
 }

@@ -1,0 +1,7 @@
+#
+# support is an eptagon.
+# test for the canonization procedure
+#
+alexander (u,v) {
++u^3 + u^5 + u^8v^2 + u^8v^5 + u^5v^8 + u^2v^7 + v^4
+}

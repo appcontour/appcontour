@@ -71,6 +71,7 @@ main (int argc, char *argv[])
   struct ccomplex *ccomplex;
   int infiles = 1;
   struct presentation *p;
+  struct alexanderideal *ai;
 
   ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
@@ -1034,23 +1035,53 @@ main (int argc, char *argv[])
     case ACTION_LINKINGNUMBER:
     tok = gettoken (infile);
     ungettoken (tok);
-    if (tok == TOK_FPGROUP)
+    if (tok == TOK_FPGROUP || tok == TOK_ALEXANDER || tok == TOK_IDEAL)
     {
-      p = (struct presentation *) malloc (sizeof (struct presentation));
-      read_group_presentation (infile, p);
-      switch (action)
+      switch (tok)
       {
-        case ACTION_FUNDAMENTAL:
-          fundamental_group (p);
+        case TOK_FPGROUP:
+          p = (struct presentation *) malloc (sizeof (struct presentation));
+          read_group_presentation (infile, p);
+          switch (action)
+          {
+            case ACTION_FUNDAMENTAL:
+              fundamental_group (p);
+              break;
+            case ACTION_AFUNDAMENTAL:
+              abelianized_fundamental_group (p);
+              break;
+            case ACTION_ALEXANDER:
+              alexander (p);
+              break;
+            case ACTION_LINKINGNUMBER:
+              linkingnumber (p);
+              break;
+          }
           break;
-        case ACTION_AFUNDAMENTAL:
-          abelianized_fundamental_group (p);
+
+        case TOK_ALEXANDER:
+        case TOK_IDEAL:
+          ai = read_alexander_ideal (infile);
+          switch (action)
+          {
+            case ACTION_ALEXANDER:
+              alexander_fromideal (ai);
+            break;
+
+            case ACTION_LINKINGNUMBER:
+              linkingnumber_fromideal (ai);
+            break;
+
+            default:
+              printf ("Invalid action %d for Alexander ideal input file\n", action);
+              exit (12);
+            break;
+          }
           break;
-        case ACTION_ALEXANDER:
-          alexander (p);
-          break;
-        case ACTION_LINKINGNUMBER:
-          linkingnumber (p);
+
+        default:
+          printf ("Reading an input file with token (TOK_) %d (see parser.h) is not implemented\n", tok);
+          exit (11);
           break;
       }
     } else {

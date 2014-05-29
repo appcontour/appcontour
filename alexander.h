@@ -14,10 +14,21 @@ struct laurentpoly2 {
   struct laurentpoly *stem[];
 };
 
+struct alexanderideal {
+  int indets;
+  int extranum;
+  int val;
+  struct laurentpoly *l1;
+  struct laurentpoly2 *l2;
+  struct laurentpoly2 *extradets[];
+};
+
 /* prototypes */
 
 int alexander (struct presentation *p);
+int alexander_fromideal (struct alexanderideal *ai);
 int linkingnumber (struct presentation *p);
+int linkingnumber_fromideal (struct alexanderideal *ai);
 int corank_one_alexander (struct presentation *p);
 struct laurentpoly *laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate);
 struct laurentpoly2 *laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
@@ -67,3 +78,5 @@ void laurent2_canonifysign (struct laurentpoly2 *p);
 int mcd (int a, int b);
 void base_random (int matrixb[2][2]);
 int isinvertible_base (int b[2][2]);
+
+struct alexanderideal *read_alexander_ideal (FILE *file);
