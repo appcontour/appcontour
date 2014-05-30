@@ -41,6 +41,8 @@ struct alexanderideal {
 
 int alexander (struct presentation *p);
 int alexander_fromideal (struct alexanderideal *ai);
+void printout_ideal2 (struct alexanderideal *ai, struct laurentpoly2 *principal,
+                     struct laurentpoly2 **fundamentals, int fnum, int deficiency);
 int printout_constant_ideal (char *msg, int val);
 int linkingnumber (struct presentation *p);
 int linkingnumber_fromideal (struct alexanderideal *ai);

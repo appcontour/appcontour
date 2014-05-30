@@ -223,6 +223,7 @@ get_factor2 (FILE *file, char indet_names[2], int *coefpt, int *exp1pt, int *exp
   ch = mygetchar (file);
   if (isdigit (ch))
   {
+    ungetc (ch, file);
     *coefpt = get_unsignednum (file);
     return (1);
   }
