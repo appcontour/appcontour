@@ -4,6 +4,7 @@
 # extra commutator factors
 #
 
-./contour --outside alexander examples/conway_pinched.knot -q
+./contour --out alexander examples/conway_pinched.knot -q
 ./contour alexander examples/fpgroups/embrace_equiv.fpgroup -q
-./contour --outside alexander examples/ochiai_mod_to_genus2.knot -q
+./contour --out alexander examples/ochiai_mod_to_genus2.knot -q
+./contour --out alexander examples/conway_pinched.knot -Q | ./contour alexander -q

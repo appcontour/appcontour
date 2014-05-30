@@ -1473,6 +1473,7 @@ int
 base_canonify2_twodim (struct laurentpoly2 **ppt)
 {
   struct laurentpoly2 *origp, *newp, *optp;
+  struct laurentpoly2 *tempp;
   extern int verbose;
   int x1[2], x2[2], x3[2], du2, dv2, du3, dv3;
   int origtotdegree, newtotdegree, optdegree;
@@ -1561,6 +1562,7 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
   optdegree = origtotdegree;
   for (k = 0; k <= optdegree; k++)
   {
+//printf ("k = %d\n", k);
     for (a = k*amin/area2 ; a <= k*amax/area2; a++)
     {
       for (b = k*bmin/area2; b <= k*bmax/area2; b++)
@@ -1569,7 +1571,6 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
         {
           for (d = k*bmin/area2; d <= k*bmax/area2; d++)
           {
-            struct laurentpoly2 *tempp;
             bm[0][0] = a;
             bm[0][1] = b;
             bm[1][0] = c;
@@ -2478,6 +2479,7 @@ laurent2_lexicocompare (struct laurentpoly2 *p1, struct laurentpoly2 *p2)
     pu1 = p1->stem[k];
     pu2 = p2->stem[k];
 
+    if (pu1 == 0) continue;
     for (ku = 0; ku <= pu1->stemdegree; ku++)
     {
       if (abs(pu1->stem[ku]) < abs(pu2->stem[ku])) return (-1);

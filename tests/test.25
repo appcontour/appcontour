@@ -1,0 +1,5 @@
+#
+# check base canonization for a fake polynomial with 3 monomials
+#
+
+./contour alexander examples/alexanderideals/sample.ideal -q
