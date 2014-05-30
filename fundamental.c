@@ -1647,12 +1647,12 @@ read_group_presentation (FILE *file, struct presentation *p)
   p->gennum = read_generators_list (file, generator_names, MAXGENERATORS);
 
   tok = gettoken (file);
-  if (tok != TOK_SEMICOLON)
+  if (tok != TOK_SEMICOLON && tok != KEY_GT)
   {
     printf ("Invalid syntax, tok = %d; semicolon expected\n", tok);
     return;
   }
-
+  if (tok == KEY_GT) ungettoken (tok);
   p->rules = read_relators_list (file, generator_names, p->gennum);
 
   tok = gettoken (file);
@@ -1703,16 +1703,22 @@ read_generators_list (FILE *file, char *gennames, int maxgennum)
 struct presentationrule *
 read_relators_list (FILE *file, char *generator_names, int gennum)
 {
-  int i, j, tok;
+  int i, j;
   int sign;
-  char buf[BUFSIZE + 1];
+  char ch, buf[BUFSIZE + 1];
   struct presentationrule *r;
 
-  skipblanks (file);
-  tok = getword (file, buf, BUFSIZE);
+  ch = mygetchar (file);
 
-  if (tok == TOK_ID)
+  if (isalpha(ch))
   {
+    i = 0;
+    buf[i++] = ch;
+    while (isalpha(ch = mygetchar (file)))
+      if (i < BUFSIZE) buf[i++] = ch;
+    buf[i] = 0;
+    ungetc (ch, file);
+    if (i >= BUFSIZE) fprintf (stderr, "Relator is too long, truncated!\n");
     r = (struct presentationrule *) malloc (sizeof (struct presentationrule) +
            strlen(buf)*sizeof(int));
     r->length = strlen(buf);
@@ -1736,16 +1742,16 @@ read_relators_list (FILE *file, char *generator_names, int gennum)
         printf ("Cannot find generator: %c\n", buf[i]);
       }
     }
-    tok = gettoken (file);
-    if (tok == TOK_COMMA)
+    ch = mygetchar (file);
+    if (ch == ',')
     {
       r->next = read_relators_list (file, generator_names, gennum);
       return (r);
     }
-    ungettoken (tok);
+    ungetc (ch, file);
     return (r);
   }
-  ungettoken (tok);
+  ungetc (ch, file);
 
   return (0);
 }
