@@ -1677,27 +1677,24 @@ read_group_presentation (FILE *file, struct presentation *p)
 int
 read_generators_list (FILE *file, char *gennames, int maxgennum)
 {
-  int tok;
-  char buf[10];
+  char ch;
 
-  skipblanks (file);
-  tok = getword (file, buf, 8);
+  ch = mygetchar (file);
 
-  if (tok == TOK_ID)
+  if (isalnum(ch))
   {
-    if (strlen (buf) == 0) return (0);
-    if (*buf < 'a' || *buf > 'z' || strlen (buf) != 1)
+    if (! islower(ch))
     {
       printf ("Generators must be a single lower-case letter\n");
       return (0);
     }
-    *gennames++ = *buf;
-    tok = gettoken (file);
-    if (tok == TOK_COMMA) return (read_generators_list (file, gennames, maxgennum-1) + 1);
-    ungettoken (tok);
+    *gennames++ = ch;
+    ch = mygetchar (file);
+    if (ch == ',') return (read_generators_list (file, gennames, maxgennum-1) + 1);
+    ungetc (ch, file);
     return (1);
   }
-  ungettoken (tok);
+  ungetc (ch, file);
   return (0);
 }
 
