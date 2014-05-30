@@ -158,35 +158,90 @@ gettokennumber ()
 }
 
 /*
- *
+ * read an expression for a Laurent polynomial in two indeterminates
  */
+
+int
+get_unsignednum (FILE *file)
+{
+  char ch;
+  int val = 0;
+
+  skipblanks (file);
+  while (isdigit (ch = fgetc (file)))
+  {
+    val *= 10;
+    val += ch - '0';
+  }
+  ungetc (ch, file);
+
+  return (val);
+}
+
+int
+get_exponent2 (FILE *file)
+{
+  char ch;
+  int inparens = 0;
+  int sign = 1;
+  int val;
+
+  ch = mygetchar (file);
+  if (ch != '^')
+  {
+    ungetc (ch, file);
+    return (1);
+  }
+
+  ch = mygetchar (file);
+  if (ch == '(')
+  {
+    inparens = 1;
+    ch = mygetchar (file);
+    if (ch == '-') sign = -1;
+    if (ch != '-' && ch != '+') ungetc (ch, file);
+  } else ungetc (ch, file);
+
+  val = get_unsignednum (file);
+
+  if (inparens)
+  {
+    ch = mygetchar (file);
+    assert (ch == ')');
+  }
+  return (sign*val);
+}
 
 int
 get_factor2 (FILE *file, char indet_names[2], int *coefpt, int *exp1pt, int *exp2pt)
 {
-  int tok, flagsaved;
-  char word[2];
+  char ch;
 
   *coefpt = 1;
   *exp1pt = *exp2pt = 0;
 
-  tok = gettoken (file);
-  if (tok == ISNUMBER)
+  ch = mygetchar (file);
+  if (isdigit (ch))
   {
-    *coefpt = gettokennumber ();
+    *coefpt = get_unsignednum (file);
     return (1);
   }
 
-  flagsaved = onecharword;
-  onecharword = 1;
-  tok = getword (file, word, 1);
-
-  if (tok != TOK_CHAR)
+  if (islower (ch))
   {
-    ungettoken (tok);
+    if (ch == indet_names[0])
+    {
+      *exp1pt = get_exponent2 (file);
+      return (1);
+    }
+    if (ch == indet_names[1])
+    {
+      *exp2pt = get_exponent2 (file);
+      return (1);
+    }
   }
-  onecharword = flagsaved;
-  /* XXXXXXXXXXXXXXXXXXXX */
+  ungetc (ch, file);
+  return (0);
 }
 
 int

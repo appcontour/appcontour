@@ -228,6 +228,40 @@ alexander (struct presentation *p)
 int
 alexander_fromideal (struct alexanderideal *ai)
 {
+  int i;
+  extern int verbose;
+  struct laurentpoly2 *determinant2;
+
+  switch (ai->indets)
+  {
+    case 0:
+    case 1:
+      printf ("Not yet implemented\n");
+    break;
+
+    case 2:
+      if (verbose)
+      {
+        printf ("Alexander ideal before canization:\n{\n");
+        for (i = 0; i < ai->l2num; i++)
+        {
+          print_laurentpoly2 (ai->l2[i], 'u', 'v');
+          printf (";\n");
+        }
+        for (i = 0; i < ai->fl2num; i++)
+        {
+          printf ("F: ");
+          print_laurentpoly2 (ai->fl2[i], 'u', 'v');
+          printf (";\n");
+        }
+        printf ("}\n");
+      }
+      //if (ai->l2num > 1) /* cannot use XXXXXXXXXXXXXXX */
+      //{
+      //}
+      printf ("Not yet implemented\n");
+    break;
+  }
   printf ("Not implemented\n");
   return (0);
 }
@@ -2479,25 +2513,25 @@ isinvertible_base (int b[2][2])
 struct laurentpoly2 *
 read_laurentpoly2 (FILE *file, char indet_names[2])
 {
-  int tok, sign, coef, exp1, exp2;
+  char ch;
+  int sign, coef, exp1, exp2;
   struct laurentpoly2 *l2 = 0;
 
-  tok = gettoken (file);
-
-  if (tok == TOK_SEMICOLON) return (l2);
+  ch = mygetchar (file);
+  if (ch == ';') return (l2);
 
   sign = 1;
-  if (tok == TOK_MINUS) sign = -1;
-  if (tok != TOK_PLUS && tok != TOK_MINUS) ungettoken (tok);
+  if (ch == '-') sign = -1;
+  if (ch != '+' && ch != '-') ungetc (ch, file);
   while (get_unsignedmonomial2 (file, indet_names, &coef, &exp1, &exp2))
   {
     coef = sign*coef;
     l2 = laurentpoly2_addmonom (l2, exp1, exp2, coef);
-    tok = gettoken (file);
-    if (tok == TOK_SEMICOLON) return (l2);
-    assert (tok == TOK_PLUS || tok == TOK_MINUS);
+    ch = mygetchar (file);
+    if (ch == ';') return (l2);
+    assert (ch == '+' || ch == '-');
     sign = 1;
-    if (tok == TOK_MINUS) sign = -1;
+    if (ch == '-') sign = -1;
   }
   assert (0);
   return (l2);
@@ -2511,11 +2545,10 @@ read_laurentpoly2 (FILE *file, char indet_names[2])
 struct alexanderideal *
 read_alexander_ideal (FILE *file)
 {
-  char indet_names[2];
+  char ch, indet_names[2];
   struct alexanderideal *ai;
   struct laurentpoly2 *l2;
   int tok, ffound;
-  char buf[2];
 
   tok = gettoken (file);
 
@@ -2536,19 +2569,25 @@ read_alexander_ideal (FILE *file)
 
   switch (ai->indets)
   {
+    case 0:
+    case 1:
+      printf ("Reading an Alexander ideal with %d indeterminates is not yet implemented!\n", ai->indets);
+      free (ai);
+      return (0);
+    break;
+
     case 2:
       while (1)
       {
         ffound = 0;
-        skipblanks (file);
-        tok = getword (file, buf, 1);
-        if (*buf == 'F')
+        ch = mygetchar (file);
+        if (ch == '}') break;
+        if (ch == 'F')
         {
-          assert (strlen (buf) == 1);
-          tok = gettoken (file);
-          assert (tok == TOK_COLON);
+          ch = mygetchar (file);
+          assert (ch == ':');
           ffound = 1;
-        } else ungettoken (tok);
+        } else ungetc (ch, file);
         l2 = read_laurentpoly2 (file, indet_names);
         if (ffound)
         {
@@ -2556,16 +2595,13 @@ read_alexander_ideal (FILE *file)
         } else {
           ai->l2[ai->l2num++] = l2;
         }
-        tok = gettoken (file);
-        ungettoken (tok);
-        if (tok == TOK_RBRACE) break;
       }
     break;
 
     default:
-    printf ("Reading an Alexander ideal from file is not yet implemented!\n");
-    free (ai);
-    return (0);
+      printf ("Reading an Alexander ideal from file with %d indeterminates is not implemented!\n", ai->indets);
+      free (ai);
+      return (0);
   }
 
   return (ai);
