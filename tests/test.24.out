@@ -1,5 +1,5 @@
 d = 2
-# *** Warning: canonization procedure not yet implemented ***
+# *** Warning: result can be noncanonical ***
 Ideal [
 +1-u-2v+2uv+u^2v+uv^2-2u^2v^2+u^3v^2;
 (-1+u-u^2+u^3) (u - 1);
@@ -8,20 +8,20 @@ Ideal [
 (+2-2u+u^2-u^3-uv+2u^2v-u^3v+u^4v) (v - 1);
 ]
 d = 2
-# *** Warning: canonization procedure not yet implemented ***
+# *** Warning: result can be noncanonical ***
 Ideal [
 +1-u+uv-2u^2v+u^3v+u^2v^2-u^5v^3+u^5v^4;
 (-1-v-uv+u^2v+u^2v^2-u^3v^3-u^4v^3) (u - 1);
 (-1-v-uv+u^2v+u^2v^2-u^3v^3-u^4v^3) (v - 1);
 ]
 d = 2
-# *** Warning: canonization procedure not yet implemented ***
+# *** Warning: result can be noncanonical ***
 Ideal [
 +1-2u+u^2+2uv-u^2v;
 (+1-u) (u - 1);
 (+1-u) (v - 1);
 ]
-# *** Warning: canonization procedure not yet implemented ***
+# *** Warning: result can be noncanonical ***
 Ideal [
 ;
 +1-u-2v+2uv+u^2v+uv^2-2u^2v^2+u^3v^2;

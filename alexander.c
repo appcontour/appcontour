@@ -163,7 +163,7 @@ alexander (struct presentation *p)
       shuffle_poly2 (&determinant2, extradeterminants, extradets);
     }
     if (canonify_ideal2 (&determinant2, extradeterminants, extradets) == 0)
-      printf ("# *** Warning: canonization procedure not yet implemented ***\n");
+      printf ("# *** Warning: result can be noncanonical ***\n");
     if (extradeterminants)
     {
       if (deficiency == 2) laurent_canonify2 (determinant2);
@@ -251,7 +251,7 @@ alexander_fromideal (struct alexanderideal *ai)
           for (i = 0; i < extradets; i++) extradeterminants[i] = ai->fl2[i];
         }
         if (canonify_ideal2 (&determinant2, extradeterminants, extradets) == 0)
-          printf ("# *** Warning: canonization procedure not yet implemented ***\n");
+          printf ("# *** Warning: result can be noncanonical ***\n");
         if (ai->l2num == 1) ai->l2[0] = determinant2;
         if (extradets > 0)
         {
@@ -729,7 +729,7 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
    * Indeed the program gives "0" as a result if we force the deficiency to
    * be one, e.g. by giving a presentation such as <a, b, aA>:
    * $ echo "fpgroup{<a,b; aA>}" | contour --out alexander
-   * *** Warning: canonization procedure not yet implemented ***
+   * *** Warning: result can be noncanonical ***
    * Alexander polynomial:
    * 0
    *
