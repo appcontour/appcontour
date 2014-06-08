@@ -1,0 +1,10 @@
+#
+# square knot
+#
+knot {
+ ^  ^  ^ ;
+| x  x  |;
+ X || X  ;
+| x  x | ;
+ U U  U  ;
+} 
