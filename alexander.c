@@ -1427,11 +1427,12 @@ base_canonify2 (struct laurentpoly2 **ppt)
 
   suppdim = laurent_suppdim2 (*ppt);
  
-  if (suppdim <= 0) return (1);
+  if (suppdim < 0) return (1);
 
   if (nobasecanonify) return (0);
   switch (suppdim)
   {
+    case 0:
     case 1:
     return (base_canonify2_onedim (ppt));
     break;
@@ -1466,6 +1467,7 @@ base_canonify2_onedim (struct laurentpoly2 **ppt)
   if (p->stemdegree == 0)
   {
     laurent_canonify (p->stem[0]);
+    laurent_canonifysign (p->stem[0]);
     return (1);  // already canonical!
   }
 
@@ -1510,7 +1512,8 @@ base_canonify2_onedim (struct laurentpoly2 **ppt)
   p->minexpon = 0;
   p->stemdegree = 0;
   p->stem[0] = newp1;
- 
+  laurent_canonifysign (p->stem[0]);
+
   return (1);
 }
 
@@ -1611,7 +1614,6 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
   optdegree = origtotdegree;
   for (k = 0; k <= optdegree; k++)
   {
-//printf ("k = %d\n", k);
     for (a = k*amin/area2 ; a <= k*amax/area2; a++)
     {
       for (b = k*bmin/area2; b <= k*bmax/area2; b++)
@@ -1667,8 +1669,37 @@ base_canonify2_twodim (struct laurentpoly2 **ppt)
   free_laurentpoly2 (origp);
   laurent2_canonifysign (optp);
   *ppt = optp;
-  //if (verbose) printf ("Canonization procedure for two-dimensional support not yet implemented!\n");
   return (1);
+}
+
+/*
+ * canonify sign such that either p(1) > 0
+ * or the first nonzero coefficient is positive
+ */
+
+void
+laurent_canonifysign (struct laurentpoly *p)
+{
+  int val1 = 0;
+  int k;
+
+  if (p == 0) return;
+
+  /* evaluate in (1) */
+  for (k = 0; k <= p->stemdegree; k++)
+    val1 += p->stem[k];
+
+  if (val1 > 0) return;
+
+  if (val1 == 0)
+  {
+    assert (p->stem[0] != 0);
+    if (p->stem[0] > 0) return;
+  }
+
+  /* if here change sign */
+  for (k = 0; k <= p->stemdegree; k++)
+    p->stem[k] = - p->stem[k];
 }
 
 /*
