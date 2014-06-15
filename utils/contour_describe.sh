@@ -260,7 +260,9 @@ function getalexander ()
   alexander=`$ccontour extractcc $comp $file 2>/dev/null | $ccontour alexander --foxd $foxd $sideopt -q 2>/dev/null | grep -iv warning`
   alexander=`echo $alexander | tr -d ' '`
   alexander=${alexander#+}
+  alexander=${alexander%;}
   if [ "$alexander" = "1" ]; then alexander=""; fi
+  if [ "$alexander" = "+1" ]; then alexander=""; fi
   if [ "$alexander" = "-1" ]; then alexander=""; fi
   if [ "$alexander" = "[+1]" ]; then alexander=""; fi
   if [ "$alexander" = "[1]" ]; then alexander=""; fi
@@ -279,6 +281,7 @@ function getalexanderlink2 ()
   alexander=`$ccontour extractcc $comp1,$comp2 $file 2>/dev/null | $ccontour alexander --foxd 1 $sideopt -q 2>/dev/null | grep -iv warning`
   alexander=`echo $alexander | tr -d ' '`
   alexander=${alexander#+}
+  alexander=${alexander%;}
   if [ "$alexander" = "0" ]; then alexander=""; fi
   if [ "$alexander" = "-0" ]; then alexander=""; fi
   if [ "$alexander" = "[+0]" ]; then alexander=""; fi
