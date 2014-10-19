@@ -3340,7 +3340,7 @@ cellcomplex_printarcs (struct ccomplex *cc, int verbose)
   {
     arc = cc->arcs + n;
     if (arc->type == CC_REMOVED) continue;
-    printf ("arc %d[%d,%d]", n, arc->enda, arc->endb);
+    printf ("arc %d [%d %d]", n, arc->enda, arc->endb);
     if (verbose) printf (" ref %d", arc->refcount);
     if (verbose >= 2)
     {

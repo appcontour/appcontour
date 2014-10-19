@@ -1019,14 +1019,19 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     if (docanonify) canonify (sketch);
     ccomplex = compute_cellcomplex (sketch, fg_type);
-    count = complex_collapse (ccomplex);
-    if (debug) printf ("Collapsed %d cell pairs\n", count);
+
+    if (simplify) {
+      count = complex_collapse (ccomplex);
+      if (debug) printf ("Collapsed %d cell pairs\n", count);
+    }
     if (debug) printf ("Euler characteristic %d = %d nodes - %d arcs + %d faces\n",
                         ccomplex->nodenum - ccomplex->arcnum + ccomplex->facenum,
                         ccomplex->nodenum, ccomplex->arcnum, ccomplex->facenum);
-    cellcomplex_print (ccomplex, 1);
-    count =  find_spanning_tree (ccomplex);
-    printf ("Found %d connected components\n", count);
+    cellcomplex_print (ccomplex, quiet?0:1);
+    if (!quiet) {
+      count =  find_spanning_tree (ccomplex);
+      printf ("Found %d connected components\n", count);
+    }
     break;
 
     case ACTION_FUNDAMENTAL:
