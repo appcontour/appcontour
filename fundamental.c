@@ -3308,7 +3308,7 @@ onarc2narc (int onarc)
  */
 
 void
-cellcomplex_printnodes (struct ccomplex *cc, int verbose)
+cellcomplex_printnodes (struct ccomplex *cc, int verbose, int *noderemap)
 {
   int n;
   struct ccomplexnode *node;
@@ -3317,7 +3317,7 @@ cellcomplex_printnodes (struct ccomplex *cc, int verbose)
   {
     node = cc->nodes + n;
     if (node->type == CC_REMOVED) continue;
-    printf ("node %d", n);
+    printf ("node %d", noderemap[n]);
     if (verbose) printf (" ref %d", node->refcount);
     if (verbose >= 2)
     {
@@ -3331,7 +3331,7 @@ cellcomplex_printnodes (struct ccomplex *cc, int verbose)
 }
 
 void
-cellcomplex_printarcs (struct ccomplex *cc, int verbose)
+cellcomplex_printarcs (struct ccomplex *cc, int verbose, int *noderemap, int *arcremap)
 {
   int n;
   struct ccomplexarc *arc;
@@ -3340,7 +3340,7 @@ cellcomplex_printarcs (struct ccomplex *cc, int verbose)
   {
     arc = cc->arcs + n;
     if (arc->type == CC_REMOVED) continue;
-    printf ("arc %d [%d %d]", n, arc->enda, arc->endb);
+    printf ("arc %d [%d %d]", arcremap[n], noderemap[arc->enda], noderemap[arc->endb]);
     if (verbose) printf (" ref %d", arc->refcount);
     if (verbose >= 2)
     {
@@ -3353,23 +3353,23 @@ cellcomplex_printarcs (struct ccomplex *cc, int verbose)
 }
 
 void
-cellcomplex_printfaces (struct ccomplex *cc, int verbose)
+cellcomplex_printfaces (struct ccomplex *cc, int verbose, int *arcremap)
 {
-  int n, i, na;
+  int n, i, na, nr;
   int *ivec;
   struct ccomplexface *face;
 
-  for (n = 0; n < cc->facedim; n++)
+  for (n = 0, nr = 0; n < cc->facedim; n++)
   {
     face = cc->faces + n;
     if (face->type == CC_REMOVED) continue;
     ivec = face->faceborder;
-    printf ("face %d [", n);
+    printf ("face %d [", nr++);
     for (i = 0; i < face->facebordernum; i++)
     {
       na = onarc2narc(ivec[i]);
       printf ("%c", (ivec[i]>0)?'+':'-');
-      printf ("%d ", na);
+      printf ("%d ", arcremap[na]);
     }
     printf ("]");
     if (verbose >= 2) printf (", stratum %d", face->stratum);
@@ -3380,9 +3380,28 @@ cellcomplex_printfaces (struct ccomplex *cc, int verbose)
 void
 cellcomplex_print (struct ccomplex *cc, int verbose)
 {
-  cellcomplex_printnodes (cc, verbose);
-  cellcomplex_printarcs (cc, verbose);
-  cellcomplex_printfaces (cc, verbose);
+  int n, nr, *noderemap, *arcremap;
+  struct ccomplexnode *node;
+  struct ccomplexarc *arc;
+
+  noderemap = (int *) malloc (cc->nodedim*sizeof(int));
+  arcremap = (int *) malloc (cc->arcdim*sizeof(int));
+
+  for (n = 0, nr = 0; n < cc->nodedim; n++)
+  {
+    noderemap[n] = -1;
+    node = cc->nodes + n;
+    if (node->type != CC_REMOVED) noderemap[n] = nr++;
+  }
+  for (n = 0, nr = 0; n < cc->arcdim; n++)
+  {
+    arcremap[n] = -1;
+    arc = cc->arcs + n;
+    if (arc->type != CC_REMOVED) arcremap[n] = nr++;
+  }
+  cellcomplex_printnodes (cc, verbose, noderemap);
+  cellcomplex_printarcs (cc, verbose, noderemap, arcremap);
+  cellcomplex_printfaces (cc, verbose, arcremap);
 }
 
 /*

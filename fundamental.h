@@ -145,9 +145,9 @@ int fund_findnode (struct ccomplex *cc, struct arc *a, int stratum);
 int find_spanning_tree (struct ccomplex *cc);
 void cc_revert_face (struct ccomplex *cc, int nface);
 void cellcomplex_print (struct ccomplex *cc, int verbose);
-void cellcomplex_printarcs (struct ccomplex *cc, int verbose);
-void cellcomplex_printnodes (struct ccomplex *cc, int verbose);
-void cellcomplex_printfaces (struct ccomplex *cc, int verbose);
+void cellcomplex_printarcs (struct ccomplex *cc, int verbose, int *noderemap, int *arcremap);
+void cellcomplex_printnodes (struct ccomplex *cc, int verbose, int *noderemap);
+void cellcomplex_printfaces (struct ccomplex *cc, int verbose, int *arcremap);
 int onarc2narc (int);
 int cellcomplex_checkconsistency (struct ccomplex *cc);
 
