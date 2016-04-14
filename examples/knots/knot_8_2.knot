@@ -1,0 +1,12 @@
+#
+# http://katlas.math.toronto.edu/wiki/8_2
+#
+knot {
+     ^      ;
+ |   ^   |  ;
+  X     X   ;
+|    x     |;
+||^ ^ ^ ^ ||;
+|x x x x x |;
+U U U U U U ;
+}
