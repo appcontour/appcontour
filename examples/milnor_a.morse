@@ -1,0 +1,17 @@
+#
+# milnor curve (apparent contour of a sphere)
+# with a labelling that corresponds to one of the two possible
+# 'lifts' in space
+#
+
+morse {
+        ^l0      ;
+ /   ^l2   ^l2 \ ;
+( /  ^r2X  ^r0\ );
+( | | ||4|2| | |);
+ X  (  X X  )  X ;
+( | | ||2|0| | |);
+( \  U2 X  U0 / );
+ \    U0  U0   / ;
+        U0       ;
+}

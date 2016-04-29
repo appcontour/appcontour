@@ -1,0 +1,13 @@
+#
+# mentioned in https://en.wikipedia.org/wiki/Cinquefoil_knot
+#
+knot {
+ ^ ^ ^  ;
+| X X | ;
+|| X || ;
+| x x | ;
+ x X x  ;
+| U X | ;
+|   X | ;
+  U  U  ;
+}
