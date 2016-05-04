@@ -23,6 +23,8 @@ knot {
     U       U   ;
 }
 
+The corresponding region description can be found in bugs/failing_kanenobu.sketch
+
 Indeed the resulting finitely presented group is:
 
 <a,b,c; abcbCBACbcabcBCBcbcbCBACBcabcBCBCbc, abccBACBcbCBACBBcbcbCBACBBcabcBCBCbbcabcBCbc, abcbCBACbcabcBCbcabcBCbcabCBACBcbCBACBc>
