@@ -3,6 +3,11 @@
 # generate kanenobu knot for given p and q
 #
 # see http://www.ams.org/journals/proc/1986-097-01/S0002-9939-1986-0831406-7/S0002-9939-1986-0831406-7.pdf
+#
+# entries in knot atlas with same Alexander polynomial are (up to 10 crossings):
+#
+# 8_8 10_129 10_137
+#
 
 p=$1
 q=$2

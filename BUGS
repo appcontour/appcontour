@@ -1,3 +1,36 @@
+2016.05.04
+
+$ cd utils
+$ ./kanenobu.sh -1 -3 | contour --out alexander
+reading knot description
+Computing Alexander ideal for d = 1:
+Cannot compute Alexander polynomial because there are too many relators
+
+Questo non dovrebbe succedere, essendo il gruppo di un nodo!
+
+Failing example:
+knot {
+        ^       ;
+  |   ^   ^   | ;
+  |  |  X  |  | ;
+ | ^ || ^ || ^ |;
+  X X X   x x x ;
+ | U |X   x| U |;
+ |   U | | U   |;
+  |     X     | ;
+  |     X     | ;
+  |     X     | ;
+    U       U   ;
+}
+
+Indeed the resulting finitely presented group is:
+
+<a,b,c; abcbCBACbcabcBCBcbcbCBACBcabcBCBCbc, abccBACBcbCBACBBcbcbCBACBBcabcBCBCbbcabcBCbc, abcbCBACbcabcBCbcabcBCbcabCBACBcbCBACBc>
+
+whereas it should have one less relator than generators...
+
+
+
 2010.10.14
 
 MENDES GRAPH
