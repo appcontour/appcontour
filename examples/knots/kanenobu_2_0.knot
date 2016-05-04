@@ -1,0 +1,25 @@
+# case p = 2, q = 0
+# see http://www.ams.org/journals/proc/1986-097-01/S0002-9939-1986-0831406-7/S0002-9939-1986-0831406-7.pdf
+#
+# lower case 'x' represents the crossing 
+#    \ /
+#     \
+#    / \
+#
+# upper case 'X' represents the crossing 
+#    \ /
+#     /
+#    / \
+#
+knot {
+        ^       ;
+  |   ^   ^   | ;
+  |  |  x  |  | ; #(repeat |p| times, change to 'X' for negative p)
+  |  |  x  |  | ; #(repeat |p| times, change to 'X' for negative p)
+ | ^ || ^ || ^ |;
+  X X X   x x x ;
+ | U |X   x| U |;
+ |   U | | U   |;
+# |     x     | ; #(repeat |q| times, change to 'X' for negative q)
+    U       U   ; 
+}
