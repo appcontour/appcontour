@@ -3,12 +3,12 @@
 #
 
 list1a="disjoint_spheres genus_2_linked genus_2 hill hollowsphere internalexternal internalknot mendes milnor_a painted_klein_bottle"
-list1b="partial_eclipse potato prova sarcone sphere_2 sphere_behind_torus sphere_infrontof_torus sphere test_rule_cn3 three_spheres"
+list1b="partial_eclipse potato sphere_2 sphere_behind_torus sphere_infrontof_torus sphere test_rule_cn3 three_spheres"
 list1c="torus1 torus2 torus3 torus_eight torus_twist trefoil two_beans two_hills twohollowsphere two_rings"
 
 list1="$list1a $list1b $list1c"
 
-list2a="borromeanrings conway conway_pinched double_twist eight embrace embrace_trefoil fox_pag127 granny kinoshita_terasaka linked_rings"
+list2a="borromeanrings conway conway_pinched double_twist eight embrace embrace_trefoil granny kinoshita_terasaka linked_rings"
 list2b="linked_rings_twice ochiai_mod_to_genus2 ochiai_mod_to_link ochiai_unknot one_chain sarcone square toric_3_2 trefoilknotfake"
 list2c="trefoilknot trinacria two_rings whitehead"
 

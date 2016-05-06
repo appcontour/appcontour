@@ -90,20 +90,6 @@ Trivial whole ring ideal:
 1;
 
 =====================================
-testing example prova.morse
-=====================================
-Computing Alexander ideal for d = 2:
-Alexander polynomial:
-+1-u+u^2;
-
-=====================================
-testing example sarcone.morse
-=====================================
-Computing Alexander ideal for d = 2:
-Alexander polynomial:
-+1+u-v;
-
-=====================================
 testing example sphere_2.morse
 =====================================
 Computing Alexander ideal for d = 1:
@@ -277,13 +263,6 @@ testing example embrace_trefoil.knot
 Computing Alexander ideal for d = 2:
 Alexander polynomial:
 +1+u-v;
-
-=====================================
-testing example fox_pag127.knot
-=====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
-+1-5t+10t^2-13t^3+10t^4-5t^5+t^6;
 
 =====================================
 testing example granny.knot
