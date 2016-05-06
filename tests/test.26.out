@@ -327,13 +327,6 @@ Trivial whole ring ideal:
 1;
 
 =====================================
-testing example sarcone.knot
-=====================================
-Computing Alexander ideal for d = 2:
-Alexander polynomial:
-+1+u-v;
-
-=====================================
 testing example square.knot
 =====================================
 Computing Alexander ideal for d = 1:
