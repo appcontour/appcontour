@@ -9,7 +9,7 @@ list1c="torus1 torus2 torus3 torus_eight torus_twist trefoil two_beans two_hills
 list1="$list1a $list1b $list1c"
 
 list2a="borromeanrings conway conway_pinched double_twist eight embrace embrace_trefoil granny kinoshita_terasaka linked_rings"
-list2b="linked_rings_twice ochiai_mod_to_genus2 ochiai_mod_to_link ochiai_unknot one_chain sarcone square toric_3_2 trefoilknotfake"
+list2b="linked_rings_twice ochiai_mod_to_genus2 ochiai_mod_to_link ochiai_unknot one_chain square toric_3_2 trefoilknotfake"
 list2c="trefoilknot trinacria two_rings whitehead"
 
 list2="$list2a $list2b $list2c"
