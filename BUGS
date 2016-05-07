@@ -1,14 +1,3 @@
-2016.05.06
-
-problema nell'implementazione del conto delle cavita':
-
-./contour -v --out fg examples/partial_eclipse.morse
-Euler characteristic: 3
-Betti numbers: b0 = 1, b1 = -1, b2 = 1
-
-mentre b2 = 1, mentre le cavita' sono 2 (tre superfici di bordo, contando
-quella aggiunta esternamente)
-
 
 2016.05.04
 

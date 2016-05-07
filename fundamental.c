@@ -2245,6 +2245,7 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   cc = (struct ccomplex *) malloc (sizeof (struct ccomplex));
   cc->type = fg_type;
   cc->sketch = s;
+  cc->cc = 0;
   if (s->isempty)
   {
     cc->nodenum = cc->arcnum = cc->facenum = 0;
@@ -2293,13 +2294,18 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   fundamental_fillfaces (cc);
 
   complex_countreferences (cc);
+  /*
+   * it is necessary to call find_spanning_tree before any simplification
+   * in order to gather information about the cavities
+   */
+  find_spanning_tree (cc);
 
   if (debug)
   {
     cellcomplex_print (cc, 2);
     status = cellcomplex_checkconsistency (cc);
     assert (status);
-    printf ("Connected components: %d\n", find_spanning_tree (cc));
+    printf ("Connected components: %d\n", cc->ccnum);
   }
   return (cc);
 }
@@ -2328,33 +2334,66 @@ find_spanning_tree (struct ccomplex *cc)
   struct ccomplexarc *arcs = cc->arcs;
   struct ccomplexarc *arc;
   int i, bn, again, n1, n2;
+  int computebetti = 0;
   int *surfcomptag;
 
+  /*
+   * this is a little messy, however
+   * finding the connected components produces a spanning tree as a 
+   * side effect, so we do that here anyway.  However we do not want to
+   * lose the betti numbers informations possibly already computed
+   */
   /* initializations */
-  cc->cc = 0;
-  cc->ccnum = 0;
+  if (cc->cc)
+  {
+    /* update che ccomplexcc list to point to still existing nodes
+     * in the same component
+     */
+    for (cccc = cc->cc; cccc; cccc = cccc->next)
+    {
+      for (i = 0; i < cc->nodedim; i++)
+      {
+        if (nodes[i].type == CC_REMOVED) continue;
+        if (nodes[i].cc == cccc)
+        {
+          cccc->basenode = i;
+          break;
+        }
+      }
+    }
+  } else {
+    computebetti = 1;
+    cc->cc = 0;
+    cc->ccnum = 0;
+    assert (cc->surfccnum > 0);
+    surfcomptag = (int *) malloc (cc->surfccnum * sizeof (int));
+  }
   for (i = 0; i < cc->nodedim; i++) nodes[i].cc = 0;
   for (i = 0; i < cc->arcdim; i++) arcs[i].isinspanningtree = 0;
 
-  assert (cc->surfccnum > 0);
-  surfcomptag = (int *) malloc (cc->surfccnum * sizeof (int));
-
-  while ((bn = cc_find_new_base_node (cc)) >= 0)
+  cccc = cc->cc;
+  while ( (bn = (computebetti ?
+                 cc_find_new_base_node (cc) :
+                 (cccc?cccc->basenode:(-1))
+                                                 )) >= 0)
   {
-    for (i = 0; i < cc->surfccnum; i++) surfcomptag[i] = 0;
-    cccc = (struct ccomplexcc *) malloc (sizeof (struct ccomplexcc));
-    cccc->tag = cc->ccnum;
-    cccc->basenode = bn;
-    assert (nodes[bn].surfcc >= 0);
-    surfcomptag[nodes[bn].surfcc]++;
-    cccc->p = 0;
-    cccc->next = 0;
-    cc->ccnum++;
-    if (lastcc == 0)
-      cc->cc = cccc;
-     else
-      lastcc->next = cccc;
-    lastcc = cccc;
+    if (computebetti)
+    {
+      for (i = 0; i < cc->surfccnum; i++) surfcomptag[i] = 0;
+      cccc = (struct ccomplexcc *) malloc (sizeof (struct ccomplexcc));
+      cccc->tag = cc->ccnum;
+      cccc->basenode = bn;
+      assert (nodes[bn].surfcc >= 0);
+      surfcomptag[nodes[bn].surfcc]++;
+      cccc->p = 0;
+      cccc->next = 0;
+      cc->ccnum++;
+      if (lastcc == 0)
+        cc->cc = cccc;
+       else
+        lastcc->next = cccc;
+      lastcc = cccc;
+    }
     nodes[bn].cc = cccc;
     again = 1;
     while (again)   // repeated loop on arcs to expand spanning tree
@@ -2374,29 +2413,34 @@ find_spanning_tree (struct ccomplex *cc)
         {
           assert (nodes[n2].cc == 0);
           nodes[n2].cc = nodes[n1].cc;
-          surfcomptag[nodes[n2].surfcc]++;
+          if (computebetti) surfcomptag[nodes[n2].surfcc]++;
         } else {
           assert (nodes[n1].cc == 0);
           nodes[n1].cc = nodes[n2].cc;
-          surfcomptag[nodes[n1].surfcc]++;
+          if (computebetti) surfcomptag[nodes[n1].surfcc]++;
         }
       }
     }
-    cccc->betti_2 = 0;
-    for (i = 0; i < cc->surfccnum; i++)
+    if (computebetti)
     {
-      if (surfcomptag[i] > 0)
+      cccc->betti_2 = 0;
+      for (i = 0; i < cc->surfccnum; i++)
       {
-        cccc->betti_2++;
+        if (surfcomptag[i] > 0)
+        {
+          cccc->betti_2++;
+        }
       }
+      /*
+       * the betti number 2 is the number of cavities, i.e. the number of
+       * adjacent surfaces minus 1
+       */
+      cccc->betti_2--;
+    } else {
+      cccc = cccc->next;
     }
-    /*
-     * the betti number 2 is the number of cavities, i.e. the number of
-     * adjacent surfaces minus 1
-     */
-    cccc->betti_2--;
   }
-  free (surfcomptag);
+  if (computebetti) free (surfcomptag);
   return (cc->ccnum);
 }
 
