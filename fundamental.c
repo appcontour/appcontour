@@ -110,6 +110,7 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
   p = (struct presentation *) malloc (sizeof (struct presentation));
   p->gennum = 0;
   p->rules = 0;
+  p->characteristic = 1;  /* the spanning tree has characteristic 1 */
 
   for (n = 0; n < cc->arcdim; n++)
   {
@@ -118,6 +119,7 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
     if (arc->isinspanningtree) continue;
     node = cc->nodes + arc->enda;
     if (node->cc != cccc) continue;
+    p->characteristic--;  /* each further arc counts -1 */
     p->gennum++;
   }
   if (p->gennum == 0) return (p);
@@ -143,6 +145,7 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
     arc = arcs + onarc2narc (ivec[0]);
     node = nodes + arc->enda;
     if (node->cc != cccc) continue;
+    p->characteristic++;  /* each face counts +1 */
     /* we have a new rule */
     for (length = 0, i = 0; i < face->facebordernum; i++)
     {
@@ -173,6 +176,13 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
     }
   }
 
+  assert (cccc->betti_2 >= 0);
+  if (verbose)
+  {
+    /* b1 = b0 + b2 - C */
+    printf ("Euler characteristic: %d\n", p->characteristic);
+    printf ("Betti numbers: b0 = 1, b1 = %d, b2 = %d\n", 1 + cccc->betti_2 - p->characteristic, cccc->betti_2);
+  }
   free (variable);
   return (p);
 }
@@ -2235,6 +2245,17 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   cc = (struct ccomplex *) malloc (sizeof (struct ccomplex));
   cc->type = fg_type;
   cc->sketch = s;
+  if (s->isempty)
+  {
+    cc->nodenum = cc->arcnum = cc->facenum = 0;
+    cc->nodes = 0;
+    cc->arcs = 0;
+    cc->faces = 0;
+    return (0);
+  }
+  if (s->isempty) cc->surfccnum = 0;
+  else cc->surfccnum = count_connected_components (s);
+  assert (s->cc_tagged || s->isempty);
 
   cc->nodenum = cc->nodedim = fundamental_countnodes (s);
   cc->arcnum = cc->arcdim = fundamental_countarcs (cc->sketch, cc->type);
@@ -2288,6 +2309,8 @@ compute_cellcomplex (struct sketch *s, int fg_type)
  * we also have a separation of the various connected components
  * of the 1D skeleton, for each connected component a base node is
  * selected.
+ * Moreover, for each component the number of adjacent surfaces of the contour
+ * is computed, whence the betti number n. 2
  */
 
 /* local prototypes */
@@ -2305,6 +2328,7 @@ find_spanning_tree (struct ccomplex *cc)
   struct ccomplexarc *arcs = cc->arcs;
   struct ccomplexarc *arc;
   int i, bn, again, n1, n2;
+  int *surfcomptag;
 
   /* initializations */
   cc->cc = 0;
@@ -2312,11 +2336,17 @@ find_spanning_tree (struct ccomplex *cc)
   for (i = 0; i < cc->nodedim; i++) nodes[i].cc = 0;
   for (i = 0; i < cc->arcdim; i++) arcs[i].isinspanningtree = 0;
 
+  assert (cc->surfccnum > 0);
+  surfcomptag = (int *) malloc (cc->surfccnum * sizeof (int));
+
   while ((bn = cc_find_new_base_node (cc)) >= 0)
   {
+    for (i = 0; i < cc->surfccnum; i++) surfcomptag[i] = 0;
     cccc = (struct ccomplexcc *) malloc (sizeof (struct ccomplexcc));
     cccc->tag = cc->ccnum;
     cccc->basenode = bn;
+    assert (nodes[bn].surfcc >= 0);
+    surfcomptag[nodes[bn].surfcc]++;
     cccc->p = 0;
     cccc->next = 0;
     cc->ccnum++;
@@ -2344,13 +2374,29 @@ find_spanning_tree (struct ccomplex *cc)
         {
           assert (nodes[n2].cc == 0);
           nodes[n2].cc = nodes[n1].cc;
+          surfcomptag[nodes[n2].surfcc]++;
         } else {
           assert (nodes[n1].cc == 0);
           nodes[n1].cc = nodes[n2].cc;
+          surfcomptag[nodes[n1].surfcc]++;
         }
       }
     }
+    cccc->betti_2 = 0;
+    for (i = 0; i < cc->surfccnum; i++)
+    {
+      if (surfcomptag[i] > 0)
+      {
+        cccc->betti_2++;
+      }
+    }
+    /*
+     * the betti number 2 is the number of cavities, i.e. the number of
+     * adjacent surfaces minus 1
+     */
+    cccc->betti_2--;
   }
+  free (surfcomptag);
   return (cc->ccnum);
 }
 
@@ -2379,15 +2425,20 @@ fundamental_fillnodes (struct ccomplex *cc)
   struct ccomplexnode *vecpt;
   struct ccomplexnode *vec = cc->nodes;
   struct sketch *s = cc->sketch;
+  struct region *rleft, *rright;
   int fleft, strata, stratum;
   int vecdim = cc->nodedim;
-  int dne, dse, i;
+  int surfccid, dne, dse, dmin, dmax, delta, i;
 
   vecpt = vec;
+  assert (s->cc_tagged);
+
   for (a = s->arcs; a; a = a->next)
   {
     if (a->cusps > 0)
     {
+      rright = a->regionright->border->region;
+      surfccid = rright->strati[a->depths[1]]; /* tutte le cuspidi stanno forzatamente nella stessa superficie */
       for (i = 1; i <= a->cusps; i++)
       {
         assert (vecpt < vec + vecdim);
@@ -2395,12 +2446,14 @@ fundamental_fillnodes (struct ccomplex *cc)
         vecpt->stratum = a->depths[i];
         vecpt->ne = vecpt->se = a;
         vecpt->cusp = i;
+        vecpt->surfcc = surfccid;
         vecpt++;
       }
     }
     if (a->endpoints == 0)
     {
-      fleft = a->regionleft->border->region->f;
+      rleft = a->regionleft->border->region;
+      fleft = rleft->f;
       strata = fleft -1;
       for (stratum = 0; stratum < strata; stratum++)
       {
@@ -2409,6 +2462,10 @@ fundamental_fillnodes (struct ccomplex *cc)
         if (stratum == a->depths[0]) vecpt->type = CC_NODETYPE_VIRTUALFOLD;
         vecpt->stratum = stratum;
         vecpt->ne = vecpt->se = a;
+        if (stratum <= a->depths[0])
+          vecpt->surfcc = rleft->strati[stratum];
+         else
+          vecpt->surfcc = rleft->strati[stratum + 1];
         vecpt++;
       }
     } else {
@@ -2419,21 +2476,32 @@ fundamental_fillnodes (struct ccomplex *cc)
       /* archi in posizione canonica */
       ane = a;
       ase = bord->info;
+      rleft = ane->regionleft->border->region;
       strata = ane->regionright->border->region->f;
       dne = ane->depths[0];
       dse = ase->depths[0];
       if (dne >= dse + 2)
+      {
         dne--;
-       else
+        dmin = dse;
+        dmax = dne;
+      } else {
         dse++;
+        dmin = dne;
+        dmax = dse;
+      }
       for (stratum = 0; stratum < strata; stratum++)
       {
+        delta = 0;
+        if (stratum >= dmin) delta++;
+        if (stratum >= dmax) delta++;
         assert (vecpt < vec + vecdim);
         vecpt->type = CC_NODETYPE_CUT;
         if (stratum == dse || stratum == dne) vecpt->type = CC_NODETYPE_FOLD;
         vecpt->stratum = stratum;
         vecpt->ne = ane;
         vecpt->se = ase;
+        vecpt->surfcc = rleft->strati[stratum + delta];
         vecpt++;
       }
     }
@@ -3321,6 +3389,7 @@ cellcomplex_printnodes (struct ccomplex *cc, int verbose, int *noderemap)
     if (verbose) printf (" ref %d", node->refcount);
     if (verbose >= 2)
     {
+      printf (" surfcc %d", node->surfcc);
       if (node->type == CC_NODETYPE_CUSP) 
         printf (" of CUSP type, ne-arc %d, cusp %d", node->ne->tag, node->cusp);
        else

@@ -27,6 +27,8 @@
 #define CC_FACETYPE_HORIZONTAL 1
 #define CC_FACETYPE_WALL 2
 
+#define BETTI_UNDEF (-1)
+
 struct ccomplex {
     struct sketch *sketch;
     int type;
@@ -40,6 +42,7 @@ struct ccomplex {
     int facedim;
     struct ccomplexface *faces;
     int ccnum;
+    int surfccnum;
     struct ccomplexcc *cc;    // connected components list
   };
 
@@ -47,6 +50,7 @@ struct ccomplexnode {
     int type;
     int stratum;
     int cusp;
+    int surfcc;
     struct ccomplexcc *cc;
     struct arc *ne;   // with both arcs oriented from left to right
     struct arc *se;
@@ -84,6 +88,7 @@ struct ccomplexface {
 struct ccomplexcc {
     int tag;
     int basenode;
+    int betti_2;
     struct presentation *p;
     struct ccomplexcc *next;
   };
@@ -94,6 +99,7 @@ struct ccomplexcc {
 
 struct presentation {
     int gennum;
+    int characteristic;
     struct presentationrule *rules;
   };
 

@@ -52,7 +52,17 @@ alexander (struct presentation *p)
   if (printdvalue && outformat != OUTFORMAT_APPCONTOUR)
   {
     if (quiet) printf ("d = %d\n", foxd);
-     else printf ("Computing Alexander ideal for d = %d:\n", foxd);
+    else {
+      printf ("Computing ");
+      switch (foxd)
+      {
+        case 1: printf ("first"); break;
+        case 2: printf ("second"); break;
+        case 3: printf ("third"); break;
+        default: printf ("%d-th", foxd); break;
+      }
+      printf (" Alexander ideal (--foxd = %d)\n", foxd);
+    }
   }
   if (foxd >= p->gennum)
     return (printout_constant_ideal ("Trivial whole ring ideal:\n", 1));

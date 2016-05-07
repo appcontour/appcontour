@@ -930,6 +930,11 @@ main (int argc, char *argv[])
       fprintf (stderr, "This sketch is NOT a labelled apparent contour.\n");
       exit (13);
     }
+    if (sketch->isempty)
+    {
+      fprintf (stderr, "This sketch is EMPTY.\n");
+      exit (13);
+    }
     ccomplex = compute_cellcomplex (sketch, fg_type);
     res = complex_characteristic (ccomplex);
     if (quiet) printf ("%d\n", complex_characteristic (ccomplex));
@@ -1018,6 +1023,11 @@ main (int argc, char *argv[])
     case ACTION_CELLCOMPLEX:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     if (docanonify) canonify (sketch);
+    if (sketch->isempty)
+    {
+      fprintf (stderr, "Cannot compute cell complex of empty contour.\n");
+      exit (13);
+    }
     ccomplex = compute_cellcomplex (sketch, fg_type);
 
     if (simplify) {
@@ -1027,7 +1037,7 @@ main (int argc, char *argv[])
     if (debug) printf ("Euler characteristic %d = %d nodes - %d arcs + %d faces\n",
                         ccomplex->nodenum - ccomplex->arcnum + ccomplex->facenum,
                         ccomplex->nodenum, ccomplex->arcnum, ccomplex->facenum);
-    cellcomplex_print (ccomplex, quiet?0:1);
+    cellcomplex_print (ccomplex, verbose + (quiet?0:1));
     if (!quiet) {
       count =  find_spanning_tree (ccomplex);
       printf ("Found %d connected components\n", count);
@@ -1092,6 +1102,11 @@ main (int argc, char *argv[])
     } else {
       if ((sketch = readcontour (infile)) == 0) exit (14);
       if (docanonify) canonify (sketch);
+      if (sketch->isempty)
+      {
+        fprintf (stderr, "Cannot compute fundamental group of EMPTY contour\n");
+        exit (13);
+      }
       ccomplex = compute_cellcomplex (sketch, fg_type);
       count = complex_collapse (ccomplex);
       if (debug) printf ("%d pairs of cells collapsed\n", count);

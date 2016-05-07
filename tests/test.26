@@ -28,7 +28,7 @@ do
   echo "====================================="
   echo "testing example ${morse}.morse"
   echo "====================================="
-  ./contour --out alexander examples/${morse}.morse
+  ./contour -q --out alexander examples/${morse}.morse
 done
 
 for knot in $list2
@@ -37,7 +37,7 @@ do
   echo "====================================="
   echo "testing example ${knot}.knot"
   echo "====================================="
-  ./contour --out alexander examples/${knot}.knot
+  ./contour -q --out alexander examples/${knot}.knot
 done
 
 for knot in $list3
@@ -46,7 +46,7 @@ do
   echo "====================================="
   echo "testing example knots/${knot}.knot"
   echo "====================================="
-  ./contour --out alexander examples/knots/${knot}.knot
+  ./contour -q --out alexander examples/knots/${knot}.knot
 done
 
 for link in $list4
@@ -55,6 +55,6 @@ do
   echo "====================================="
   echo "testing example links/${link}.knot"
   echo "====================================="
-  ./contour --out alexander examples/links/${link}.knot
+  ./contour -q --out alexander examples/links/${link}.knot
 done
 

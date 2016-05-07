@@ -2,626 +2,554 @@
 =====================================
 testing example disjoint_spheres.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example genus_2_linked.morse
 =====================================
-Computing Alexander ideal for d = 2:
-Trivial whole ring ideal:
+d = 2
 1;
 
 =====================================
 testing example genus_2.morse
 =====================================
-Computing Alexander ideal for d = 2:
-Trivial whole ring ideal:
+d = 2
 1;
 
 =====================================
 testing example hill.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example hollowsphere.morse
 =====================================
-
-Connected component 0:
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
-
-Connected component 1:
-Trivial whole ring ideal:
 1;
 
 =====================================
 testing example internalexternal.morse
 =====================================
-Computing Alexander ideal for d = 2:
-Alexander polynomial:
+d = 2
 +1-u+u^2;
 
 =====================================
 testing example internalknot.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example mendes.morse
 =====================================
-Computing Alexander ideal for d = 3:
-Trivial whole ring ideal:
+d = 3
 1;
 
 =====================================
 testing example milnor_a.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example painted_klein_bottle.morse
 =====================================
-Computing Alexander ideal for d = 2:
-Trivial whole ring ideal:
+d = 2
 1;
 
 =====================================
 testing example partial_eclipse.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example potato.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example sphere_2.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example sphere_behind_torus.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example sphere_infrontof_torus.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example sphere.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example test_rule_cn3.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example three_spheres.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example torus1.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example torus2.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example torus3.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example torus_eight.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example torus_twist.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example trefoil.morse
 =====================================
-Computing Alexander ideal for d = 4:
-Trivial whole ring ideal:
+d = 4
 1;
 
 =====================================
 testing example two_beans.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example two_hills.morse
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example twohollowsphere.morse
 =====================================
-
-Connected component 0:
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
-
-Connected component 1:
-Trivial whole ring ideal:
 1;
-
-Connected component 2:
-Trivial whole ring ideal:
 1;
 
 =====================================
 testing example two_rings.morse
 =====================================
-Computing Alexander ideal for d = 2:
-Trivial whole ring ideal:
+d = 2
 1;
 
 =====================================
 testing example borromeanrings.knot
 =====================================
-Computing Alexander ideal for d = 1:
+d = 1
 Cannot compute Alexander polynomial for groups with rank 3
 
 =====================================
 testing example conway.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1;
 
 =====================================
 testing example conway_pinched.knot
 =====================================
-Computing Alexander ideal for d = 2:
+d = 2
 # *** Warning: result can be noncanonical ***
-Alexander ideal generated by:
+Ideal [
 +1-u-2v+2uv+u^2v+uv^2-2u^2v^2+u^3v^2;
 (-1+u-u^2+u^3) (u - 1);
 (-1+u-u^2+u^3) (v - 1);
 (+2-2u+u^2-u^3-uv+2u^2v-u^3v+u^4v) (u - 1);
 (+2-2u+u^2-u^3-uv+2u^2v-u^3v+u^4v) (v - 1);
+]
 
 =====================================
 testing example double_twist.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example eight.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example embrace.knot
 =====================================
-Computing Alexander ideal for d = 2:
-Alexander polynomial:
+d = 2
 +1+u-v;
 
 =====================================
 testing example embrace_trefoil.knot
 =====================================
-Computing Alexander ideal for d = 2:
-Alexander polynomial:
+d = 2
 +1+u-v;
 
 =====================================
 testing example granny.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-2t+3t^2-2t^3+t^4;
 
 =====================================
 testing example kinoshita_terasaka.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1;
 
 =====================================
 testing example linked_rings.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander ideal generated by:
+d = 1
+Ideal [
 (+1) (u - 1);
 (+1) (v - 1);
+]
 
 =====================================
 testing example linked_rings_twice.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander ideal generated by:
+d = 1
+Ideal [
 (+1+u) (u - 1);
 (+1+u) (v - 1);
+]
 
 =====================================
 testing example ochiai_mod_to_genus2.knot
 =====================================
-Computing Alexander ideal for d = 2:
+d = 2
 # *** Warning: result can be noncanonical ***
-Alexander ideal generated by:
+Ideal [
 +1-2u+u^2+2uv-u^2v;
 (+1-u) (u - 1);
 (+1-u) (v - 1);
+]
 
 =====================================
 testing example ochiai_mod_to_link.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander ideal generated by:
+d = 1
+Ideal [
 (+1-u+u^2) (u - 1);
 (+1-u+u^2) (v - 1);
+]
 
 =====================================
 testing example ochiai_unknot.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example one_chain.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example square.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-2t+3t^2-2t^3+t^4;
 
 =====================================
 testing example toric_3_2.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-t+t^2;
 
 =====================================
 testing example trefoilknotfake.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example trefoilknot.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-t+t^2;
 
 =====================================
 testing example trinacria.knot
 =====================================
-Computing Alexander ideal for d = 3:
+d = 3
 Cannot compute Alexander polynomial for groups with rank 3
 
 =====================================
 testing example two_rings.knot
 =====================================
-Computing Alexander ideal for d = 2:
-Trivial whole ring ideal:
+d = 2
 1;
 
 =====================================
 testing example whitehead.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander ideal generated by:
+d = 1
+Ideal [
 (+1-u-v+uv) (u - 1);
 (+1-u-v+uv) (v - 1);
+]
 
 =====================================
 testing example knots/knot_0_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example knots/knot_3_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-t+t^2;
 
 =====================================
 testing example knots/knot_4_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 -1+3t-t^2;
 
 =====================================
 testing example knots/knot_5_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-t+t^2-t^3+t^4;
 
 =====================================
 testing example knots/knot_5_2.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +2-3t+2t^2;
 
 =====================================
 testing example knots/knot_6_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 -2+5t-2t^2;
 
 =====================================
 testing example knots/knot_6_2.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-3t+3t^2-3t^3+t^4;
 
 =====================================
 testing example knots/knot_6_3.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-3t+5t^2-3t^3+t^4;
 
 =====================================
 testing example knots/knot_7_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-t+t^2-t^3+t^4-t^5+t^6;
 
 =====================================
 testing example knots/knot_7_2.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +3-5t+3t^2;
 
 =====================================
 testing example knots/knot_7_3.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +2-3t+3t^2-3t^3+2t^4;
 
 =====================================
 testing example knots/knot_7_4.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +4-7t+4t^2;
 
 =====================================
 testing example knots/knot_7_5.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +2-4t+5t^2-4t^3+2t^4;
 
 =====================================
 testing example knots/knot_7_6.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-5t+7t^2-5t^3+t^4;
 
 =====================================
 testing example knots/knot_7_7.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-5t+9t^2-5t^3+t^4;
 
 =====================================
 testing example knots/knot_8_17.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-4t+8t^2-11t^3+8t^4-4t^5+t^6;
 
 =====================================
 testing example knots/knot_8_19.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-t+t^3-t^5+t^6;
 
 =====================================
 testing example knots/knot_8_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 -3+7t-3t^2;
 
 =====================================
 testing example knots/knot_8_20.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-2t+3t^2-2t^3+t^4;
 
 =====================================
 testing example knots/knot_8_21.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-4t+5t^2-4t^3+t^4;
 
 =====================================
 testing example knots/knot_8_2.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-3t+3t^2-3t^3+3t^4-3t^5+t^6;
 
 =====================================
 testing example knots/knot_8_3.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 -4+9t-4t^2;
 
 =====================================
 testing example knots/knot_8_5.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-3t+4t^2-5t^3+4t^4-3t^5+t^6;
 
 =====================================
 testing example knots/knot_10_132.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-t+t^2-t^3+t^4;
 
 =====================================
 testing example knots/thistlethwaite.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Trivial whole ring ideal:
+d = 1
 1;
 
 =====================================
 testing example knots/kanenobu_0_0.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-6t+11t^2-6t^3+t^4;
 
 =====================================
 testing example knots/kanenobu_1_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-3t+5t^2-7t^3+5t^4-3t^5+t^6;
 
 =====================================
 testing example knots/kanenobu_2_0.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander polynomial (up to t -> 1/t):
+d = 1
 +1-6t+11t^2-6t^3+t^4;
 
 =====================================
 testing example links/link_2_0_1.knot
 =====================================
-Computing Alexander ideal for d = 2:
-Trivial whole ring ideal:
+d = 2
 1;
 
 =====================================
 testing example links/link_2_2_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander ideal generated by:
+d = 1
+Ideal [
 (+1) (u - 1);
 (+1) (v - 1);
+]
 
 =====================================
 testing example links/link_2_4_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander ideal generated by:
+d = 1
+Ideal [
 (+1+u) (u - 1);
 (+1+u) (v - 1);
+]
 
 =====================================
 testing example links/link_2_5_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander ideal generated by:
+d = 1
+Ideal [
 (+1-u-v+uv) (u - 1);
 (+1-u-v+uv) (v - 1);
+]
 
 =====================================
 testing example links/link_2_6_1.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander ideal generated by:
+d = 1
+Ideal [
 (+1+u+u^2) (u - 1);
 (+1+u+u^2) (v - 1);
+]
 
 =====================================
 testing example links/link_2_6_2.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander ideal generated by:
+d = 1
+Ideal [
 (+u^2+v-uv+u^2v+v^2) (u - 1);
 (+u^2+v-uv+u^2v+v^2) (v - 1);
+]
 
 =====================================
 testing example links/link_2_6_3.knot
 =====================================
-Computing Alexander ideal for d = 1:
-Alexander ideal generated by:
+d = 1
+Ideal [
 (-1+2u+2v-uv) (u - 1);
 (-1+2u+2v-uv) (v - 1);
+]
