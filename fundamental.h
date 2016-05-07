@@ -43,6 +43,7 @@ struct ccomplex {
     struct ccomplexface *faces;
     int ccnum;
     int surfccnum;
+    int *cc_characteristics;
     struct ccomplexcc *cc;    // connected components list
   };
 
@@ -89,6 +90,7 @@ struct ccomplexcc {
     int tag;
     int basenode;
     int betti_2;
+    int spherical_voids;
     struct presentation *p;
     struct ccomplexcc *next;
   };
@@ -100,6 +102,7 @@ struct ccomplexcc {
 struct presentation {
     int gennum;
     int characteristic;
+    int espected_deficiency;
     struct presentationrule *rules;
   };
 

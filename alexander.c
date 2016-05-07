@@ -33,6 +33,8 @@ alexander (struct presentation *p)
   for (r = p->rules; r; r = r->next) numcols++;
   /* foxd is the index of the Alexander ideal (dth Alexander ideal) */
   deficiency = p->gennum - numcols;
+  if (deficiency < p->espected_deficiency && numcols > 0)
+    printf ("WARNING: deficiency: %d, espected value: %d\n", deficiency, p->espected_deficiency);
   if (foxd != FOXD_UNDEF && outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d\n#\n", foxd);
   if (foxd < 0 && foxd >= FOXD_MINVALID)
     return (printout_constant_ideal ("Trivial zero ideal for negative d:\n", 0));

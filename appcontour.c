@@ -611,6 +611,52 @@ euler_characteristic (struct sketch *sketch)
 }
 
 int
+cc_euler_characteristic (struct sketch *sketch)
+{
+  struct arc *arc;
+  struct region *r;
+  struct borderlist *bl;
+  int cusps, arcweight, layers;
+  int i, d, cc_strati;
+  int ccid, ccnum, halfarcweight, factor;
+
+  assert (sketch->regions->border->sponda == 0);
+  ccnum = count_connected_components (sketch);
+
+  if (sketch->cc_characteristics) free (sketch->cc_characteristics);
+  sketch->cc_characteristics = (int *) malloc (ccnum * sizeof (int));
+
+  for (ccid = 0; ccid < ccnum; ccid++)
+  {
+    arcweight = layers = cusps = 0;
+    for (arc = sketch->arcs; arc; arc = arc->next)
+    {
+      d = arc->depths[0];
+      if (arc->regionleft->border->region->strati[d] == ccid) cusps += arc->cusps;
+      if (arc->endpoints == 0) continue;   /* questi non contano */
+      arcweight += cc_arcmult (arc, ccid);
+    }
+
+    for (r = sketch->regions; r; r = r->next)
+    {
+      factor = 2;
+      for (bl = r->border; bl; bl = bl->next)
+        if (bl->sponda) factor--;          /* regione esterna, escluso il bordo nullo */
+                                           /* peso di uno strato: 1-buchi */
+      cc_strati = 0;
+      for (i = 0; i < r->f; i++)
+        if (r->strati[i] == ccid) cc_strati++;
+      layers += factor * cc_strati;
+    }
+
+    halfarcweight = arcweight/2;
+    assert (arcweight == 2*halfarcweight);
+    sketch->cc_characteristics[ccid] = layers - cusps - halfarcweight;
+  }
+  return (ccnum);
+}
+
+int
 appcontourcheck (struct sketch *sketch, int huffman, int notquiet)
 {
   int fail, globfail, i, diff=0;
@@ -1122,7 +1168,11 @@ count_connected_components (struct sketch *sketch)
   struct region *r;
   int i, ccidmax = -1, ccidmin = BIG_INT;
 
-  if (sketch->isempty) return (0);
+  if (sketch->isempty)
+  {
+    sketch->ccnum = 0;
+    return (0);
+  }
   if (tag_connected_components (sketch) < 0) return (-1);
 
   for (r = sketch->regions; r; r = r->next)
@@ -1134,7 +1184,8 @@ count_connected_components (struct sketch *sketch)
     }
   }
   // free_connected_components (sketch);
-  return (ccidmax - ccidmin + 1);
+  sketch->ccnum = ccidmax - ccidmin + 1;
+  return (sketch->ccnum);
 }
 
 int

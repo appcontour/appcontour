@@ -105,8 +105,10 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
   struct ccomplexnode *nodes = cc->nodes;
   struct ccomplexnode *node;
   int gennum, length, narc, j, n, m, i, s;
+  int rulesnum = 0;
   int *ivec, *variable;
 
+  assert (cccc->betti_2 >= 0);
   p = (struct presentation *) malloc (sizeof (struct presentation));
   p->gennum = 0;
   p->rules = 0;
@@ -122,68 +124,75 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
     p->characteristic--;  /* each further arc counts -1 */
     p->gennum++;
   }
-  if (p->gennum == 0) return (p);
 
-  variable = (int *) malloc (p->gennum*sizeof (int));
-  for (gennum = 0, n = 0; n < cc->arcdim; n++)
+  if (p->gennum > 0)
   {
-    arc = cc->arcs + n;
-    if (arc->type == CC_REMOVED) continue;
-    if (arc->isinspanningtree) continue;
-    node = cc->nodes + arc->enda;
-    if (node->cc != cccc) continue;
-    variable[gennum++] = n;
-  }
-
-  /* loop on the list of rules */
-
-  for (m = 0; m < cc->facedim; m++)
-  {
-    face = faces + m;
-    if (face->type == CC_REMOVED) continue;
-    ivec = face->faceborder;
-    arc = arcs + onarc2narc (ivec[0]);
-    node = nodes + arc->enda;
-    if (node->cc != cccc) continue;
-    p->characteristic++;  /* each face counts +1 */
-    /* we have a new rule */
-    for (length = 0, i = 0; i < face->facebordernum; i++)
+    variable = (int *) malloc (p->gennum*sizeof (int));
+    for (gennum = 0, n = 0; n < cc->arcdim; n++)
     {
-      narc = onarc2narc (ivec[i]);
-      arc = arcs + narc;
-      if (!arc->isinspanningtree) length++;
-    }
-    rule = (struct presentationrule *) malloc (length*sizeof (int) + sizeof (struct presentationrule));
-    rule->length = length;
-    rule->next = 0;
-    if (p->rules != 0) rule->next = p->rules;
-    p->rules = rule;
-
-    j = 0;
-    for (i = 0; i < face->facebordernum; i++)
-    {
-      narc = onarc2narc (ivec[i]);
-      arc = arcs + narc;
+      arc = cc->arcs + n;
+      if (arc->type == CC_REMOVED) continue;
       if (arc->isinspanningtree) continue;
-      for (s = 0; s < p->gennum; s++)
-      {
-        if (variable[s] == narc) break;
-      }
-      assert (s < p->gennum);
-      s++;
-      if (ivec[i] < 0) s *= -1;
-      rule->var[j++] = s;
+      node = cc->nodes + arc->enda;
+      if (node->cc != cccc) continue;
+      variable[gennum++] = n;
     }
+
+    /* loop on the list of rules */
+
+    for (m = 0; m < cc->facedim; m++)
+    {
+      face = faces + m;
+      if (face->type == CC_REMOVED) continue;
+      ivec = face->faceborder;
+      arc = arcs + onarc2narc (ivec[0]);
+      node = nodes + arc->enda;
+      if (node->cc != cccc) continue;
+      /* we have a new rule */
+      p->characteristic++;  /* each face counts +1 */
+      rulesnum++;
+      for (length = 0, i = 0; i < face->facebordernum; i++)
+      {
+        narc = onarc2narc (ivec[i]);
+        arc = arcs + narc;
+        if (!arc->isinspanningtree) length++;
+      }
+      rule = (struct presentationrule *) malloc (length*sizeof (int) + sizeof (struct presentationrule));
+      rule->length = length;
+      rule->next = 0;
+      if (p->rules != 0) rule->next = p->rules;
+      p->rules = rule;
+
+      j = 0;
+      for (i = 0; i < face->facebordernum; i++)
+      {
+        narc = onarc2narc (ivec[i]);
+        arc = arcs + narc;
+        if (arc->isinspanningtree) continue;
+        for (s = 0; s < p->gennum; s++)
+        {
+          if (variable[s] == narc) break;
+        }
+        assert (s < p->gennum);
+        s++;
+        if (ivec[i] < 0) s *= -1;
+        rule->var[j++] = s;
+      }
+    }
+    free (variable);
   }
 
+  p->espected_deficiency = 1 - p->characteristic + cccc->spherical_voids;
   assert (cccc->betti_2 >= 0);
   if (verbose)
   {
     /* b1 = b0 + b2 - C */
     printf ("Euler characteristic: %d\n", p->characteristic);
     printf ("Betti numbers: b0 = 1, b1 = %d, b2 = %d\n", 1 + cccc->betti_2 - p->characteristic, cccc->betti_2);
+    printf ("Number of spherical voids in S3: %d\n", cccc->spherical_voids);
+    printf ("Initial deficiency: %d\n", gennum - rulesnum);
+    printf ("Espected deficiency: %d\n", p->espected_deficiency);
   }
-  free (variable);
   return (p);
 }
 
@@ -2204,7 +2213,7 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   extern int finfinity;
   struct ccomplex *cc;
   int euler, surfeuler, realeuler;
-  int status;
+  int i, status;
 
   if (debug)
   {
@@ -2246,6 +2255,7 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   cc->type = fg_type;
   cc->sketch = s;
   cc->cc = 0;
+  cc->cc_characteristics = 0;
   if (s->isempty)
   {
     cc->nodenum = cc->arcnum = cc->facenum = 0;
@@ -2254,8 +2264,10 @@ compute_cellcomplex (struct sketch *s, int fg_type)
     cc->faces = 0;
     return (0);
   }
-  if (s->isempty) cc->surfccnum = 0;
-  else cc->surfccnum = count_connected_components (s);
+  cc_euler_characteristic (s);
+  cc->cc_characteristics = (int *) malloc (s->ccnum * sizeof(int));
+  for (i = 0; i < s->ccnum; i++) cc->cc_characteristics[i] = s->cc_characteristics[i];
+  cc->surfccnum = s->ccnum;
   assert (s->cc_tagged || s->isempty);
 
   cc->nodenum = cc->nodedim = fundamental_countnodes (s);
@@ -2423,12 +2435,13 @@ find_spanning_tree (struct ccomplex *cc)
     }
     if (computebetti)
     {
-      cccc->betti_2 = 0;
+      cccc->betti_2 = cccc->spherical_voids = 0;
       for (i = 0; i < cc->surfccnum; i++)
       {
         if (surfcomptag[i] > 0)
         {
           cccc->betti_2++;
+          if (cc->cc_characteristics[i] == 2) cccc->spherical_voids++;
         }
       }
       /*
@@ -3420,7 +3433,7 @@ onarc2narc (int onarc)
  */
 
 void
-cellcomplex_printnodes (struct ccomplex *cc, int verbose, int *noderemap)
+cellcomplex_printnodes (struct ccomplex *cc, int lverbose, int *noderemap)
 {
   int n;
   struct ccomplexnode *node;
@@ -3430,8 +3443,8 @@ cellcomplex_printnodes (struct ccomplex *cc, int verbose, int *noderemap)
     node = cc->nodes + n;
     if (node->type == CC_REMOVED) continue;
     printf ("node %d", noderemap[n]);
-    if (verbose) printf (" ref %d", node->refcount);
-    if (verbose >= 2)
+    if (lverbose) printf (" ref %d", node->refcount);
+    if (lverbose >= 2)
     {
       printf (" surfcc %d", node->surfcc);
       if (node->type == CC_NODETYPE_CUSP) 
@@ -3444,7 +3457,7 @@ cellcomplex_printnodes (struct ccomplex *cc, int verbose, int *noderemap)
 }
 
 void
-cellcomplex_printarcs (struct ccomplex *cc, int verbose, int *noderemap, int *arcremap)
+cellcomplex_printarcs (struct ccomplex *cc, int lverbose, int *noderemap, int *arcremap)
 {
   int n;
   struct ccomplexarc *arc;
@@ -3454,8 +3467,8 @@ cellcomplex_printarcs (struct ccomplex *cc, int verbose, int *noderemap, int *ar
     arc = cc->arcs + n;
     if (arc->type == CC_REMOVED) continue;
     printf ("arc %d [%d %d]", arcremap[n], noderemap[arc->enda], noderemap[arc->endb]);
-    if (verbose) printf (" ref %d", arc->refcount);
-    if (verbose >= 2)
+    if (lverbose) printf (" ref %d", arc->refcount);
+    if (lverbose >= 2)
     {
       printf (", stratum %d, type %d", arc->stratum, arc->type);
       if (arc->type == CC_ARCTYPE_CUT || arc->type == CC_ARCTYPE_FOLD)
@@ -3466,7 +3479,7 @@ cellcomplex_printarcs (struct ccomplex *cc, int verbose, int *noderemap, int *ar
 }
 
 void
-cellcomplex_printfaces (struct ccomplex *cc, int verbose, int *arcremap)
+cellcomplex_printfaces (struct ccomplex *cc, int lverbose, int *arcremap)
 {
   int n, i, na, nr;
   int *ivec;
@@ -3485,13 +3498,13 @@ cellcomplex_printfaces (struct ccomplex *cc, int verbose, int *arcremap)
       printf ("%d ", arcremap[na]);
     }
     printf ("]");
-    if (verbose >= 2) printf (", stratum %d", face->stratum);
+    if (lverbose >= 2) printf (", stratum %d", face->stratum);
     printf ("\n");
   }
 }
 
 void
-cellcomplex_print (struct ccomplex *cc, int verbose)
+cellcomplex_print (struct ccomplex *cc, int lverbose)
 {
   int n, nr, *noderemap, *arcremap;
   struct ccomplexnode *node;
@@ -3512,9 +3525,9 @@ cellcomplex_print (struct ccomplex *cc, int verbose)
     arc = cc->arcs + n;
     if (arc->type != CC_REMOVED) arcremap[n] = nr++;
   }
-  cellcomplex_printnodes (cc, verbose, noderemap);
-  cellcomplex_printarcs (cc, verbose, noderemap, arcremap);
-  cellcomplex_printfaces (cc, verbose, arcremap);
+  cellcomplex_printnodes (cc, lverbose, noderemap);
+  cellcomplex_printarcs (cc, lverbose, noderemap, arcremap);
+  cellcomplex_printfaces (cc, lverbose, arcremap);
 }
 
 /*

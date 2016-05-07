@@ -13,6 +13,23 @@ arcmult (struct arc *arc)
 }
 
 int
+cc_arcmult (struct arc *arc, int ccid)
+{
+  struct region *rr;
+  int i, d;
+  int w = 0;
+
+  rr = arc->regionright->border->region;
+
+  for (i = 0; i < rr->f; i++)
+    if (rr->strati[i] == ccid) w++;
+
+  d = arc->depths[0];
+  if (arc->regionleft->border->region->strati[d] == ccid) w++;
+  return (w);
+}
+
+int
 sketchcmp (struct sketch *s1, struct sketch *s2)
 {
   struct region *r1, *r2;
@@ -1713,6 +1730,7 @@ newsketch ()
   s->arccount = 0;
   s->regioncount = 0;
   s->cc_tagged = 0;
+  s->cc_characteristics = 0;
   s->huffman_labelling = 0;
   s->isempty = 0;  /* we assume that empty is an exceptional situation */
   return (s);
@@ -1927,6 +1945,7 @@ freesketch (struct sketch *sketch)
 {
   if (sketch->regions) freeregion (sketch->regions);
   if (sketch->arcs) freearc (sketch->arcs);
+  if (sketch->cc_characteristics) free (sketch->cc_characteristics);
   free (sketch);
 }
 

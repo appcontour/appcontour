@@ -99,6 +99,8 @@ struct sketch {
   int arccount;
   int regioncount;
   int cc_tagged;
+  int ccnum;
+  int *cc_characteristics;
 };
 
 /*
@@ -263,6 +265,7 @@ struct region *findregion (struct sketch *s, int tag);
 struct arc *findarc (struct sketch *s, int tag);
 void showinfo (struct sketch *sketch);
 int euler_characteristic (struct sketch *sketch);
+int cc_euler_characteristic (struct sketch *sketch);
 int appcontourcheck (struct sketch *s, int huffman, int verbose);
 int checkorientationborder (struct border *b);
 int count_connected_components (struct sketch *sketch);
@@ -323,6 +326,7 @@ int adjustarcinfo (struct arc *narc, struct arc *upperarc, int incr, int oriup);
 int *concatenate_depths (struct arc *arcleft, struct arc *arcright);
 
 int arcmult (struct arc *arc);
+int cc_arcmult (struct arc *arc, int ccid);
 void postprocesssketch (struct sketch *s);
 void make_extregion_first (struct sketch *s);
 void computefvalue (struct sketch *s, struct region *extregion, int finfinity);
