@@ -57,6 +57,7 @@
 #define ACTION_AFUNDAMENTAL 49
 #define ACTION_ALEXANDER 50
 #define ACTION_LINKINGNUMBER 51
+#define ACTION_SUGGEST_P_SURGERY 52
 
 struct global_data {
   int rulenames;
@@ -275,6 +276,7 @@ void print_connected_components_ordering (struct sketch *sketch);
 void print_connected_component_childs (int ccid, struct sketch *sketch);
 int tag_connected_components (struct sketch *sketch);
 int free_connected_components (struct sketch *sketch);
+int suggest_p_surgery (struct sketch *s, struct region **r, int *stratum);
 
 int extract_connected_components (int ncc, int *ccids, struct sketch *sketch);
 //int extract_connected_component (int ccid, struct sketch *sketch);

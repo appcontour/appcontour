@@ -1,6 +1,23 @@
 
 2016.05.04
 
+-------
+update (2016.05.08):
+mitigation: the new command "suggest_p_surgery" can now be used to suggest a "punchhole" surgery
+that does not change the fundamental group, but forces an increment in the initial deficiency of
+the group presentation.  Note that in case of "--out" cell complex, we first need to "wrap" the
+the contour into a big ball and then operate the surgery (then use --in in place of --out).
+
+$ ./utils/kanenobu.sh -1 -3 | ./contour wrap | ./contour suggest_p_surgery
+[...]
+contour punchhole -r 10 -s 0
+$ ./utils/kanenobu.sh -1 -3 | ./contour wrap | ./contour punchhole -r 10 -s 0 | ./contour --in alexander
+[...]
+Computing first Alexander ideal (--foxd = 1)
+Alexander polynomial (up to t -> 1/t):
++1-3t+5t^2-7t^3+5t^4-3t^5+t^6;
+-------
+
 $ cd utils
 $ ./kanenobu.sh -1 -3 | contour --out alexander
 reading knot description

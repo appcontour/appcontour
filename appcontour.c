@@ -656,6 +656,45 @@ cc_euler_characteristic (struct sketch *sketch)
   return (ccnum);
 }
 
+/*
+ * find a punchhole surgery that does not change the fundamental group of the
+ * inside
+ */
+
+int
+suggest_p_surgery (struct sketch *sketch, struct region **region, int *stratum)
+{
+  struct region *r;
+  int i, found;
+
+  *region = 0;
+  *stratum = 0;
+  cc_euler_characteristic (sketch); /* compute Euler characteristic of each component */
+
+  if (sketch->ccnum < 2) return (0);
+  found = 0;
+  for (i = 0; i < sketch->ccnum; i++)
+  {
+    if (sketch->cc_characteristics[i] == 2) found++;
+  }
+  if (found <= 0) return (0);
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    for (i = 0; i < r->f - 1; i++)
+    {
+      if (r->strati[i] == r->strati[i+1]) continue;
+      *region = r;
+      *stratum = i;
+      if (sketch->cc_characteristics[r->strati[i]] == 2) return (1);
+      if (sketch->cc_characteristics[r->strati[i+1]] == 2) return (1);
+    }
+  }
+
+  assert (0);
+  return (0);
+}
+
 int
 appcontourcheck (struct sketch *sketch, int huffman, int notquiet)
 {

@@ -462,6 +462,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"ich") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"ocharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"och") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"suggest_p_surgery") == 0) action = ACTION_SUGGEST_P_SURGERY;
     if (strcmp(argv[i],"filepath") == 0) action = ACTION_FILEPATH;
     if (strcmp(argv[i],"evert") == 0)
     {
@@ -915,6 +916,24 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     if (docanonify) canonify (sketch);
     printmorse (sketch);
+    break;
+
+    case ACTION_SUGGEST_P_SURGERY:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    if (docanonify) canonify (sketch);
+    if (suggest_p_surgery (sketch, &r, &i))
+    {
+      if (!quiet)
+      {
+        printf ("punchhole surgery on region %d, strata %d-%d does not change fundamental group", r->tag, i, i+1);
+        printf ("  of the inside solid set:\n\n");
+      }
+      printf ("contour punchhole -r %d -s %d\n", r->tag, i);
+    } else {
+      if (!quiet) printf ("Cannot find any suitable punchhole surgery\n");
+      exit (13);
+    }
+
     break;
 
     case ACTION_CHARACTERISTIC:
