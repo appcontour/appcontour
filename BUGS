@@ -1,7 +1,69 @@
 2016.05.08
 
+./contour afg --outside examples/twohollowsphere.morse -q --autosurgery
+
+suggest_p_surgery is not able to find an appropriate surgery!
+
+
+
 option --autosurgery produces different output for some tests:  check that they
-are equivalent!
+are equivalent:
+
+----- test 17 -----------------
+
+$ ./contour ofg examples/borromeanrings.knot -q --noautosurgery
+reading knot description
+<a,b,c; acACbcaCAB, acAbaBCbAB>
+$ ./contour ofg examples/borromeanrings.knot -q --autosurgery
+reading knot description
+<a,b,c; abACacBCAc, abcBCAcbCB>
+
+----- test 24 (twice) and 26 --
+
+$./contour --out alexander examples/conway_pinched.knot -q --noautosurgery
+reading knot description
+d = 2
+# *** Warning: result can be noncanonical ***
+Ideal [
++1-u-2v+2uv+u^2v+uv^2-2u^2v^2+u^3v^2;
+(-1+u-u^2+u^3) (u - 1);
+(-1+u-u^2+u^3) (v - 1);
+(+2-2u+u^2-u^3-uv+2u^2v-u^3v+u^4v) (u - 1);
+(+2-2u+u^2-u^3-uv+2u^2v-u^3v+u^4v) (v - 1);
+]
+$ ./contour --out alexander examples/conway_pinched.knot -q --autosurgery
+reading knot description
+d = 2
+# *** Warning: result can be noncanonical ***
+Ideal [
+-u+2u^2-2u^3+u^4+v-u^2v+2u^3v-u^4v-v^2+uv^2;
+(-1+2u-2u^2+u^3+2v-2uv+2u^2v-u^3v) (u - 1);
+(-1+2u-2u^2+u^3+2v-2uv+2u^2v-u^3v) (v - 1);
+(-1+2u-2u^2+u^3+v-2uv+u^2v-u^3v) (u - 1);
+(-1+2u-2u^2+u^3+v-2uv+u^2v-u^3v) (v - 1);
+]
+
+----- test 24 and 26 ---------
+
+$ ./contour --out alexander examples/ochiai_mod_to_genus2.knot -q --noautosurgery
+reading knot description
+d = 2
+# *** Warning: result can be noncanonical ***
+Ideal [
++1-2u+u^2+2uv-u^2v;
+(+1-u) (u - 1);
+(+1-u) (v - 1);
+]
+$ ./contour --out alexander examples/ochiai_mod_to_genus2.knot -q --autosurgery
+reading knot description
+d = 2
+# *** Warning: result can be noncanonical ***
+Ideal [
++u-u^2+v-uv+u^2v;
+(+1) (u - 1);
+(+1) (v - 1);
+]
+
 
 2016.05.04
 

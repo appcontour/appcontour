@@ -2258,12 +2258,14 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   if (finfinity != 0) fprintf (stderr, "Value of f at infinity (%d) must be zero\n", finfinity);
   assert (finfinity == 0);
   computefvalue (s, s->regions, 0 /* should be finfinity */);
-  if (focus_on_fundamental && autosurgery)
+  if (fg_type != FG_SURFACE && focus_on_fundamental && autosurgery)
   {
     while (suggest_p_surgery (s, &region, &stratum))
     {
       res = add_s1 (s, region, stratum, -1);
       surfeuler -= 2;
+      if (verbose) printf ("Applying punchhole surgery on region %d, strata %d - %d\n",
+                            region->tag, stratum, stratum+1);
       free_connected_components (s);
       assert (res);
     }

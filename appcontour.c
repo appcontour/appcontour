@@ -658,7 +658,9 @@ cc_euler_characteristic (struct sketch *sketch)
 
 /*
  * find a punchhole surgery that does not change the fundamental group of the
- * inside
+ * inside.
+ * Note that the lowest stratum must be even!  Need to prove that this
+ * can always be done
  */
 
 int
@@ -681,7 +683,7 @@ suggest_p_surgery (struct sketch *sketch, struct region **region, int *stratum)
 
   for (r = sketch->regions; r; r = r->next)
   {
-    for (i = 0; i < r->f - 1; i++)
+    for (i = 0; i < r->f; i += 2)
     {
       if (r->strati[i] == r->strati[i+1]) continue;
       *region = r;
@@ -691,7 +693,7 @@ suggest_p_surgery (struct sketch *sketch, struct region **region, int *stratum)
     }
   }
 
-  assert (0);
+  fprintf (stderr, "Warning: cannot find a suitable punchhole surgery, even if the conditions are met\n");
   return (0);
 }
 

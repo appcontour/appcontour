@@ -6,5 +6,7 @@
 <a,b; >
 <a,b; abAB>
 <a,b; ababABAB>
+The following two presentations MUST be equivalent:
+<a,b,c; abcACaBAcaC>
 <a,b,c; abABcAC>
 <a,b,c; acACbcaCAB, acAbaBCbAB>
