@@ -17,8 +17,13 @@
 # this gives different, although equivalent, presentation if option
 # --autosurgery is on/off
 #
-echo "The following two presentations MUST be equivalent:"
+echo "The following two presentations MUST be equivalent (checked):"
 ./contour outsidefundamental examples/embrace.knot -q --autosurgery
 ./contour outsidefundamental examples/embrace.knot -q --noautosurgery
 #
-./contour ofg examples/borromeanrings.knot -q
+# this gives different, although equivalent, presentation if option
+# --autosurgery is on/off
+#
+echo "The following two presentations MUST be equivalent (checked):"
+./contour ofg examples/borromeanrings.knot -q --autosurgery
+./contour ofg examples/borromeanrings.knot -q --noautosurgery

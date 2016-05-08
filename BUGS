@@ -9,14 +9,7 @@ suggest_p_surgery is not able to find an appropriate surgery!
 option --autosurgery produces different output for some tests:  check that they
 are equivalent:
 
------ test 17 -----------------
-
-$ ./contour ofg examples/borromeanrings.knot -q --noautosurgery
-reading knot description
-<a,b,c; acACbcaCAB, acAbaBCbAB>
-$ ./contour ofg examples/borromeanrings.knot -q --autosurgery
-reading knot description
-<a,b,c; abACacBCAc, abcBCAcbCB>
+----- test 17 (checked, see tests/test.17)
 
 ----- test 24 (twice) and 26 --
 
@@ -45,6 +38,7 @@ Ideal [
 
 ----- test 24 and 26 ---------
 
+(sembra che entrambi siano l'ideale banale [1])
 $ ./contour --out alexander examples/ochiai_mod_to_genus2.knot -q --noautosurgery
 reading knot description
 d = 2
