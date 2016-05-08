@@ -4,7 +4,8 @@
 $ cd utils
 $ ./kanenobu.sh -1 -3 | contour --out alexander
 reading knot description
-Computing Alexander ideal for d = 1:
+WARNING: deficiency: 0, espected value: 1
+Computing first Alexander ideal (--foxd = 1)
 Cannot compute Alexander polynomial because there are too many relators
 
 Questo non dovrebbe succedere, essendo il gruppo di un nodo!
