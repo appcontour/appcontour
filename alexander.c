@@ -34,7 +34,16 @@ alexander (struct presentation *p)
   /* foxd is the index of the Alexander ideal (dth Alexander ideal) */
   deficiency = p->gennum - numcols;
   if (deficiency < p->espected_deficiency && numcols > 0)
-    printf ("WARNING: deficiency: %d, espected value: %d\n", deficiency, p->espected_deficiency);
+  {
+    printf ("WARNING: deficiency: %d, espected value: %d.", deficiency, p->espected_deficiency);
+    if (verbose)
+    {
+      printf ("\n\nYou can increase the deficiency by applying suitable punchhole surgeries that do not\n");
+      printf ("affect the fundamental group.  The --autosurgery option automates this process.\n");
+      printf ("Alternatively, use \"contour suggest_p_surgery\" on the apparent contour to obtain the correct surgery.\n");
+      printf ("Prefix with \"contour wrap\" filter if you are computing the fundamental group of the outside\n\n");
+    } else printf ("  Use --verbose option to get more details.\n");
+  }
   if (foxd != FOXD_UNDEF && outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d\n#\n", foxd);
   if (foxd < 0 && foxd >= FOXD_MINVALID)
     return (printout_constant_ideal ("Trivial zero ideal for negative d:\n", 0));

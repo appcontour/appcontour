@@ -2205,15 +2205,22 @@ complex_countreferences (struct ccomplex *cc)
 
 /*
  * procedures for the construction of the cell complex
+ *
+ * It is defined up to homotopy type (in particular, 3D cells are all
+ * retracted suitably to end up with a 2D complex.
+ *
+ * If global variable "focus_on_fundamental" is defined, then we are allowed
+ * to first apply surgeries that do not change the fundamental group
  */
 
 struct ccomplex *
 compute_cellcomplex (struct sketch *s, int fg_type)
 {
-  extern int finfinity;
+  extern int finfinity, autosurgery, focus_on_fundamental;
   struct ccomplex *cc;
+  struct region *region;
   int euler, surfeuler, realeuler;
-  int i, status;
+  int i, res, status, stratum;
 
   if (debug)
   {
@@ -2246,11 +2253,35 @@ compute_cellcomplex (struct sketch *s, int fg_type)
     status = put_in_s1 (s);
     assert (status);
     postprocesssketch (s);
+    surfeuler += 2;
   }
   if (finfinity != 0) fprintf (stderr, "Value of f at infinity (%d) must be zero\n", finfinity);
   assert (finfinity == 0);
   computefvalue (s, s->regions, 0 /* should be finfinity */);
+  if (focus_on_fundamental && autosurgery)
+  {
+    while (suggest_p_surgery (s, &region, &stratum))
+    {
+      res = add_s1 (s, region, stratum, -1);
+      surfeuler -= 2;
+      free_connected_components (s);
+      assert (res);
+    }
+  }
 
+  switch (fg_type)
+  {
+    case FG_SURFACE:
+      realeuler = surfeuler;
+      break;
+    case FG_INTERNAL:
+    case FG_EXTERNAL:
+      realeuler = surfeuler/2;
+      break;
+    default:
+      realeuler = -9999;
+      break;
+  }
   cc = (struct ccomplex *) malloc (sizeof (struct ccomplex));
   cc->type = fg_type;
   cc->sketch = s;
@@ -2276,21 +2307,6 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   euler = cc->nodenum - cc->arcnum + cc->facenum;
   if (debug) printf ("Euler characteristic: %d = %d nodes - %d arcs + %d faces.\n",
              euler, cc->nodenum, cc->arcnum, cc->facenum);
-  switch (fg_type)
-  {
-    case FG_SURFACE:
-      realeuler = surfeuler;
-      break;
-    case FG_INTERNAL:
-      realeuler = surfeuler/2;
-      break;
-    case FG_EXTERNAL:
-      realeuler = surfeuler/2 + 1;
-      break;
-    default:
-      realeuler = -9999;
-      break;
-  }
   if (euler != realeuler) fprintf (stderr, 
      "WARNING: computed euler caracteristic (%d) differs from expected value (%d).\n",
      euler, realeuler);

@@ -41,6 +41,8 @@ int mendesge = HGE_TEXT;
 int viacc = 0;
 int foxd = FOXD_UNDEF;
 int shuffle = 0;
+int autosurgery = 0;
+int focus_on_fundamental = 0;
 static int renumber = 1;
 
 struct global_data globals;
@@ -159,6 +161,16 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"-i") == 0 || strcmp(argv[i],"--interactive") == 0)
     {
       interactive++;
+      continue;
+    }
+    if (strcmp(argv[i],"--autosurgery") == 0)
+    {
+      autosurgery++;
+      continue;
+    }
+    if (strcmp(argv[i],"--noautosurgery") == 0)
+    {
+      autosurgery = 0;
       continue;
     }
     if (strcmp(argv[i],"--debug") == 0)
@@ -295,8 +307,10 @@ main (int argc, char *argv[])
       printf ("   abbreviations: afg, iafg, oafg\n");
       printf ("  scharacteristic, icharacteristic, ocharacteristic\n");
       printf ("   abbreviations: sch, ich, och\n");
+      printf ("  suggest_p_surgery: display 'punchhole' surgery that does not affect fundamental group of inside\n");
       printf ("  specific options: --in, --out, --surface[default]\n");
       printf ("   indicate which part of space to consider.  E.g. \"ifg\" is equivalent to \"fg --inside\"\n");
+      printf ("   --[no]autosurgery: automatically apply punchhole surgeries to increase the initial presentation deficiency\n");
       printf ("\n File2 can be present only for actions that require two descriptions:\n");
       printf ("  'compare', 'union', 'sum' actions.\n");
       printf ("  alternatively for such actions the two descriptions can be contained\n");
@@ -1067,6 +1081,7 @@ main (int argc, char *argv[])
     case ACTION_AFUNDAMENTAL:
     case ACTION_ALEXANDER:
     case ACTION_LINKINGNUMBER:
+    focus_on_fundamental++;
     tok = gettoken (infile);
     ungettoken (tok);
     if (tok == TOK_FPGROUP || tok == TOK_ALEXANDER || tok == TOK_IDEAL)
