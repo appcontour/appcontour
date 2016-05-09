@@ -20,6 +20,7 @@ alexander (struct presentation *p)
   struct laurentpoly *determinant;
   struct laurentpoly2 *determinant2;
   struct laurentpoly2 **extradeterminants;
+  struct alexanderideal *ai;
   int i, j, sum, rank, matrixrank, deficiency;
   int numcols = 0;
   int printdvalue = 0;
@@ -145,6 +146,11 @@ alexander (struct presentation *p)
       determinant = laurent_eliminate_one_indeterminate (p, gconj);
       laurent_canonify (determinant);
       printout_ideal1 (0, determinant);
+      break;
+
+      case 2:
+      ai = laurent_second_elementary_ideal (p, gconj, rank - 1);
+      alexander_fromideal (ai);
       break;
 
       default:
@@ -618,28 +624,106 @@ corank_one_alexander (struct presentation *p)
 struct laurentpoly *
 laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
 {
-  extern int verbose, debug;
+  extern int verbose;
+  struct laurentpoly *determinant;
+  struct laurentmatrix *matrix;
+
+  matrix = laurent_build_matrix (p, eliminate);
+
+  assert (matrix->numcols <= matrix->numrows);
+  if (matrix->numcols < matrix->numrows) return (0);
+
+  determinant = laurent_compute_determinant (matrix->columns, matrix->numcols);
+
+  laurent_free_matrix (matrix);
+
+  return (determinant);
+}
+
+/*
+ * second elementary ideal
+ */
+
+struct alexanderideal *
+laurent_second_elementary_ideal (struct presentation *p, int eliminate, int corank)
+{
+  extern int verbose;
+  struct alexanderideal *ai;
+  struct laurentmatrix *matrix;
+  struct laurentpoly *l, **matrixcolumn;
+  int i, j, idx;
+
+  matrix = laurent_build_matrix (p, eliminate);
+
+  assert (matrix->numcols <= matrix->numrows);
+  if (matrix->numcols < matrix->numrows - corank) return (0);
+
+  if (matrix->numrows > 2)
+  {
+    printf ("For now only the 2x2 case is implemented\n");
+    return (0);
+  }
+
+  ai = (struct alexanderideal *) malloc (sizeof (struct alexanderideal));
+  ai->indets = 1;
+  ai->l1num = matrix->numrows;
+  if (matrix->numcols == matrix->numrows) ai->l1num *= ai->l1num;
+
+  if (ai->l1nums > IDEAL_MAX_GENERATORS_NUM)
+  {
+    printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1nums);
+    laurent_free_matrix (matrix);
+    return (0);
+  }
+  /* for now just enter the elements */
+  /* XXXXXXXXXXXXXXXXX lavori in corso XXXXXXXXXXXXXXXXXXXXXXX */
+  idx = 0;
+  for (i = 0; i < matrix->numrows; i++)
+  {
+    for (j = 0; j < matrix->numcols; j++)
+    {
+      matrixcolumn = matrix->columns[j];
+      l = matrixcolumn[i];
+      assert (idx < ai->l1num);
+      ai->l1[idx++] = laurent_dup(l);
+    }
+  }
+  while (idx < ai->l1num) ai->l1[idx++] = 0;
+  //determinant = laurent_compute_determinant (matrix->columns, matrix->numcols);
+
+  laurent_free_matrix (matrix);
+
+  return (ai);
+}
+
+/*
+ * build Alexander matrix (rank 1: e.g. knots)
+ */
+
+struct laurentmatrix *
+laurent_build_matrix (struct presentation *p, int eliminate)
+{
   struct presentationrule *r;
-  struct laurentpoly *l, *determinant;
-  struct laurentpoly **matrixcolumn;
-  struct laurentpoly ***matrix;
+  struct laurentmatrix *matrix;
+  struct laurentpoly *l, **matrixcolumn;
   int numcols = 0;
-  int numrows;
-  int i, ii, j;
+  int i, ii, j, numrows;
+  extern int verbose, debug;
 
   assert (eliminate >= 1);
   assert (eliminate <= p->gennum);
 
   for (r = p->rules; r; r = r->next) numcols++;
   numrows = p->gennum - 1;
-  assert (numcols <= numrows);
 
-  if (numcols < numrows) return (0);
+  matrix = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
+  matrix->numcols = numcols;
+  matrix->numrows = numrows;
 
-  matrix = (struct laurentpoly ***) malloc (numcols*sizeof(struct laurentpoly **));
+  matrix->columns = (struct laurentpoly ***) malloc (numcols*sizeof(struct laurentpoly **));
   for (j = 0; j < numcols; j++)
   {
-    matrix[j] = (struct laurentpoly **) malloc (numrows*sizeof(struct laurentpoly *));
+    matrix->columns[j] = (struct laurentpoly **) malloc (numrows*sizeof(struct laurentpoly *));
   }
 
   /*
@@ -648,7 +732,7 @@ laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
 
   for (j = 0, r = p->rules; r; j++, r = r->next)
   {
-    matrixcolumn = matrix[j];
+    matrixcolumn = matrix->columns[j];
     for (i = 1, ii = 0; i <= p->gennum; i++)
     {
       if (i == eliminate) continue;
@@ -677,7 +761,7 @@ laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
     {
       for (j = 0; j < numcols; j++)
       {
-        matrixcolumn = matrix[j];
+        matrixcolumn = matrix->columns[j];
         l = matrixcolumn[i];
         print_laurentpoly (l, 't');
         printf ("; \t");
@@ -685,26 +769,31 @@ laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
       printf ("\n");
     }
   }
+  return (matrix);
+}
 
-  determinant = laurent_compute_determinant (matrix, numcols);
+/*
+ * free allocated space for Alexander matrix
+ */
 
-  /*
-   * free allocated space
-   */
+void
+laurent_free_matrix (struct laurentmatrix *matrix)
+{
+  struct laurentpoly *l, **matrixcolumn;
+  int i, j;
 
-  for (j = 0; j < numcols; j++)
+  for (j = 0; j < matrix->numcols; j++)
   {
-    matrixcolumn = matrix[j];
-    for (i = 0; i < numrows; i++)
+    matrixcolumn = matrix->columns[j];
+    for (i = 0; i < matrix->numrows; i++)
     {
       l = matrixcolumn[i];
       if (l) free (l);
     }
     free (matrixcolumn);
   }
+  free (matrix->columns);
   free (matrix);
-
-  return (determinant);
 }
 
 /*

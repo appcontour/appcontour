@@ -37,6 +37,16 @@ struct alexanderideal {
   struct laurentpoly2 *fl2[IDEAL_MAX_GENERATORS_NUM];
 };
 
+/*
+ * laurentmatrix
+ */
+
+struct laurentmatrix {
+  int numrows;
+  int numcols;
+  struct laurentpoly ***columns;
+};
+
 /* prototypes */
 
 int alexander (struct presentation *p);
@@ -49,6 +59,7 @@ int linkingnumber (struct presentation *p);
 int linkingnumber_fromideal (struct alexanderideal *ai);
 int corank_one_alexander (struct presentation *p);
 struct laurentpoly *laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate);
+struct alexanderideal *laurent_second_elementary_ideal (struct presentation *p, int eliminate, int corank);
 struct laurentpoly2 *laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
                       struct laurentpoly2 ***extrapt);
 struct laurentpoly *laurent_get_exp_sum (struct presentationrule *r, int g, int gconj);
@@ -78,6 +89,8 @@ void laurent_t_to_oneovert (struct laurentpoly *l);
 void free_laurentpoly2 (struct laurentpoly2 *l);
 struct laurentpoly *laurentpoly_addmonom (struct laurentpoly *l, int expon, int coef);
 struct laurentpoly2 *laurentpoly2_addmonom (struct laurentpoly2 *l, int expu, int expv, int coef);
+struct laurentmatrix *laurent_build_matrix (struct presentation *p, int eliminate);
+void laurent_free_matrix (struct laurentmatrix *matrix);
 
 int laurent_sum_coefficients (struct laurentpoly *l);
 struct laurentpoly *laurent_sum_coefficients2 (struct laurentpoly2 *l);
