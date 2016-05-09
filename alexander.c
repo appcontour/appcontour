@@ -1355,6 +1355,9 @@ laurent_negate2 (struct laurentpoly2 *term)
 
 /*
  * canonify with respect to t->1/t
+ *
+ * note that the sign is such that evaluation in 1 gives
+ * 1 (should be careful in general)
  */
 
 void
@@ -1383,7 +1386,6 @@ laurent_canonify (struct laurentpoly *l)
       return;
     }
   }
-  if (l->stem[0] < 0) laurent_negate (l);
   l->minexpon = 0; // we are interested only to the stem
   return;
 }
