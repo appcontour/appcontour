@@ -1383,6 +1383,7 @@ laurent_canonify (struct laurentpoly *l)
       return;
     }
   }
+  if (l->stem[0] < 0) laurent_negate (l);
   l->minexpon = 0; // we are interested only to the stem
   return;
 }
