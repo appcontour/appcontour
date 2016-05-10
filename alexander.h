@@ -107,7 +107,7 @@ int laurent2_lexicocompare (struct laurentpoly2 *p1, struct laurentpoly2 *p2);
 void laurent_canonifysign (struct laurentpoly *p);
 void laurent2_canonifysign (struct laurentpoly2 *p);
 
-int mcd (int a, int b);
+int gcd (int a, int b);
 void base_random (int matrixb[2][2]);
 int isinvertible_base (int b[2][2]);
 

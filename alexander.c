@@ -669,9 +669,9 @@ laurent_second_elementary_ideal (struct presentation *p, int eliminate, int cora
   ai->l1num = matrix->numrows;
   if (matrix->numcols == matrix->numrows) ai->l1num *= ai->l1num;
 
-  if (ai->l1nums > IDEAL_MAX_GENERATORS_NUM)
+  if (ai->l1num > IDEAL_MAX_GENERATORS_NUM)
   {
-    printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1nums);
+    printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
     laurent_free_matrix (matrix);
     return (0);
   }
@@ -1573,7 +1573,7 @@ base_canonify2_onedim (struct laurentpoly2 **ppt)
   struct laurentpoly *p1;
   struct laurentpoly *newp1;
   int origy, dx, dy, k, xk;
-  int mymcd, xstep, ystep;
+  int mygcd, xstep, ystep;
 
   p = *ppt;
   assert (p);
@@ -1594,18 +1594,18 @@ base_canonify2_onedim (struct laurentpoly2 **ppt)
   assert (p1->stemdegree == 0);
   dy = p1->minexpon - origy;  // du
 
-  mymcd = mcd (dx, dy);  /* this is the degree of the resulting polynomial */
-  xstep = dx/mymcd;
-  ystep = dy/mymcd;
+  mygcd = gcd (dx, dy);  /* this is the degree of the resulting polynomial */
+  xstep = dx/mygcd;
+  ystep = dy/mygcd;
   assert (xstep > 0);
 
-  assert (mymcd >= 1);
+  assert (mygcd >= 1);
 
-  newp1 = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + (mymcd+1)*sizeof(int));
-  newp1->stemdegree = mymcd;
+  newp1 = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + (mygcd+1)*sizeof(int));
+  newp1->stemdegree = mygcd;
 
-  for (k = 0; k <= mymcd; k++) newp1->stem[k] = 0;
-  for (k = 0, xk = 0; k <= mymcd; k++, xk += xstep)
+  for (k = 0; k <= mygcd; k++) newp1->stem[k] = 0;
+  for (k = 0, xk = 0; k <= mygcd; k++, xk += xstep)
   {
     /* fill up new polynomial */
     p1 = p->stem[xk];
@@ -2522,7 +2522,7 @@ laurent_sum_each_coefficient2 (struct laurentpoly2 *l)
  */
 
 int
-mcd (int a, int b)
+gcd (int a, int b)
 {
   int asaved;
 
@@ -2538,7 +2538,7 @@ mcd (int a, int b)
     b = asaved;
   }
 
-  return (mcd (b, a%b));
+  return (gcd (b, a%b));
 }
 
 /*
