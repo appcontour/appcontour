@@ -2964,7 +2964,6 @@ laurent_gcd (struct laurentpoly *p1, struct laurentpoly *p2)
   int i, cont_p1, cont_p2, cont_gcd;
 
   /* special cases */
-
   if (p1 == 0)
   {
     return (laurent_dup (p2));
@@ -2981,10 +2980,7 @@ laurent_gcd (struct laurentpoly *p1, struct laurentpoly *p2)
   cont_p1 = laurent_factor_content (p1);
   cont_p2 = laurent_factor_content (p2);
 
-  if (p1->stemdegree >= p2->stemdegree)
-    resgcd = laurent_euclid (p1, p2);
-   else
-    resgcd = laurent_euclid (p2, p1);
+  resgcd = laurent_euclid (p1, p2);
   laurent_factor_content (resgcd);
   cont_gcd = gcd (cont_p1, cont_p2);
 
@@ -3006,28 +3002,45 @@ laurent_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
 {
   struct laurentpoly *resgcd;
   int *a, *b, *c;
-  int dega, degb, degc;
-  int i, g, fa, fb;
+  int dega, degb, degc, vecsize;
+  int i, g, fa, fb, temp;
   int c_is_null;
 
-  assert (p1->stemdegree >= p2->stemdegree);
+  //assert (p1->stemdegree >= p2->stemdegree);
 
   dega = p1->stemdegree;
   degb = p2->stemdegree;
-  a = (int *) malloc ( (dega + 1)*sizeof(int) );
-  b = (int *) malloc ( (dega + 1)*sizeof(int) );
-  c = (int *) malloc ( (dega + 1)*sizeof(int) );
+  vecsize = dega;
+  if (degb > dega) vecsize = degb;
+  vecsize++;
+  a = (int *) malloc ( vecsize*sizeof(int) );
+  b = (int *) malloc ( vecsize*sizeof(int) );
+  c = (int *) malloc ( vecsize*sizeof(int) );
   for (i = 0; i <= dega; i++) a[i] = p1->stem[dega - i];
   for (i = 0; i <= degb; i++) b[i] = p2->stem[degb - i];
 
   /*
    * the three buffers a, b, c contain the integral coefficients
    * from the higher degree term of the divisor, dividend, rest
+   * possibly exchanging a <-> b we assume dega >= degb
    * subtracting from a multiple of 'a' a monomial multiple of 'b'
    * we decrease the degree of 'a' by one
    */
   while (1)
   {
+    if (degb > dega)
+    {
+      for (i = 0; i <= degb; i++)
+      {
+        temp = a[i];
+        a[i] = b[i];
+        b[i] = temp;
+      }
+      temp = dega;
+      dega = degb;
+      degb = temp;
+    }
+    for (i = degb + 1; i <= dega; i++) b[i] = 0;
     g = gcd (a[0], b[0]);
     fa = b[0]/g;
     fb = a[0]/g;
@@ -3035,7 +3048,7 @@ laurent_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
     for (i = 1; i <= dega; i++)
     {
       c[i-1] = fa*a[i] - fb*b[i];
-      if (c[i-1] != 0) c_is_null++;
+      if (c[i-1] != 0) c_is_null = 0;
     }
     degc = dega - 1;
     if (c_is_null) break;
