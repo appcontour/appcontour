@@ -693,6 +693,8 @@ laurent_second_elementary_ideal (struct presentation *p, int eliminate, int cora
 
   laurent_free_matrix (matrix);
 
+  laurent_simplify_ideal (ai);
+
   return (ai);
 }
 
@@ -794,6 +796,29 @@ laurent_free_matrix (struct laurentmatrix *matrix)
   }
   free (matrix->columns);
   free (matrix);
+}
+
+void
+laurent_simplify_ideal (struct alexanderideal *ai)
+{
+  struct laurentpoly *newgcd;
+  extern int principal;
+  int i;
+
+  if (principal)
+  {
+    for (i = 1; i < ai->l1num; i++)
+    {
+      newgcd = laurent_gcd (ai->l1[0], ai->l1[i]);
+      free (ai->l1[0]);
+      free (ai->l1[i]);
+      ai->l1[0] = newgcd;
+    }
+    ai->l1num = 1;
+    return;
+  }
+
+  return;  /* TODO: not implemented at the moment! */
 }
 
 /*
@@ -2928,3 +2953,138 @@ read_alexander_ideal (FILE *file)
   return (ai);
 }
 
+/*
+ *
+ */
+
+struct laurentpoly *
+laurent_gcd (struct laurentpoly *p1, struct laurentpoly *p2)
+{
+  struct laurentpoly *resgcd;
+  int i, cont_p1, cont_p2, cont_gcd;
+
+  /* special cases */
+
+  if (p1 == 0)
+  {
+    return (laurent_dup (p2));
+  }
+  if (p2 == 0)
+  {
+    return (laurent_dup (p1));
+  }
+
+  /*
+   * first: factor out content of the two polynomials
+   */
+
+  cont_p1 = laurent_factor_content (p1);
+  cont_p2 = laurent_factor_content (p2);
+
+  if (p1->stemdegree >= p2->stemdegree)
+    resgcd = laurent_euclid (p1, p2);
+   else
+    resgcd = laurent_euclid (p2, p1);
+  laurent_factor_content (resgcd);
+  cont_gcd = gcd (cont_p1, cont_p2);
+
+  for (i = 0; i <= p1->stemdegree; i++) p1->stem[i] *= cont_p1;
+  for (i = 0; i <= p2->stemdegree; i++) p2->stem[i] *= cont_p2;
+  for (i = 0; i <= resgcd->stemdegree; i++) resgcd->stem[i] *= cont_gcd;
+
+  return (resgcd);
+}
+
+/*
+ * minexpon has no effect
+ *
+ * the resulting gcd is not guaranteed to be primitive
+ */
+
+struct laurentpoly *
+laurent_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
+{
+  struct laurentpoly *resgcd;
+  int *a, *b, *c;
+  int dega, degb, degc;
+  int i, g, fa, fb;
+  int c_is_null;
+
+  assert (p1->stemdegree >= p2->stemdegree);
+
+  dega = p1->stemdegree;
+  degb = p2->stemdegree;
+  a = (int *) malloc ( (dega + 1)*sizeof(int) );
+  b = (int *) malloc ( (dega + 1)*sizeof(int) );
+  c = (int *) malloc ( (dega + 1)*sizeof(int) );
+  for (i = 0; i <= dega; i++) a[i] = p1->stem[dega - i];
+  for (i = 0; i <= degb; i++) b[i] = p2->stem[degb - i];
+
+  /*
+   * the three buffers a, b, c contain the integral coefficients
+   * from the higher degree term of the divisor, dividend, rest
+   * subtracting from a multiple of 'a' a monomial multiple of 'b'
+   * we decrease the degree of 'a' by one
+   */
+  while (1)
+  {
+    g = gcd (a[0], b[0]);
+    fa = b[0]/g;
+    fb = a[0]/g;
+    c_is_null = 1;
+    for (i = 1; i <= dega; i++)
+    {
+      c[i-1] = fa*a[i] - fb*b[i];
+      if (c[i-1] != 0) c_is_null++;
+    }
+    degc = dega - 1;
+    if (c_is_null) break;
+    while (c[0] == 0)
+    {
+      for (i = 0; i < degc; i++) c[i] = c[i+1];
+      degc--;
+    }
+    /*
+     * b becomes the new a, c becomes the new b
+     */
+    dega = degb;
+    for (i = 0; i <= dega; i++) a[i] = b[i];
+    degb = degc;
+    for (i = 0; i <= degb; i++) b[i] = c[i];
+  }
+
+  /*
+   * c is identically zero, b is a multiple of the gcd
+   */
+
+  resgcd = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) +
+                                         (degb+1)*sizeof(int) );
+  for (i = 0; i <= degb; i++)
+  {
+    resgcd->stem[i] = b[degb - i];
+  }
+  resgcd->stemdegree = degb;
+  resgcd->minexpon = 0;
+  free (a);
+  free (b);
+  free (c);
+  return (resgcd);
+}
+
+
+/*
+ *
+ */
+
+int
+laurent_factor_content (struct laurentpoly *p)
+{
+  int i, cont;
+
+  assert (p);
+  cont = p->stem[0];
+  for (i = 1; i <= p->stemdegree; i++) cont = gcd (cont, p->stem[i]);
+  for (i = 0; i <= p->stemdegree; i++) p->stem[i] /= cont;
+
+  return (cont);
+}

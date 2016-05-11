@@ -1,3 +1,16 @@
+2016.05.10
+
+calcolo del gcd (secondo polinomio di Alexander)
+$ ./contour --out alexander --principal examples/knots/knot_8_5.knot --foxd 2
+reading knot description
+Alexander polynomial (up to t -> 1/t):
++2-3t+2t^2;
+
+
+Mentre il risultato corretto dovrebbe essere tutto l'anello (1)
+vedi http://katlas.math.toronto.edu/wiki/8_5
+
+
 2016.05.08
 
 ./contour afg --outside examples/twohollowsphere.morse -q --autosurgery

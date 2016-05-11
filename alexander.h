@@ -91,6 +91,10 @@ struct laurentpoly *laurentpoly_addmonom (struct laurentpoly *l, int expon, int 
 struct laurentpoly2 *laurentpoly2_addmonom (struct laurentpoly2 *l, int expu, int expv, int coef);
 struct laurentmatrix *laurent_build_matrix (struct presentation *p, int eliminate);
 void laurent_free_matrix (struct laurentmatrix *matrix);
+struct laurentpoly *laurent_gcd (struct laurentpoly *p1, struct laurentpoly *p2);
+int laurent_factor_content (struct laurentpoly *p);
+struct laurentpoly *laurent_euclid (struct laurentpoly *p1, struct laurentpoly *p2);
+void laurent_simplify_ideal (struct alexanderideal *ai);
 
 int laurent_sum_coefficients (struct laurentpoly *l);
 struct laurentpoly *laurent_sum_coefficients2 (struct laurentpoly2 *l);

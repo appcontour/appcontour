@@ -43,6 +43,7 @@ int foxd = FOXD_UNDEF;
 int shuffle = 0;
 int autosurgery = 0;
 int focus_on_fundamental = 0;
+int principal = 0;
 static int renumber = 1;
 
 struct global_data globals;
@@ -171,6 +172,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--noautosurgery") == 0)
     {
       autosurgery = 0;
+      continue;
+    }
+    if (strcmp(argv[i],"--principal") == 0 || strcmp(argv[i],"--gcd") == 0)
+    {
+      principal++;
       continue;
     }
     if (strcmp(argv[i],"--debug") == 0)

@@ -7,6 +7,7 @@
 # entries in knot atlas with same Alexander polynomial are (up to 10 crossings):
 #
 # 8_8 10_129 10_137
+# altri nodi con al piu' 10 incroci: 8_9, 10_155(?)
 #
 
 p=$1
