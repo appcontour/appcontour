@@ -14,11 +14,11 @@
 knot {
         ^       ;
   |   ^   ^   | ;
-# |  |  x  |  | ;  (repeat |p| times, change to 'X' for negative p)
+# |  |  x  |  | ;  (repeat 2|p| times, change to 'X' for negative p)
  | ^ || ^ || ^ |;
   X X X   x x x ;
  | U |X   x| U |;
  |   U | | U   |;
-# |     x     | ;  (repeat |q| times, change to 'X' for negative q)
+# |     x     | ;  (repeat 2|q| times, change to 'X' for negative q)
     U       U   ; 
 }
