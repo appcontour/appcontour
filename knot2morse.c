@@ -181,6 +181,7 @@ knot2morse (FILE *file)
       eatenspaces = 0;
       while ((ch = *linept++) && ch != ';')
       {
+        if (ch == '%') ch = 'X';
         for (i = 0; charlist[i]; i++)
         {
           if (charlist[i] == ch) break;
