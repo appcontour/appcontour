@@ -803,7 +803,7 @@ void
 laurent_simplify_ideal (struct alexanderideal *ai)
 {
   struct laurentpoly *newgcd;
-  extern int principal;
+  extern int principal, verbose;
   int i;
 
   if (principal)
@@ -818,6 +818,8 @@ laurent_simplify_ideal (struct alexanderideal *ai)
     ai->l1num = 1;
     return;
   }
+
+  if (verbose) laurent_extended_euclid (ai->l1[0], ai->l1[1]);
 
   return;  /* TODO: not implemented at the moment! */
 }

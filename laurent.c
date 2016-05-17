@@ -11,6 +11,178 @@
 #include "parser.h"
 
 /*
+ * implement extended Euclidean algorithm for two Laurent polynomials
+ */
+
+struct lpol {
+    int start;
+    int end;
+    int buf[];
+  };
+
+void euclid_alfabetatk (struct lpol *a, struct lpol *b, int alfa, int beta, int k);
+void euclid_reduce3 (struct lpol *a, struct lpol *b, struct lpol *c);
+void euclid_printlpol (struct lpol *a);
+
+static int bufsize;
+
+/*
+ * test fatti con:
+ * ./utils/kanenobu.sh -4 2 | ./contour --out alexander --foxd 2 --principal -v
+ *
+ * che risulta in una matrice 2x2, e un generatore dell'ideale secondo e' 3
+ */
+
+struct laurentpoly *
+laurent_extended_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
+{
+  struct laurentpoly *res;
+  struct lpol *r_i, *r_im1, *s_i, *s_im1, *t_i, *t_im1, *temp;
+  int i, j, k_i, ri0, rim10, c, alpha_i, beta_i;
+  extern int verbose;
+
+  bufsize=100;  //TODO  dare un valore decente!!
+  /*
+   *
+   */
+
+  if (verbose)
+  {
+    printf ("===> Extended Euclid: "); print_laurentpoly (p1, 'x'); printf (" --- ");
+    print_laurentpoly (p2, 'x'); printf ("\n");
+  }
+  if (p1 == 0) return (laurent_dup (p2));
+  if (p2 == 0) return (laurent_dup (p1));
+
+  r_im1 = (struct lpol *) malloc (sizeof (struct lpol) + bufsize*sizeof (int));
+  r_i = (struct lpol *) malloc (sizeof (struct lpol) + bufsize*sizeof (int));
+  s_im1 = (struct lpol *) malloc (sizeof (struct lpol) + bufsize*sizeof (int));
+  s_i = (struct lpol *) malloc (sizeof (struct lpol) + bufsize*sizeof (int));
+  t_im1 = (struct lpol *) malloc (sizeof (struct lpol) + bufsize*sizeof (int));
+  t_i = (struct lpol *) malloc (sizeof (struct lpol) + bufsize*sizeof (int));
+
+  for (i = 0; i < bufsize; i++)
+  {
+    r_im1->buf[i] = 0;
+    s_im1->buf[i] = 0;
+    t_im1->buf[i] = 0;
+    r_i->buf[i] = 0;
+    s_i->buf[i] = 0;
+    t_i->buf[i] = 0;
+  }
+
+  r_im1->start = r_i->start = r_im1->end = r_i->end = bufsize/2;
+  s_im1->start = s_i->start = s_im1->end = s_i->end = bufsize/2;
+  t_im1->start = t_i->start = t_im1->end = t_i->end = bufsize/2;
+  if (p1)
+  {
+    for (i = 0, j = r_im1->start; i <= p1->stemdegree; i++) r_im1->buf[j++] = p1->stem[i];
+    r_im1->end += p1->stemdegree + 1;
+  }
+  if (p2)
+  {
+    for (i = 0, j = r_i->start; i <= p2->stemdegree; i++) r_i->buf[j++] = p2->stem[i];
+    r_i->end += p2->stemdegree + 1;
+  }
+  s_im1->buf[s_im1->start] = 1;
+  s_im1->end = s_im1->start + 1;
+  t_im1->end = t_im1->start;
+  s_i->end = s_i->start;
+  t_i->buf[t_i->start] = 1;
+  t_i->end = t_i->start + 1;
+
+  while (1)
+  {
+    /* first: find alfa_i and q_i=beta_i t^k_i */
+    //r_i_size = r_i->end - e_i->start;
+    //if (r_i_size < 0) r_i_size += bufsize;
+    k_i = r_im1->start - r_i->start;
+    ri0 = r_i->buf[r_i->start];
+    rim10 = r_im1->buf[r_im1->start];
+    c = gcd (ri0, rim10);
+    alpha_i = ri0/c;
+    beta_i = rim10/c;
+    euclid_alfabetatk (r_im1, r_i, alpha_i, beta_i, k_i);
+    euclid_alfabetatk (s_im1, s_i, alpha_i, beta_i, k_i);
+    euclid_alfabetatk (t_im1, t_i, alpha_i, beta_i, k_i);
+    euclid_reduce3 (r_im1, s_im1, t_im1);
+
+    if (r_im1->start == r_im1->end) break;
+    temp = r_im1; r_im1 = r_i; r_i = temp;
+    temp = s_im1; s_im1 = s_i; s_i = temp;
+    temp = t_im1; t_im1 = t_i; t_i = temp;
+  }
+
+  if (verbose)
+  {
+    printf ("gcd: "); euclid_printlpol (r_i);
+    printf ("  s: "); euclid_printlpol (s_i);
+    printf ("  t: "); euclid_printlpol (t_i);
+  }
+  assert (r_i->start != r_i->end);
+  res = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + (r_i->end-r_i->start)*sizeof(int));
+  res->minexpon = 0;
+  res->stemdegree = r_i->end - r_i->start - 1;
+  for (i = r_i->start, j = 0; i < r_i->end; i++) res->stem[j++] = r_i->buf[i];
+  free (r_im1);
+  free (s_im1);
+  free (t_im1);
+  free (r_i);
+  free (s_i);
+  free (t_i);
+  return (res);
+}
+
+/*
+ *
+ */
+
+void
+euclid_printlpol (struct lpol *a)
+{
+  int i;
+
+  printf ("start: %d,", a->start);
+  for (i = a->start; i < a->end; i++) printf (" %d", a->buf[i]);
+  printf ("\n");
+}
+
+void
+euclid_alfabetatk (struct lpol *a, struct lpol *b, int alpha, int beta, int k)
+{
+  int i;
+
+  assert (b->start + k >= 0);
+  assert (b->end + k < bufsize);
+  for (i = a->start; i < a->end; i++) a->buf[i] *= alpha;
+  for (i = b->start; i < b->end; i++) a->buf[i+k] -= beta*b->buf[i];
+  if (a->end < b->end + k) a->end = b->end + k;
+  if (a->start > b->start + k) a->start = b->start + k;
+  while (a->buf[a->start] == 0 && a->start < a->end) a->start++;
+  if (a->start == a->end) return;
+  while (a->buf[a->end - 1] == 0) a->end--;
+}
+
+void
+euclid_reduce3 (struct lpol *a, struct lpol *b, struct lpol *c)
+{
+  int i;
+  int cgcd = 0;
+
+  for (i = a->start; i < a->end; i++) cgcd = gcd (cgcd, a->buf[i]);
+  for (i = b->start; i < b->end; i++) cgcd = gcd (cgcd, b->buf[i]);
+  for (i = c->start; i < c->end; i++) cgcd = gcd (cgcd, c->buf[i]);
+
+  if (cgcd == 0) return;
+  if (cgcd < 0) cgcd = -cgcd;
+  if (cgcd == 1) return;
+
+  for (i = a->start; i < a->end; i++) a->buf[i] /= cgcd;
+  for (i = b->start; i < b->end; i++) b->buf[i] /= cgcd;
+  for (i = c->start; i < c->end; i++) c->buf[i] /= cgcd;
+}
+
+/*
  * negate polynomial
  */
 
@@ -726,6 +898,7 @@ laurent_gcd (struct laurentpoly *p1, struct laurentpoly *p2)
   struct laurentpoly *resgcd;
   int i, cont_p1, cont_p2, cont_gcd;
 
+laurent_extended_euclid (p1, p2);
   /* special cases */
   if (p1 == 0)
   {

@@ -41,6 +41,8 @@ struct laurentpoly *laurent_sum_each_coefficient2 (struct laurentpoly2 *l);
 struct laurentpoly *laurent_gcd (struct laurentpoly *p1, struct laurentpoly *p2);
 int laurent_factor_content (struct laurentpoly *p);
 struct laurentpoly *laurent_euclid (struct laurentpoly *p1, struct laurentpoly *p2);
+struct laurentpoly *laurent_extended_euclid (struct laurentpoly *p1, struct laurentpoly *p2);
+
 
 int gcd (int a, int b);
 
