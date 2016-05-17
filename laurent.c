@@ -93,6 +93,12 @@ laurent_extended_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
 
   while (1)
   {
+    if ((r_im1->end - r_im1->start) < (r_i->end - r_i->start))
+    {
+      temp = r_im1; r_im1 = r_i; r_i = temp;
+      temp = s_im1; s_im1 = s_i; s_i = temp;
+      temp = t_im1; t_im1 = t_i; t_i = temp;
+    }
     /* first: find alfa_i and q_i=beta_i t^k_i */
     //r_i_size = r_i->end - e_i->start;
     //if (r_i_size < 0) r_i_size += bufsize;
@@ -108,9 +114,6 @@ laurent_extended_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
     euclid_reduce3 (r_im1, s_im1, t_im1);
 
     if (r_im1->start == r_im1->end) break;
-    temp = r_im1; r_im1 = r_i; r_i = temp;
-    temp = s_im1; s_im1 = s_i; s_i = temp;
-    temp = t_im1; t_im1 = t_i; t_i = temp;
   }
 
   if (verbose)
@@ -896,9 +899,10 @@ struct laurentpoly *
 laurent_gcd (struct laurentpoly *p1, struct laurentpoly *p2)
 {
   struct laurentpoly *resgcd;
-  int i, cont_p1, cont_p2, cont_gcd;
+  struct laurentpoly *resgcd2;
+  int i, alpha, cont_p1, cont_p2, cont_gcd;
+  extern int verbose;
 
-laurent_extended_euclid (p1, p2);
   /* special cases */
   if (p1 == 0)
   {
@@ -913,17 +917,23 @@ laurent_extended_euclid (p1, p2);
    * first: factor out content of the two polynomials
    */
 
+  resgcd2 = laurent_extended_euclid (p1, p2);
   cont_p1 = laurent_factor_content (p1);
   cont_p2 = laurent_factor_content (p2);
 
   resgcd = laurent_euclid (p1, p2);
   laurent_factor_content (resgcd);
+  alpha = laurent_factor_content (resgcd2);
+  assert (resgcd->stemdegree == resgcd2->stemdegree);
+  
+  for (i = 0; i <= resgcd->stemdegree; i++) assert (resgcd->stem[i] == resgcd2->stem[i]);
   cont_gcd = gcd (cont_p1, cont_p2);
 
   for (i = 0; i <= p1->stemdegree; i++) p1->stem[i] *= cont_p1;
   for (i = 0; i <= p2->stemdegree; i++) p2->stem[i] *= cont_p2;
   for (i = 0; i <= resgcd->stemdegree; i++) resgcd->stem[i] *= cont_gcd;
 
+  if (verbose) printf ("spread: %d / %d\n", alpha, cont_gcd);
   return (resgcd);
 }
 
@@ -1027,11 +1037,15 @@ laurent_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
 int
 laurent_factor_content (struct laurentpoly *p)
 {
-  int i, cont;
+  int i, sign, cont;
 
   assert (p);
+  assert (p->stem[0] != 0);
+  sign = 1;
+  if (p->stem[0] < 0) sign = -1;
   cont = p->stem[0];
   for (i = 1; i <= p->stemdegree; i++) cont = gcd (cont, p->stem[i]);
+  if (cont*sign < 0) cont = -cont;
   for (i = 0; i <= p->stemdegree; i++) p->stem[i] /= cont;
 
   return (cont);
