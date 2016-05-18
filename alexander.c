@@ -324,11 +324,13 @@ printout_ideal1 (struct alexanderideal *ai, struct laurentpoly *principal)
   } else {
     if (ai) assert (ai->spread >= 1);
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander(t) {\n");
-    if (!quiet)
+    if (quiet)
     {
-      if (ai->spread > 1) printf ("Fuzzy ");
+      if (ai && ai->spread > 1) printf ("spread = %d\n", ai->spread);
+    } else {
+      if (ai && ai->spread > 1) printf ("Fuzzy ");
       printf ("Alexander polynomial (up to t -> 1/t)");
-      printf (" with spread factor %d", ai->spread);
+      if (ai && ai->spread > 1) printf (" with spread factor %d", ai->spread);
       printf (":\n");
     }
     if (ai == 0) print_laurentpoly (principal, 't');
