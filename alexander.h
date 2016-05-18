@@ -48,7 +48,7 @@ int linkingnumber (struct presentation *p);
 int linkingnumber_fromideal (struct alexanderideal *ai);
 int corank_one_alexander (struct presentation *p);
 struct laurentpoly *laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate);
-struct alexanderideal *laurent_second_elementary_ideal (struct presentation *p, int eliminate, int corank);
+struct alexanderideal *laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int corank);
 struct laurentpoly2 *laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
                       struct laurentpoly2 ***extrapt);
 struct laurentpoly *laurent_get_exp_sum (struct presentationrule *r, int g, int gconj);

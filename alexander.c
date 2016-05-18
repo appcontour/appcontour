@@ -150,7 +150,9 @@ alexander (struct presentation *p)
       break;
 
       case 2:
-      ai = laurent_second_elementary_ideal (p, gconj, rank - 1);
+      case 3:
+      case 4:
+      ai = laurent_notfirst_elementary_ideal (p, gconj, foxd - 1);
       alexander_fromideal (ai);
       break;
 
@@ -221,9 +223,14 @@ int
 alexander_fromideal (struct alexanderideal *ai)
 {
   int i, extradets;
-  extern int verbose;
+  extern int verbose, quiet;
   struct laurentpoly2 *determinant2, **extradeterminants;
 
+  if (ai == 0)
+  {
+    if (!quiet) printf ("Error: not able to compute the required ideal.\n");
+    return (0);
+  }
   switch (ai->indets)
   {
     case 0:
@@ -655,57 +662,68 @@ laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
  */
 
 struct alexanderideal *
-laurent_second_elementary_ideal (struct presentation *p, int eliminate, int corank)
+laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int corank)
 {
   extern int verbose;
   struct alexanderideal *ai;
   struct laurentmatrix *matrix;
   struct laurentpoly *l, **matrixcolumn;
-  int i, j, idx;
+  int rank, i, j, idx;
 
   matrix = laurent_build_matrix (p, eliminate);
 
   assert (matrix->numcols <= matrix->numrows);
   if (matrix->numcols < matrix->numrows - corank) return (0);
 
-  if (matrix->numrows > 2)
-  {
-    printf ("For now only the 2x2 case is implemented\n");
-    return (0);
-  }
-
+  rank = matrix->numrows - corank;
   ai = (struct alexanderideal *) malloc (sizeof (struct alexanderideal));
   ai->indets = 1;
-  ai->l1num = matrix->numrows;
   ai->spread = 1;
-  if (matrix->numcols == matrix->numrows) ai->l1num *= ai->l1num;
-
-  if (ai->l1num > IDEAL_MAX_GENERATORS_NUM)
+  switch (rank)
   {
-    printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
+    case 0:
+    ai->indets = 0;
+    ai->l1num = 1;
+    ai->val = 1;
+    laurent_free_matrix (matrix);
+    return (ai);
+    break;
+
+    case 1:
+    ai->l1num = matrix->numrows;
+    if (matrix->numcols == matrix->numrows) ai->l1num *= ai->l1num;
+    if (ai->l1num > IDEAL_MAX_GENERATORS_NUM)
+    {
+      printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
+      laurent_free_matrix (matrix);
+      free (ai);
+      return (0);
+    }
+    idx = 0;
+    for (i = 0; i < matrix->numrows; i++)
+    {
+      for (j = 0; j < matrix->numcols; j++)
+      {
+        matrixcolumn = matrix->columns[j];
+        l = matrixcolumn[i];
+        assert (idx < ai->l1num);
+        ai->l1[idx++] = laurent_dup(l);
+      }
+    }
+    while (idx < ai->l1num) ai->l1[idx++] = 0;
+    break;
+
+    default:
+    /* XXXXXXXXXXXXXXXXX lavori in corso XXXXXXXXXXXXXXXXXXXXXXX */
+    printf ("For now only the rank 1 case is implemented\n");
+    free (ai);
     laurent_free_matrix (matrix);
     return (0);
+    break;
   }
-  /* for now just enter the elements */
-  /* XXXXXXXXXXXXXXXXX lavori in corso XXXXXXXXXXXXXXXXXXXXXXX */
-  idx = 0;
-  for (i = 0; i < matrix->numrows; i++)
-  {
-    for (j = 0; j < matrix->numcols; j++)
-    {
-      matrixcolumn = matrix->columns[j];
-      l = matrixcolumn[i];
-      assert (idx < ai->l1num);
-      ai->l1[idx++] = laurent_dup(l);
-    }
-  }
-  while (idx < ai->l1num) ai->l1[idx++] = 0;
-  //determinant = laurent_compute_determinant (matrix->columns, matrix->numcols);
 
   laurent_free_matrix (matrix);
-
   laurent_simplify_ideal (ai);
-
   return (ai);
 }
 
