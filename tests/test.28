@@ -1,0 +1,17 @@
+#
+# test consistency of extended euclidean algorithm
+#
+
+pqlist="0,0 2,0 4,0 2,-2 2,-4 2,-6 2,-10 2,-12"
+
+# case where the Alexander matrix is 3x3 (not implemented yet)
+#pqlist="4,-2"  (and larger values of p, also)
+
+for pq in $pqlist
+do
+  p=$(echo "$pq" | cut -f1 -d,)
+  q=$(echo "$pq" | cut -f2 -d,)
+  echo "second elementary principal ideal for kanenobu $p $q"
+  ./utils/kanenobu.sh $p $q | ./contour --out alexander --internalcheck --principal --foxd 2
+done
+
