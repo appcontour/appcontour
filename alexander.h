@@ -17,6 +17,7 @@
 struct alexanderideal {
   int indets;
   int l1num;
+  int spread;
   int l2num;
   int fl2num;
   int val;

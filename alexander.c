@@ -322,8 +322,15 @@ printout_ideal1 (struct alexanderideal *ai, struct laurentpoly *principal)
     }
     if (quiet && outformat != OUTFORMAT_APPCONTOUR) printf ("]\n");
   } else {
+    if (ai) assert (ai->spread >= 1);
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander(t) {\n");
-    if (!quiet) printf ("Alexander polynomial (up to t -> 1/t):\n");
+    if (!quiet)
+    {
+      if (ai->spread > 1) printf ("Fuzzy ");
+      printf ("Alexander polynomial (up to t -> 1/t)");
+      printf (" with spread factor %d", ai->spread);
+      printf (":\n");
+    }
     if (ai == 0) print_laurentpoly (principal, 't');
      else {
       assert (ai->l1num == 1);
@@ -668,6 +675,7 @@ laurent_second_elementary_ideal (struct presentation *p, int eliminate, int cora
   ai = (struct alexanderideal *) malloc (sizeof (struct alexanderideal));
   ai->indets = 1;
   ai->l1num = matrix->numrows;
+  ai->spread = 1;
   if (matrix->numcols == matrix->numrows) ai->l1num *= ai->l1num;
 
   if (ai->l1num > IDEAL_MAX_GENERATORS_NUM)
@@ -804,18 +812,21 @@ laurent_simplify_ideal (struct alexanderideal *ai)
 {
   struct laurentpoly *newgcd;
   extern int principal, verbose;
-  int i;
+  int i, spread, lspread;
 
+  spread = 1;
   if (principal)
   {
     for (i = 1; i < ai->l1num; i++)
     {
-      newgcd = laurent_gcd (ai->l1[0], ai->l1[i]);
+      newgcd = laurent_gcd (spread, ai->l1[0], ai->l1[i], &lspread);
+      spread = lspread;
       free (ai->l1[0]);
       free (ai->l1[i]);
       ai->l1[0] = newgcd;
     }
     ai->l1num = 1;
+    ai->spread = spread;
     return;
   }
 
@@ -2160,6 +2171,7 @@ read_alexander_ideal (FILE *file)
   assert (tok == TOK_LPAREN);
   ai = (struct alexanderideal *) malloc (sizeof (struct alexanderideal));
   ai->l1num = ai->l2num = ai->fl2num = 0;
+  ai->spread = 1;
   ai->val = 0;
   ai->indets = read_generators_list (file, indet_names, 2);
 

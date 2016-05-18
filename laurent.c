@@ -892,16 +892,16 @@ laurent_sum_each_coefficient2 (struct laurentpoly2 *l)
 }
 
 /*
- *
+ * if unsure, call with "inspread = 1"
  */
 
 struct laurentpoly *
-laurent_gcd (struct laurentpoly *p1, struct laurentpoly *p2)
+laurent_gcd (int inspread, struct laurentpoly *p1, struct laurentpoly *p2, int *spreadpt)
 {
   struct laurentpoly *resgcd;
   struct laurentpoly *resgcd2;
   int i, alpha, cont_p1, cont_p2, cont_gcd;
-  extern int verbose;
+  extern int verbose, internalcheck;
 
   /* special cases */
   if (p1 == 0)
@@ -917,23 +917,31 @@ laurent_gcd (struct laurentpoly *p1, struct laurentpoly *p2)
    * first: factor out content of the two polynomials
    */
 
-  resgcd2 = laurent_extended_euclid (p1, p2);
   cont_p1 = laurent_factor_content (p1);
+  if (p1) {for (i = 0; i <= p1->stemdegree; i++) p1->stem[i] *= inspread*cont_p1;}  /* restore p1 */
+  resgcd = laurent_extended_euclid (p1, p2);
   cont_p2 = laurent_factor_content (p2);
 
-  resgcd = laurent_euclid (p1, p2);
-  laurent_factor_content (resgcd);
-  alpha = laurent_factor_content (resgcd2);
-  assert (resgcd->stemdegree == resgcd2->stemdegree);
-  
-  for (i = 0; i <= resgcd->stemdegree; i++) assert (resgcd->stem[i] == resgcd2->stem[i]);
+  alpha = laurent_factor_content (resgcd);
+
+  if (internalcheck)
+  {
+    resgcd2 = laurent_euclid (p1, p2);
+    laurent_factor_content (resgcd2);
+    assert (resgcd2->stemdegree == resgcd->stemdegree);
+    for (i = 0; i <= resgcd2->stemdegree; i++) assert (resgcd2->stem[i] == resgcd->stem[i]);
+    if (resgcd2) free (resgcd2);
+  }
   cont_gcd = gcd (cont_p1, cont_p2);
-
-  for (i = 0; i <= p1->stemdegree; i++) p1->stem[i] *= cont_p1;
+  if (cont_gcd < 0) cont_gcd = -cont_gcd;
+  if (alpha < 0) alpha = -alpha;
+  *spreadpt = alpha/cont_gcd;
+  assert (alpha == (*spreadpt)*cont_gcd);
+  for (i = 0; i <= p1->stemdegree; i++) p1->stem[i] /= inspread;
   for (i = 0; i <= p2->stemdegree; i++) p2->stem[i] *= cont_p2;
-  for (i = 0; i <= resgcd->stemdegree; i++) resgcd->stem[i] *= cont_gcd;
+  for (i = 0; i <= resgcd->stemdegree; i++) resgcd->stem[i] *= cont_gcd;  /* obtain real gcd */
 
-  if (verbose) printf ("spread: %d / %d\n", alpha, cont_gcd);
+  if (verbose) printf ("spread: %d\n", *spreadpt);
   return (resgcd);
 }
 

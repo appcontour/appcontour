@@ -1,24 +1,24 @@
 second elementary principal ideal for kanenobu 0 0
-Alexander polynomial (up to t -> 1/t):
+Alexander polynomial (up to t -> 1/t) with spread factor 1:
 +1-3t+t^2;
 second elementary principal ideal for kanenobu 2 0
-Alexander polynomial (up to t -> 1/t):
+Alexander polynomial (up to t -> 1/t) with spread factor 1:
 +1;
 second elementary principal ideal for kanenobu 4 0
-Alexander polynomial (up to t -> 1/t):
+Fuzzy Alexander polynomial (up to t -> 1/t) with spread factor 2:
 +1;
 second elementary principal ideal for kanenobu 2 -2
-Alexander polynomial (up to t -> 1/t):
+Fuzzy Alexander polynomial (up to t -> 1/t) with spread factor 2:
 +1;
 second elementary principal ideal for kanenobu 2 -4
-Alexander polynomial (up to t -> 1/t):
+Fuzzy Alexander polynomial (up to t -> 1/t) with spread factor 3:
 +1;
 second elementary principal ideal for kanenobu 2 -6
-Alexander polynomial (up to t -> 1/t):
+Fuzzy Alexander polynomial (up to t -> 1/t) with spread factor 4:
 +1;
 second elementary principal ideal for kanenobu 2 -10
-Alexander polynomial (up to t -> 1/t):
+Fuzzy Alexander polynomial (up to t -> 1/t) with spread factor 6:
 +1;
 second elementary principal ideal for kanenobu 2 -12
-Alexander polynomial (up to t -> 1/t):
+Fuzzy Alexander polynomial (up to t -> 1/t) with spread factor 7:
 +1;
