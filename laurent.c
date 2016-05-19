@@ -58,6 +58,15 @@ laurent_extended_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
 
   bufsize = p1->stemdegree;
   if (p2->stemdegree > p1->stemdegree) bufsize = p2->stemdegree;
+  if (bufsize == 0) /* special case of two nonzero monomials */
+  {
+    c = abs(gcd(p1->stem[0], p2->stem[0]));
+    res = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + sizeof(int));
+    res->minexpon = 0;
+    res->stemdegree = 0;
+    res->stem[0] = c;
+    return (res);
+  }
   bufsize += 2;
   bufsize *= 2;
 
