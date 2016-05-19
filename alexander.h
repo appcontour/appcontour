@@ -71,10 +71,6 @@ int base_canonify2_onedim (struct laurentpoly2 **lpt);
 int base_canonify2_twodim (struct laurentpoly2 **lpt);
 void shuffle_poly2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets, int extranum);
 struct laurentpoly2 *base_change2 (struct laurentpoly2 *l, int matrixb[2][2]);
-int laurent2_totdegree (struct laurentpoly2 *l);
-int laurent2_lexicocompare (struct laurentpoly2 *p1, struct laurentpoly2 *p2);
-void laurent_canonifysign (struct laurentpoly *p);
-void laurent2_canonifysign (struct laurentpoly2 *p);
 
 void base_random (int matrixb[2][2]);
 int isinvertible_base (int b[2][2]);

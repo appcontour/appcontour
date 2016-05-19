@@ -43,4 +43,9 @@ int laurent_factor_content (struct laurentpoly *p);
 struct laurentpoly *laurent_euclid (struct laurentpoly *p1, struct laurentpoly *p2);
 struct laurentpoly *laurent_extended_euclid (struct laurentpoly *p1, struct laurentpoly *p2);
 
+int laurent2_totdegree (struct laurentpoly2 *l);
+int laurent2_lexicocompare (struct laurentpoly2 *p1, struct laurentpoly2 *p2);
+void laurent_canonifysign (struct laurentpoly *p);
+void laurent2_canonifysign (struct laurentpoly2 *p);
+
 int gcd (int a, int b);
