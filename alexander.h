@@ -63,6 +63,7 @@ int canonify_ideal2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets,
 struct laurentmatrix *laurent_build_matrix (struct presentation *p, int eliminate);
 void laurent_free_matrix (struct laurentmatrix *matrix);
 void laurent_simplify_ideal (struct alexanderideal *ai);
+int laurent_try_simplify_ideal (struct alexanderideal *ai);
 
 int laurent_suppdim2 (struct laurentpoly2 *l);
 void laurent_getthree2 (struct laurentpoly2 *l, int *x1, int *x2, int *x3);

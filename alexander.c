@@ -834,6 +834,8 @@ laurent_simplify_ideal (struct alexanderideal *ai)
   extern int principal, verbose;
   int i, spread, lspread;
 
+  while (laurent_try_simplify_ideal (ai));
+
   spread = 1;
   if (principal)
   {
@@ -853,6 +855,163 @@ laurent_simplify_ideal (struct alexanderideal *ai)
   if (verbose) laurent_extended_euclid (ai->l1[0], ai->l1[1]);
 
   return;  /* TODO: not implemented at the moment! */
+}
+
+/*
+ * try to simplify the ideal by removal of some generator or
+ * reduction in complexity of one generator
+ * no increase is allowed
+ * return 1 if at least one simplification was performed
+ */
+
+int laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2);
+
+int
+laurent_try_simplify_ideal (struct alexanderideal *ai)
+{
+  struct laurentpoly *l, *l1, *l2, *newgcd;
+  int i, j, spread;
+  extern int verbose;
+
+  if (ai->indets != 1 ) return (0);
+
+  if (ai->l1num <= 1) return (0); // at least two generators...
+
+  for (i = 0; i < ai->l1num; i++)
+  {
+    if (ai->l1[i] == 0)
+    {
+      for (j = i; j < ai->l1num - 1; j++) ai->l1[j] = ai->l1[j+1];
+      ai->l1num--;
+      if (verbose) printf ("Ideal simplification: zero polynomial removed\n");
+      return (1);
+    }
+  }
+  for (i = 0; i < ai->l1num; i++)
+  {
+    l = ai->l1[i];
+    if (l->stemdegree == 0 && abs(l->stem[0]) == 1)
+    {
+      for (j = 0; j < ai->l1num; j++)
+      {
+        if (j != i && ai->l1[j]) free (ai->l1[j]);
+        ai->l1[j] = 0;
+      }
+      ai->l1[0] = l;
+      ai->l1num = 1;
+      if (verbose) printf ("Ideal simplification: unit polynomial generates everything\n");
+      return (1);
+    }
+    for (j = i+1; j < ai->l1num; j++)
+    {
+      /*
+       * check whether the two polynomials generate a principal ideal
+       */
+      newgcd = laurent_gcd (1, ai->l1[i], ai->l1[j], &spread);
+      if (spread == 1)
+      {
+        if (ai->l1[i]) free (ai->l1[i]);
+        if (ai->l1[j]) free (ai->l1[j]);
+        ai->l1[i] = newgcd;
+        ai->l1[j] = 0;
+        if (verbose) printf ("Ideal simplification: two pols generate a principal ideal\n");
+        assert (newgcd);
+        assert (newgcd->stem[0]);
+        assert (newgcd->stem[newgcd->stemdegree]);
+        return (1);
+      } else free (newgcd);
+    }
+  }
+  for (i = 0; i < ai->l1num; i++)
+  {
+    l1 = ai->l1[i];
+    if (l1 == 0) continue;
+    assert (l1->stem[0]);
+    assert (l1->stem[l1->stemdegree]);
+    for (j = i+1; j < ai->l1num; j++)
+    {
+      /*
+       * kind of euclidean division step
+       */
+      l2 = ai->l1[j];
+      if (l2 == 0) continue;
+      assert (l2->stem[0]);
+      assert (l2->stem[l2->stemdegree]);
+      if (l1->stemdegree < l2->stemdegree && laurent_try_reduce_pair (l2, l1)) return (1);
+      if (l1->stemdegree > l2->stemdegree && laurent_try_reduce_pair (l1, l2)) return (1);
+      if (l1->stemdegree == l2->stemdegree)
+      {
+        if (laurent_try_reduce_pair (l1, l2)) return (1);
+        if (laurent_try_reduce_pair (l2, l1)) return (1);
+      }
+    }
+  }
+  return (0);
+}
+
+/*
+ * try division of l1 by a monomial multiple of l2, in case there is a stemdegree reduction
+ * note that at the moment it is forbidden to have l1 monomial multiple of l2
+ */
+
+int
+laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
+{
+  int i, k, c1, c2, quotient;
+
+  assert (l1);
+  assert (l2);
+  assert (l1->stemdegree >= l2->stemdegree);
+
+  c1 = l1->stem[0];
+  c2 = l2->stem[0];
+  assert (c2);
+
+  quotient = c1/c2;
+  if (c1 == c2*quotient)
+  {
+    for (i = 0; i <= l2->stemdegree; i++)
+    {
+      l1->stem[i] -= quotient*l2->stem[i];
+    }
+    assert (l1->stem[0] == 0);
+    while (l1->stem[0] == 0 && l1->stemdegree > 0)
+    {
+      for (i = 0; i < l1->stemdegree; i++) l1->stem[i] = l1->stem[i+1];
+      l1->stemdegree--;
+      l1->minexpon++;
+    }
+    while (l1->stem[l1->stemdegree] == 0 && l1->stemdegree > 0)
+      l1->stemdegree--;
+    assert (l1->stem[0]);
+    assert (l1->stem[l1->stemdegree]);
+    return (1);
+  }
+  c1 = l1->stem[l1->stemdegree];
+  c2 = l2->stem[l2->stemdegree];
+  assert (c2);
+  quotient = c1/c2;
+  if (c1 == c2*quotient)
+  {
+    k = l1->stemdegree - l2->stemdegree;
+    for (i = 0; i <= l2->stemdegree; i++)
+    {
+      l1->stem[i + k] -= quotient*l2->stem[i];
+    }
+    assert (l1->stem[l1->stemdegree] == 0);
+    while (l1->stem[l1->stemdegree] == 0 && l1->stemdegree > 0)
+      l1->stemdegree--;
+    while (l1->stem[0] == 0 && l1->stemdegree > 0)
+    {
+      for (i = 0; i < l1->stemdegree; i++) l1->stem[i] = l1->stem[i+1];
+      l1->stemdegree--;
+      l1->minexpon++;
+    }
+    assert (l1->stem[0]);
+    assert (l1->stem[l1->stemdegree] != 0);
+    return (1);
+  }
+  return (0);
 }
 
 /*
