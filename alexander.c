@@ -666,9 +666,9 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
 {
   extern int verbose;
   struct alexanderideal *ai;
-  struct laurentmatrix *matrix;
+  struct laurentmatrix *matrix, *minor;
   struct laurentpoly *l, **matrixcolumn;
-  int rank, i, j, idx;
+  int rank, i, j, jj, idx;
 
   matrix = laurent_build_matrix (p, eliminate);
 
@@ -714,11 +714,37 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
     break;
 
     default:
-    /* XXXXXXXXXXXXXXXXX lavori in corso XXXXXXXXXXXXXXXXXXXXXXX */
-    printf ("For now only the rank 1 case is implemented\n");
-    free (ai);
-    laurent_free_matrix (matrix);
-    return (0);
+    assert (corank >= 1);
+    if (corank > 1)
+    {
+      printf ("Corank larger than 1 is not yet implemented\n");
+      free (ai);
+      laurent_free_matrix (matrix);
+      return (0);
+    }
+    /* this is the corank 1 case, with rank larger than 1 */
+    assert (matrix->numrows == matrix->numcols);
+    idx = 0;
+    for (i = 0; i < matrix->numrows; i++)
+    {
+      for (j = 0; j < matrix->numcols; j++)
+      {
+        if (idx >= IDEAL_MAX_GENERATORS_NUM)
+        {
+          printf ("Fatal: too many generators (%d) for the ideal\n", idx+1);
+          laurent_free_matrix (matrix);
+          free (ai);
+          return (0);
+        }
+        assert (idx < IDEAL_MAX_GENERATORS_NUM);
+        minor = minor_matrix_corank1 (matrix, i, j);
+        ai->l1[idx++] = laurent_compute_determinant (minor->columns, minor->numcols);
+        for (jj = 0; jj < minor->numcols; jj++) free (minor->columns[jj]);
+        free (minor->columns);
+        free (minor);
+        ai->l1num = idx;
+      }
+    }
     break;
   }
 
@@ -801,6 +827,37 @@ laurent_build_matrix (struct presentation *p, int eliminate)
     }
   }
   return (matrix);
+}
+
+struct laurentmatrix *
+minor_matrix_corank1 (struct laurentmatrix *matrix, int dropi, int dropj)
+{
+  struct laurentmatrix *minor;
+  struct laurentpoly **matrixcolumn, **minorcolumn;
+  int i, j, ii, jj;
+
+  minor = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
+  minor->numcols = matrix->numcols - 1;
+  minor->numrows = matrix->numrows - 1;
+
+  minor->columns = (struct laurentpoly ***) malloc (minor->numcols*sizeof(struct laurentpoly **));
+  for (j = 0; j < minor->numcols; j++)
+  {
+    minor->columns[j] = (struct laurentpoly **) malloc (minor->numrows*sizeof(struct laurentpoly *));
+  }
+
+  for (j = 0, jj = 0; j < matrix->numcols; j++)
+  {
+    if (j == dropj) continue;
+    matrixcolumn = matrix->columns[j];
+    minorcolumn = minor->columns[jj++];
+    for (i = 0, ii = 0; i < matrix->numrows; i++)
+    {
+      if (i == dropi) continue;
+      minorcolumn[ii++] = matrixcolumn[i];
+    }
+  }
+  return (minor);
 }
 
 /*

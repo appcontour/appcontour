@@ -61,6 +61,7 @@ struct laurentpoly2 *laurent_minor_determinant2 (struct laurentpoly2 ***matrix, 
                           int row_to_substitute);
 int canonify_ideal2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets, int extranum);
 struct laurentmatrix *laurent_build_matrix (struct presentation *p, int eliminate);
+struct laurentmatrix *minor_matrix_corank1 (struct laurentmatrix *matrix, int i, int j);
 void laurent_free_matrix (struct laurentmatrix *matrix);
 void laurent_simplify_ideal (struct alexanderideal *ai);
 int laurent_try_simplify_ideal (struct alexanderideal *ai);
