@@ -1,3 +1,9 @@
+spread between two monomials does not work (laurent.c)
+
+laurent_try_reduce_pair should also try to reduce the coefficients of the
+bigger polynomial
+
+
 1. Add the possibility to personalize default values (e.g. --autosurgery)
 using environment variables or via rc file.
 

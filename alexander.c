@@ -927,9 +927,10 @@ int
 laurent_try_simplify_ideal (struct alexanderideal *ai)
 {
   struct laurentpoly *l, *l1, *l2, *newgcd;
-  int i, j, spread;
+  int i, j, spread, numreductions;
   extern int verbose;
 
+  numreductions = 0;
   if (ai->indets != 1 ) return (0);
 
   if (ai->l1num <= 1) return (0); // at least two generators...
@@ -994,14 +995,15 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
       if (l2 == 0) continue;
       assert (l2->stem[0]);
       assert (l2->stem[l2->stemdegree]);
-      if (l1->stemdegree < l2->stemdegree && laurent_try_reduce_pair (l2, l1)) return (1);
-      if (l1->stemdegree > l2->stemdegree && laurent_try_reduce_pair (l1, l2)) return (1);
+      if (l1->stemdegree < l2->stemdegree && laurent_try_reduce_pair (l2, l1)) {numreductions++; continue;}
+      if (l1->stemdegree > l2->stemdegree && laurent_try_reduce_pair (l1, l2)) {numreductions++; continue;}
       if (l1->stemdegree == l2->stemdegree)
       {
-        if (laurent_try_reduce_pair (l1, l2)) return (1);
-        if (laurent_try_reduce_pair (l2, l1)) return (1);
+        if (laurent_try_reduce_pair (l1, l2)) {numreductions++; continue;}
+        if (laurent_try_reduce_pair (l2, l1)) {numreductions++; continue;}
       }
     }
+    if (numreductions) return (numreductions);
   }
   return (0);
 }
