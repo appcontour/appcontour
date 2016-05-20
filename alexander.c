@@ -995,12 +995,19 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
       if (l2 == 0) continue;
       assert (l2->stem[0]);
       assert (l2->stem[l2->stemdegree]);
-      if (l1->stemdegree < l2->stemdegree && laurent_try_reduce_pair (l2, l1)) {numreductions++; continue;}
-      if (l1->stemdegree > l2->stemdegree && laurent_try_reduce_pair (l1, l2)) {numreductions++; continue;}
-      if (l1->stemdegree == l2->stemdegree)
+      if (l1->stemdegree <= l2->stemdegree) numreductions += laurent_try_reduce_pair (l2, l1);
+      if (l2->stemdegree == 0 && l2->stem[0] == 0)
       {
-        if (laurent_try_reduce_pair (l1, l2)) {numreductions++; continue;}
-        if (laurent_try_reduce_pair (l2, l1)) {numreductions++; continue;}
+        free (l2);
+        ai->l1[j] = 0;
+        continue;
+      }
+      if (l1->stemdegree >= l2->stemdegree) numreductions += laurent_try_reduce_pair (l1, l2);
+      if (l1->stemdegree == 0 && l1->stem[0] == 0)
+      {
+        free (l1);
+        ai->l1[i] = 0;
+        break;
       }
     }
     if (numreductions) return (numreductions);
@@ -1010,7 +1017,9 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
 
 /*
  * try division of l1 by a monomial multiple of l2, in case there is a stemdegree reduction
- * note that at the moment it is forbidden to have l1 monomial multiple of l2
+ * note that if l1 is a monomial multiple of l2, the result is a polynomial of stemdegree 0
+ * and null coefficient, this should be tested by the caller function and the pointer to
+ * the polynomial replaced by the null pointer
  */
 
 int
@@ -1042,8 +1051,11 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
     }
     while (l1->stem[l1->stemdegree] == 0 && l1->stemdegree > 0)
       l1->stemdegree--;
-    assert (l1->stem[0]);
-    assert (l1->stem[l1->stemdegree]);
+    if (l1->stemdegree > 0)
+    {
+      assert (l1->stem[0]);
+      assert (l1->stem[l1->stemdegree]);
+    }
     return (1);
   }
   c1 = l1->stem[l1->stemdegree];
@@ -1066,8 +1078,11 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
       l1->stemdegree--;
       l1->minexpon++;
     }
-    assert (l1->stem[0]);
-    assert (l1->stem[l1->stemdegree] != 0);
+    if (l1->stemdegree > 0)
+    {
+      assert (l1->stem[0]);
+      assert (l1->stem[l1->stemdegree] != 0);
+    }
     return (1);
   }
   return (0);
