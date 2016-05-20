@@ -909,10 +909,10 @@ laurent_simplify_ideal (struct alexanderideal *ai)
     return;
   }
 
-  if (verbose) laurent_extended_euclid (ai->l1[0], ai->l1[1]);
-
   return;  /* TODO: not implemented at the moment! */
 }
+
+//#define USE_EUCLID_GCD 1
 
 /*
  * try to simplify the ideal by removal of some generator or
@@ -926,11 +926,14 @@ int laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2);
 int
 laurent_try_simplify_ideal (struct alexanderideal *ai)
 {
-  struct laurentpoly *l, *l1, *l2, *newgcd;
+  struct laurentpoly *l, *l1, *l2;
+#ifdef USE_EUCLID_GCD
+  struct laurentpoly *newgcd;
+#endif
   int i, j, spread, numreductions;
   extern int verbose;
 
-  numreductions = 0;
+  numreductions = spread = 0;
   if (ai->indets != 1 ) return (0);
 
   if (ai->l1num <= 1) return (0); // at least two generators...
@@ -960,6 +963,7 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
       if (verbose) printf ("Ideal simplification: unit polynomial generates everything\n");
       return (1);
     }
+#ifdef USE_EUCLID_GCD
     for (j = i+1; j < ai->l1num; j++)
     {
       /*
@@ -979,6 +983,7 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
         return (1);
       } else free (newgcd);
     }
+#endif
   }
   for (i = 0; i < ai->l1num; i++)
   {
@@ -1010,7 +1015,11 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
         break;
       }
     }
-    if (numreductions) return (numreductions);
+    if (numreductions)
+    {
+      if (verbose) printf ("Ideal simplification: %d pairwise reductions performed\n", numreductions);
+      return (numreductions);
+    }
   }
   return (0);
 }
@@ -1025,18 +1034,22 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
 int
 laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
 {
-  int i, k, c1, c2, quotient;
+  int f, i, j, k, c1, c2first, c2last, quotient;
+  int deltadegree;
+  int s2first = 1;
+  int s2last = 1;
+  int numreductions = 0;
 
   assert (l1);
   assert (l2);
   assert (l1->stemdegree >= l2->stemdegree);
 
   c1 = l1->stem[0];
-  c2 = l2->stem[0];
-  assert (c2);
+  c2first = l2->stem[0];
+  assert (c2first);
 
-  quotient = c1/c2;
-  if (c1 == c2*quotient)
+  quotient = c1/c2first;
+  if (c1 == c2first*quotient)
   {
     for (i = 0; i <= l2->stemdegree; i++)
     {
@@ -1059,10 +1072,10 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
     return (1);
   }
   c1 = l1->stem[l1->stemdegree];
-  c2 = l2->stem[l2->stemdegree];
-  assert (c2);
-  quotient = c1/c2;
-  if (c1 == c2*quotient)
+  c2last = l2->stem[l2->stemdegree];
+  assert (c2last);
+  quotient = c1/c2last;
+  if (c1 == c2last*quotient)
   {
     k = l1->stemdegree - l2->stemdegree;
     for (i = 0; i <= l2->stemdegree; i++)
@@ -1085,7 +1098,58 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
     }
     return (1);
   }
-  return (0);
+
+  /* no reduction in stemdegree is possible, try to reduce coefficients size */
+
+  deltadegree = l1->stemdegree - l2->stemdegree;
+
+  if (c2first < 0) s2first = -1;
+  c2first *= s2first;
+  if (c2last < 0) s2last = -1;
+  c2last *= s2last;
+
+  for (k = 0; k <= deltadegree/2; k++)
+  {
+    if (l1->stem[k] > c2first/2)
+    {
+      numreductions++;
+      f = (l1->stem[k] - c2first/2 + c2first - 1)/c2first;
+      for (i = 0, j = k; i <= l2->stemdegree; i++)
+      {
+        l1->stem[j++] -= f*s2first*l2->stem[i];
+      }
+    }
+    if (l1->stem[k] < -(c2first-1)/2)
+    {
+      numreductions++;
+      f = (-(c2first-1)/2 - l1->stem[k] + c2first - 1)/c2first;
+      for (i = 0, j = k; i <= l2->stemdegree; i++)
+      {
+        l1->stem[j++] += f*s2first*l2->stem[i];
+      }
+    }
+    if (k >= (deltadegree+1)/2) continue;
+    if (l1->stem[l1->stemdegree - k] > c2last/2)
+    {
+      numreductions++;
+      f = (l1->stem[l1->stemdegree - k] - c2last/2 + c2last - 1)/c2last;
+      for (i = 0, j = deltadegree - k; i <= l2->stemdegree; i++)
+      {
+        l1->stem[j++] -= f*s2last*l2->stem[i];
+      }
+    }
+    if (l1->stem[l1->stemdegree - k] < -(c2last-1)/2)
+    {
+      numreductions++;
+      f = (-(c2last-1)/2 - l1->stem[l1->stemdegree - k] + c2last - 1)/c2last;
+      for (i = 0, j = deltadegree - k; i <= l2->stemdegree; i++)
+      {
+        l1->stem[j++] += f*s2last*l2->stem[i];
+      }
+    }
+  }
+
+  return (numreductions);
 }
 
 /*
