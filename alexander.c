@@ -887,15 +887,50 @@ laurent_free_matrix (struct laurentmatrix *matrix)
 void
 laurent_simplify_ideal (struct alexanderideal *ai)
 {
-  struct laurentpoly *newgcd;
+  struct laurentpoly *oldgcd, *newgcd;
   extern int principal, verbose;
   int i, spread, lspread;
+  int loop = 1;
 
-  while (laurent_try_simplify_ideal (ai));
-
-  spread = 1;
-  if (principal)
+  while (loop)
   {
+    loop = 0;
+    while (laurent_try_simplify_ideal (ai));
+
+    if (ai->l1num > 1)
+    {
+      spread = 1;
+      newgcd = laurent_gcd (spread, ai->l1[0], ai->l1[1], &lspread);
+      spread = lspread;
+      for (i = 2; i < ai->l1num; i++)
+      {
+        oldgcd = newgcd;
+        newgcd = laurent_gcd (spread, oldgcd, ai->l1[i], &lspread);
+        spread = lspread;
+        free (oldgcd);
+      }
+      if (newgcd->stemdegree >= ai->l1[0]->stemdegree)
+      {
+        free (newgcd);
+      } else {
+        if (verbose) printf ("Information: degree reduction in ideal generators!\n");
+        for (i = 0; i <= newgcd->stemdegree; i++) newgcd->stem[i] *= spread;
+        if (ai->l1num < IDEAL_MAX_GENERATORS_NUM)
+        {
+          for (i = ai->l1num; i > 0; i--) ai->l1[i] = ai->l1[i-1];
+          ai->l1num++;
+          ai->l1[0] = newgcd;
+          loop = 1;
+        } else {
+          printf ("Warning: no space left to add new generator!\n");
+          free (newgcd);
+        }
+      }
+    }
+  }
+  if (principal && ai->l1num > 1)
+  {
+    spread = 1;
     for (i = 1; i < ai->l1num; i++)
     {
       newgcd = laurent_gcd (spread, ai->l1[0], ai->l1[i], &lspread);
