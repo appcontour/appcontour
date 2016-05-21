@@ -153,6 +153,7 @@ alexander (struct presentation *p)
       case 3:
       case 4:
       ai = laurent_notfirst_elementary_ideal (p, gconj, foxd - 1);
+      if (ai->l1num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
       alexander_fromideal (ai);
       break;
 
@@ -928,6 +929,10 @@ laurent_simplify_ideal (struct alexanderideal *ai)
       }
     }
   }
+
+  for (i = 0; i < ai->l1num; i++)
+    laurent_canonifysign (ai->l1[i]);
+
   if (principal && ai->l1num > 1)
   {
     spread = 1;
@@ -1076,6 +1081,7 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
   int s2first = 1;
   int s2last = 1;
   int numreductions = 0;
+  int maxc2size, safesize;
 
   assert (l1);
   assert (l2);
@@ -1084,8 +1090,19 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
   c1 = l1->stem[0];
   c2first = l2->stem[0];
   assert (c2first);
+  maxc2size = 0;
+  for (i = 0; i <= l2->stemdegree; i++) if (abs(l2->stem[i]) > maxc2size) maxc2size = abs(l2->stem[i]);
 
   quotient = c1/c2first;
+  safesize = INT_MAX;
+  if (quotient) safesize /= abs(quotient);
+  safesize /= 2;
+  if (maxc2size > safesize)
+  {
+    printf ("FATAL: above max allowed int size!\n");
+    exit (1234);
+  }
+
   if (c1 == c2first*quotient)
   {
     for (i = 0; i <= l2->stemdegree; i++)

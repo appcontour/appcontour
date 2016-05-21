@@ -4,6 +4,7 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -168,7 +169,13 @@ void
 euclid_alfabetatk (struct lpol *a, struct lpol *b, int alpha, int beta, int k)
 {
   int i;
+  int maxca = 0;
+  int maxcb = 0;
 
+  for (i = a->start; i < a->end; i++) if (maxca < abs(a->buf[i])) maxca = abs(a->buf[i]);
+  for (i = b->start; i < b->end; i++) if (maxcb < abs(b->buf[i])) maxcb = abs(b->buf[i]);
+  if (alpha) assert (maxca < (INT_MAX/abs(alpha)/2));
+  if (beta) assert (maxcb < (INT_MAX/abs(beta)/2));
   assert (b->start + k >= 0);
   assert (b->end + k < bufsize);
   for (i = a->start; i < a->end; i++) a->buf[i] *= alpha;
