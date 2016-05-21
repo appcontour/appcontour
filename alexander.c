@@ -922,6 +922,7 @@ laurent_simplify_ideal (struct alexanderideal *ai)
  */
 
 int laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2);
+void laurent_sort_entries (int num, struct laurentpoly *l[]);
 
 int
 laurent_try_simplify_ideal (struct alexanderideal *ai)
@@ -938,6 +939,7 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
 
   if (ai->l1num <= 1) return (0); // at least two generators...
 
+  laurent_sort_entries (ai->l1num, ai->l1);
   for (i = 0; i < ai->l1num; i++)
   {
     if (ai->l1[i] == 0)
@@ -1150,6 +1152,72 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
   }
 
   return (numreductions);
+}
+
+void laurent_sort_entries_buf (int num, struct laurentpoly *l[], struct laurentpoly *buffer[]);
+
+void
+laurent_sort_entries (int num, struct laurentpoly *l[])
+{
+  struct laurentpoly **buffer;
+
+  if (num <= 1) return;
+
+  buffer = (struct laurentpoly **) malloc (num * sizeof (struct laurentpoly *));
+
+  laurent_sort_entries_buf (num, l, buffer);
+  free (buffer);
+}
+
+void
+laurent_sort_entries_buf (int num, struct laurentpoly *l[], struct laurentpoly *buffer[])
+{
+  struct laurentpoly *li, *lj;
+  int i, j, k, s;
+  int half, iwins;
+
+  if (num <= 1) return;
+
+  half = num/2;
+
+  /*
+   * sort each half
+   */
+  laurent_sort_entries_buf (half, l, buffer);
+  laurent_sort_entries_buf (num - half, l + half, buffer);
+
+  /*
+   * merge...
+   */
+
+  i = 0; j = half; k = 0;
+  while (k < num)
+  {
+    /* compare i and j entries */
+    if (i >= half) {buffer[k++] = l[j++]; continue;}
+    if (j >= num) {buffer[k++] = l[i++]; continue;}
+    if (l[i] == 0) {buffer[k++] = l[i++]; continue;}
+    if (l[j] == 0) {buffer[k++] = l[j++]; continue;}
+    if (l[i]->stemdegree < l[j]->stemdegree) {buffer[k++] = l[i++]; continue;}
+    if (l[i]->stemdegree > l[j]->stemdegree) {buffer[k++] = l[j++]; continue;}
+    li = l[i];
+    lj = l[j];
+    iwins = 1;
+    for (s = 0; s <= li->stemdegree; s++)
+    {
+      if (abs (li->stem[s]) < abs (lj->stem[s])) break;
+      if (abs (li->stem[s]) > abs (lj->stem[s])) {iwins = 0; break;}
+      if (li->stem[s] < lj->stem[s]) break;
+      if (li->stem[s] > lj->stem[s]) {iwins = 0; break;}
+    }
+    if (iwins) {buffer[k++] = l[i++]; continue;}
+    buffer[k++] = l[j++];
+  }
+  assert (i == half);
+  assert (j == num);
+  assert (k == num);
+
+  for (k = 0; k < num; k++) l[k] = buffer[k];
 }
 
 /*
