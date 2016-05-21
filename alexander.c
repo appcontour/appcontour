@@ -890,7 +890,7 @@ laurent_simplify_ideal (struct alexanderideal *ai)
 {
   struct laurentpoly *oldgcd, *newgcd;
   extern int principal, verbose;
-  int i, spread, lspread;
+  int last, i, spread, lspread;
   int loop = 1;
 
   while (loop)
@@ -901,16 +901,18 @@ laurent_simplify_ideal (struct alexanderideal *ai)
     if (ai->l1num > 1)
     {
       spread = 1;
-      newgcd = laurent_gcd (spread, ai->l1[0], ai->l1[1], &lspread);
+      last = ai->l1num - 1;
+      newgcd = laurent_gcd (spread, ai->l1[last], ai->l1[last-1], &lspread);
       spread = lspread;
-      for (i = 2; i < ai->l1num; i++)
+      for (i = last-2; i >= 0; i--)
       {
         oldgcd = newgcd;
         newgcd = laurent_gcd (spread, oldgcd, ai->l1[i], &lspread);
         spread = lspread;
         free (oldgcd);
       }
-      if (newgcd->stemdegree >= ai->l1[0]->stemdegree)
+      if (newgcd->stemdegree > ai->l1[0]->stemdegree ||
+          (newgcd->stemdegree == ai->l1[0]->stemdegree && abs(spread*newgcd->stem[0]) >= abs(ai->l1[0]->stem[0])) )
       {
         free (newgcd);
       } else {
