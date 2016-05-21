@@ -2,7 +2,7 @@
  * definitions for alexander polynomial
  */
 
-#define IDEAL_MAX_GENERATORS_NUM 10
+#define IDEAL_MAX_GENERATORS_NUM 20
 
 /*
  * if indets == 0, then val holds the constant value
