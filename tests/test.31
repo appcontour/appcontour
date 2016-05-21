@@ -31,9 +31,13 @@
 # 10_157: {7,t+1}
 # 10_163: {2,t^2+t+1}
 
-echo "first elementary ideal"
-./contour --out alexander --foxd 1 examples/knots/knot_8_18.knot -q
+list="8_18 9_35"
 
-echo "second elementary ideal"
-./contour --out alexander --foxd 2 examples/knots/knot_8_18.knot -q
+for knot in $list
+do
+  echo "first elementary ideal of knot $knot"
+  ./contour --out alexander --foxd 1 examples/knots/knot_${knot}.knot -q
 
+  echo "second elementary ideal"
+  ./contour --out alexander --foxd 2 examples/knots/knot_${knot}.knot -q
+done

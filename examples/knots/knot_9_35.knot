@@ -1,0 +1,13 @@
+#
+# X is overpass ne-sw
+#
+
+knot {
+  ^   ^  ;
+|   x   |;
+ X ^ ^ X ;
+| x x x |;
+ X U U X ;
+|   x   |;
+  U   U  ;
+}

@@ -1,4 +1,12 @@
-first elementary ideal
+first elementary ideal of knot 8_18
 +1-5t+10t^2-13t^3+10t^4-5t^5+t^6;
 second elementary ideal
 +1-t+t^2;
+first elementary ideal of knot 9_35
++7-13t+7t^2;
+second elementary ideal
+# *** Warning: result can be noncanonical ***
+Ideal [
++3;
++1+t;
+]
