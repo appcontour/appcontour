@@ -1,0 +1,14 @@
+#
+# http://www.indiana.edu/~knotinfo/diagram_display/diagram_display_12a_0554.html
+#
+knot {
+    ^  ^   ;
+  |   x  | ;
+ |   |  X  ;
+| ^ ^ x ^ |;
+ X X X X X ;
+| U U x x |;
+   X  || U ;
+  |  x |   ;
+   U  U    ;
+}
