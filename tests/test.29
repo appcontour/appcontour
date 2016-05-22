@@ -1,13 +1,7 @@
-#
-# test consistency of extended euclidean algorithm
-#
-# case where the Alexander matrix is 3x3 (not implemented yet)
+# case where the Alexander matrix is 3x3
 
 pqlist="4,-2 6,-2"
 
-#
-# these values lead to intermediate integers that are toot large
-# 6,-4 8,-2"
 #
 
 for pq in $pqlist

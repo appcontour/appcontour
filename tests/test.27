@@ -3,7 +3,7 @@
 #
 
 echo "Finding surgery..."
-command=$(./utils/kanenobu.sh -1 -3 | ./contour wrap | ./contour suggest_p_surgery -q)
+command=$(./utils/kanenobu.sh 1 3 | ./contour wrap | ./contour suggest_p_surgery -q)
 
 if ! echo "$command" | grep -q "^contour "
 then
@@ -16,8 +16,8 @@ echo "Contour arguments to apply surgery: $command"
 
 echo "Applying surgery and computing Alexander polynomial..."
 
-./utils/kanenobu.sh -1 -3 | ./contour wrap | ./contour $command | ./contour --in alexander -q
+./utils/kanenobu.sh 1 3 | ./contour wrap | ./contour $command | ./contour --in alexander -q
 
 echo "Now using the new option --autosurgery..."
 
-./utils/kanenobu.sh -1 -3 | ./contour --out alexander -q --autosurgery
+./utils/kanenobu.sh 1 3 | ./contour --out alexander -q --autosurgery
