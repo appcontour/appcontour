@@ -13,6 +13,8 @@
 #include "laurent.h"
 #include "parser.h"
 
+static int int_overflow_encountered = 0;
+
 int
 alexander (struct presentation *p)
 {
@@ -902,6 +904,11 @@ laurent_simplify_ideal (struct alexanderideal *ai)
     {
       spread = 1;
       last = ai->l1num - 1;
+      if (int_overflow_encountered)
+      {
+        printf ("WARNING: inhibiting gcd computation due to integer size\n");
+        break;
+      }
       newgcd = laurent_gcd (spread, ai->l1[last], ai->l1[last-1], &lspread);
       spread = lspread;
       for (i = last-2; i >= 0; i--)
@@ -1098,11 +1105,12 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
   quotient = c1/c2first;
   safesize = INT_MAX;
   if (quotient) safesize /= abs(quotient);
-  safesize /= 2;
+  safesize /= 4;
   if (maxc2size > safesize)
   {
-    printf ("FATAL: above max allowed int size!\n");
-    exit (1234);
+    if (int_overflow_encountered++ == 0)
+      printf ("WARNING: above max allowed int size, cannot complete simplification\n");
+    return (0);
   }
 
   if (c1 == c2first*quotient)

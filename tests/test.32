@@ -1,0 +1,14 @@
+#
+# test for the computation of the second elementary ideal
+#
+# treat specially the worse Kanenobu 10 -2
+# a reflection does not change the group of the knot.  In this case that
+# is sufficient to avoid (somehow) the large integer blow up.
+#
+
+p=10
+q=-2
+
+echo "Checking with kanenobu $p $q"
+./utils/kanenobu.sh $p $q | ./contour frontback | ./contour --out alexander --foxd 2 -q
+
