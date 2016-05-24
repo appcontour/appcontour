@@ -1,5 +1,6 @@
 #
 # http://www.indiana.edu/~knotinfo/diagram_display/diagram_display_12a_0554.html
+# dt notation: [4 12 16 14 18 22 2 6 20 8 24 10]
 #
 knot {
     ^  ^   ;
