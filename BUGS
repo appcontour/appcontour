@@ -1,3 +1,11 @@
+2016.05.24
+
+new utility dowker-thistlethwaite to decode dt-code.
+It does not work with non-alternating knots, example:
+
+dowker_thistlethwaite 4 8 -12 2 -14 -6 -16 -10
+
+
 2016.05.21
 
 $ ./utils/kanenobu.sh 10 -2 | ./contour --out alexander --foxd 2
