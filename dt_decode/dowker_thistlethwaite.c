@@ -52,7 +52,7 @@ main (int argc, char *argv[])
     abscode[curoddnode] = abs(rcode);
     dtsign[curoddnode] = 1;
     if (rcode < 0) dtsign[curoddnode] = -1;
-    abscode[rcode] = curoddnode;
+    abscode[abs(rcode)] = curoddnode;
     curoddnode += 2;
   }
   curevennode = 2;
