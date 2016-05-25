@@ -13,6 +13,7 @@ static int numregions;
 static int *abscode;
 static int *dtsign;
 static int *regionsign;
+static int *tagged;
 
 void reconstruct_sign (void);
 int nextlabel (int label);
@@ -25,6 +26,10 @@ void display_arcs_from_nodes (void);
 void display_regions (void);
 void display_regions_from_arcs (void);
 void display_regions_from_nodes (void);
+void first_completion (int stackdim);
+int next_completion (void);
+int isconsistent (void);
+int tour_of_region (int label, int velocity);
 
 int
 main (int argc, char *argv[])
@@ -42,6 +47,7 @@ main (int argc, char *argv[])
   abscode = (int *) malloc ((numlabels+1)*(sizeof (int)));
   dtsign = (int *) malloc ((numlabels+1)*(sizeof (int)));
   regionsign = (int *) malloc ((numlabels+1)*(sizeof (int)));
+  tagged = (int *) malloc ( (2*numnodes+1) * sizeof(int) );
   for (i = 1; i <= numlabels; i++) regionsign[i] = 0;
 
   curoddnode = 1;
@@ -84,6 +90,10 @@ main (int argc, char *argv[])
   display_regions_from_arcs ();
   display_regions_from_nodes ();
   printf ("}\n");
+  free (tagged);
+  free (regionsign);
+  free (dtsign);
+  free (abscode);
 }
 
 /*
@@ -298,11 +308,8 @@ display_regions_from_nodes ()
 void
 reconstruct_sign (void)
 {
-  int *tagged;
   int i, j, node, expansions, totexpansions = 0;
   int insist;
-
-  tagged = (int *) malloc ( (2*numnodes+1) * sizeof(int) );
 
   insist = 1;
   while (insist)
@@ -330,8 +337,20 @@ reconstruct_sign (void)
       }
     }
   }
-  free (tagged);
-  assert (totexpansions == numnodes - 1);
+  if (totexpansions < numnodes - 1)
+  {
+printf ("totexpansions: %d instead of %d\n", totexpansions, numnodes - 1);
+    first_completion (numnodes - 1 - totexpansions);
+    while (! isconsistent () )
+    {
+      if (! next_completion () )
+      {
+        printf ("Cannot find any consistent knot diagram!\n");
+        exit (11);
+      }
+    }
+  }
+  //assert (totexpansions == numnodes - 1);
   // printf ("totexpansions: %d\n", totexpansions);
 
   //for (i = 1; i <= numlabels; i++)
@@ -380,6 +399,112 @@ inherit (int startlabel)
     }
   }
   return (expansions);
+}
+
+/*
+ *
+ */
+
+static int *stack;
+static int *stacknode;
+static int stackpt;
+static int stackdim;
+
+void
+first_completion (int stdim)
+{
+  int i, label;
+
+  stackdim = stdim;
+  stack = (int *) malloc (stackdim * sizeof (int));
+  stacknode = (int *) malloc (stackdim * sizeof (int));
+  for (i = 0; i < numnodes; i++)
+  {
+    label = 2*i+1;
+    if (regionsign[label]) continue;
+    stack[stackpt] = 1;
+    stacknode[stackpt++] = i;
+    assert (stackpt <= stackdim);
+    regionsign[label] = 1;
+    regionsign[abscode[label]] = -1;
+  }
+  assert (stackpt == stackdim);
+}
+
+/*
+ *
+ */
+
+int
+next_completion (void)
+{
+  int node, label;
+
+  while (stackpt > 0 && stack[--stackpt] < 0);
+  if (stack[stackpt] < 0)
+  {
+    /* no more configurations possible */
+    free (stack);
+    free (stacknode);
+    return (0);
+  }
+  while (stackpt < stackdim)
+  {
+    stack[stackpt] = -stack[stackpt];
+    node = stacknode[stackpt++];
+    label = 2*node + 1;
+    regionsign[label] *= -1;  
+    regionsign[abscode[label]] *= -1;  
+  }
+  return (1);
+}
+
+/*
+ *
+ */
+
+int
+isconsistent (void)
+{
+  int i;
+
+  for (i = 1; i <= numlabels; i++) tagged[i] = 0;
+
+  /* each arc should be walked once positively and once negatively
+   * tag 0
+   * tag 1 +
+   * tag 2 -
+   * tag 3 +-
+   */
+
+  while (1)
+  {
+    for (i = 1; i <= numlabels; i++)
+    {
+      if (tagged[i] < 3) break;
+    }
+    if (i > numlabels) break; /* complete tour! everything fine */
+
+    /* i is an arc that has not been walked twice */
+    if (tagged[i] == 0 || tagged[i] == 2)
+    {
+      if (!tour_of_region (i, 1)) return (0);  /* something went wrong during tour */
+    } else {
+      if (!tour_of_region (i, -1)) return (0);  /* something went wrong during tour */
+    }
+  }
+  return (1);
+}
+
+/*
+ * return 0 if something goes wrong
+ */
+
+int
+tour_of_region (int label, int velocity)
+{
+  printf ("NOT IMPLEMENTED\n");
+  return (0);
 }
 
 int
