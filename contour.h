@@ -68,6 +68,7 @@ struct global_data {
 #define MSPTMAX 4
 
 #define FOXD_UNDEF (-1000)
+#define FOXD_MAXINTERESTING (-1001)
 #define FOXD_MINVALID (-999)
 #define FOXD_KNOT 1
 #define FOXD_LINK 1

@@ -1,3 +1,12 @@
+2016.05.24
+
+$ ./dt_decode/dowker_thistlethwaite 4 8 14 10 2 16 6 12
+or worse (missing 4 nodes):
+$ ./dt_decode/dowker_thistlethwaite 4, 8, 14, 10, 2, 20, 16, 6, 22, 12, 18
+dowker_thistlethwaite: dowker_thistlethwaite.c:334: reconstruct_sign: Assertion `totexpansions == numnodes - 1' failed.
+
+
+
 2016.05.21
 
 $ ./utils/kanenobu.sh 10 -2 | ./contour --out alexander --foxd 2

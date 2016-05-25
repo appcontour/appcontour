@@ -57,6 +57,13 @@ alexander (struct presentation *p)
     printf ("Computation of order ideal not implemented\n");
     return (0);
   }
+  if (foxd == FOXD_MAXINTERESTING)
+  {
+    printdvalue = 1;
+    foxd = numcols;
+    if (foxd < 1) foxd = 1;
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d (generators: %d)\n#\n", foxd, p->gennum);
+  }
   if (foxd == FOXD_UNDEF)
   {
     printdvalue = 1;

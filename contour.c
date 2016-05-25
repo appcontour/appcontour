@@ -185,6 +185,11 @@ main (int argc, char *argv[])
       internalcheck++;
       continue;
     }
+    if (strcmp(argv[i],"--maxd") == 0)
+    {
+      foxd = FOXD_MAXINTERESTING;
+      continue;
+    }
     if (strcmp(argv[i],"--debug") == 0)
     {
       debug++;
