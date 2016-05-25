@@ -30,6 +30,7 @@ void first_completion (int stackdim);
 int next_completion (void);
 int isconsistent (void);
 int tour_of_region (int label, int velocity);
+void walk_left (int *labelpt, int *velocitypt);
 
 int
 main (int argc, char *argv[])
@@ -73,8 +74,8 @@ main (int argc, char *argv[])
   regionsign[1] = 1;
   regionsign[abscode[1]] = -regionsign[1];
 
-  reconstruct_sign ();
   numregions = 2 + numlabels - numnodes;
+  reconstruct_sign ();
   // printf ("numregions: %d\n", numregions);
   printf ("#\n# tubular knot with Dowker-Thistletwait notation\n");
   printf ("# [");
@@ -339,10 +340,11 @@ reconstruct_sign (void)
   }
   if (totexpansions < numnodes - 1)
   {
-printf ("totexpansions: %d instead of %d\n", totexpansions, numnodes - 1);
+    //printf ("totexpansions: %d instead of %d\n", totexpansions, numnodes - 1);
     first_completion (numnodes - 1 - totexpansions);
     while (! isconsistent () )
     {
+      //printf ("completion is not consistent...\n");
       if (! next_completion () )
       {
         printf ("Cannot find any consistent knot diagram!\n");
@@ -467,6 +469,7 @@ int
 isconsistent (void)
 {
   int i;
+  int countregions = 0;
 
   for (i = 1; i <= numlabels; i++) tagged[i] = 0;
 
@@ -485,6 +488,7 @@ isconsistent (void)
     }
     if (i > numlabels) break; /* complete tour! everything fine */
 
+    countregions++;
     /* i is an arc that has not been walked twice */
     if (tagged[i] == 0 || tagged[i] == 2)
     {
@@ -493,6 +497,9 @@ isconsistent (void)
       if (!tour_of_region (i, -1)) return (0);  /* something went wrong during tour */
     }
   }
+  if (countregions != numregions) return (0);
+  //printf ("correct number of regions!\n");
+  /* we NEED to find a test that works for sure! This is not enough */
   return (1);
 }
 
@@ -501,10 +508,54 @@ isconsistent (void)
  */
 
 int
-tour_of_region (int label, int velocity)
+tour_of_region (int startlabel, int startvelocity)
 {
-  printf ("NOT IMPLEMENTED\n");
+  int label = startlabel;
+  int velocity = startvelocity;
+
+  while (1)
+  {
+    if (velocity > 0)
+    {
+      if ((tagged[label] & 1)) return (0); /* should not be already visited */
+      tagged[label] += 1;
+    } else {
+      if ((tagged[label] & 2)) return (0);
+      tagged[label] += 2;
+    }
+    walk_left (&label, &velocity);
+    if (label == startlabel && velocity == startvelocity) return (1);
+  }
   return (0);
+}
+
+/*
+ * walk around a region conterclockwise
+ */
+
+void
+walk_left (int *labelpt, int *velocitypt)
+{
+  if (*velocitypt > 0)
+  {
+    if (regionsign[*labelpt] > 0)
+    {
+      /* velocity remains positive */
+      *labelpt = nextlabel(abscode[*labelpt]);
+    } else {
+      *velocitypt = - *velocitypt;
+      *labelpt = abscode[*labelpt];
+    }
+  } else {
+    if (regionsign[prevlabel(*labelpt)] > 0)
+    {
+      /* velocity remains negative */
+      *labelpt = abscode[prevlabel(*labelpt)];
+    } else {
+      *velocitypt = - *velocitypt;
+      *labelpt = nextlabel(abscode[prevlabel(*labelpt)]);
+    }
+  }
 }
 
 int
