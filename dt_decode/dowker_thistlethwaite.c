@@ -14,6 +14,12 @@ static int *abscode;
 static int *dtsign;
 static int *regionsign;
 static int *tagged;
+static int *stack;
+static int *stacknode;
+static int *marknodes;
+static int stackpt;
+static int stackdim;
+
 
 void reconstruct_sign (void);
 int nextlabel (int label);
@@ -49,13 +55,18 @@ main (int argc, char *argv[])
   dtsign = (int *) malloc ((numlabels+1)*(sizeof (int)));
   regionsign = (int *) malloc ((numlabels+1)*(sizeof (int)));
   tagged = (int *) malloc ( (2*numnodes+1) * sizeof(int) );
+  marknodes = (int *) malloc ( (2*numnodes+1) * sizeof(int) );
   for (i = 1; i <= numlabels; i++) regionsign[i] = 0;
 
   curoddnode = 1;
   for (i = 0; i < numnodes; i++)
   {
     rcode = atoi(argv[i+1]);
-    assert ((rcode/2)*2 == rcode);
+    if ((rcode/2)*2 != rcode)
+    {
+      printf ("Only even values allowed!\n");
+      exit (4);
+    }
     abscode[curoddnode] = abs(rcode);
     dtsign[curoddnode] = 1;
     if (rcode < 0) dtsign[curoddnode] = -1;
@@ -67,6 +78,19 @@ main (int argc, char *argv[])
   {
     dtsign[curevennode] = -dtsign[abscode[curevennode]];
     curevennode += 2;
+  }
+  for (i = 1; i <= numlabels; i++)
+  {
+    if (abscode[i] == 0)
+    {
+      printf ("Must use all even number from 2 to %d\n", numlabels);
+      exit (5);
+    }
+    if (abs(i - abscode[i]) <= 1)
+    {
+      printf ("No tight loop allowed: %d %d\n", i, abscode[i]);
+      exit (6);
+    }
   }
 
   /* decide arbitrarily the region sign of a node */
@@ -310,7 +334,7 @@ void
 reconstruct_sign (void)
 {
   int i, j, node, expansions, totexpansions = 0;
-  int insist;
+  int numconsistent, insist;
 
   insist = 1;
   while (insist)
@@ -341,16 +365,34 @@ reconstruct_sign (void)
   if (totexpansions < numnodes - 1)
   {
     //printf ("totexpansions: %d instead of %d\n", totexpansions, numnodes - 1);
+    /* cycle twice over possible completions
+     * the first time only to count the number of consistent completions
+     */
+    numconsistent = 0;
+    first_completion (numnodes - 1 - totexpansions);
+    do
+    {
+      if (isconsistent ()) numconsistent++;
+    } while (next_completion());
+    if (numconsistent > 1)
+    {
+      printf ("More than one (%d) consistent completion found!\n", numconsistent);
+      printf ("maybe this is a compound knot\n");
+      exit (2);
+    }
+    if (numconsistent < 1)
+    {
+      printf ("No consistent completions found. Perhaps this is a composite knot\n");
+      exit (3);
+    }
     first_completion (numnodes - 1 - totexpansions);
     while (! isconsistent () )
     {
       //printf ("completion is not consistent...\n");
-      if (! next_completion () )
-      {
-        printf ("Cannot find any consistent knot diagram!\n");
-        exit (11);
-      }
+      if (! next_completion () ) assert (0);
     }
+    free (stack);
+    free (stacknode);
   }
   //assert (totexpansions == numnodes - 1);
   // printf ("totexpansions: %d\n", totexpansions);
@@ -407,11 +449,6 @@ inherit (int startlabel)
  *
  */
 
-static int *stack;
-static int *stacknode;
-static int stackpt;
-static int stackdim;
-
 void
 first_completion (int stdim)
 {
@@ -420,6 +457,7 @@ first_completion (int stdim)
   stackdim = stdim;
   stack = (int *) malloc (stackdim * sizeof (int));
   stacknode = (int *) malloc (stackdim * sizeof (int));
+  stackpt = 0;
   for (i = 0; i < numnodes; i++)
   {
     label = 2*i+1;
@@ -440,12 +478,20 @@ first_completion (int stdim)
 int
 next_completion (void)
 {
-  int node, label;
+  int i, node, label;
 
   while (stackpt > 0 && stack[--stackpt] < 0);
   if (stack[stackpt] < 0)
   {
     /* no more configurations possible */
+    /* reset completions, for the benefit of subsequent call */
+    for (i = 0; i < stackdim; i++)
+    {
+      label = 2*stacknode[i] + 1;
+      regionsign[label] = 0;
+      regionsign[abscode[label]] = 0;
+    }
+    stackpt = 0;
     free (stack);
     free (stacknode);
     return (0);
@@ -512,9 +558,16 @@ tour_of_region (int startlabel, int startvelocity)
 {
   int label = startlabel;
   int velocity = startvelocity;
+  int i, node_to_tag;
+
+  for (i = 1; i <= numlabels; i++) marknodes[i] = 0;  /* will mark traversed labels */
 
   while (1)
   {
+    node_to_tag = label;
+    if (velocity < 0) node_to_tag = prevlabel(label);
+    if (marknodes[node_to_tag] != 0) return (0);
+    marknodes[node_to_tag] = 1;
     if (velocity > 0)
     {
       if ((tagged[label] & 1)) return (0); /* should not be already visited */
