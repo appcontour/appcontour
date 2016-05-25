@@ -161,6 +161,8 @@ alexander (struct presentation *p)
       case 2:
       case 3:
       case 4:
+      case 5:
+      case 6:
       ai = laurent_notfirst_elementary_ideal (p, gconj, foxd - 1);
       if (ai->l1num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
       alexander_fromideal (ai);
@@ -700,15 +702,15 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
     break;
 
     case 1:
-    ai->l1num = matrix->numrows;
-    if (matrix->numcols == matrix->numrows) ai->l1num *= ai->l1num;
-    if (ai->l1num > IDEAL_MAX_GENERATORS_NUM)
-    {
-      printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
-      laurent_free_matrix (matrix);
-      free (ai);
-      return (0);
-    }
+    //ai->l1num = matrix->numrows;
+    //if (matrix->numcols == matrix->numrows) ai->l1num *= ai->l1num;
+    //if (ai->l1num > IDEAL_MAX_GENERATORS_NUM)
+    //{
+    //  printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
+    //  laurent_free_matrix (matrix);
+    //  free (ai);
+    //  return (0);
+    //}
     idx = 0;
     for (i = 0; i < matrix->numrows; i++)
     {
@@ -716,11 +718,21 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
       {
         matrixcolumn = matrix->columns[j];
         l = matrixcolumn[i];
-        assert (idx < ai->l1num);
-        ai->l1[idx++] = laurent_dup(l);
+        if (l == 0) continue;
+        if (idx >= IDEAL_MAX_GENERATORS_NUM)
+        {
+          printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
+          laurent_free_matrix (matrix);
+          free (ai);
+          return (0);
+        } else {
+          // assert (idx < ai->l1num);
+          ai->l1[idx++] = laurent_dup(l);
+        }
       }
     }
-    while (idx < ai->l1num) ai->l1[idx++] = 0;
+    ai->l1num = idx;
+    //while (idx < ai->l1num) ai->l1[idx++] = 0;
     break;
 
     default:
