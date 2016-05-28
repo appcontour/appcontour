@@ -319,6 +319,10 @@ struct region *sortregionlist (struct region *region);
 struct sketch *readcontour (FILE *file);
 struct sketch *readsketch (FILE *file);
 struct sketch *readmorse (FILE *file);
+struct sketch *readdtcode (FILE *file);
+struct sketch *readknotscape (FILE *file);
+void insert_arc_in_list (struct arc *a, struct arc *list);
+void insert_region_in_list (struct region *region, struct region *list);
 int readrow (FILE *file, struct sketch *sketch, 
              struct border *actregions[], int num, int vecdim);
 int getcrossinfo (FILE *file);

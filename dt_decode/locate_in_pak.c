@@ -127,7 +127,7 @@ printcode (int codelen, int dtcode[], int dtpositive[])
   int sum1 = 0;
   int sum2 = 0;
 
-  if (!quiet) printf ("[");
+  if (!quiet) printf ("dtcode {[");
   for (i = 0; i < codelen; i++)
   {
     sign = 2*dtpositive[i]-1;
@@ -137,5 +137,5 @@ printcode (int codelen, int dtcode[], int dtpositive[])
   }
   sum1 += codelen;
   sign = 2*dtpositive[codelen]-1;
-  printf ("%d%s\n", sign*(2*(sum1 - sum2) + 2), (quiet)?"":"]");
+  printf ("%d%s\n", sign*(2*(sum1 - sum2) + 2), (quiet)?"":"]}");
 }

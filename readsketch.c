@@ -8,10 +8,6 @@ extern int debug;
 
 static int has_huffman_labelling = 0;
 
-/* local prototypes */
-void insert_arc_in_list (struct arc *a, struct arc *list);
-void insert_region_in_list (struct region *region, struct region *list);
-
 struct sketch *
 readsketch (FILE *file)
 {
