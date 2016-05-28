@@ -1,8 +1,33 @@
+/*
+ * BIG credits to the authors of knotscape for their knotTables
+ *
+        a        n
+------------------
+03      1        0
+04      1        0
+05      2        0
+06      3        0
+07      7        0
+08     18        3
+09     41        8
+10    123       42
+11    367      185
+12   1288      888
+13   4878     5110
+14  19536    27436
+15  85263   168030
+16 379799  1008906
+
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <limits.h>
 #include <string.h>
+
+static int quiet = 0;
 
 void printcode (int codelen, int dtcode[], int dtpositive[]);
 
@@ -14,10 +39,17 @@ main (int argc, char *argv[])
   int nodeid = 0;
   int i, crossings, codelen, alternate;
   char path[]="./";
-  char ch, filename[80];
+  char filename[80];
   FILE *pakfile;
   int *dtcode, *dtpositive;
-  int tailstart, high, low;
+  int ch, tailstart, high, low;
+
+  if (argc >= 2 && strcmp (argv[1], "-q") == 0)
+  {
+    quiet = 1;
+    argc--;
+    argv++;
+  }
 
   if (argc < 3)
   {
@@ -95,7 +127,7 @@ printcode (int codelen, int dtcode[], int dtpositive[])
   int sum1 = 0;
   int sum2 = 0;
 
-  printf ("[");
+  if (!quiet) printf ("[");
   for (i = 0; i < codelen; i++)
   {
     sign = 2*dtpositive[i]-1;
@@ -105,5 +137,5 @@ printcode (int codelen, int dtcode[], int dtpositive[])
   }
   sum1 += codelen;
   sign = 2*dtpositive[codelen]-1;
-  printf ("%d]\n", sign*(2*(sum1 - sum2) + 2));
+  printf ("%d%s\n", sign*(2*(sum1 - sum2) + 2), (quiet)?"":"]");
 }
