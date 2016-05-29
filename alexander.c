@@ -15,6 +15,10 @@
 
 static int int_overflow_encountered = 0;
 
+/* local prototypes */
+void print_matrix (struct laurentmatrix *matrix);
+void print_matrix_n_m (struct laurentpoly ***matrix, int nrows, int ncols);
+
 int
 alexander (struct presentation *p)
 {
@@ -254,12 +258,13 @@ alexander_fromideal (struct alexanderideal *ai)
       if (verbose)
       {
         printf ("Alexander ideal before canonization:\n{\n");
-        for (i = 0; i < ai->l1num; i++)
-        {
-          print_laurentpoly (ai->l1[i], 't');
-          printf (";\n");
-        }
-        printf ("}\n");
+	printout_ideal1 (ai, 0);
+        //for (i = 0; i < ai->l1num; i++)
+        //{
+        //  print_laurentpoly (ai->l1[i], 't');
+        //  printf (";\n");
+        //}
+        //printf ("}\n");
       }
       for (i = 0; i < ai->l1num; i++) laurent_canonify (ai->l1[i]);
       printout_ideal1 (ai, 0);
@@ -682,6 +687,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   struct laurentpoly *l, **matrixcolumn;
   int rank, i, j, jj, idx;
 
+  assert (corank >= 1);
   matrix = laurent_build_matrix (p, eliminate);
 
   assert (matrix->numcols <= matrix->numrows);
@@ -691,52 +697,50 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   ai = (struct alexanderideal *) malloc (sizeof (struct alexanderideal));
   ai->indets = 1;
   ai->spread = 1;
-  switch (rank)
+  if (rank <= corank)
   {
-    case 0:
-    ai->indets = 0;
-    ai->l1num = 1;
-    ai->val = 1;
-    laurent_free_matrix (matrix);
-    return (ai);
-    break;
-
-    case 1:
-    //ai->l1num = matrix->numrows;
-    //if (matrix->numcols == matrix->numrows) ai->l1num *= ai->l1num;
-    //if (ai->l1num > IDEAL_MAX_GENERATORS_NUM)
-    //{
-    //  printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
-    //  laurent_free_matrix (matrix);
-    //  free (ai);
-    //  return (0);
-    //}
-    idx = 0;
-    for (i = 0; i < matrix->numrows; i++)
+    switch (rank)
     {
-      for (j = 0; j < matrix->numcols; j++)
+      case 0:
+      ai->indets = 0;
+      ai->l1num = 1;
+      ai->val = 1;
+      laurent_free_matrix (matrix);
+      return (ai);
+      break;
+
+      case 1:
+      idx = 0;
+      for (i = 0; i < matrix->numrows; i++)
       {
-        matrixcolumn = matrix->columns[j];
-        l = matrixcolumn[i];
-        if (l == 0) continue;
-        if (idx >= IDEAL_MAX_GENERATORS_NUM)
+        for (j = 0; j < matrix->numcols; j++)
         {
-          printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
-          laurent_free_matrix (matrix);
-          free (ai);
-          return (0);
-        } else {
-          // assert (idx < ai->l1num);
-          ai->l1[idx++] = laurent_dup(l);
+          matrixcolumn = matrix->columns[j];
+          l = matrixcolumn[i];
+          if (l == 0) continue;
+          if (idx >= IDEAL_MAX_GENERATORS_NUM)
+          {
+            printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
+            laurent_free_matrix (matrix);
+            free (ai);
+            return (0);
+          } else {
+            // assert (idx < ai->l1num);
+            ai->l1[idx++] = laurent_dup(l);
+          }
         }
       }
-    }
-    ai->l1num = idx;
-    //while (idx < ai->l1num) ai->l1[idx++] = 0;
-    break;
+      ai->l1num = idx;
+      break;
 
-    default:
-    assert (corank >= 1);
+      default:
+      printf ("Rank larger than 1 is not yet implemented\n");
+      free (ai);
+      laurent_free_matrix (matrix);
+      return (0);
+      break;
+    }
+  } else { /* corank less than rank */
     if (corank > 1)
     {
       printf ("Corank larger than 1 is not yet implemented\n");
@@ -767,7 +771,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
         ai->l1num = idx;
       }
     }
-    break;
+    if (verbose) printout_ideal1 (ai, 0);
   }
 
   laurent_free_matrix (matrix);
@@ -784,7 +788,7 @@ laurent_build_matrix (struct presentation *p, int eliminate)
 {
   struct presentationrule *r;
   struct laurentmatrix *matrix;
-  struct laurentpoly *l, **matrixcolumn;
+  struct laurentpoly **matrixcolumn;
   int numcols = 0;
   int i, ii, j, numrows;
   extern int verbose, debug;
@@ -833,22 +837,34 @@ laurent_build_matrix (struct presentation *p, int eliminate)
    * stampa della matrice
    */
 
-  if (verbose)
-  {
-    printf ("Matrix entries:\n");
-    for (i = 0; i < numrows; i++)
-    {
-      for (j = 0; j < numcols; j++)
-      {
-        matrixcolumn = matrix->columns[j];
-        l = matrixcolumn[i];
-        print_laurentpoly (l, 't');
-        printf ("; \t");
-      }
-      printf ("\n");
-    }
-  }
+  if (verbose) print_matrix (matrix);
   return (matrix);
+}
+
+void
+print_matrix (struct laurentmatrix *matrix)
+{
+  print_matrix_n_m (matrix->columns, matrix->numrows, matrix->numcols);
+}
+
+void
+print_matrix_n_m (struct laurentpoly ***matrixcolumns, int numrows, int numcols)
+{
+  struct laurentpoly *l, **matrixcolumn;
+  int i, j;
+
+  printf ("Matrix entries:\n");
+  for (i = 0; i < numrows; i++)
+  {
+    for (j = 0; j < numcols; j++)
+    {
+      matrixcolumn = matrixcolumns[j];
+      l = matrixcolumn[i];
+      print_laurentpoly (l, 't');
+      printf ("; \t");
+    }
+    printf ("\n");
+  }
 }
 
 struct laurentmatrix *
@@ -1756,6 +1772,7 @@ laurent_common_factor2 (struct presentationrule *r, int x1, int x2)
 struct laurentpoly *
 laurent_compute_determinant (struct laurentpoly ***matrix, int n)
 {
+  extern int debug;
   int i, ii, jj, i1;
   int sign;
   struct laurentpoly *determinant = 0, *subdeterminant, *product, *sum;
@@ -1777,6 +1794,8 @@ laurent_compute_determinant (struct laurentpoly ***matrix, int n)
    * developping the determinant about the first column
    */
 
+  if (debug >= 2) printf ("Computing determinant of a %dx%d matrix\n", n, n);
+  if (debug >= 2) print_matrix_n_m (matrix, n, n);
   submatrix = (struct laurentpoly ***) malloc ( (n-1)*sizeof (struct laurentpoly **) );
   for (jj = 0; jj < n-1; jj++)
     submatrix[jj] = (struct laurentpoly **) malloc ( (n-1)*sizeof (struct laurentpoly *) );
@@ -1799,6 +1818,14 @@ laurent_compute_determinant (struct laurentpoly ***matrix, int n)
 
     subdeterminant = laurent_compute_determinant (submatrix, n-1);
     product = laurent_mul (subdeterminant, firstcolumn[i]);
+    if (debug >= 2)
+    {
+      printf ("Development row: %d of %d\n", i, n);
+      printf ("element: "); print_laurentpoly (firstcolumn[i], 't');
+      printf ("\nminor determinant: "); print_laurentpoly (subdeterminant, 't');
+      printf ("\n product: "); print_laurentpoly (product, 't');
+      printf ("\n");
+    }
     if (subdeterminant) free (subdeterminant);
     if (sign < 0) laurent_negate (product);
     sum = laurent_add (determinant, product);
@@ -1810,6 +1837,12 @@ laurent_compute_determinant (struct laurentpoly ***matrix, int n)
   for (jj = 0; jj < n-1; jj++) free (submatrix[jj]);
   free (submatrix);
 
+  if (debug >= 2)
+  {
+    printf ("Resulting determinant of %d matrix: ", n);
+    print_laurentpoly (determinant, 't');
+    printf ("\n");
+  }
   return (determinant);
 }
 
