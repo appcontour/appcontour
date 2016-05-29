@@ -685,8 +685,8 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   extern int verbose;
   struct alexanderideal *ai;
   struct laurentmatrix *matrix, *minor;
-  struct laurentpoly *l, **matrixcolumn;
-  int rank, i, j, jj, idx;
+  struct laurentpoly *l, **matrixcolumn, **columnj, **columnjj;
+  int rank, i, ii, j, jj, idx;
 
   assert (corank >= 1);
   matrix = laurent_build_matrix (p, eliminate);
@@ -731,6 +731,55 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
           }
         }
       }
+      ai->l1num = idx;
+      break;
+
+      case 2:
+      idx = 0;
+      minor = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
+      minor->numcols = 2;
+      minor->numrows = 2;
+      minor->columns = (struct laurentpoly ***) malloc (2*sizeof(struct laurentpoly **));
+      minor->columns[0] = (struct laurentpoly **) malloc (2*sizeof(struct laurentpoly *));
+      minor->columns[1] = (struct laurentpoly **) malloc (2*sizeof(struct laurentpoly *));
+      for (j = 0; j < matrix->numcols; j++)
+      {
+        columnj = matrix->columns[j];
+        for (jj = j+1; jj < matrix->numcols; jj++)
+        {
+          columnjj = matrix->columns[jj];
+          for (i = 0; i < matrix->numrows; i++)
+          {
+            for (ii = i+1; ii < matrix->numrows; ii++)
+            {
+              minor->columns[0][0] = columnj[i];
+              minor->columns[0][1] = columnj[ii];
+              minor->columns[1][0] = columnjj[i];
+              minor->columns[1][1] = columnjj[ii];
+              if (idx >= IDEAL_MAX_GENERATORS_NUM)
+              {
+                printf ("Fatal: too many generators (%d) for the ideal\n", idx);
+                free (minor->columns[0]);
+                free (minor->columns[1]);
+                free (minor->columns);
+                free (minor);
+                laurent_free_matrix (matrix);
+                free (ai);
+                return (0);
+              }
+              ai->l1[idx++] = laurent_compute_determinant (minor->columns, minor->numcols);
+              minor->columns[0][0] = 0;
+              minor->columns[0][1] = 0;
+              minor->columns[1][0] = 0;
+              minor->columns[1][1] = 0;
+            }
+          }
+        }
+      }
+      free (minor->columns[0]);
+      free (minor->columns[1]);
+      free (minor->columns);
+      free (minor);
       ai->l1num = idx;
       break;
 

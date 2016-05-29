@@ -12,8 +12,8 @@ echo "Computing first elementary ideal:"
 echo "$dtcode" | ./contour --out alexander --foxd 1
 echo "Computing second elementary ideal:"
 echo "$dtcode" | ./contour --out alexander --foxd 2
-#echo "Computing second elementary ideal:"
-#echo "$dtcode" | ./contour --out alexander --foxd 3
+echo "Computing third elementary ideal:"
+echo "$dtcode" | ./contour --out alexander --foxd 3
 echo "Computing fourth elementary ideal:"
 echo "$dtcode" | ./contour --out alexander --foxd 4
 
