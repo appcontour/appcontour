@@ -1018,6 +1018,13 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
   int i, j, spread, numreductions;
   extern int verbose;
 
+  if (verbose >= 2)
+  {
+    printf ("==============================\n");
+    printf ("Try simplify ideal: \n");
+    printout_ideal1 (ai, 0);
+    printf ("==============================\n");
+  }
   numreductions = spread = 0;
   if (ai->indets != 1 ) return (0);
 
@@ -1115,6 +1122,9 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
  * note that if l1 is a monomial multiple of l2, the result is a polynomial of stemdegree 0
  * and null coefficient, this should be tested by the caller function and the pointer to
  * the polynomial replaced by the null pointer
+ *
+ * TODO: the simplification strategy should be modified in order to avoid abnormal
+ * size increase of the coefficients in the middle...
  */
 
 int
@@ -1125,7 +1135,7 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
   int s2first = 1;
   int s2last = 1;
   int numreductions = 0;
-  int maxc2size, safesize;
+  int maxc2size, maxc1size, safesize;
 
   assert (l1);
   assert (l2);
@@ -1136,12 +1146,14 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
   assert (c2first);
   maxc2size = 0;
   for (i = 0; i <= l2->stemdegree; i++) if (abs(l2->stem[i]) > maxc2size) maxc2size = abs(l2->stem[i]);
+  maxc1size = 0;
+  for (i = 0; i <= l1->stemdegree; i++) if (abs(l1->stem[i]) > maxc1size) maxc1size = abs(l1->stem[i]);
 
   quotient = c1/c2first;
   safesize = INT_MAX;
   if (quotient) safesize /= abs(quotient);
-  safesize /= 4;
-  if (maxc2size > safesize)
+  safesize /= 2;
+  if (maxc2size > safesize || maxc1size > INT_MAX/2)
   {
     if (int_overflow_encountered++ == 0)
       printf ("WARNING: above max allowed int size, cannot complete simplification\n");
