@@ -26,6 +26,8 @@
 #include <assert.h>
 #include <limits.h>
 #include <string.h>
+#include <ctype.h>
+#include <unistd.h>
 
 static int quiet = 0;
 
@@ -38,8 +40,9 @@ main (int argc, char *argv[])
   int end = INT_MAX;
   int nodeid = 0;
   int i, crossings, codelen, alternate;
-  char path[]="./";
+  char path[]="knotTable/";
   char filename[80];
+  char *argpt;
   FILE *pakfile;
   int *dtcode, *dtpositive;
   int ch, tailstart, high, low;
@@ -51,34 +54,58 @@ main (int argc, char *argv[])
     argv++;
   }
 
-  if (argc < 3)
+  if (argc < 2)
   {
-    printf ("Usage: %s crossings a|n [startnode [endnode]]\n", argv[0]);
+    printf ("Usage: %s xx[a|n]_nnnnn[-nnnnn]\n", argv[0]);
     exit (1);
   }
-  crossings = atoi (argv[1]);
+  crossings = strtol (argv[1], &argpt, 10);
   assert (crossings >= 3 && crossings <= 16);
   dtcode = (int *) malloc (crossings *sizeof (int));
   dtpositive = (int *) malloc (crossings *sizeof (int));
-  alternate = -1;
-  if (strcmp (argv[2], "a") == 0) alternate = 1;
-  if (strcmp (argv[2], "n") == 0) alternate = 0;
-  if (alternate < 0)
+  switch (*argpt++)
   {
-    printf ("invalid alternate value: %s, valid values: a or n\n", argv[2]);
+    case 'a':
+    alternate = 1;
+    break;
+
+    case 'n':
+    alternate = 0;
+    break;
+
+    default:
+    printf ("Invalid character after number of crossings: %c (valid values: 'a' or 'n')\n", *argpt);
     exit (2);
+    break;
   }
-  if (argc > 3)
+  if (*argpt == '_')
   {
-    start = atoi (argv[3]);
-    if (argc > 4)
+    argpt++;
+    assert (isdigit(*argpt));
+    start = strtol (argpt, &argpt, 10);
+    if (*argpt == '-')
     {
-      end = atoi (argv[4]);
+      argpt++;
+      assert (isdigit (*argpt));
+      end = strtol (argpt, &argpt, 10);
+      assert (*argpt == 0);
     } else {
       end = start;
+      assert (*argpt == 0);
+    }
+  } else {
+    assert (*argpt == 0);
+  }
+  sprintf (filename, "%d%c.pak", crossings, (alternate)?'a':'n');
+  if (access (filename, R_OK))
+  {
+    sprintf (filename, "%s%d%c.pak", path, crossings, (alternate)?'a':'n');
+    if (access (filename, R_OK))
+    {
+      printf ("Cannot open file %s\n", filename);
+      exit (3);
     }
   }
-  sprintf (filename, "%s%d%c.pak", path, crossings, (alternate)?'a':'n');
 
   //printf ("filename = %s\n", filename);
 
