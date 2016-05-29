@@ -18,6 +18,7 @@ static int int_overflow_encountered = 0;
 /* local prototypes */
 void print_matrix (struct laurentmatrix *matrix);
 void print_matrix_n_m (struct laurentpoly ***matrix, int nrows, int ncols);
+int laurentpoly_linf (struct laurentpoly *l);
 
 int
 alexander (struct presentation *p)
@@ -928,7 +929,7 @@ laurent_simplify_ideal (struct alexanderideal *ai)
   struct laurentpoly *oldgcd, *newgcd;
   extern int principal, verbose;
   int last, i, spread, lspread;
-  int loop = 1;
+  int linf, maxcoef, loop = 1;
 
   while (loop)
   {
@@ -941,8 +942,17 @@ laurent_simplify_ideal (struct alexanderideal *ai)
       last = ai->l1num - 1;
       if (int_overflow_encountered)
       {
-        printf ("WARNING: inhibiting gcd computation due to integer size\n");
-        break;
+        /* chek if size of coefficients is too large */
+        maxcoef = 0;
+        for (i = 0; i < ai->l1num; i++)
+        {
+          if ((linf = laurentpoly_linf (ai->l1[i])) > maxcoef) maxcoef = linf;
+        }
+        if (maxcoef > (INT_MAX >> (4*sizeof(int))))
+        {
+          printf ("WARNING: inhibiting gcd computation due to integer size\n");
+          break;
+        }
       }
       newgcd = laurent_gcd (spread, ai->l1[last], ai->l1[last-1], &lspread);
       spread = lspread;
@@ -1127,6 +1137,8 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
  * size increase of the coefficients in the middle...
  */
 
+int l_safety_check (int f, int maxc);
+
 int
 laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
 {
@@ -1135,7 +1147,7 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
   int s2first = 1;
   int s2last = 1;
   int numreductions = 0;
-  int maxc2size, maxc1size, safesize;
+  int maxc2size;
 
   assert (l1);
   assert (l2);
@@ -1144,27 +1156,18 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
   c1 = l1->stem[0];
   c2first = l2->stem[0];
   assert (c2first);
-  maxc2size = 0;
-  for (i = 0; i <= l2->stemdegree; i++) if (abs(l2->stem[i]) > maxc2size) maxc2size = abs(l2->stem[i]);
-  maxc1size = 0;
-  for (i = 0; i <= l1->stemdegree; i++) if (abs(l1->stem[i]) > maxc1size) maxc1size = abs(l1->stem[i]);
+  maxc2size = laurentpoly_linf (l2);
 
   quotient = c1/c2first;
-  safesize = INT_MAX;
-  if (quotient) safesize /= abs(quotient);
-  safesize /= 2;
-  if (maxc2size > safesize || maxc1size > INT_MAX/2)
-  {
-    if (int_overflow_encountered++ == 0)
-      printf ("WARNING: above max allowed int size, cannot complete simplification\n");
-    return (0);
-  }
-
   if (c1 == c2first*quotient)
   {
-    for (i = 0; i <= l2->stemdegree; i++)
+    if ((l_safety_check (quotient, maxc2size)) == 0) return (0);
+    for (i = 0; i <= l2->stemdegree; i++) l1->stem[i] -= quotient*l2->stem[i];
+    if (laurentpoly_linf (l1) >= INT_MAX/2)
     {
-      l1->stem[i] -= quotient*l2->stem[i];
+      /* backtrack if coefficients grow too much */
+      for (i = 0; i <= l2->stemdegree; i++) l1->stem[i] += quotient*l2->stem[i];
+      return (0);
     }
     assert (l1->stem[0] == 0);
     while (l1->stem[0] == 0 && l1->stemdegree > 0)
@@ -1188,10 +1191,14 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
   quotient = c1/c2last;
   if (c1 == c2last*quotient)
   {
+    if ((l_safety_check (quotient, maxc2size)) == 0) return (0);
     k = l1->stemdegree - l2->stemdegree;
-    for (i = 0; i <= l2->stemdegree; i++)
+    for (i = 0; i <= l2->stemdegree; i++) l1->stem[i + k] -= quotient*l2->stem[i];
+    if (laurentpoly_linf (l1) >= INT_MAX/2)
     {
-      l1->stem[i + k] -= quotient*l2->stem[i];
+      /* backtrack if coefficients grow too much */
+      for (i = 0; i <= l2->stemdegree; i++) l1->stem[i + k] += quotient*l2->stem[i];
+      return (0);
     }
     assert (l1->stem[l1->stemdegree] == 0);
     while (l1->stem[l1->stemdegree] == 0 && l1->stemdegree > 0)
@@ -1223,44 +1230,89 @@ laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
   {
     if (l1->stem[k] > c2first/2)
     {
-      numreductions++;
       f = (l1->stem[k] - c2first/2 + c2first - 1)/c2first;
-      for (i = 0, j = k; i <= l2->stemdegree; i++)
+      if ((l_safety_check (f, maxc2size)) == 0) return (0);
+      for (i = 0, j = k; i <= l2->stemdegree; i++) l1->stem[j++] -= f*s2first*l2->stem[i];
+      if (laurentpoly_linf (l1) >= INT_MAX/2)
       {
-        l1->stem[j++] -= f*s2first*l2->stem[i];
+        /* backtrack if coefficients grow too much */
+        for (i = 0, j = k; i <= l2->stemdegree; i++) l1->stem[j++] += f*s2first*l2->stem[i];
+        return (0);
       }
+      numreductions++;
     }
     if (l1->stem[k] < -(c2first-1)/2)
     {
-      numreductions++;
       f = (-(c2first-1)/2 - l1->stem[k] + c2first - 1)/c2first;
-      for (i = 0, j = k; i <= l2->stemdegree; i++)
+      if ((l_safety_check (f, maxc2size)) == 0) return (0);
+      for (i = 0, j = k; i <= l2->stemdegree; i++) l1->stem[j++] += f*s2first*l2->stem[i];
+      if (laurentpoly_linf (l1) >= INT_MAX/2)
       {
-        l1->stem[j++] += f*s2first*l2->stem[i];
+        /* backtrack if coefficients grow too much */
+        for (i = 0, j = k; i <= l2->stemdegree; i++) l1->stem[j++] -= f*s2first*l2->stem[i];
+        return (0);
       }
+      numreductions++;
     }
     if (k >= (deltadegree+1)/2) continue;
     if (l1->stem[l1->stemdegree - k] > c2last/2)
     {
-      numreductions++;
       f = (l1->stem[l1->stemdegree - k] - c2last/2 + c2last - 1)/c2last;
-      for (i = 0, j = deltadegree - k; i <= l2->stemdegree; i++)
+      if ((l_safety_check (f, maxc2size)) == 0) return (0);
+      for (i = 0, j = deltadegree - k; i <= l2->stemdegree; i++) l1->stem[j++] -= f*s2last*l2->stem[i];
+      if (laurentpoly_linf (l1) >= INT_MAX/2)
       {
-        l1->stem[j++] -= f*s2last*l2->stem[i];
+        /* backtrack if coefficients grow too much */
+        for (i = 0, j = deltadegree - k; i <= l2->stemdegree; i++) l1->stem[j++] += f*s2first*l2->stem[i];
+        return (0);
       }
+      numreductions++;
     }
     if (l1->stem[l1->stemdegree - k] < -(c2last-1)/2)
     {
-      numreductions++;
       f = (-(c2last-1)/2 - l1->stem[l1->stemdegree - k] + c2last - 1)/c2last;
-      for (i = 0, j = deltadegree - k; i <= l2->stemdegree; i++)
+      if ((l_safety_check (f, maxc2size)) == 0) return (0);
+      for (i = 0, j = deltadegree - k; i <= l2->stemdegree; i++) l1->stem[j++] += f*s2last*l2->stem[i];
+      if (laurentpoly_linf (l1) >= INT_MAX/2)
       {
-        l1->stem[j++] += f*s2last*l2->stem[i];
+        /* backtrack if coefficients grow too much */
+        for (i = 0, j = deltadegree - k; i <= l2->stemdegree; i++) l1->stem[j++] -= f*s2first*l2->stem[i];
+        return (0);
       }
+      numreductions++;
     }
   }
 
   return (numreductions);
+}
+
+int
+laurentpoly_linf (struct laurentpoly *l)
+{
+  int i;
+  int norm = 0;
+
+  for (i = 0; i <= l->stemdegree; i++)
+  {
+    if (abs(l->stem[i]) > norm) norm = abs(l->stem[i]);
+  }
+  return (norm);
+}
+
+int
+l_safety_check (int f, int maxc)
+{
+  int safesize = INT_MAX;
+
+  if (f) safesize /= abs(f);
+  safesize /= 4;
+  if (maxc > safesize)
+  {
+    if (int_overflow_encountered++ == 0)
+      printf ("WARNING: above max allowed int size, cannot complete simplification\n");
+    return (0);
+  }
+  return (1);
 }
 
 void laurent_sort_entries_buf (int num, struct laurentpoly *l[], struct laurentpoly *buffer[]);

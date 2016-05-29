@@ -1,0 +1,19 @@
+#
+# test for dtcode input mode
+#
+# this is knot 15n_112310
+#
+# probably it has Nakanishi index 4
+#
+dtcode="dtcode {[4 16 -20 -18 -22 -26 -24 28 2 -6 -10 -8 -12 30 14]}"
+
+echo "knot: 15n_112310"
+echo "Computing first elementary ideal:"
+echo "$dtcode" | ./contour --out alexander --foxd 1
+echo "Computing second elementary ideal:"
+echo "$dtcode" | ./contour --out alexander --foxd 2
+#echo "Computing second elementary ideal:"
+#echo "$dtcode" | ./contour --out alexander --foxd 3
+echo "Computing fourth elementary ideal:"
+echo "$dtcode" | ./contour --out alexander --foxd 4
+
