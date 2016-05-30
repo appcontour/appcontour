@@ -1,0 +1,16 @@
+#
+# see http://arxiv.org/abs/math/0601525
+#
+knot {
+  ^ ^  ;
+ | X | ;
+ | X | ;
+ | X | ;
+ | X | ;
+  x X  ;
+  x X  ;
+ | x | ;
+ | x | ;
+ | x | ;
+  U U  ;
+}
