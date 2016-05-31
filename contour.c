@@ -352,11 +352,20 @@ main (int argc, char *argv[])
       printf ("  --preabelian: compute preabelian presentation of fundamental group\n");
       printf ("  --in|--out: apply command to the inside/outside of surface\n");
       printf ("      works for cell complex and fundamental group computations\n");
+      printf ("  --foxd <int>: compute the d-th elementary ideal (d given by <int>) instead of the\n");
+      printf ("      default value (d=1 for knots and links, d=2 for genus-2 surfaces, etc)\n");
+      printf ("  --maxd: compute the elementary ideal corresponding to 1x1 minors of the presentation\n");
+      printf ("      matrix\n");
       printf ("  --nosimplify: do not simplify the presentation of the fundamental group\n");
       printf ("  --nobasecanonify: do not base-canonify Alexander polynomial in two indeterminates\n");
       printf ("  --shuffle: random change of base for Alexander ideal in two indeterminates\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
       exit (0);
+    }
+    if (*argv[i] == '-')
+    {
+      printf ("Invalid option %s\n", argv[i]);
+      exit (1);
     }
     if (infile2)
     {
@@ -1257,8 +1266,8 @@ FILE *
 open_description_file (char *arg)
 {
   FILE *infile;
-  char *subdirs[]={".", "immersed", 0};
-  char *exts[]={"morse", "sketch", "knot", 0};
+  char *subdirs[]={".", "immersed", "knots", "links", 0};
+  char *exts[]={"morse", "sketch", "knot", "dtcode", 0};
   int subdirid, extid, len;
 
   strncpy (examplesfilename, arg, MAXFILELENGTH);

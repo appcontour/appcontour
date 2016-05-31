@@ -1,3 +1,9 @@
+2016-05-25: Module to decode the dt-code of Dowker-Thistlethwaite, input description can now also take
+	the form "dtcode {[x x x x]}".
+
+2016-05-23: New option --maxd computes the d-th elementary ideal of a knot with d computed as n-1 where
+	n is the dimension of the presentation matrix.  Useful to get information about the Nakanishi index.
+
 2016-05-18: Added the computation of the second elementary ideal for the 'knot' case (i.e. outside
 	of a tubular neighborhood of a knot).
 	This leads to a fundamental group having the commutator quotient group of rank 1 (and torsion-free),

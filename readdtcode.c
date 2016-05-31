@@ -1,4 +1,8 @@
 #include <assert.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <string.h>
 #include "contour.h"
 #include "parser.h"
 
@@ -191,9 +195,85 @@ readdtcode (FILE *file)
  * perhaps we shall also implement something that reads into the knotscape pak files
  */
 
+#define MAXFILELENGTH 2000
+
+static char tokenword[80];
+static char pathname[MAXFILELENGTH];
+
 struct sketch *
 readknotscape (FILE *file)
 {
+  extern int quiet;
+  char *knotscape_homes[]={".", "/home", "/usr/local", "/usr/local/share", 0};
+  char *pakpaths[]={"knotTable", "knotscape/knotTable", "knotscape/knotscape_1.01/knotTable", 0};
+  int tok, ip1, ip2, crossings, alternate, knotnum;
+  int found = 0;
+  struct stat s = {0};
+  char *namept;
+  int *dtcode, *dtpositive;
+
+  for (ip1 = 0; knotscape_homes[ip1]; ip1++)
+  {
+    for (ip2 = 0; pakpaths[ip2]; ip2++)
+    {
+      strncpy (pathname, knotscape_homes[ip1], MAXFILELENGTH);
+      strncat (pathname, "/", MAXFILELENGTH);
+      strncat (pathname, pakpaths[ip2], MAXFILELENGTH);
+      if (!stat(pathname, &s))
+      {
+        if (s.st_mode & S_IFDIR) {found = 1; break;}
+      }
+    }
+    if (found) break;
+  }
+  if (!found)
+  {
+    printf ("Cannot find knotscape installation.  You should install the knotscape package by\n");
+    printf ("Morwen Thistlethwaite and Jim Hoste in /home/knotscape or /usr/local/knotscake\n");
+    printf ("The pak files should reside in a folder with a name like /home/knotscape/knotscape_1.01/knotTable/\n");
+    exit (2);
+  }
+
+  tok = gettoken (file);
+  assert (tok == TOK_LBRACE);
+
+  if (getword (file, tokenword, 80) == TOK_EOF) return (0);
+
+  if (!quiet) printf ("[pak files courtesy of Morwen Thistlethwaite and Jim Hoste, in knotscape package]\n");
+  printf ("Knot name: %s\n", tokenword);
+
+  crossings = strtol (tokenword, &namept, 10);
+  assert (crossings >= 3 && crossings <= 16);
+  switch (*namept++)
+  {
+    case 'a':
+    alternate = 1;
+    break;
+
+    case 'n':
+    alternate = 0;
+    break;
+
+    default:
+    printf ("Invalid character after number of crossings: %c (valid values: 'a' or 'n')\n", *namept);
+    exit (2);
+    break;
+  }
+  assert (*namept++ == '_');
+  assert (isdigit(*namept));
+  knotnum = strtol (namept, &namept, 10);
+
+  printf ("Split: %d %c %d\n", crossings, alternate?'a':'n', knotnum);
+
+  dtcode = (int *) malloc (crossings *sizeof (int));
+  dtpositive = (int *) malloc (crossings *sizeof (int));
+
+  tok = gettoken (file);
+  assert (tok == TOK_RBRACE);
+
+  printf ("found path: %s\n", pathname);
+
+  
   printf ("NOT IMPLEMENTED\n");
   return (0);
 }

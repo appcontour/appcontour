@@ -22,7 +22,7 @@ getword (FILE *file, char *word, int wordmaxlen)
   int charcount = 0;
   char ch;
 
-  while (isalnum(ch = fgetc (file)))
+  while (isalnum(ch = fgetc (file)) || ch == '_')
   {
     if (onecharword && ! isdigit(ch)) break;
     if (charcount++ >= wordmaxlen)
@@ -140,6 +140,7 @@ gettoken (FILE *file)
   if (strcmp(tokenword,"sketch") == 0) return (TOK_SKETCH);
   if (strcmp(tokenword,"dtcode") == 0) return (TOK_DTCODE);
   if (strcmp(tokenword,"knotscape") == 0) return (TOK_KNOTSCAPE);
+  if (strcmp(tokenword,"knotname") == 0) return (TOK_KNOTSCAPE);
   if (strcmp(tokenword,"fpgroup") == 0) return (TOK_FPGROUP);
   if (strcmp(tokenword,"alexander") == 0) return (TOK_ALEXANDER);
   if (strcmp(tokenword,"ideal") == 0) return (TOK_IDEAL);

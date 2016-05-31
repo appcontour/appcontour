@@ -1,0 +1,6 @@
+#
+# unknot the gordian knot of Haken
+#
+echo "unknotting the gordian knot..."
+
+contour --out fg examples/knots/gordian.dtcode -q
