@@ -1,3 +1,10 @@
+2016-06-01: bump version to 2.3.1.
+
+2016-05-30: input syntax "knotname {<knotscape-name>}" is now allowed.  <knotscape-name> is something
+	like "15n_1234" to mean the 1234-th non-alternating knot with 15 crosses.  For this to work it is
+	necessary to have knotscape installed in some standard place, or at least the 'pak' files in a
+	directory named knotTable (see "readdtcode.c" for a complete list of searched places).
+
 2016-05-25: Module to decode the dt-code of Dowker-Thistlethwaite, input description can now also take
 	the form "dtcode {[x x x x]}".
 

@@ -207,7 +207,12 @@ realize_dtcode (int lnumnodes, int *vecofint)
 }
 
 /*
- * Read into the knotscape pak files
+ * Read into the knotscape pak files.
+ * Please note: the various *.pak files have been created by Morwen Thistlethwaite and Jim Hoste
+ * by use with the well-known software knotscape.
+ * They are part of the 'knotscape' program.
+ *
+ * I would like to thank them for their work!
  */
 
 #define MAXFILELENGTH 2000
@@ -220,7 +225,7 @@ readknotscape (FILE *file)
 {
   extern int quiet, verbose;
   struct sketch *sketch;
-  char *knotscape_homes[]={".", "/home", "/usr/local", "/usr/local/share", 0};
+  char *knotscape_homes[]={".", "/home", "/usr/local", "/usr/local/share", "/usr/local/share/appcontour", 0};
   char *pakpaths[]={"knotTable", "knotscape/knotTable", "knotscape/knotscape_1.01/knotTable", 0};
   char basename[20];
   int nodeid, i, tok, ip1, ip2, crossings, codelen, alternate, knotnum;
