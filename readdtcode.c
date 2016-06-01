@@ -29,6 +29,7 @@ static int *marknodes;
 static int stackpt;
 static int stackdim;
 
+struct sketch *realize_dtcode (int numnodes, int *vecofint);
 void reconstruct_sign (void);
 int nextlabel (int label);
 int prevlabel (int label);
@@ -50,7 +51,7 @@ struct sketch *
 readdtcode (FILE *file)
 {
   struct sketch *sketch;
-  int i, curoddnode, curevennode, rcode;
+  int i;
   int startwithlbracket = 1;
   int tok, *vecofint;
 
@@ -106,7 +107,22 @@ readdtcode (FILE *file)
     return (0);
   }
 
-  numnodes = i;
+  sketch = realize_dtcode (i, vecofint);
+  free (vecofint);
+  return (sketch);
+}
+
+/*
+ * main function that reconstructs the correct crossings handedness
+ */
+
+struct sketch *
+realize_dtcode (int lnumnodes, int *vecofint)
+{
+  struct sketch *sketch;
+  int i, curoddnode, curevennode, rcode;
+
+  numnodes = lnumnodes;
   numlabels = 2*numnodes;
   assert (numnodes >= 2);
 
@@ -132,7 +148,6 @@ readdtcode (FILE *file)
     abscode[abs(rcode)] = curoddnode;
     curoddnode += 2;
   }
-  free (vecofint);
 
   curevennode = 2;
   for (i = 0; i < numnodes; i++)
@@ -192,7 +207,7 @@ readdtcode (FILE *file)
 }
 
 /*
- * perhaps we shall also implement something that reads into the knotscape pak files
+ * Read into the knotscape pak files
  */
 
 #define MAXFILELENGTH 2000
@@ -203,14 +218,20 @@ static char pathname[MAXFILELENGTH];
 struct sketch *
 readknotscape (FILE *file)
 {
-  extern int quiet;
+  extern int quiet, verbose;
+  struct sketch *sketch;
   char *knotscape_homes[]={".", "/home", "/usr/local", "/usr/local/share", 0};
   char *pakpaths[]={"knotTable", "knotscape/knotTable", "knotscape/knotscape_1.01/knotTable", 0};
-  int tok, ip1, ip2, crossings, alternate, knotnum;
+  char basename[20];
+  int nodeid, i, tok, ip1, ip2, crossings, codelen, alternate, knotnum;
+  int sign, ch, tailstart, high, low;
+  int sum1 = 0;
+  int sum2 = 0;
   int found = 0;
   struct stat s = {0};
   char *namept;
   int *dtcode, *dtpositive;
+  FILE *pakfile;
 
   for (ip1 = 0; knotscape_homes[ip1]; ip1++)
   {
@@ -239,8 +260,8 @@ readknotscape (FILE *file)
 
   if (getword (file, tokenword, 80) == TOK_EOF) return (0);
 
-  if (!quiet) printf ("[pak files courtesy of Morwen Thistlethwaite and Jim Hoste, in knotscape package]\n");
-  printf ("Knot name: %s\n", tokenword);
+  if (!quiet) printf ("['pak' files courtesy of Morwen Thistlethwaite and Jim Hoste, in knotscape package]\n");
+  //printf ("Knot name: %s\n", tokenword);
 
   crossings = strtol (tokenword, &namept, 10);
   assert (crossings >= 3 && crossings <= 16);
@@ -263,19 +284,94 @@ readknotscape (FILE *file)
   assert (isdigit(*namept));
   knotnum = strtol (namept, &namept, 10);
 
-  printf ("Split: %d %c %d\n", crossings, alternate?'a':'n', knotnum);
+  tok = gettoken (file);
+  assert (tok == TOK_RBRACE);
+
+  sprintf (basename, "%d%c", crossings, (alternate)?'a':'n');
+  strncat (pathname, "/", MAXFILELENGTH);
+  strncat (pathname, basename, MAXFILELENGTH);
+  strncat (pathname, ".pak", MAXFILELENGTH);
+  //printf ("Split: %d %c %d\n", crossings, alternate?'a':'n', knotnum);
+  if (access (pathname, R_OK))
+  {
+    printf ("Cannot open file %s\n", pathname);
+    exit (3);
+  }
 
   dtcode = (int *) malloc (crossings *sizeof (int));
   dtpositive = (int *) malloc (crossings *sizeof (int));
 
-  tok = gettoken (file);
-  assert (tok == TOK_RBRACE);
+  pakfile = fopen (pathname, "r");
+  codelen = crossings - 1;
+  for (i = 0; i < crossings; i++) {dtcode[i] = 0; dtpositive[i] = 1;}
+  nodeid = 0;
+  while ((ch = fgetc (pakfile)) != EOF)
+  {
+    nodeid++;
+    high = ch/16;
+    low = ch - 16*high;
+    assert (high == low);
+    tailstart = codelen - high;
+    for (i = tailstart; i < codelen;)
+    {
+      ch = fgetc (pakfile);
+      high = ch/16;
+      low = ch - 16*high;
+      dtcode[i++] = high;
+      if (i >= codelen) break;
+      dtcode[i++] = low;
+    }
+    if (alternate == 0)
+    {
+      ch = fgetc (pakfile);
+      for (i = 7; i >= 0; i--)
+      {
+        if (i < crossings) dtpositive[i] = ch & 1;
+        ch = ch >> 1;
+      }
+      ch = fgetc (pakfile);
+      for (i = 15; i >= 8; i--)
+      {
+        if (i < crossings) dtpositive[i] = ch & 1;
+        ch = ch >> 1;
+      }
+    }
+    if (nodeid == knotnum) {found = 1; break;}
+  }
+  if (!found)
+  {
+    printf ("Cannot find knot %d in pak file %s\n", knotnum, pathname);
+    exit (2);
+  }
 
-  printf ("found path: %s\n", pathname);
+  for (i = 0; i < codelen; i++)
+  {
+    sign = 2*dtpositive[i]-1;
+    sum1 += i;
+    sum2 += dtcode[i];
+    dtcode[i] = sign*(2*dtcode[i] + 2);
+  }
+  assert (i == codelen);
+  sum1 += codelen;
+  sign = 2*dtpositive[codelen]-1;
+  dtcode[i] = sign*(2*(sum1 - sum2) + 2);
+  codelen++;
+  free (dtpositive);
+  if (verbose)
+  {
+    printf ("dtcode {[");
+    for (i = 0; i < codelen; i++)
+    {
+      if (i > 0) printf (" ");
+      printf ("%d", dtcode[i]);
+    }
+    printf ("]}\n");
+  }
+  sketch = realize_dtcode (codelen, dtcode);
+  free (dtcode);
 
-  
-  printf ("NOT IMPLEMENTED\n");
-  return (0);
+  //printf ("found path: %s\n", pathname);
+  return (sketch);
 }
 
 /*
