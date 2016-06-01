@@ -45,6 +45,7 @@ int autosurgery = 0;
 int focus_on_fundamental = 0;
 int principal = 0;
 int internalcheck = 0;
+int dtreconstructid = 0;
 static int renumber = 1;
 
 struct global_data globals;
@@ -248,6 +249,12 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--seed") == 0)
     {
       rndseed = atoi (argv[++i]);
+      continue;
+    }
+    if (strcmp(argv[i],"--dtcount") == 0)
+    {
+      dtreconstructid = atoi (argv[++i]);
+      assert (dtreconstructid >= 0);
       continue;
     }
     if (strcmp(argv[i],"--heisemberg") == 0 ||

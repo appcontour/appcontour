@@ -947,7 +947,9 @@ display_regions_from_nodes (struct sketch *s)
 void
 reconstruct_sign (void)
 {
+  extern int dtreconstructid;
   int i, j, node, expansions, totexpansions = 0;
+  int countreconstructions, found;
   int numconsistent, insist;
 
   insist = 1;
@@ -988,10 +990,15 @@ reconstruct_sign (void)
     {
       if (isconsistent ()) numconsistent++;
     } while (next_completion());
-    if (numconsistent > 1)
+    if (numconsistent > 1 && dtreconstructid <= 0)
     {
       printf ("More than one (%d) consistent completion found!\n", numconsistent);
       printf ("maybe this is a compound knot\n");
+      exit (2);
+    }
+    if (numconsistent >= 1 && dtreconstructid > numconsistent)
+    {
+      printf ("Required reconstruction id is too high: %d > %d\n", dtreconstructid, numconsistent);
       exit (2);
     }
     if (numconsistent < 1)
@@ -1000,13 +1007,20 @@ reconstruct_sign (void)
       exit (3);
     }
     first_completion (numnodes - 1 - totexpansions);
-    while (! isconsistent () )
+    countreconstructions = 0;
+    found = 0;
+    do
     {
+      if (isconsistent ())
+      {
+        countreconstructions++;
+        if (dtreconstructid <= 0 || dtreconstructid == countreconstructions) {found = 1; break;}
+      }
       //printf ("completion is not consistent...\n");
-      if (! next_completion () ) assert (0);
-    }
+    }  while (next_completion () );
     free (stack);
     free (stacknode);
+    if (! found) {assert(0); exit(4);}
   }
   //assert (totexpansions == numnodes - 1);
   // printf ("totexpansions: %d\n", totexpansions);
