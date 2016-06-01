@@ -1,0 +1,21 @@
+#
+# Kauffman - Lambropoulou 
+#
+# figure 8
+#
+# use option --dtcount 1 or --dtcount 2
+#
+dtcode {-60 48 54 -22 16 -28 20 -36 12 -32 38 -8 -14 34
+-10 26 -18 30 24 -56 62 -50 58 -42 2 -46 -40 6
+-64 44 -4 52}
+#
+# numbers 5,54 6,55 7,22 8,23 correspond to the central 4 crossings
+# of the trasversal upper arc connecting the two "trefoil knots"
+#
+# changing sign to both 54 and 22, i.e.:
+# dtcode {-60 48 54 -22 16 -28 20 -36 12 -32 38 -8 -14 34
+# -10 26 -18 30 24 -56 62 -50 58 -42 2 -46 -40 6
+# -64 44 -4 52}
+#
+# produces a simplified presentation with 6 generators -> presentation
+# matrix of order 5
