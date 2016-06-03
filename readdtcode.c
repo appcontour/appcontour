@@ -16,6 +16,10 @@ extern int verbose;
 
 #define MAXDTCODELEN 200
 
+static char *rolfsen_to_dt[] = {
+#include "rolfsen_to_dt.h"
+};
+
 static int numnodes;
 static int numlabels;
 static int numregions;
@@ -285,8 +289,19 @@ readknotscape (FILE *file)
   assert (tok == TOK_LBRACE);
 
   if (getword (file, tokenword, 80) == TOK_EOF) return (0);
+  for (i = 0; rolfsen_to_dt[i]; i += 2)
+  {
+    if (strcmp (tokenword, rolfsen_to_dt[i]) == 0)
+    {
+      strcpy (tokenword, rolfsen_to_dt[i+1]);
+      if (!quiet)
+      {
+        printf ("# Converting Rolfsen notation into dt numbering: %s -> %s\n", rolfsen_to_dt[i], rolfsen_to_dt[i+1]);
+      }
+    }
+  }
 
-  if (!quiet) printf ("['pak' files courtesy of Morwen Thistlethwaite and Jim Hoste, in knotscape package]\n");
+  if (!quiet) printf ("# ['pak' files courtesy of Morwen Thistlethwaite and Jim Hoste, in knotscape package]\n");
   //printf ("Knot name: %s\n", tokenword);
 
   crossings = strtol (tokenword, &namept, 10);
