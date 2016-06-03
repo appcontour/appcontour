@@ -244,6 +244,7 @@ simplify_presentation2 (struct presentation *p)
 
   while (goon)
   {
+    if (debug) printf ("Simplifying presentation: %d generators\n", p->gennum);
     goon = 0;
     goon += sp_eliminatevar (p);
     goon += sp_simplifyword (p);
@@ -271,6 +272,7 @@ sp_tryeliminatevariable (struct presentation *p)
 
   while (goon)
   {
+    if (debug) printf ("in sp_tryeliminatevariable: %d generators\n", p->gennum);
     goon = 0;
     optsublen = INT_MAX;
     optsubvar = 0;

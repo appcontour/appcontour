@@ -1,3 +1,6 @@
+2016-06-03: allow for extra information in a dt-code.  This can alleviate the exponential-time problem
+	in the diagram reconstruction.  See example examples/knots/hardunknot_haken_satellite.dtcode
+
 2016-06-01: bump version to 2.3.1.
 
 2016-05-30: input syntax "knotname {<knotscape-name>}" is now allowed.  <knotscape-name> is something

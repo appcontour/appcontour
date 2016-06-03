@@ -23,14 +23,10 @@ static int *abscode;
 static int *dtsign;
 static int *regionsign;
 static int *tagged;
-static int *stack;
-static int *stacknode;
 static int *marknodes;
-static int stackpt;
-static int stackdim;
 
-struct sketch *realize_dtcode (int numnodes, int *vecofint);
-void reconstruct_sign (void);
+struct sketch *realize_dtcode (int numnodes, int *vecofint, int *gregionsign);
+int reconstruct_sign (int which, int *gregionsign);
 int nextlabel (int label);
 int prevlabel (int label);
 int inherit (int label);
@@ -41,8 +37,6 @@ void display_arcs_from_nodes (struct sketch *s);
 void display_regions (struct sketch *s);
 void display_regions_from_arcs (struct sketch *s);
 void display_regions_from_nodes (struct sketch *s);
-void first_completion (int stackdim);
-int next_completion (void);
 int isconsistent (void);
 int tour_of_region (int label, int velocity);
 void walk_left (int *labelpt, int *velocitypt);
@@ -53,7 +47,7 @@ readdtcode (FILE *file)
   struct sketch *sketch;
   int i;
   int startwithlbracket = 1;
-  int tok, *vecofint;
+  int tok, *vecofint, *gregionsign;
 
   /*
    * read dt code
@@ -72,6 +66,7 @@ readdtcode (FILE *file)
     ungettoken (tok);
   }
   vecofint = (int *) malloc (MAXDTCODELEN * sizeof (int));
+  gregionsign = (int *) malloc (MAXDTCODELEN * sizeof (int));
   i = 0;
   while ((tok = gettoken (file)) == ISNUMBER || tok == TOK_MINUS)
   {
@@ -79,9 +74,17 @@ readdtcode (FILE *file)
     {
       tok = gettoken (file);
       assert (tok == ISNUMBER);
-      vecofint[i++] = - gettokennumber ();
-    } else vecofint[i++] = gettokennumber ();
-
+      vecofint[i] = - gettokennumber ();
+    } else vecofint[i] = gettokennumber ();
+    tok = gettoken (file);
+    gregionsign[i] = 0;
+    if (tok == KEY_GT || tok == KEY_LT)
+    {
+      /* handedness is given by the user */
+      if (tok == KEY_GT) gregionsign[i] = 1;
+      else gregionsign[i] = -1;
+    } else ungettoken (tok);
+    i++;
     if (i >= MAXDTCODELEN)
     {
       printf ("Error: dtcode exceeds maximum allowed length: %d\n", MAXDTCODELEN);
@@ -107,7 +110,7 @@ readdtcode (FILE *file)
     return (0);
   }
 
-  sketch = realize_dtcode (i, vecofint);
+  sketch = realize_dtcode (i, vecofint, gregionsign);
   free (vecofint);
   return (sketch);
 }
@@ -117,10 +120,11 @@ readdtcode (FILE *file)
  */
 
 struct sketch *
-realize_dtcode (int lnumnodes, int *vecofint)
+realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
 {
   struct sketch *sketch;
-  int i, curoddnode, curevennode, rcode;
+  int i, numconsistent, curoddnode, curevennode, rcode;
+  extern int dtreconstructid;
 
   numnodes = lnumnodes;
   numlabels = 2*numnodes;
@@ -170,7 +174,29 @@ realize_dtcode (int lnumnodes, int *vecofint)
 
   numregions = 2 + numlabels - numnodes;
 
-  reconstruct_sign ();
+  numconsistent = reconstruct_sign (0, gregionsign);
+  if (numconsistent <= 0)
+  {
+    printf ("No consistent completions found. Perhaps this is a composite knot\n");
+    exit (3);
+  }
+  if (dtreconstructid > 0)
+  {
+    if (dtreconstructid > numconsistent)
+    {
+      printf ("Required reconstruction id is too high: %d > %d\n", dtreconstructid, numconsistent);
+      exit (2);
+    }
+    reconstruct_sign (dtreconstructid, gregionsign);
+  } else {
+    if (numconsistent > 2)
+    {
+      printf ("More than one (%d) consistent completion found!\n", numconsistent/2);
+      printf ("maybe this is a compound knot\n");
+      exit (2);
+    }
+    reconstruct_sign (1, gregionsign);
+  }
   sketch = newsketch ();
   // printf ("numregions: %d\n", numregions);
   //printf ("#\n# tubular knot with Dowker-Thistletwait notation\n");
@@ -367,7 +393,7 @@ readknotscape (FILE *file)
     }
     printf ("]}\n");
   }
-  sketch = realize_dtcode (codelen, dtcode);
+  sketch = realize_dtcode (codelen, dtcode, 0);
   free (dtcode);
 
   //printf ("found path: %s\n", pathname);
@@ -942,77 +968,119 @@ display_regions_from_nodes (struct sketch *s)
 
 /*
  * reconstruct regionsign of nodes
+ * if nonzero, gregionsign points to a vector of given handedness:
+ * 0: value unassigned
+ * +1: if arriving at the odd-numbered label, the crossed strand
+ *     is oriented from right to left
+ * -1: if arriving at the odd-numbered label, the crossed strand
+ *     is oriented from left to right
  */
 
-int maximal_expansion ();
+static int *choices;
+static int choicept;
 
-void
-reconstruct_sign (void)
+int maximal_expansion (void);
+void make_choice (void);
+
+int
+reconstruct_sign (int which, int *gregionsign)
 {
   extern int dtreconstructid;
-  int i, totexpansions, countreconstructions, found;
-  int numconsistent;
+  int i, numtagged, countreconstructions;
 
-  /* make all regionsigns unknown */
-  for (i = 1; i <= numlabels; i++) regionsign[i] = 0;
+  choices = (int *) malloc ( numnodes*sizeof(int) );
+  choices[0] = 0;
+  choicept = 0;
+  countreconstructions = 0;
 
-  /* decide arbitrarily the region sign of a node */
-  regionsign[1] = 1;
-  regionsign[abscode[1]] = -regionsign[1];
-
-  totexpansions = maximal_expansion ();
-
-  if (totexpansions < numnodes - 1)
+  while (1) /* cycle on all possible reconstructions */
   {
-    if (debug) printf ("totexpansions: %d instead of %d\n", totexpansions, numnodes - 1);
-    /* cycle twice over possible completions
-     * the first time only to count the number of consistent completions
-     */
-    numconsistent = 0;
-    first_completion (numnodes - 1 - totexpansions);
-    do
+    /* make all regionsigns unknown */
+    numtagged = 0;
+    for (i = 1; i <= numlabels; i++) regionsign[i] = 0;
+    if (gregionsign)
     {
-      if (isconsistent ()) numconsistent++;
-    } while (next_completion());
-    if (numconsistent > 1 && dtreconstructid <= 0)
-    {
-      printf ("More than one (%d) consistent completion found!\n", numconsistent);
-      printf ("maybe this is a compound knot\n");
-      exit (2);
-    }
-    if (numconsistent >= 1 && dtreconstructid > numconsistent)
-    {
-      printf ("Required reconstruction id is too high: %d > %d\n", dtreconstructid, numconsistent);
-      exit (2);
-    }
-    if (numconsistent < 1)
-    {
-      printf ("No consistent completions found. Perhaps this is a composite knot\n");
-      exit (3);
-    }
-    first_completion (numnodes - 1 - totexpansions);
-    countreconstructions = 0;
-    found = 0;
-    do
-    {
-      if (isconsistent ())
+      for (i = 0; i <= numnodes; i++)
       {
-        countreconstructions++;
-        if (dtreconstructid <= 0 || dtreconstructid == countreconstructions) {found = 1; break;}
+        if (gregionsign[i])
+        {
+          regionsign[2*i+1] = gregionsign[i];
+          regionsign[abscode[2*i+1]] = -gregionsign[i];
+          numtagged++;
+          numtagged += maximal_expansion ();
+        }
       }
-      //printf ("completion is not consistent...\n");
-    }  while (next_completion () );
-    free (stack);
-    free (stacknode);
-    if (! found) {assert(0); exit(4);}
+    }
+    while (numtagged < numnodes) /* subsequent waves of reconstruction */
+    {
+      make_choice ();
+      numtagged++;
+      numtagged += maximal_expansion ();
+      if (debug) printf ("reconstruction: %d, covered %d of %d\n", countreconstructions, numtagged, numnodes);
+    }
+    if (isconsistent ())
+    {
+      countreconstructions++;
+      if (countreconstructions == which)
+      {
+        /* found desired reconstruction */
+        free (choices);
+        return (countreconstructions);
+      }
+    }
+    /* next possible choice... */
+    assert (choices[choicept] == 0);
+    if (choicept == 0)
+    { /* exhausted all possible choices */
+      free (choices);
+      return (countreconstructions);
+    }
+    assert (choicept > 0);
+    choicept--;
+    while (choices[choicept] == -1)
+    {
+      choices[choicept] = 0;
+      if (choicept == 0)
+      { /* exhausted all possible choices */
+        free (choices);
+        return (countreconstructions);
+      }
+      choicept--;
+    }
+    assert (choices[choicept] == 1);
+    choices[choicept] = -1;
+    choices[choicept+1] = 0;
+    choicept = 0;
   }
-  //assert (totexpansions == numnodes - 1);
-  // printf ("totexpansions: %d\n", totexpansions);
+  free (choices);
+  assert (0);
+  return (countreconstructions);
+}
 
-  //for (i = 1; i <= numlabels; i++)
-  //{
-  //  printf ("regionsign[%d] = %d\n", i, regionsign[i]);
-  //}
+void
+make_choice (void)
+{
+  int i;
+
+  for (i = 1; i <= numlabels; i++)
+  {
+    if (regionsign[i] == 0)
+    {
+      /* found an unoriented node */
+      if (choices[choicept] == 0)
+      {
+        choices[choicept] = 1;
+        choices[choicept + 1] = 0;
+      }
+      assert (abs(choices[choicept]) == 1);
+      regionsign[i] = choices[choicept];
+      regionsign[abscode[i]] = -choices[choicept];
+      choicept++;
+      return;
+    }
+  }
+  assert (0);
+  return;
 }
 
 int
@@ -1090,68 +1158,6 @@ inherit (int startlabel)
     }
   }
   return (expansions);
-}
-
-/*
- *
- */
-
-void
-first_completion (int stdim)
-{
-  int i, label;
-
-  stackdim = stdim;
-  stack = (int *) malloc (stackdim * sizeof (int));
-  stacknode = (int *) malloc (stackdim * sizeof (int));
-  stackpt = 0;
-  for (i = 0; i < numnodes; i++)
-  {
-    label = 2*i+1;
-    if (regionsign[label]) continue;
-    stack[stackpt] = 1;
-    stacknode[stackpt++] = i;
-    assert (stackpt <= stackdim);
-    regionsign[label] = 1;
-    regionsign[abscode[label]] = -1;
-  }
-  assert (stackpt == stackdim);
-}
-
-/*
- *
- */
-
-int
-next_completion (void)
-{
-  int i, node, label;
-
-  while (stackpt > 0 && stack[--stackpt] < 0);
-  if (stack[stackpt] < 0)
-  {
-    /* no more configurations possible */
-    /* reset completions, for the benefit of subsequent call */
-    for (i = 0; i < stackdim; i++)
-    {
-      label = 2*stacknode[i] + 1;
-      regionsign[label] = 0;
-      regionsign[abscode[label]] = 0;
-    }
-    stackpt = 0;
-    free (stack);
-    free (stacknode);
-    return (0);
-  }
-  while (stackpt < stackdim)
-  {
-    stack[stackpt] = -stack[stackpt];
-    node = stacknode[stackpt++];
-    label = 2*node + 1;
-    regionsign[label] *= -1;  
-    regionsign[abscode[label]] *= -1;  
-  }
-  return (1);
 }
 
 /*
