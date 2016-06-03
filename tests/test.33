@@ -1,4 +1,4 @@
-#
+ 
 # test for dtcode input mode
 #
 # this is knot 15n_112310
@@ -11,9 +11,23 @@ echo "knot: 15n_112310"
 echo "Computing first elementary ideal:"
 echo "$dtcode" | ./contour --out alexander --foxd 1
 echo "Computing second elementary ideal:"
-echo "$dtcode" | ./contour --out alexander --foxd 2
+echo "$dtcode" | ./contour --autosurgery --out alexander --foxd 2
 echo "Computing third elementary ideal:"
 echo "$dtcode" | ./contour --out alexander --foxd 3
 echo "Computing fourth elementary ideal:"
 echo "$dtcode" | ./contour --out alexander --foxd 4
+
+list="hardunknot_kauffman_fig24 hardunknot_kauffman_fig2 hardunknot_kauffman_fig30 hardunknot_kauffman_fig6 knot_21_morton"
+
+for dt in $list
+do
+  locfile="examples/knots/${dt}.dtcode"
+  echo "reconstruction of from $locfile"
+  ./contour print $locfile | md5sum
+done
+
+locfile="examples/knots/hardunknot_kauffman_fig8.dtcode"
+echo "In example $locfile we need to specify which reconstruction we want"
+./contour print $locfile --dtcount 1 | md5sum
+./contour print $locfile --dtcount 2 | md5sum
 

@@ -1,41 +1,45 @@
 #!/bin/bash
 #
 
-list=`ls tests/test.??`
+l__ist=`ls tests/test.??`
+if [ -n "$1" ]
+then
+  l__ist=tests/test.$1
+fi
 
-tmpfile=test$$.tmp
+tmpf__ile=test$$.tmp
 failed="0"
 
-for file in $list
+for f__ile in $l__ist
 do
-  test=`echo $file | cut -f2 -d\.`
+  test=`echo $f__ile | cut -f2 -d\.`
   echo "Running test $test..."
-  source $file 2>/dev/null >$tmpfile
+  source $f__ile 2>/dev/null >$tmpf__ile
   exitcode=$?
 
-  if [ -f ${file}.out ]
+  if [ -f ${f__ile}.out ]
   then
-    if ! diff $tmpfile ${file}.out
+    if ! diff $tmpf__ile ${f__ile}.out
     then
       failed=$[ $failed + 1 ]
     fi
   else
     echo "...new test, copying out file"
-    cp $tmpfile ${file}.out
+    cp $tmpf__ile ${f__ile}.out
   fi
-  rm $tmpfile
-  echo "$exitcode" >$tmpfile
-  if [ -f ${file}.ec ]
+  rm $tmpf__ile
+  echo "$exitcode" >$tmpf__ile
+  if [ -f ${f__ile}.ec ]
   then
-    if ! diff $tmpfile ${file}.ec
+    if ! diff $tmpf__ile ${f__ile}.ec
     then
       failed=$[ $failed + 1 ]
     fi
   else
     echo "...new test, copying ec file"
-    cp $tmpfile ${file}.ec
+    cp $tmpf__ile ${f__ile}.ec
   fi
-  rm $tmpfile
+  rm $tmpf__ile
 done
 
 if [ "$failed" -gt "0" ]
