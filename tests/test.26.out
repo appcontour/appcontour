@@ -270,12 +270,6 @@ Ideal [
 ]
 
 =====================================
-testing example ochiai_unknot.knot
-=====================================
-d = 1
-1;
-
-=====================================
 testing example one_chain.knot
 =====================================
 d = 1
@@ -471,7 +465,7 @@ d = 1
 +1-t+t^2-t^3+t^4;
 
 =====================================
-testing example knots/thistlethwaite.knot
+testing example knots/hardunknot_thistlethwaite.knot
 =====================================
 d = 1
 1;
