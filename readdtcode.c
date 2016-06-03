@@ -131,7 +131,6 @@ realize_dtcode (int lnumnodes, int *vecofint)
   regionsign = (int *) malloc ((numlabels+1)*(sizeof (int)));
   tagged = (int *) malloc ( (2*numnodes+1) * sizeof(int) );
   marknodes = (int *) malloc ( (2*numnodes+1) * sizeof(int) );
-  for (i = 1; i <= numlabels; i++) regionsign[i] = 0;
 
   curoddnode = 1;
   for (i = 0; i < numnodes; i++)
@@ -169,12 +168,8 @@ realize_dtcode (int lnumnodes, int *vecofint)
     }
   }
 
-  /* decide arbitrarily the region sign of a node */
-
-  regionsign[1] = 1;
-  regionsign[abscode[1]] = -regionsign[1];
-
   numregions = 2 + numlabels - numnodes;
+
   reconstruct_sign ();
   sketch = newsketch ();
   // printf ("numregions: %d\n", numregions);
@@ -949,43 +944,27 @@ display_regions_from_nodes (struct sketch *s)
  * reconstruct regionsign of nodes
  */
 
+int maximal_expansion ();
+
 void
 reconstruct_sign (void)
 {
   extern int dtreconstructid;
-  int i, j, node, expansions, totexpansions = 0;
-  int countreconstructions, found;
-  int numconsistent, insist;
+  int i, totexpansions, countreconstructions, found;
+  int numconsistent;
 
-  insist = 1;
-  while (insist)
-  {
-    insist = 0;
-    for (i = 1; i <= numlabels; i++)
-    {
-      for (j = 1; j <= numlabels; j++) tagged[j] = 0;
-      /* follow cicle */
-      node = i;
-      while (1)
-      {
-        if (tagged[node])
-        {
-          // printf ("found cycle starting at node: %d\n", abscode[node]);
-          expansions = inherit (abscode[node]);
-          if (expansions) insist = 1;
-          totexpansions += expansions;
-          // printf ("Expanded by %d nodes\n", expansions);
-          break;
-        }
-        assert (tagged[abscode[node]] == 0);
-        tagged[abscode[node]] = 1;
-        node = nextlabel (node);
-      }
-    }
-  }
+  /* make all regionsigns unknown */
+  for (i = 1; i <= numlabels; i++) regionsign[i] = 0;
+
+  /* decide arbitrarily the region sign of a node */
+  regionsign[1] = 1;
+  regionsign[abscode[1]] = -regionsign[1];
+
+  totexpansions = maximal_expansion ();
+
   if (totexpansions < numnodes - 1)
   {
-    //printf ("totexpansions: %d instead of %d\n", totexpansions, numnodes - 1);
+    if (debug) printf ("totexpansions: %d instead of %d\n", totexpansions, numnodes - 1);
     /* cycle twice over possible completions
      * the first time only to count the number of consistent completions
      */
@@ -1034,6 +1013,41 @@ reconstruct_sign (void)
   //{
   //  printf ("regionsign[%d] = %d\n", i, regionsign[i]);
   //}
+}
+
+int
+maximal_expansion ()
+{
+  int insist = 1;
+  int totexpansions = 0;
+  int i, j, node, expansions;
+
+  while (insist)
+  {
+    insist = 0;
+    for (i = 1; i <= numlabels; i++)
+    {
+      for (j = 1; j <= numlabels; j++) tagged[j] = 0;
+      /* follow cicle */
+      node = i;
+      while (1)
+      {
+        if (tagged[node])
+        {
+          // printf ("found cycle starting at node: %d\n", abscode[node]);
+          expansions = inherit (abscode[node]);
+          if (expansions) insist = 1;
+          totexpansions += expansions;
+          // printf ("Expanded by %d nodes\n", expansions);
+          break;
+        }
+        assert (tagged[abscode[node]] == 0);
+        tagged[abscode[node]] = 1;
+        node = nextlabel (node);
+      }
+    }
+  }
+  return (totexpansions);
 }
 
 int
