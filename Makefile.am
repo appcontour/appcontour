@@ -8,4 +8,6 @@ AM_LDFLAGS = -ftrapv
 # man1_MANS = contour.1
 dist_man_MANS = contour.1
 
+EXTRA_DIST = test
+
 TESTS = test
