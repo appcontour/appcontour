@@ -3,4 +3,4 @@
 #
 echo "unknotting the gordian knot..."
 
-contour --out fg examples/knots/gordian.dtcode -q
+contour --out fg examples/knots/hardunknot_gordian.dtcode -q

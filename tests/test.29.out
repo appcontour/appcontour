@@ -1,14 +1,6 @@
-# case where the Alexander matrix is 3x3
-
-pqlist="4,-2 6,-2"
-
-#
-
-for pq in $pqlist
-do
-  p=$(echo "$pq" | cut -f1 -d,)
-  q=$(echo "$pq" | cut -f2 -d,)
-  echo "second elementary principal ideal for kanenobu $p $q"
-  ./utils/kanenobu.sh $p $q | ./contour --out alexander --principal --foxd 2 -q
-done
-
+second elementary principal ideal for kanenobu 4 -2
+spread = 3
++1;
+second elementary principal ideal for kanenobu 6 -2
+spread = 4
++1;
