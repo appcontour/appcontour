@@ -989,6 +989,9 @@ display_regions_from_nodes (struct sketch *s)
  *     is oriented from right to left
  * -1: if arriving at the odd-numbered label, the crossed strand
  *     is oriented from left to right
+ *
+ * This doesn't work well (see Haken satellite example), perhaps we should try
+ * to incorporate the routine "realize" by Jim Hoste in decode_new_DT.c (knotscape)
  */
 
 static int *choices;
