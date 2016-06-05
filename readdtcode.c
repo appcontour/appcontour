@@ -1,3 +1,19 @@
+/*
+ * CREDITS
+ *
+ * the function "dt_realize" is taken almost verbatim from the KnotScape
+ * package (src/decode_new_DT.c) where it is called "realize".
+ * Credits for this routine must go to Jeff Weeks, here is a short
+ * note about this routine from Morwen Thistlethwaite:
+ >
+ > The code was written by Jeff Weeks, and was adapted from pseudocode
+ > in:  C.H. Dowker and M.B. Thistlethwaite, On the classification of
+ > knots,  C.R. Math. Rep. Acad. Sci. Canada, IV (1982) no.2, 129-131.
+ >
+ > He wrote it so that he could input the knots into Snappea to work
+ > out the canonical cell decompositions of their complements.
+ */
+
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
