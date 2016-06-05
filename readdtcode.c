@@ -172,11 +172,11 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   numlabels = 2*numnodes;
   assert (numnodes >= 2);
 
-  abscode = (int *) malloc ((numlabels+1)*(sizeof (int)));
-  dtsign = (int *) malloc ((numlabels+1)*(sizeof (int)));
-  regionsign = (int *) malloc ((numlabels+1)*(sizeof (int)));
-  tagged = (int *) malloc ( (2*numnodes+1) * sizeof(int) );
-  marknodes = (int *) malloc ( (2*numnodes+1) * sizeof(int) );
+  abscode = (int *) malloc (numlabels*(sizeof (int)));
+  dtsign = (int *) malloc (numlabels*(sizeof (int)));
+  regionsign = (int *) malloc (numlabels*(sizeof (int)));
+  tagged = (int *) malloc (numlabels * sizeof(int) );
+  marknodes = (int *) malloc (numlabels * sizeof(int) );
 
   curoddnode = 1;
   for (i = 0; i < numnodes; i++)
@@ -187,29 +187,29 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
       printf ("Only even values allowed!\n");
       exit (4);
     }
-    abscode[curoddnode] = abs(rcode);
-    dtsign[curoddnode] = 1;
-    if (rcode < 0) dtsign[curoddnode] = -1;
-    abscode[abs(rcode)] = curoddnode;
+    abscode[curoddnode - 1] = abs(rcode) - 1;
+    dtsign[curoddnode - 1] = 1;
+    if (rcode < 0) dtsign[curoddnode - 1] = -1;
+    abscode[abs(rcode) - 1] = curoddnode - 1;
     curoddnode += 2;
   }
 
-  curevennode = 2;
+  curevennode = 1;
   for (i = 0; i < numnodes; i++)
   {
     dtsign[curevennode] = -dtsign[abscode[curevennode]];
     curevennode += 2;
   }
-  for (i = 1; i <= numlabels; i++)
+  for (i = 0; i < numlabels; i++)
   {
-    if (abscode[i] == 0)
+    if (abscode[i] < 0)
     {
       printf ("Must use all even number from 2 to %d\n", numlabels);
       exit (5);
     }
     if (abs(i - abscode[i]) <= 1)
     {
-      printf ("No tight loop allowed: %d %d\n", i, abscode[i]);
+      printf ("No tight loop allowed: %d %d\n", i + 1, abscode[i] + 1);
       exit (6);
     }
   }
@@ -220,7 +220,7 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   /* this function wants a zero-based vector */
   dt_realization = (int *) malloc (numlabels * sizeof (int));
   dt_involution = (int *) malloc (numlabels * sizeof (int));
-  for (i = 0; i < numlabels; i++) {dt_involution[i] = abscode[i+1] - 1;}
+  for (i = 0; i < numlabels; i++) {dt_involution[i] = abscode[i];}
   dt_realize (dt_involution, dt_realization, numnodes);
   dt_incomplete = 0;
   for (i = 0; i < numlabels; i++) if (dt_realization[i] == 0) dt_incomplete = 1;
@@ -244,7 +244,7 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
       {
         for (i = 0; i < numnodes; i++)
         {
-          printf ("%d%c ", dtsign[2*i+1]*(dt_involution[2*i]+1), (dt_realization[2*i] > 0)?'>':'<');
+          printf ("%d%c ", dtsign[2*i]*(dt_involution[2*i]+1), (dt_realization[2*i] > 0)?'>':'<');
         }
         printf ("\n");
       }
@@ -261,7 +261,7 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
         ch = '?';
         if (dt_realization[2*i] > 0) ch = '>';
         if (dt_realization[2*i] < 0) ch = '<';
-        printf ("%d%c ", dtsign[2*i+1]*(dt_involution[2*i]+1), ch);
+        printf ("%d%c ", dtsign[2*i]*(dt_involution[2*i]+1), ch);
       }
       printf ("\n");
     }
@@ -284,7 +284,7 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
     }
     reconstruct_sign (1, gregionsign);
   } else {
-    for (i = 0; i < numlabels; i++) regionsign[i+1] = dt_realization[i];
+    for (i = 0; i < numlabels; i++) regionsign[i] = dt_realization[i];
   }
   free (dt_involution);
   free (dt_realization);
@@ -310,10 +310,10 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   // printf ("numregions: %d\n", numregions);
   //printf ("#\n# tubular knot with Dowker-Thistletwait notation\n");
   //printf ("# [");
-  //for (i = 1; i <= numlabels; i += 2)
+  //for (i = 0; i < numlabels; i += 2)
   //{
-  //  if (i > 1) printf (", ");
-  //  printf ("%d", dtsign[i]*abscode[i]);
+  //  if (i > 0) printf (", ");
+  //  printf ("%d", dtsign[i]*(abscode[i]+1));
   //}
   //printf ("]\n#\nsketch {\n");
   display_arcs_from_arcs (sketch);
@@ -541,10 +541,10 @@ display_arcs_from_arcs (struct sketch *s)
   struct arc *arc1, *arc2;
   int i;
 
-  for (i = 1; i <= numlabels; i++)
+  for (i = 0; i < numlabels; i++)
   {
     arc1 = newarc (s);
-    arc1->tag = 2*i-1;
+    arc1->tag = 2*i+1;
     if (arc1->next && arc1->tag > arc1->next->tag)
     {
       s->arcs = arc1->next;
@@ -552,7 +552,7 @@ display_arcs_from_arcs (struct sketch *s)
       insert_arc_in_list (arc1, s->arcs);
     }
     arc2 = newarc (s);
-    arc2->tag = 2*i;
+    arc2->tag = 2*i+2;
     if (arc2->next && arc2->tag > arc2->next->tag)
     {
       s->arcs = arc2->next;
@@ -582,10 +582,10 @@ display_arcs_from_nodes (struct sketch *s)
   int offset = 2*numlabels;
 
   //printf ("# start of node arcs\n");
-  for (i = 1; i <= numnodes; i++)
+  for (i = 0; i < numnodes; i++)
   {
     arc1 = newarc (s);
-    arc1->tag = offset + 4*i - 3;
+    arc1->tag = offset + 4*i + 1;
     if (arc1->next && arc1->tag > arc1->next->tag)
     {
       s->arcs = arc1->next;
@@ -593,7 +593,7 @@ display_arcs_from_nodes (struct sketch *s)
       insert_arc_in_list (arc1, s->arcs);
     }
     arc2 = newarc (s);
-    arc2->tag = offset + 4*i - 2;
+    arc2->tag = offset + 4*i + 2;
     if (arc2->next && arc2->tag > arc2->next->tag)
     {
       s->arcs = arc2->next;
@@ -601,7 +601,7 @@ display_arcs_from_nodes (struct sketch *s)
       insert_arc_in_list (arc2, s->arcs);
     }
     arc3 = newarc (s);
-    arc3->tag = offset + 4*i - 1;
+    arc3->tag = offset + 4*i + 3;
     if (arc3->next && arc3->tag > arc3->next->tag)
     {
       s->arcs = arc3->next;
@@ -609,7 +609,7 @@ display_arcs_from_nodes (struct sketch *s)
       insert_arc_in_list (arc3, s->arcs);
     }
     arc4 = newarc (s);
-    arc4->tag = offset + 4*i - 0;
+    arc4->tag = offset + 4*i + 4;
     if (arc4->next && arc4->tag > arc4->next->tag)
     {
       s->arcs = arc4->next;
@@ -621,7 +621,7 @@ display_arcs_from_nodes (struct sketch *s)
     arc3->depths = (int *) malloc (sizeof (int));
     arc4->depths = (int *) malloc (sizeof (int));
     overpass = 0;
-    if (dtsign[2*i-1] < 0) overpass = 2;
+    if (dtsign[2*i] < 0) overpass = 2;
     arc1->depths[0] = arc3->depths[0] = 2 - overpass;
     arc2->depths[0] = arc4->depths[0] = overpass;
     arc1->depthsdim = arc2->depthsdim = arc3->depthsdim = arc4->depthsdim = 1;
@@ -650,13 +650,13 @@ display_regions (struct sketch *s)
   int blueregionnum = 0;
   int i, arc, atag;
 
-  redtagged = (int *) malloc ( (numlabels+1) * sizeof(int) );
-  bluetagged = (int *) malloc ( (numlabels+1) * sizeof(int) );
-  for (i = 1; i <= numlabels; i++) redtagged[i] = bluetagged[i] = 0;
+  redtagged = (int *) malloc ( numlabels * sizeof(int) );
+  bluetagged = (int *) malloc ( numlabels * sizeof(int) );
+  for (i = 0; i < numlabels; i++) redtagged[i] = bluetagged[i] = 0;
 
   //printf ("Displaying red regions...\n");
 
-  for (i = 1; i <= numlabels; i++)
+  for (i = 0; i < numlabels; i++)
   {
     if (redtagged[i]) continue;
     redregionnum++;  /* found new region */
@@ -701,28 +701,28 @@ display_regions (struct sketch *s)
       blast = b;
       b->orientation = -1;
 
-      if ( (arc % 2) == 1 )
-      { /* odd arc */
+      if ( (arc % 2) == 0 )
+      { /* "odd" arc */
         if (regionsign[arc] > 0)
         {
           arc = nextlabel(abscode[arc]);
-          atag = 2*arc;
-          //printf ("-a%d ", 2*arc);
+          atag = 2*arc + 2;
+          //printf ("-a%d ", 2*arc + 2);
         } else {
           arc = abscode[arc];
-          atag = 2*arc - 1;
-          //printf ("-a%d ", 2*arc - 1);
+          atag = 2*arc + 1;
+          //printf ("-a%d ", 2*arc + 1);
         }
-      } else {  /* even arc */
+      } else {  /* "even" arc */
         if (regionsign[prevlabel(arc)] > 0)
         {
           arc = abscode[prevlabel(arc)];
-          atag = 2*arc - 1;
-          //printf ("-a%d ", 2*arc - 1);
+          atag = 2*arc + 1;
+          //printf ("-a%d ", 2*arc + 1);
         } else {
           arc = nextlabel(abscode[prevlabel(arc)]);
-          atag = 2*arc;
-          //printf ("-a%d ", 2*arc);
+          atag = 2*arc + 2;
+          //printf ("-a%d ", 2*arc + 2);
         }
       }
       for (a = s->arcs; a; a = a->next)
@@ -745,7 +745,7 @@ display_regions (struct sketch *s)
 
   //printf ("Displaying blue regions (counterclockwise)...\n");
 
-  for (i = 1; i <= numlabels; i++)
+  for (i = 0; i < numlabels; i++)
   {
     if (bluetagged[i]) continue;
     blueregionnum++;  /* found new region */
@@ -783,28 +783,28 @@ display_regions (struct sketch *s)
       }
       blast = b;
       b->orientation = -1;
-      if ( (arc % 2) == 1 )
-      { /* odd arc */
+      if ( (arc % 2) == 0 )
+      { /* "odd" arc */
         if (regionsign[prevlabel(arc)] > 0)
         {
           arc = abscode[prevlabel(arc)];
-          atag = 2*arc - 1;
-          //printf ("-a%d ", 2*arc - 1);
+          atag = 2*arc + 1;
+          //printf ("-a%d ", 2*arc + 1);
         } else {
           arc = nextlabel(abscode[prevlabel(arc)]);
-          atag = 2*arc;
-          //printf ("-a%d ", 2*arc);
+          atag = 2*arc + 2;
+          //printf ("-a%d ", 2*arc + 2);
         }
-      } else {  /* even arc */
+      } else {  /* "even" arc */
         if (regionsign[arc] > 0)
         {
           arc = nextlabel(abscode[arc]);
-          atag = 2*arc;
-          //printf ("-a%d ", 2*arc);
+          atag = 2*arc + 2;
+          //printf ("-a%d ", 2*arc + 2);
         } else {
           arc = abscode[arc];
-          atag = 2*arc - 1;
-          //printf ("-a%d ", 2*arc - 1);
+          atag = 2*arc + 1;
+          //printf ("-a%d ", 2*arc + 1);
         }
       }
       for (a = s->arcs; a; a = a->next)
@@ -844,12 +844,12 @@ display_regions_from_arcs (struct sketch *s)
   struct border *b, *blast;
   struct arc *a;
   int i, atag;
-  int offset = numregions - 1;
+  int offset = numregions;
   int arcsoffset = 2*numlabels + 1;
   int arcahead, arcbehind;
 
   //printf ("# elongated regions corresponding to arcs\n");
-  for (i = 1; i <= numlabels; i++)
+  for (i = 0; i < numlabels; i++)
   {
     blast = 0;
     region = newregion (s);
@@ -869,15 +869,15 @@ display_regions_from_arcs (struct sketch *s)
       insert_region_in_list (region, s->regions);
     }
 
-    if ( (i % 2) == 1)
+    if ( (i % 2) == 0)
     {
-      arcahead = 2*(i-1);
-      arcbehind = 2*(abscode[prevlabel(i)] - 1) + 3;
+      arcahead = 2*i;
+      arcbehind = 2*(abscode[prevlabel(i)]) + 3;
     } else {
-      arcahead = 2*(abscode[i]-1) + 1;
-      arcbehind = 2*(prevlabel(i) - 1) + 2;
+      arcahead = 2*(abscode[i]) + 1;
+      arcbehind = 2*(prevlabel(i)) + 2;
     }
-    //printf ("Region %d: ", offset + i);
+    //printf ("Region %d: ", offset + i + 1);
     bl = newborderlist_tail (region);
     b = newborder (bl);
     if (blast == 0)
@@ -889,7 +889,7 @@ display_regions_from_arcs (struct sketch *s)
     }
     blast = b;
     b->orientation = 1;
-    atag = 2*i - 1;
+    atag = 2*i + 1;
     for (a = s->arcs; a; a = a->next)
     {
       if (a->tag == atag)
@@ -929,7 +929,7 @@ display_regions_from_arcs (struct sketch *s)
     }
     blast = b;
     b->orientation = 1;
-    atag = 2*i;
+    atag = 2*i + 2;
     for (a = s->arcs; a; a = a->next)
     {
       if (a->tag == atag)
@@ -1000,7 +1000,7 @@ display_regions_from_nodes (struct sketch *s)
     }
     bl = newborderlist_tail (region);
     oddarc = 2*i + 1;
-    ori = regionsign[oddarc];
+    ori = regionsign[oddarc-1];
     oddarc = 2*oddarc + arcsoffset;
 
     atag = oddarc;
@@ -1127,15 +1127,15 @@ reconstruct_sign (int which, int *gregionsign)
   {
     /* make all regionsigns unknown */
     numtagged = 0;
-    for (i = 1; i <= numlabels; i++) regionsign[i] = 0;
+    for (i = 0; i < numlabels; i++) regionsign[i] = 0;
     if (gregionsign)
     {
       for (i = 0; i < numnodes; i++)
       {
         if (gregionsign[i])
         {
-          regionsign[2*i+1] = gregionsign[i];
-          regionsign[abscode[2*i+1]] = -gregionsign[i];
+          regionsign[2*i] = gregionsign[i];
+          regionsign[abscode[2*i]] = -gregionsign[i];
           numtagged++;
           numtagged += maximal_expansion ();
         }
@@ -1192,7 +1192,7 @@ make_choice (void)
 {
   int i;
 
-  for (i = 1; i <= numlabels; i++)
+  for (i = 0; i < numlabels; i++)
   {
     if (regionsign[i] == 0)
     {
@@ -1223,16 +1223,16 @@ maximal_expansion ()
   while (insist)
   {
     insist = 0;
-    for (i = 1; i <= numlabels; i++)
+    for (i = 0; i < numlabels; i++)
     {
-      for (j = 1; j <= numlabels; j++) tagged[j] = 0;
+      for (j = 0; j < numlabels; j++) tagged[j] = 0;
       /* follow cicle */
       node = i;
       while (1)
       {
         if (tagged[node])
         {
-          // printf ("found cycle starting at node: %d\n", abscode[node]);
+          // printf ("found cycle starting at node: %d\n", abscode[node] + 1);
           expansions = inherit (abscode[node]);
           if (expansions) insist = 1;
           totexpansions += expansions;
@@ -1255,17 +1255,17 @@ inherit (int startlabel)
   int endlabel, label;
   int expansions = 0;
 
-  // printf ("searching inheritance for cycle starting at %d\n", startlabel);
+  // printf ("searching inheritance for cycle starting at %d\n", startlabel + 1);
 
-  /* there is a cicle starting ad startlabel and ending
-   * at abscode[startlabel]
+  /* there is a cicle starting ad startlabel + 1 and ending
+   * at abscode[startlabel] + 1
    */
 
   endlabel = abscode[startlabel];
   assert (nextlabel(startlabel) != abscode[startlabel]);  /* no tight loops allowed */
   assert (nextlabel(endlabel) != abscode[endlabel]);  /* no tight loops allowed */
 
-  /* now find where the path continuing from abscode[startlabel]
+  /* now find where the path continuing from abscode[startlabel] + 1
    * first intersects the loop
    */
 
@@ -1276,11 +1276,11 @@ inherit (int startlabel)
     {
       if (isinside)
       {
-        // printf ("Sign Inheritance between %d and %d (EXITING)\n", startlabel, label);
+        // printf ("Sign Inheritance between %d and %d (EXITING)\n", startlabel + 1, label + 1);
         expansions += propagate (-regionsign[startlabel], label);
         expansions += propagate (-regionsign[label], startlabel);
       } else {
-        // printf ("Sign Inheritance between %d and %d (ENTERING)\n", startlabel, label);
+        // printf ("Sign Inheritance between %d and %d (ENTERING)\n", startlabel + 1, label + 1);
         expansions += propagate (regionsign[startlabel], label);
         expansions += propagate (regionsign[label], startlabel);
       }
@@ -1300,7 +1300,7 @@ isconsistent (void)
   int i;
   int countregions = 0;
 
-  for (i = 1; i <= numlabels; i++) tagged[i] = 0;
+  for (i = 0; i < numlabels; i++) tagged[i] = 0;
 
   /* each arc should be walked once positively and once negatively
    * tag 0
@@ -1311,11 +1311,11 @@ isconsistent (void)
 
   while (1)
   {
-    for (i = 1; i <= numlabels; i++)
+    for (i = 0; i < numlabels; i++)
     {
       if (tagged[i] < 3) break;
     }
-    if (i > numlabels) break; /* complete tour! everything fine */
+    if (i >= numlabels) break; /* complete tour! everything fine */
 
     countregions++;
     /* i is an arc that has not been walked twice */
@@ -1343,7 +1343,7 @@ tour_of_region (int startlabel, int startvelocity)
   int velocity = startvelocity;
   int i, node_to_tag;
 
-  for (i = 1; i <= numlabels; i++) marknodes[i] = 0;  /* will mark traversed labels */
+  for (i = 0; i < numlabels; i++) marknodes[i] = 0;  /* will mark traversed labels */
 
   while (1)
   {
@@ -1398,7 +1398,7 @@ int
 nextlabel (int label)
 {
   label++;
-  if (label > numlabels) label -= numlabels;
+  if (label >= numlabels) label -= numlabels;
   return (label);
 }
 
@@ -1406,7 +1406,7 @@ int
 prevlabel (int label)
 {
   label--;
-  if (label < 1) label += numlabels;
+  if (label < 0) label += numlabels;
   return (label);
 }
 

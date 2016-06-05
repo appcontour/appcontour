@@ -30,5 +30,7 @@ reconstruction of from examples/knots/hardunknot_kauffman_fig6.dtcode
 c48a38e665bcb2c77d6be9498c62d58d  -
 reconstruction of from examples/knots/knot_21_morton.dtcode
 1271ce99b037de441aa357346d693df5  -
+reconstruction of from examples/knots/hardunknot_haken_satellite.dtcode
+41f6fb5d3bf1c8a4c9a75769805de865  -
 In example examples/knots/hardunknot_kauffman_fig8.dtcode we need to specify which reconstruction we want (-22> in the dt-code)
 727ac34fc63c8be3b38b8807aef4308e  -

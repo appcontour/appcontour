@@ -17,7 +17,7 @@ echo "$dtcode" | ./contour --out alexander --foxd 3
 echo "Computing fourth elementary ideal:"
 echo "$dtcode" | ./contour --out alexander --foxd 4
 
-list="hardunknot_kauffman_fig24 hardunknot_kauffman_fig2 hardunknot_kauffman_fig30 hardunknot_kauffman_fig6 knot_21_morton"
+list="hardunknot_kauffman_fig24 hardunknot_kauffman_fig2 hardunknot_kauffman_fig30 hardunknot_kauffman_fig6 knot_21_morton hardunknot_haken_satellite"
 
 for dt in $list
 do
