@@ -1,11 +1,14 @@
 #!/bin/bash
-
+#
+# use file "Rolfsen_DT.html" from knotscape package as input file
+#
 function display ()
 {
   echo "  \"$1\", \"$2\","
 }
 
 crossings=""
+lastknots=""
 while read a b c
 do
   #echo "$a-$b-$c"
@@ -27,11 +30,20 @@ do
   then
     if echo "$a" | grep -q =
     then
+      lastknots="1"
       a1=`echo "$a" | cut -f1 -d=`
       a=`echo "$a" | cut -f2 -d=`
       display ${crossings}_$a1 ${crossings}${alternating}_$b
     fi
-    display ${crossings}_$a ${crossings}${alternating}_$b
+    if [ -n "$lastknots" ]
+    then
+      display ${crossings}_$a "#${crossings}${alternating}_$b"
+      aprev=$[ $a - 1 ]
+      display ${crossings}_${a}R "${crossings}${alternating}_$b"
+      display ${crossings}_${aprev}KA "${crossings}${alternating}_$b"
+    else
+      display ${crossings}_$a ${crossings}${alternating}_$b
+    fi
     #echo "{\"${crossings}_$a\", \"${crossings}${alternating}_$b\"},"
   fi
 done

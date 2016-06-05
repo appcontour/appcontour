@@ -27,7 +27,6 @@ do
 done
 
 locfile="examples/knots/hardunknot_kauffman_fig8.dtcode"
-echo "In example $locfile we need to specify which reconstruction we want"
-./contour print $locfile --dtcount 1 | md5sum
-./contour print $locfile --dtcount 2 | md5sum
+echo "In example $locfile we need to specify which reconstruction we want (-22> in the dt-code)"
+./contour print $locfile | md5sum
 

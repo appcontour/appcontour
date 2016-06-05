@@ -14,6 +14,7 @@ extern int verbose;
  * for each odd/even label
  */
 
+#define ALG_DT 1
 #define MAXDTCODELEN 200
 
 static char *rolfsen_to_dt[] = {
@@ -44,6 +45,21 @@ void display_regions_from_nodes (struct sketch *s);
 int isconsistent (void);
 int tour_of_region (int label, int velocity);
 void walk_left (int *labelpt, int *velocitypt);
+
+#ifdef ALG_DT
+/*
+ * a few preliminary definitions.  See at end for the main
+ * function, based on Jim Hoste code
+ */
+
+extern int experimental;
+//typedef unsigned char   Boolean;
+
+static void dt_realize (int *anInvolution, int *aRealization, int aNumCrossings);
+
+void uFatalError (char *function, char *file)
+{ printf ("FATAL error in function %s, file %s\n", function, file); exit (3); }
+#endif
 
 struct sketch *
 readdtcode (FILE *file)
@@ -128,7 +144,13 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
 {
   struct sketch *sketch;
   int i, numconsistent, curoddnode, curevennode, rcode;
-  extern int dtreconstructid;
+#ifdef ALG_DT
+  int *dt_realization;
+  int *dt_involution;
+  int dt_incomplete;
+  int agree, agreeneg;
+  char ch;
+#endif
 
   numnodes = lnumnodes;
   numlabels = 2*numnodes;
@@ -178,21 +200,66 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
 
   numregions = 2 + numlabels - numnodes;
 
-  numconsistent = reconstruct_sign (0, gregionsign);
-  if (numconsistent <= 0)
+#ifdef ALG_DT
+  /* this function wants a zero-based vector */
+  dt_realization = (int *) malloc (numlabels * sizeof (int));
+  dt_involution = (int *) malloc (numlabels * sizeof (int));
+  for (i = 0; i < numlabels; i++) {dt_involution[i] = abscode[i+1] - 1;}
+  dt_realize (dt_involution, dt_realization, numnodes);
+  dt_incomplete = 0;
+  for (i = 0; i < numlabels; i++) if (dt_realization[i] == 0) dt_incomplete = 1;
+  if (gregionsign)
   {
-    printf ("No consistent completions found. Perhaps this is a composite knot\n");
-    exit (3);
-  }
-  if (dtreconstructid > 0)
-  {
-    if (dtreconstructid > numconsistent)
+    /*
+     * this (partial?) reconstruction must be consistent with possible informations given
+     * by the user
+     */
+    agree = 1;
+    agreeneg = 1;
+    for (i = 0; i < numnodes; i++)
     {
-      printf ("Required reconstruction id is too high: %d > %d\n", dtreconstructid, numconsistent);
-      exit (2);
+      if (gregionsign[i]*dt_realization[2*i] > 0) agreeneg = 0;
+      if (gregionsign[i]*dt_realization[2*i] < 0) agree = 0;
     }
-    reconstruct_sign (dtreconstructid, gregionsign);
-  } else {
+    if ((agree == 0) && (agreeneg == 0))
+    {
+      printf ("Fatal: the reconstruction is inconsistent with user-supplied values.\n");
+      if (verbose)
+      {
+        for (i = 0; i < numnodes; i++)
+        {
+          printf ("%d%c ", dtsign[2*i+1]*(dt_involution[2*i]+1), (dt_realization[2*i] > 0)?'>':'<');
+        }
+        printf ("\n");
+      }
+      exit (4);
+    }
+    if (agree == 0)
+    {
+      for (i = 0; i < numlabels; i++) dt_realization[i] = -dt_realization[i];
+    }
+    if (verbose)
+    {
+      for (i = 0; i < numnodes; i++)
+      {
+        ch = '?';
+        if (dt_realization[2*i] > 0) ch = '>';
+        if (dt_realization[2*i] < 0) ch = '<';
+        printf ("%d%c ", dtsign[2*i+1]*(dt_involution[2*i]+1), ch);
+      }
+      printf ("\n");
+    }
+
+  }
+  if (dt_incomplete)
+  {
+    /* fallback to my old code */
+    numconsistent = reconstruct_sign (0, gregionsign);
+    if (numconsistent <= 0)
+    {
+      printf ("No consistent completions found. Perhaps this is a composite knot\n");
+      exit (3);
+    }
     if (numconsistent > 2)
     {
       printf ("More than one (%d) consistent completion found!\n", numconsistent/2);
@@ -200,7 +267,29 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
       exit (2);
     }
     reconstruct_sign (1, gregionsign);
+  } else {
+    for (i = 0; i < numlabels; i++) regionsign[i+1] = dt_realization[i];
   }
+  free (dt_involution);
+  free (dt_realization);
+
+#else
+
+  numconsistent = reconstruct_sign (0, gregionsign);
+  if (numconsistent <= 0)
+  {
+    printf ("No consistent completions found. Perhaps this is a composite knot\n");
+    exit (3);
+  }
+  if (numconsistent > 2)
+  {
+    printf ("More than one (%d) consistent completion found!\n", numconsistent/2);
+    printf ("maybe this is a compound knot\n");
+    exit (2);
+  }
+  reconstruct_sign (1, gregionsign);
+#endif
+
   sketch = newsketch ();
   // printf ("numregions: %d\n", numregions);
   //printf ("#\n# tubular knot with Dowker-Thistletwait notation\n");
@@ -294,9 +383,17 @@ readknotscape (FILE *file)
     if (strcmp (tokenword, rolfsen_to_dt[i]) == 0)
     {
       strcpy (tokenword, rolfsen_to_dt[i+1]);
+      if (*tokenword == '#')
+      {
+        printf ("# Warning: there is a difference in the numbering of the last four knots in Rolfsen table\n");
+        printf ("# with respect to other references, e.g. the knot atlas.  To avoid this warning you should\n");
+        printf ("# postfix the knot name with 'R' (Rolfsen book), or 'KA' (Knot Atlas): e.g. 10_165KA refers\n");
+        printf ("# to the last knot in the Knot Atlas and is the same as 10_166R\n");
+        strcpy (tokenword, rolfsen_to_dt[i+1]+1);
+      }
       if (!quiet)
       {
-        printf ("# Converting Rolfsen notation into dt numbering: %s -> %s\n", rolfsen_to_dt[i], rolfsen_to_dt[i+1]);
+        printf ("# Converting Rolfsen notation into dt numbering: %s -> %s\n", rolfsen_to_dt[i], tokenword);
       }
     }
   }
@@ -1003,7 +1100,6 @@ void make_choice (void);
 int
 reconstruct_sign (int which, int *gregionsign)
 {
-  extern int dtreconstructid;
   int i, numtagged, countreconstructions;
 
   choices = (int *) malloc ( numnodes*sizeof(int) );
@@ -1018,7 +1114,7 @@ reconstruct_sign (int which, int *gregionsign)
     for (i = 1; i <= numlabels; i++) regionsign[i] = 0;
     if (gregionsign)
     {
-      for (i = 0; i <= numnodes; i++)
+      for (i = 0; i < numnodes; i++)
       {
         if (gregionsign[i])
         {
@@ -1318,3 +1414,195 @@ propagate (int sign, int label)
   regionsign[abscode[label]] = -sign;
   return (1);
 }
+
+#ifdef ALG_DT
+/*
+ * this is taken verbatim from decode_new_DT.c of knotscape
+ * based on Jim Hoste previous code
+ */
+
+static void dt_realize(
+    int     *anInvolution,
+    int     *aRealization,
+    int     aNumCrossings)
+{
+    /*
+     *  I'm hoping to read through -- and understand -- Dowker
+     *  and Thistlethwaite's paper.  But for the moment I'll
+     *  try to splice in some of Jim's code and hope I'm interpreting
+     *  it correctly.
+     */
+
+    int N;
+    int i,j;
+    int *modTWO_N;
+    int *modN;
+    int *seq;
+    int *emb;
+    int *A,*D;
+    int Aempty,Dempty;
+    int OkSoFar;
+    int *phi;
+    int x;
+
+    N = aNumCrossings;
+
+    /*
+     *  Allocate local arrays.
+     */
+    modTWO_N    = (int *) malloc(4 * N * sizeof(int));
+    modN        = (int *) malloc(2 * N * sizeof(int));
+    seq         = (int *) malloc(4 * N * sizeof(int));
+    emb         = (int *) malloc(2 * N * sizeof(int));
+    A           = (int *) malloc(2 * N * sizeof(int));
+    D           = (int *) malloc(2 * N * sizeof(int));
+    phi         = (int *) malloc(2 * N * sizeof(int));
+
+    /*create the modTWO_N array*/
+    for(i=0;i<2*N;i++){
+        modTWO_N[i]=i;
+        modTWO_N[i+2*N]=i;
+    }
+    /*create the modN array*/
+    for(i=0;i<N;i++){
+        modN[i]=i;
+        modN[i+N]=i;
+    }
+    /* get seq and height from DT code*/
+    /* seq is two copies of full DT involution on crossings numbered 0 to 2N-1 */
+
+    /*
+     *  Concatenate two copies of theInvolution[] to obtain seq[].
+     */
+    for(i = 0; i < 2*N; i++)
+    {
+        seq[i      ] = anInvolution[i];
+        seq[i + 2*N] = anInvolution[i];
+    }
+
+    /* begin realizability routine to recover embedding of projection */
+    /*zero emb, A, and D. A and D will only contain zeroes and ones*/
+    for(i=0;i<2*N;i++){
+        emb[i]=A[i]=D[i]=0;
+    }
+    /*set initial conditions*/
+    OkSoFar=A[0]=A[seq[0]]=1;
+    emb[0]=1;
+    emb[seq[0]]=-1;
+
+    /* see if A is empty, ie is all zeroes*/
+    for(j=0;j<2*N-1 && !A[j];j++)
+        /*nothing*/;
+    Aempty=!A[j];
+
+    while(!Aempty && OkSoFar){
+        /* let i be least member of A*/
+        for(i=0; !A[i]; i++)
+            /*nothing*/;
+        /*determine phi for this value of i*/
+        phi[i]=1;
+        for(j=i+1;j<i+2*N;j++){
+            phi[modTWO_N[j]]=(seq[j]>=i && seq[j]<=seq[i]) ? -phi[modTWO_N[j-1]]:phi[modTWO_N[j-1]];
+        }
+        /*establish D*/
+        for(j=0; j<i; j++)
+            D[j]=1;
+        for(j=seq[i]+1; j<2*N; j++)
+            D[j]=1;
+        /* see if D is empty, ie is all zeroes*/
+        for(j=0;j<2*N-1 && !D[j];j++)
+            ;
+        Dempty=!D[j];
+        while(!Dempty && OkSoFar){
+            /*let x be least member of D*/
+            for(x=0; !D[x]; x++)
+                /*nothing*/;
+            if(x<i){
+                if(seq[x]<i || seq[x]>seq[i]){
+                    if(phi[x]*phi[seq[x]]==1){
+                        D[x]=D[seq[x]]=0;
+                    }
+                    else{
+                        OkSoFar=0;
+                    }
+                }
+                else{
+                    if(emb[x] != 0){/* emb[x] is already defined*/
+                        if(phi[x]*phi[seq[x]]*emb[i]==emb[x])
+                            D[x]=0;
+                        else
+                            OkSoFar=0;
+                    }
+                    else{/* emb[x] is not yet defined. Hence x<>0 and x<>seq[0]*/
+                        emb[x]=phi[x]*phi[seq[x]]*emb[i];
+                        emb[seq[x]]=-emb[x];
+                        D[x]=0;
+                        if( modTWO_N[abs(seq[x]-seq[x-1])]==1){
+                            /*nothing*/
+                        }
+                        else{
+                            A[x]=A[seq[x]]=1;
+                        }
+                    }
+                }
+            }
+            else{/*x>seq[i]*/
+                if(seq[x]<i || seq[x]>seq[i]){
+                    D[x]=D[seq[x]]=0;
+                }
+                else{
+                    if(emb[x]!=0){
+                        D[x]=0;
+                    }
+                    else{
+                        emb[x]=phi[x]*phi[seq[x]]*emb[i];
+                        emb[seq[x]]=-emb[x];
+                        D[x]=0;
+                        if( modTWO_N[abs(seq[x]-seq[x-1])]==1){
+                            /*nothing*/
+                        }
+                        else{
+                            A[x]=A[seq[x]]=1;
+                        }
+                    }
+                }
+            }
+            /* see if D is empty, ie is all zeroes*/
+            for(j=0;j<2*N-1 && !D[j];j++)
+                ;
+            Dempty=!D[j];
+        }/*end of while*/
+        A[i]=0;
+        A[seq[i]]=0;
+        /* see if A is empty, ie is all zeroes*/
+        for(j=0;j<2*N-1 && !A[j];j++)
+            /*nothing*/;
+        Aempty=!A[j];
+    }/*end of while*/
+
+    /*end of realizability routine*/
+
+    if(!OkSoFar){/* sequence is not realizable*/
+        uFatalError("realize", "decode_DT");
+    }
+
+    /*
+     *  Convert emb[] to aRealization[].
+     */
+    for(i = 0; i < 2*N; i++)
+        //aRealization[i] = (emb[i] == +1);
+        aRealization[i] = emb[i];
+
+    /*
+     *  Free local arrays.
+     */
+    free(modTWO_N);
+    free(modN);
+    free(seq);
+    free(emb);
+    free(A);
+    free(D);
+    free(phi);
+}
+
+#endif
