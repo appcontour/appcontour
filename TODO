@@ -1,3 +1,6 @@
+Example of a complex alexander ideal for genus2 surfaces:
+echo "knotname{16a_1}" | ./contour punchhole -r 45 -s 1 | ./contour --out alexander
+
 spread between two monomials does not work (laurent.c)
 
 laurent_try_reduce_pair should also try to reduce the coefficients of the
