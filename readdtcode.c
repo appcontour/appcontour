@@ -40,9 +40,9 @@ static char *rolfsen_to_dt[] = {
 static int numnodes;
 static int numlabels;
 static int numregions;
-static int *abscode;
+static int *dt_involution;
 static int *dtsign;
-static int *regionsign;
+static int *dt_realization;
 static int *tagged;
 static int *marknodes;
 
@@ -161,8 +161,6 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   struct sketch *sketch;
   int i, numconsistent, curoddnode, curevennode, rcode;
 #ifdef ALG_DT
-  int *dt_realization;
-  int *dt_involution;
   int dt_incomplete;
   int agree, agreeneg;
   char ch;
@@ -172,9 +170,9 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   numlabels = 2*numnodes;
   assert (numnodes >= 2);
 
-  abscode = (int *) malloc (numlabels*(sizeof (int)));
+  dt_involution = (int *) malloc (numlabels*(sizeof (int)));
   dtsign = (int *) malloc (numlabels*(sizeof (int)));
-  regionsign = (int *) malloc (numlabels*(sizeof (int)));
+  dt_realization = (int *) malloc (numlabels*(sizeof (int)));
   tagged = (int *) malloc (numlabels * sizeof(int) );
   marknodes = (int *) malloc (numlabels * sizeof(int) );
 
@@ -187,29 +185,29 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
       printf ("Only even values allowed!\n");
       exit (4);
     }
-    abscode[curoddnode - 1] = abs(rcode) - 1;
+    dt_involution[curoddnode - 1] = abs(rcode) - 1;
     dtsign[curoddnode - 1] = 1;
     if (rcode < 0) dtsign[curoddnode - 1] = -1;
-    abscode[abs(rcode) - 1] = curoddnode - 1;
+    dt_involution[abs(rcode) - 1] = curoddnode - 1;
     curoddnode += 2;
   }
 
   curevennode = 1;
   for (i = 0; i < numnodes; i++)
   {
-    dtsign[curevennode] = -dtsign[abscode[curevennode]];
+    dtsign[curevennode] = -dtsign[dt_involution[curevennode]];
     curevennode += 2;
   }
   for (i = 0; i < numlabels; i++)
   {
-    if (abscode[i] < 0)
+    if (dt_involution[i] < 0)
     {
       printf ("Must use all even number from 2 to %d\n", numlabels);
       exit (5);
     }
-    if (abs(i - abscode[i]) <= 1)
+    if (abs(i - dt_involution[i]) <= 1)
     {
-      printf ("No tight loop allowed: %d %d\n", i + 1, abscode[i] + 1);
+      printf ("No tight loop allowed: %d %d\n", i + 1, dt_involution[i] + 1);
       exit (6);
     }
   }
@@ -218,9 +216,6 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
 
 #ifdef ALG_DT
   /* this function wants a zero-based vector */
-  dt_realization = (int *) malloc (numlabels * sizeof (int));
-  dt_involution = (int *) malloc (numlabels * sizeof (int));
-  for (i = 0; i < numlabels; i++) {dt_involution[i] = abscode[i];}
   dt_realize (dt_involution, dt_realization, numnodes);
   dt_incomplete = 0;
   for (i = 0; i < numlabels; i++) if (dt_realization[i] == 0) dt_incomplete = 1;
@@ -283,11 +278,7 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
       exit (2);
     }
     reconstruct_sign (1, gregionsign);
-  } else {
-    for (i = 0; i < numlabels; i++) regionsign[i] = dt_realization[i];
   }
-  free (dt_involution);
-  free (dt_realization);
 
 #else
 
@@ -313,7 +304,7 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   //for (i = 0; i < numlabels; i += 2)
   //{
   //  if (i > 0) printf (", ");
-  //  printf ("%d", dtsign[i]*(abscode[i]+1));
+  //  printf ("%d", dtsign[i]*(dt_involution[i]+1));
   //}
   //printf ("]\n#\nsketch {\n");
   display_arcs_from_arcs (sketch);
@@ -323,9 +314,9 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   display_regions_from_nodes (sketch);
   // printf ("}\n");
   free (tagged);
-  free (regionsign);
+  free (dt_realization);
   free (dtsign);
-  free (abscode);
+  free (dt_involution);
   sketch->huffman_labelling = 1;
   if (sketch->regions->next == 0) {
     fprintf (stderr, "Warning: empty sketch!\n");
@@ -703,24 +694,24 @@ display_regions (struct sketch *s)
 
       if ( (arc % 2) == 0 )
       { /* "odd" arc */
-        if (regionsign[arc] > 0)
+        if (dt_realization[arc] > 0)
         {
-          arc = nextlabel(abscode[arc]);
+          arc = nextlabel(dt_involution[arc]);
           atag = 2*arc + 2;
           //printf ("-a%d ", 2*arc + 2);
         } else {
-          arc = abscode[arc];
+          arc = dt_involution[arc];
           atag = 2*arc + 1;
           //printf ("-a%d ", 2*arc + 1);
         }
       } else {  /* "even" arc */
-        if (regionsign[prevlabel(arc)] > 0)
+        if (dt_realization[prevlabel(arc)] > 0)
         {
-          arc = abscode[prevlabel(arc)];
+          arc = dt_involution[prevlabel(arc)];
           atag = 2*arc + 1;
           //printf ("-a%d ", 2*arc + 1);
         } else {
-          arc = nextlabel(abscode[prevlabel(arc)]);
+          arc = nextlabel(dt_involution[prevlabel(arc)]);
           atag = 2*arc + 2;
           //printf ("-a%d ", 2*arc + 2);
         }
@@ -785,24 +776,24 @@ display_regions (struct sketch *s)
       b->orientation = -1;
       if ( (arc % 2) == 0 )
       { /* "odd" arc */
-        if (regionsign[prevlabel(arc)] > 0)
+        if (dt_realization[prevlabel(arc)] > 0)
         {
-          arc = abscode[prevlabel(arc)];
+          arc = dt_involution[prevlabel(arc)];
           atag = 2*arc + 1;
           //printf ("-a%d ", 2*arc + 1);
         } else {
-          arc = nextlabel(abscode[prevlabel(arc)]);
+          arc = nextlabel(dt_involution[prevlabel(arc)]);
           atag = 2*arc + 2;
           //printf ("-a%d ", 2*arc + 2);
         }
       } else {  /* "even" arc */
-        if (regionsign[arc] > 0)
+        if (dt_realization[arc] > 0)
         {
-          arc = nextlabel(abscode[arc]);
+          arc = nextlabel(dt_involution[arc]);
           atag = 2*arc + 2;
           //printf ("-a%d ", 2*arc + 2);
         } else {
-          arc = abscode[arc];
+          arc = dt_involution[arc];
           atag = 2*arc + 1;
           //printf ("-a%d ", 2*arc + 1);
         }
@@ -872,9 +863,9 @@ display_regions_from_arcs (struct sketch *s)
     if ( (i % 2) == 0)
     {
       arcahead = 2*i;
-      arcbehind = 2*(abscode[prevlabel(i)]) + 3;
+      arcbehind = 2*(dt_involution[prevlabel(i)]) + 3;
     } else {
-      arcahead = 2*(abscode[i]) + 1;
+      arcahead = 2*(dt_involution[i]) + 1;
       arcbehind = 2*(prevlabel(i)) + 2;
     }
     //printf ("Region %d: ", offset + i + 1);
@@ -1000,7 +991,7 @@ display_regions_from_nodes (struct sketch *s)
     }
     bl = newborderlist_tail (region);
     oddarc = 2*i + 1;
-    ori = regionsign[oddarc-1];
+    ori = dt_realization[oddarc-1];
     oddarc = 2*oddarc + arcsoffset;
 
     atag = oddarc;
@@ -1095,7 +1086,7 @@ display_regions_from_nodes (struct sketch *s)
 }
 
 /*
- * reconstruct regionsign of nodes
+ * reconstruct dt_realization of nodes
  * if nonzero, gregionsign points to a vector of given handedness:
  * 0: value unassigned
  * +1: if arriving at the odd-numbered label, the crossed strand
@@ -1127,15 +1118,15 @@ reconstruct_sign (int which, int *gregionsign)
   {
     /* make all regionsigns unknown */
     numtagged = 0;
-    for (i = 0; i < numlabels; i++) regionsign[i] = 0;
+    for (i = 0; i < numlabels; i++) dt_realization[i] = 0;
     if (gregionsign)
     {
       for (i = 0; i < numnodes; i++)
       {
         if (gregionsign[i])
         {
-          regionsign[2*i] = gregionsign[i];
-          regionsign[abscode[2*i]] = -gregionsign[i];
+          dt_realization[2*i] = gregionsign[i];
+          dt_realization[dt_involution[2*i]] = -gregionsign[i];
           numtagged++;
           numtagged += maximal_expansion ();
         }
@@ -1194,7 +1185,7 @@ make_choice (void)
 
   for (i = 0; i < numlabels; i++)
   {
-    if (regionsign[i] == 0)
+    if (dt_realization[i] == 0)
     {
       /* found an unoriented node */
       if (choices[choicept] == 0)
@@ -1203,8 +1194,8 @@ make_choice (void)
         choices[choicept + 1] = 0;
       }
       assert (abs(choices[choicept]) == 1);
-      regionsign[i] = choices[choicept];
-      regionsign[abscode[i]] = -choices[choicept];
+      dt_realization[i] = choices[choicept];
+      dt_realization[dt_involution[i]] = -choices[choicept];
       choicept++;
       return;
     }
@@ -1232,15 +1223,15 @@ maximal_expansion ()
       {
         if (tagged[node])
         {
-          // printf ("found cycle starting at node: %d\n", abscode[node] + 1);
-          expansions = inherit (abscode[node]);
+          // printf ("found cycle starting at node: %d\n", dt_involution[node] + 1);
+          expansions = inherit (dt_involution[node]);
           if (expansions) insist = 1;
           totexpansions += expansions;
           // printf ("Expanded by %d nodes\n", expansions);
           break;
         }
-        assert (tagged[abscode[node]] == 0);
-        tagged[abscode[node]] = 1;
+        assert (tagged[dt_involution[node]] == 0);
+        tagged[dt_involution[node]] = 1;
         node = nextlabel (node);
       }
     }
@@ -1258,31 +1249,31 @@ inherit (int startlabel)
   // printf ("searching inheritance for cycle starting at %d\n", startlabel + 1);
 
   /* there is a cicle starting ad startlabel + 1 and ending
-   * at abscode[startlabel] + 1
+   * at dt_involution[startlabel] + 1
    */
 
-  endlabel = abscode[startlabel];
-  assert (nextlabel(startlabel) != abscode[startlabel]);  /* no tight loops allowed */
-  assert (nextlabel(endlabel) != abscode[endlabel]);  /* no tight loops allowed */
+  endlabel = dt_involution[startlabel];
+  assert (nextlabel(startlabel) != dt_involution[startlabel]);  /* no tight loops allowed */
+  assert (nextlabel(endlabel) != dt_involution[endlabel]);  /* no tight loops allowed */
 
-  /* now find where the path continuing from abscode[startlabel] + 1
+  /* now find where the path continuing from dt_involution[startlabel] + 1
    * first intersects the loop
    */
 
   isinside = 0;
   for (label = nextlabel(endlabel); label != startlabel; label = nextlabel(label))
   {
-    if (isinpath (abscode[label], startlabel, endlabel))
+    if (isinpath (dt_involution[label], startlabel, endlabel))
     {
       if (isinside)
       {
         // printf ("Sign Inheritance between %d and %d (EXITING)\n", startlabel + 1, label + 1);
-        expansions += propagate (-regionsign[startlabel], label);
-        expansions += propagate (-regionsign[label], startlabel);
+        expansions += propagate (-dt_realization[startlabel], label);
+        expansions += propagate (-dt_realization[label], startlabel);
       } else {
         // printf ("Sign Inheritance between %d and %d (ENTERING)\n", startlabel + 1, label + 1);
-        expansions += propagate (regionsign[startlabel], label);
-        expansions += propagate (regionsign[label], startlabel);
+        expansions += propagate (dt_realization[startlabel], label);
+        expansions += propagate (dt_realization[label], startlabel);
       }
       isinside = 1-isinside;
     }
@@ -1374,22 +1365,22 @@ walk_left (int *labelpt, int *velocitypt)
 {
   if (*velocitypt > 0)
   {
-    if (regionsign[*labelpt] > 0)
+    if (dt_realization[*labelpt] > 0)
     {
       /* velocity remains positive */
-      *labelpt = nextlabel(abscode[*labelpt]);
+      *labelpt = nextlabel(dt_involution[*labelpt]);
     } else {
       *velocitypt = - *velocitypt;
-      *labelpt = abscode[*labelpt];
+      *labelpt = dt_involution[*labelpt];
     }
   } else {
-    if (regionsign[prevlabel(*labelpt)] > 0)
+    if (dt_realization[prevlabel(*labelpt)] > 0)
     {
       /* velocity remains negative */
-      *labelpt = abscode[prevlabel(*labelpt)];
+      *labelpt = dt_involution[prevlabel(*labelpt)];
     } else {
       *velocitypt = - *velocitypt;
-      *labelpt = nextlabel(abscode[prevlabel(*labelpt)]);
+      *labelpt = nextlabel(dt_involution[prevlabel(*labelpt)]);
     }
   }
 }
@@ -1424,10 +1415,10 @@ int
 propagate (int sign, int label)
 {
   if (sign == 0) return (0);
-  if (regionsign[label] != 0) return (0);
+  if (dt_realization[label] != 0) return (0);
 
-  regionsign[label] = sign;
-  regionsign[abscode[label]] = -sign;
+  dt_realization[label] = sign;
+  dt_realization[dt_involution[label]] = -sign;
   return (1);
 }
 
