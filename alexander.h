@@ -19,11 +19,16 @@ struct alexanderideal {
   int l1num;
   int spread;
   int l2num;
+  int fl2offset;
   int fl2num;
   int val;
-  struct laurentpoly *l1[IDEAL_MAX_GENERATORS_NUM];
-  struct laurentpoly2 *l2[IDEAL_MAX_GENERATORS_NUM];
-  struct laurentpoly2 *fl2[IDEAL_MAX_GENERATORS_NUM];
+  int max_generators_num;
+  union {  struct laurentpoly *l1;
+           struct laurentpoly2 *l2;  /* followed by ex fl2 at fl2offset */
+        } lx[0];
+  //struct laurentpoly *l1[IDEAL_MAX_GENERATORS_NUM];
+  //struct laurentpoly2 *l2[IDEAL_MAX_GENERATORS_NUM];  /* followed by ex fl2 at fl2offset */
+  //struct laurentpoly2 *fl2[IDEAL_MAX_GENERATORS_NUM];
 };
 
 /*

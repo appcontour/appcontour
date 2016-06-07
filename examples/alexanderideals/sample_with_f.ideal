@@ -1,0 +1,12 @@
+# ideal obtained with command
+# echo "knotname{16a_1}" | ./contour punchhole -r 45 -s 1 | ./contour --out alexander -Q
+#
+# --foxd 2
+#
+# *** Warning: result can be noncanonical ***
+ideal(u,v) {
++u-2v-7uv+11v^2+24uv^2-30v^3-46uv^3+50v^4+49uv^4-49v^5-27uv^5+27v^6+8uv^6-8v^7-uv^7+v^8;
+F: +1-7v+20v^2-29v^3+20v^4-7v^5+v^6;
+F: -1+6v-14v^2+14v^3-6v^4+v^5;
+F: +1-5v+11v^2-12v^3+6v^4-v^5;
+}
