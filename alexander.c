@@ -685,7 +685,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   struct alexanderideal *ai;
   struct laurentmatrix *matrix, *minor;
   struct laurentpoly *l, **matrixcolumn, **columnj, **columnjj;
-  int rank, i, ii, j, jj, idx;
+  int rank, i, ii, j, jj;
 
   assert (corank >= 1);
   matrix = laurent_build_matrix (p, eliminate);
@@ -694,8 +694,8 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   if (matrix->numcols < matrix->numrows - corank) return (0);
 
   rank = matrix->numrows - corank;
-  ai = (struct alexanderideal *) malloc (IDEAL_MAX_GENERATORS_NUM*sizeof(void *) + sizeof (struct alexanderideal));
-  ai->max_generators_num = IDEAL_MAX_GENERATORS_NUM;
+  ai = (struct alexanderideal *) malloc (IDEAL_DEF_GENERATORS_NUM*sizeof(void *) + sizeof (struct alexanderideal));
+  ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
   ai->indets = 1;
   ai->spread = 1;
   if (rank <= corank)
@@ -711,7 +711,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
       break;
 
       case 1:
-      idx = 0;
+      ai->l1num = 0;
       for (i = 0; i < matrix->numrows; i++)
       {
         for (j = 0; j < matrix->numcols; j++)
@@ -719,7 +719,8 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
           matrixcolumn = matrix->columns[j];
           l = matrixcolumn[i];
           if (l == 0) continue;
-          if (idx >= ai->max_generators_num)
+          if (ai->l1num >= ai->max_generators_num) ai = ai_increase_size (ai);
+          if (ai->l1num >= ai->max_generators_num)
           {
             printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
             laurent_free_matrix (matrix);
@@ -727,15 +728,14 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
             return (0);
           } else {
             // assert (idx < ai->l1num);
-            ai->lx[idx++].l1 = laurent_dup(l);
+            ai->lx[ai->l1num++].l1 = laurent_dup(l);
           }
         }
       }
-      ai->l1num = idx;
       break;
 
       case 2:
-      idx = 0;
+      ai->l1num = 0;
       minor = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
       minor->numcols = 2;
       minor->numrows = 2;
@@ -756,9 +756,10 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
               minor->columns[0][1] = columnj[ii];
               minor->columns[1][0] = columnjj[i];
               minor->columns[1][1] = columnjj[ii];
-              if (idx >= ai->max_generators_num)
+              if (ai->l1num >= ai->max_generators_num) ai = ai_increase_size (ai);
+              if (ai->l1num >= ai->max_generators_num)
               {
-                printf ("Fatal: too many generators (%d) for the ideal\n", idx);
+                printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
                 free (minor->columns[0]);
                 free (minor->columns[1]);
                 free (minor->columns);
@@ -767,7 +768,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
                 free (ai);
                 return (0);
               }
-              ai->lx[idx++].l1 = laurent_compute_determinant (minor->columns, minor->numcols);
+              ai->lx[ai->l1num++].l1 = laurent_compute_determinant (minor->columns, minor->numcols);
               minor->columns[0][0] = 0;
               minor->columns[0][1] = 0;
               minor->columns[1][0] = 0;
@@ -780,7 +781,6 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
       free (minor->columns[1]);
       free (minor->columns);
       free (minor);
-      ai->l1num = idx;
       break;
 
       default:
@@ -800,32 +800,32 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
     }
     /* this is the corank 1 case, with rank larger than 1 */
     assert (matrix->numrows == matrix->numcols);
-    idx = 0;
+    ai->l1num = 0;
     for (i = 0; i < matrix->numrows; i++)
     {
       for (j = 0; j < matrix->numcols; j++)
       {
-        if (idx >= ai->max_generators_num)
+        if (ai->l1num >= ai->max_generators_num) ai = ai_increase_size (ai);
+        if (ai->l1num >= ai->max_generators_num)
         {
-          printf ("Fatal: too many generators (%d) for the ideal\n", idx+1);
+          printf ("Fatal: too many generators (%d) for the ideal\n", ai->l1num);
           laurent_free_matrix (matrix);
           free (ai);
           return (0);
         }
-        assert (idx < ai->max_generators_num);
+        assert (ai->l1num < ai->max_generators_num);
         minor = minor_matrix_corank1 (matrix, i, j);
-        ai->lx[idx++].l1 = laurent_compute_determinant (minor->columns, minor->numcols);
+        ai->lx[ai->l1num++].l1 = laurent_compute_determinant (minor->columns, minor->numcols);
         for (jj = 0; jj < minor->numcols; jj++) free (minor->columns[jj]);
         free (minor->columns);
         free (minor);
-        ai->l1num = idx;
       }
     }
     if (verbose) printout_ideal1 (ai, 0);
   }
 
   laurent_free_matrix (matrix);
-  laurent_simplify_ideal (ai);
+  ai = laurent_simplify_ideal (ai);
   return (ai);
 }
 
@@ -972,7 +972,7 @@ laurent_free_matrix (struct laurentmatrix *matrix)
   free (matrix);
 }
 
-void
+struct alexanderideal *
 laurent_simplify_ideal (struct alexanderideal *ai)
 {
   struct laurentpoly *oldgcd, *newgcd;
@@ -1019,6 +1019,7 @@ laurent_simplify_ideal (struct alexanderideal *ai)
       } else {
         if (verbose) printf ("Information: degree reduction in ideal generators!\n");
         for (i = 0; i <= newgcd->stemdegree; i++) newgcd->stem[i] *= spread;
+        if (ai->l1num >= ai->max_generators_num) ai = ai_increase_size (ai);
         if (ai->l1num < ai->max_generators_num)
         {
           for (i = ai->l1num; i > 0; i--) ai->lx[i].l1 = ai->lx[i-1].l1;
@@ -1049,10 +1050,10 @@ laurent_simplify_ideal (struct alexanderideal *ai)
     }
     ai->l1num = 1;
     ai->spread = spread;
-    return;
+    return (ai);
   }
 
-  return;  /* TODO: not implemented at the moment! */
+  return (ai);  /* TODO: not implemented at the moment! */
 }
 
 //#define USE_EUCLID_GCD 1
@@ -2611,10 +2612,10 @@ read_alexander_ideal (FILE *file)
 
   tok = gettoken (file);
   assert (tok == TOK_LPAREN);
-  ai = (struct alexanderideal *) malloc (IDEAL_MAX_GENERATORS_NUM*sizeof(void *) + sizeof (struct alexanderideal));
-  ai->max_generators_num = IDEAL_MAX_GENERATORS_NUM;
+  ai = (struct alexanderideal *) malloc (IDEAL_DEF_GENERATORS_NUM*sizeof(void *) + sizeof (struct alexanderideal));
+  ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
   ai->l1num = ai->l2num = ai->fl2num = 0;
-  ai->fl2offset = IDEAL_MAX_GENERATORS_NUM/3;  /* assume there are more 'F' polynomials */
+  ai->fl2offset = IDEAL_DEF_GENERATORS_NUM/3;  /* assume there are more 'F' polynomials */
   ai->spread = 1;
   ai->val = 0;
   ai->indets = read_generators_list (file, indet_names, 2);
@@ -2666,6 +2667,7 @@ read_alexander_ideal (FILE *file)
         l2 = read_laurentpoly2 (file, indet_names);
         if (ffound)
         {
+          if (ai->fl2offset + ai->fl2num >= ai->max_generators_num) ai = ai_increase_size (ai);
           assert (ai->fl2offset + ai->fl2num < ai->max_generators_num);
           ai->lx[ai->fl2offset + ai->fl2num++].l2 = l2;
         } else {
@@ -2684,3 +2686,44 @@ read_alexander_ideal (FILE *file)
   return (ai);
 }
 
+/*
+ * reallocate ideal to accomodate for more generators
+ */
+
+struct alexanderideal *
+ai_increase_size (struct alexanderideal *ai)
+{
+  struct alexanderideal *newai;
+  extern int debug;
+  int i, fincrease;
+  int oldsize = ai->max_generators_num;
+  int newsize = 2 + oldsize + oldsize/2;  /* circa 50% increase in size */
+
+  if (debug) printf ("IDEAL: size increase from %d to %d\n", oldsize, newsize);
+  assert (ai->indets > 0);
+  assert (ai->indets <= 2);
+  newai = (struct alexanderideal *) malloc (newsize*sizeof(void *) + sizeof (struct alexanderideal));
+  newai->indets = ai->indets;
+  newai->max_generators_num = newsize;
+  newai->spread = ai->spread;
+  newai->val = ai->val;
+  switch (ai->indets)
+  {
+    case 1:
+      newai->l1num = ai->l1num;
+      for (i = 0; i < ai->l1num; i++) newai->lx[i].l1 = ai->lx[i].l1;
+      break;
+
+    case 2:
+      assert (newsize - oldsize >= 2);
+      fincrease = (newsize - oldsize)/3;
+      if (fincrease <= 0) fincrease = 1;
+      assert (newsize - oldsize - fincrease > 0);
+      newai->fl2offset = ai->fl2offset + fincrease;
+      for (i = 0; i < ai->l2num; i++) newai->lx[i].l2 = ai->lx[i].l2;
+      for (i = 0; i < ai->fl2num; i++) newai->lx[i+newai->fl2offset] = ai->lx[i+ai->fl2offset];
+      break;
+  }
+  free (ai);
+  return (newai);
+}

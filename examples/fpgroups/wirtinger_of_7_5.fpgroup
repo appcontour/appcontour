@@ -1,0 +1,9 @@
+#
+# wirtinger presentation of knot 7_5 (Rolfsen) (= 7a_3 of knotscape)
+#
+fpgroup {
+<a, b, c, d, e, f, g; BEae, CAba, DGcg, EFdf, FBeb, GCfc>
+}
+#
+# ho rimosso ADgd perche' si puo' scrivere utilizzando gli altri relators
+#

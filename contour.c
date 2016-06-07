@@ -1132,9 +1132,11 @@ main (int argc, char *argv[])
               abelianized_fundamental_group (p);
               break;
             case ACTION_ALEXANDER:
+              if (simplify) simplify_presentation (p);
               alexander (p);
               break;
             case ACTION_LINKINGNUMBER:
+              if (simplify) simplify_presentation (p);
               linkingnumber (p);
               break;
           }

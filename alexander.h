@@ -2,7 +2,8 @@
  * definitions for alexander polynomial
  */
 
-#define IDEAL_MAX_GENERATORS_NUM 40
+//#define IDEAL_MAX_GENERATORS_NUM 40
+#define IDEAL_DEF_GENERATORS_NUM 10
 
 /*
  * if indets == 0, then val holds the constant value
@@ -68,7 +69,7 @@ int canonify_ideal2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets,
 struct laurentmatrix *laurent_build_matrix (struct presentation *p, int eliminate);
 struct laurentmatrix *minor_matrix_corank1 (struct laurentmatrix *matrix, int i, int j);
 void laurent_free_matrix (struct laurentmatrix *matrix);
-void laurent_simplify_ideal (struct alexanderideal *ai);
+struct alexanderideal *laurent_simplify_ideal (struct alexanderideal *ai);
 int laurent_try_simplify_ideal (struct alexanderideal *ai);
 
 int laurent_suppdim2 (struct laurentpoly2 *l);
@@ -83,3 +84,4 @@ void base_random (int matrixb[2][2]);
 int isinvertible_base (int b[2][2]);
 
 struct alexanderideal *read_alexander_ideal (FILE *file);
+struct alexanderideal *ai_increase_size (struct alexanderideal *ai);
