@@ -169,6 +169,7 @@ alexander (struct presentation *p)
       case 5:
       case 6:
       ai = laurent_notfirst_elementary_ideal (p, gconj, foxd - 1);
+      if (ai == 0) { foxdtoolarge++; break; }
       if (ai->l1num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
       alexander_fromideal (ai);
       break;
@@ -179,44 +180,58 @@ alexander (struct presentation *p)
     }
     break;
 
-    case 2:
-    if (foxd > deficiency)
+    case 2:  /* two-component links or surface of genus 2 */
+    assert (foxd >= deficiency);
+    switch (foxd - deficiency)
     {
+      case 0: /* 2 components link: foxd = 1; genus 2 surface: foxd = 2 */
+      determinant2 = laurent_eliminate_two_indeterminates (p, gconj2, gconj, &extradeterminants);
+      extradets = 1;
+      if (deficiency == 2) extradets = numcols;
+      if (extradeterminants == 0) extradets = 0;
+      if (verbose)
+      {
+        printf ("Alexander ideal before canonization:\n");
+        printf ("-------------\n");
+        printf ("Main polynomial:\n");
+        print_laurentpoly2 (determinant2, 'u', 'v');
+        printf ("\n");
+        for (j = 0; j < extradets; j++)
+        {
+          printf ("Fundamental ideal factor %d:\n", j);
+          print_laurentpoly2 (extradeterminants[j], 'u', 'v');
+          printf ("\n");
+        }
+        printf ("-------------\n");
+      }
+      if (shuffle)
+      {
+        shuffle_poly2 (&determinant2, extradeterminants, extradets);
+      }
+      if (canonify_ideal2 (&determinant2, extradeterminants, extradets) == 0)
+        printf ("# *** Warning: result can be noncanonical ***\n");
+      if (extradeterminants)
+      {
+        if (deficiency == 2) laurent_canonify2 (determinant2);
+        for (j = 0; j < extradets; j++) laurent_canonify2 (extradeterminants[j]);
+      } else laurent_canonify2 (determinant2);
+      printout_ideal2 (0, determinant2, extradeterminants, extradets, (deficiency == 2));
+      break;
+
+      case 1:
+      if (deficiency > 1) { foxdtoolarge++; break; }
+      /* case of link and request of second elementary ideal */
+      ai = laurent_notfirst_elementary_ideal2 (p, gconj2, gconj, foxd - 1);
+      if (ai == 0) { foxdtoolarge++; break; }
+      //if (ai->l2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
+      //alexander_fromideal (ai);
+      break;
+
+      default:
       foxdtoolarge++;
+
       break;
     }
-    assert (foxd == deficiency);
-    determinant2 = laurent_eliminate_two_indeterminates (p, gconj2, gconj, &extradeterminants);
-    extradets = 1;
-    if (deficiency == 2) extradets = numcols;
-    if (extradeterminants == 0) extradets = 0;
-    if (verbose)
-    {
-      printf ("Alexander ideal before canonization:\n");
-      printf ("-------------\n");
-      printf ("Main polynomial:\n");
-      print_laurentpoly2 (determinant2, 'u', 'v');
-      printf ("\n");
-      for (j = 0; j < extradets; j++)
-      {
-        printf ("Fundamental ideal factor %d:\n", j);
-        print_laurentpoly2 (extradeterminants[j], 'u', 'v');
-        printf ("\n");
-      }
-      printf ("-------------\n");
-    }
-    if (shuffle)
-    {
-      shuffle_poly2 (&determinant2, extradeterminants, extradets);
-    }
-    if (canonify_ideal2 (&determinant2, extradeterminants, extradets) == 0)
-      printf ("# *** Warning: result can be noncanonical ***\n");
-    if (extradeterminants)
-    {
-      if (deficiency == 2) laurent_canonify2 (determinant2);
-      for (j = 0; j < extradets; j++) laurent_canonify2 (extradeterminants[j]);
-    } else laurent_canonify2 (determinant2);
-    printout_ideal2 (0, determinant2, extradeterminants, extradets, (deficiency == 2));
     break;
 
     default:
@@ -675,7 +690,7 @@ laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
 }
 
 /*
- * second elementary ideal
+ * second elementary ideal for knots (one indet)
  */
 
 struct alexanderideal *
@@ -827,6 +842,32 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   laurent_free_matrix (matrix);
   ai = laurent_simplify_ideal (ai);
   return (ai);
+}
+
+/*
+ * second elementary ideal for two-components links (two indets)
+ */
+
+struct alexanderideal *
+laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int corank)
+{
+  extern int verbose;
+
+  assert (corank == 1);
+  /* TODO:
+   * jacobian matrix is (p+1)x(p+2) if p+2 is the number of generators
+   * the last two columns are a multiple of (v-1) and (u-1) respectively
+   * We need to compute determinants for two sets of pxp minors:
+   * the (p+1) minors with the first p columns contribute to the main part of the ideal
+   * the (p+1)x(p) minors with as last column the common factor of the last two columns
+   * of the jacobian matrix: they contribute in the part that multiplies the fundamental
+   * ideal
+   *
+   * in the special case p = 1 (three generators) we have 2 generators in the main part
+   * and 2 generators in the fundamental part
+   */
+  printf ("Second elementary ideal for two-component links is not yet implemented\n");
+  return (0);
 }
 
 /*

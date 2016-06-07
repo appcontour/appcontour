@@ -57,6 +57,7 @@ struct laurentpoly *laurent_eliminate_one_indeterminate (struct presentation *p,
 struct alexanderideal *laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int corank);
 struct laurentpoly2 *laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
                       struct laurentpoly2 ***extrapt);
+struct alexanderideal *laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int corank);
 struct laurentpoly *laurent_get_exp_sum (struct presentationrule *r, int g, int gconj);
 struct laurentpoly2 *laurent_get_exp_sum2 (struct presentationrule *r, int g, int e1, int e2);
 struct laurentpoly2 *laurent_mixed_derivative2 (struct presentationrule *r, int x1, int x2);
