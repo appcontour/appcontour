@@ -854,7 +854,7 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
   extern int verbose;
   struct laurentmatrix2 *matrix;
   struct alexanderideal *ai;
-  int rank;
+  int i, j, rank;
 
   assert (corank == 1);
 
@@ -882,6 +882,26 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
       return (ai);
       break;
 
+      case 1:
+printf ("Matrix is %d rows by %d columns\n", matrix->numrows, matrix->numcols);
+      /* the main part of the ideal comes from a double loop: last row is excluded */
+      for (j = 0; j < matrix->numcols; j++)
+      {
+        for (i = 0; i < matrix->numrows - 1; i++)
+        {
+printf ("Element in column %d and row %d\n", j, i);
+        }
+      }
+      /* the "fundamental" part of the ideal comes from a single loop: last row is included */
+      for (j = 0; j < matrix->numcols; j++)
+      {
+printf ("Element column %d (and last row)\n", j);
+      }
+      printf ("WORK in progress...\n");
+
+      laurent_free_matrix2 (matrix);
+      break;
+
       default:
       printf ("Rank larger than 0 is not yet implemented\n");
       free (ai);
@@ -898,6 +918,7 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
       return (0);
     }
     assert (matrix->numrows == matrix->numcols);  /* the genus-2 case should be treated elsewhere */
+    /* however it would be feasible to treat here the genus-2 case (foxd = 2) also */
 
     /* TODO:
      * jacobian matrix is (p+1)x(p+2) if p+2 is the number of generators
@@ -915,6 +936,20 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
      * by one last row containing the common factors
      */
 
+    /* the main part of the ideal comes from a single loop: last row is excluded */
+printf ("Matrix is %d rows by %d columns\n", matrix->numrows, matrix->numcols);
+    for (j = 0; j < matrix->numcols; j++)
+    {
+printf ("Exclude column %d (and last row)\n", j);
+    }
+    /* the "fundamental" part of the ideal comes from a couple of loops: last row is included */
+    for (j = 0; j < matrix->numcols; j++)
+    {
+      for (i = 0; i < matrix->numrows - 1; i++)
+      {
+printf ("Exclude column %d and row %d\n", j, i);
+      }
+    }
     printf ("WORK in progress...\n");
 
     laurent_free_matrix2 (matrix);
