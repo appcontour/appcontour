@@ -1,8 +1,16 @@
 See BUG 2016.06.08
 d = 1
 0;
+The only entry actually has trivial whole ring ideal, which is consistent
+since appcontour does not perform ANY simplification at the moment
 Computing second elementary ideal for link links/link_2_6_3
 
-WORK in progress...
-Second elementary ideal for two-component links is not yet implemented
-Unable to compute higer d = 2 Alexander ideal.
+# *** Warning: result can be noncanonical ***
+Ideal [
+-1+u+v;
++1-v;
+(+u^2+uv+v^2) (u - 1);
+(+u^2+uv+v^2) (v - 1);
+(-u-v^2) (u - 1);
+(-u-v^2) (v - 1);
+]

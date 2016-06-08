@@ -228,7 +228,7 @@ alexander (struct presentation *p)
       ai = laurent_notfirst_elementary_ideal2 (p, gconj2, gconj, foxd - 1);
       if (ai == 0) { foxdtoolarge++; break; }
       if (ai->l2num + ai->fl2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
-      printout_ideal2 (ai, 0, 0, 0, 0);
+      alexander_fromideal (ai);
       break;
 
       default:
@@ -330,8 +330,8 @@ alexander_fromideal (struct alexanderideal *ai)
           for (i = 0; i < extradets; i++) ai->lx[i + ai->fl2offset].l2 = extradeterminants[i];
           free (extradeterminants);
         }
-        printout_ideal2 (ai, 0, 0, 0, 0);
       }
+      printout_ideal2 (ai, 0, 0, 0, 0);
     break;
   }
   return (1);

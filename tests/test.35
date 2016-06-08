@@ -8,6 +8,9 @@ echo "fpgroup{<a,b; aA>}" | ./contour --nosimplify --out alexander -q
 # check for computation of second elementary ideal for two-components links
 #
 list="links/link_2_6_3"
+#
+echo "The only entry actually has trivial whole ring ideal, which is consistent"
+echo "since appcontour does not perform ANY simplification at the moment"
 
 for f in $list
 do
