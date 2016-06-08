@@ -42,6 +42,16 @@ struct laurentmatrix {
   struct laurentpoly ***columns;
 };
 
+/*
+ * laurentmatrix in two indeterminates
+ */
+
+struct laurentmatrix2 {
+  int numrows;
+  int numcols;
+  struct laurentpoly2 ***columns;
+};
+
 /* prototypes */
 
 int alexander (struct presentation *p);
@@ -68,8 +78,10 @@ struct laurentpoly2 *laurent_minor_determinant2 (struct laurentpoly2 ***matrix, 
                           int row_to_substitute);
 int canonify_ideal2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets, int extranum);
 struct laurentmatrix *laurent_build_matrix (struct presentation *p, int eliminate);
+struct laurentmatrix2 *laurent_build_matrix2 (struct presentation *p, int e1, int e2);
 struct laurentmatrix *minor_matrix_corank1 (struct laurentmatrix *matrix, int i, int j);
 void laurent_free_matrix (struct laurentmatrix *matrix);
+void laurent_free_matrix2 (struct laurentmatrix2 *matrix);
 struct alexanderideal *laurent_simplify_ideal (struct alexanderideal *ai);
 int laurent_try_simplify_ideal (struct alexanderideal *ai);
 

@@ -1,0 +1,17 @@
+#
+# this shouln't segfault!
+#
+echo "See BUG 2016.06.08"
+echo "fpgroup{<a,b; aA>}" | ./contour --nosimplify --out alexander -q
+
+#
+# check for computation of second elementary ideal for two-components links
+#
+list="links/link_2_6_3"
+
+for f in $list
+do
+  echo "Computing second elementary ideal for link $f"
+  echo ""
+  ./contour --out alexander examples/${f}.knot --foxd 2 -q
+done

@@ -706,7 +706,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   matrix = laurent_build_matrix (p, eliminate);
 
   assert (matrix->numcols <= matrix->numrows);
-  if (matrix->numcols < matrix->numrows - corank) return (0);
+  if (matrix->numcols < matrix->numrows - corank) return (0); /* TODO: this should be the trivial "0" ideal, instead */
 
   rank = matrix->numrows - corank;
   ai = (struct alexanderideal *) malloc (IDEAL_DEF_GENERATORS_NUM*sizeof(void *) + sizeof (struct alexanderideal));
@@ -852,20 +852,75 @@ struct alexanderideal *
 laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int corank)
 {
   extern int verbose;
+  struct laurentmatrix2 *matrix;
+  struct alexanderideal *ai;
+  int rank;
 
   assert (corank == 1);
-  /* TODO:
-   * jacobian matrix is (p+1)x(p+2) if p+2 is the number of generators
-   * the last two columns are a multiple of (v-1) and (u-1) respectively
-   * We need to compute determinants for two sets of pxp minors:
-   * the (p+1) minors with the first p columns contribute to the main part of the ideal
-   * the (p+1)x(p) minors with as last column the common factor of the last two columns
-   * of the jacobian matrix: they contribute in the part that multiplies the fundamental
-   * ideal
-   *
-   * in the special case p = 1 (three generators) we have 2 generators in the main part
-   * and 2 generators in the fundamental part
-   */
+
+  matrix = laurent_build_matrix2 (p, e1, e2);
+
+  assert (matrix->numcols <= matrix->numrows);
+  if (matrix->numcols < matrix->numrows - corank) return (0); /* TODO this should be the trivial "0" ideal, instead */
+
+  rank = matrix->numrows - corank;
+  ai = (struct alexanderideal *) malloc (IDEAL_DEF_GENERATORS_NUM*sizeof(void *) + sizeof (struct alexanderideal));
+  ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
+  ai->indets = 2;
+  ai->spread = 1;
+
+  //if (rank <= corank)
+  if (rank < corank)  /* TODO for now fall back in the corank case */
+  {
+    switch (rank)
+    {
+      case 0:
+      ai->indets = 0;
+      ai->l2num = 1;
+      ai->val = 1;
+      laurent_free_matrix2 (matrix);
+      return (ai);
+      break;
+
+      default:
+      printf ("Rank larger than 0 is not yet implemented\n");
+      free (ai);
+      laurent_free_matrix2 (matrix);
+      return (0);
+      break;
+    }
+  } else { /* corank less than rank */
+    if (corank > 1)
+    {
+      printf ("Corank larger than 1 is not yet implemented\n");
+      free (ai);
+      laurent_free_matrix2 (matrix);
+      return (0);
+    }
+    assert (matrix->numrows == matrix->numcols);  /* the genus-2 case should be treated elsewhere */
+
+    /* TODO:
+     * jacobian matrix is (p+1)x(p+2) if p+2 is the number of generators
+     * the last two columns are a multiple of (v-1) and (u-1) respectively
+     * We need to compute determinants for two sets of pxp minors:
+     * the (p+1) minors with the first p columns contribute to the main part of the ideal
+     * the (p+1)x(p) minors with as last column the common factor of the last two columns
+     * of the jacobian matrix: they contribute in the part that multiplies the fundamental
+     * ideal
+     *
+     * in the special case p = 1 (three generators) we have 2 generators in the main part
+     * and 2 generators in the fundamental part
+     *
+     * here the matrix is transposed and the last two columns of the jacobian is substituted
+     * by one last row containing the common factors
+     */
+
+    printf ("WORK in progress...\n");
+
+    laurent_free_matrix2 (matrix);
+    /* this is the corank 1 case, with rank larger than 1 */
+  }
+
   printf ("Second elementary ideal for two-component links is not yet implemented\n");
   return (0);
 }
@@ -929,6 +984,102 @@ laurent_build_matrix (struct presentation *p, int eliminate)
    */
 
   if (verbose) print_matrix (matrix);
+  return (matrix);
+}
+
+/*
+ * build Alexander matrix (rank 2: e.g. links or genus-2 surfaces)
+ */
+
+struct laurentmatrix2 *
+laurent_build_matrix2 (struct presentation *p, int e1, int e2)
+{
+  struct presentationrule *r;
+  struct laurentmatrix2 *matrix;
+  struct laurentpoly2 **matrixcolumn, *l;
+  int numcols = 0;
+  int i, ii, j, numrows;
+  extern int verbose, debug;
+
+  assert (e1 >= 1 && e2 >= 1);
+  assert (e1 <= p->gennum);
+  assert (e2 <= p->gennum);
+  assert (e1 != e2);
+
+  for (r = p->rules; r; r = r->next) numcols++;
+
+  numrows = p->gennum - 1;
+
+  matrix = (struct laurentmatrix2 *) malloc (sizeof (struct laurentmatrix2));
+  matrix->numcols = numcols;
+  matrix->numrows = numrows;
+
+  /*
+   * last row will contain the common extra factor
+   */
+
+  matrix->columns = (struct laurentpoly2 ***) malloc (numcols*sizeof(struct laurentpoly2 **));
+  for (j = 0; j < numcols; j++)
+  {
+    matrix->columns[j] = (struct laurentpoly2 **) malloc (numrows*sizeof(struct laurentpoly2 *));
+  }
+
+  /*
+   * fill matrix
+   */
+
+  for (j = 0, r = p->rules; r; j++, r = r->next)
+  {
+    matrixcolumn = matrix->columns[j];
+    for (i = 1, ii = 0; i <= p->gennum; i++)
+    {
+      if (i == e1 || i == e2) continue;
+      matrixcolumn[ii++] = laurent_get_exp_sum2 (r, i, e1, e2);
+    }
+    assert (ii == numrows - 1);
+    matrixcolumn[ii] = laurent_common_factor2 (r, e1, e2);
+  }
+
+  if (debug)
+  {
+    for (j = 1, r = p->rules; r; j++, r = r->next)
+    {
+      printf ("Extra row 1, entry %d: ", j);
+      print_laurentpoly2 (laurent_get_exp_sum2 (r, e1, e1, e2), 'u', 'v');
+      printf (";\n");
+      printf ("Extra row 2, entry %d: ", j);
+      print_laurentpoly2 (laurent_get_exp_sum2 (r, e2, e1, e2), 'u', 'v');
+      printf (";\n");
+      printf ("Fox mixed derivative, entry %d: ", j);
+      print_laurentpoly2 (laurent_mixed_derivative2 (r, e1, e2), 'u', 'v');
+      printf (";\n");
+      printf ("Common factor, entry %d: ", j);
+      print_laurentpoly2 (matrix->columns[j-1][numrows-1], 'u', 'v');
+      printf (";\n");
+    }
+  }
+
+  /*
+   * stampa della matrice
+   */
+
+  if (verbose)
+  {
+    printf ("Matrix entries:\n");
+    for (i = 0; i < numrows; i++)
+    {
+      for (j = 0; j < numcols; j++)
+      {
+        matrixcolumn = matrix->columns[j];
+        l = matrixcolumn[i];
+        print_laurentpoly2 (l, 'u', 'v');
+        printf ("; \t");
+      }
+      printf ("\n");
+    }
+    printf ("The last row contains the commutator factors.\n");
+  }
+
   return (matrix);
 }
 
@@ -1006,6 +1157,30 @@ laurent_free_matrix (struct laurentmatrix *matrix)
     {
       l = matrixcolumn[i];
       if (l) free (l);
+    }
+    free (matrixcolumn);
+  }
+  free (matrix->columns);
+  free (matrix);
+}
+
+/*
+ * free allocated space for Alexander matrix (two indets)
+ */
+
+void
+laurent_free_matrix2 (struct laurentmatrix2 *matrix)
+{
+  struct laurentpoly2 *l, **matrixcolumn;
+  int i, j;
+
+  for (j = 0; j < matrix->numcols; j++)
+  {
+    matrixcolumn = matrix->columns[j];
+    for (i = 0; i < matrix->numrows; i++)
+    {
+      l = matrixcolumn[i];
+      if (l) free_laurentpoly2 (l);
     }
     free (matrixcolumn);
   }
@@ -1482,21 +1657,19 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
 {
   extern int verbose, debug, quiet;
   struct presentationrule *r;
-  struct laurentpoly2 *l, *determinant;
+  struct laurentpoly2 *determinant;
   struct laurentpoly2 **matrixcolumn;
-  struct laurentpoly2 ***matrix;
+  //struct laurentpoly2 ***matrix;
   struct laurentpoly2 **extradeterminants;
+  struct laurentmatrix2 *matrix;
   int numcols = 0;
-  int numrows, deficiency;
-  int i, ii, j;
+  int lastrow, deficiency, j;
   int extrafound = 0;
 
-  assert (e1 >= 1 && e2 >= 1);
-  assert (e1 <= p->gennum);
-  assert (e2 <= p->gennum);
-  assert (e1 != e2);
+  matrix = laurent_build_matrix2 (p, e1, e2);
 
   for (r = p->rules; r; r = r->next) numcols++;
+  assert (numcols == matrix->numcols);
   deficiency = p->gennum - numcols;
   assert (deficiency >= 1);
   if (deficiency > 2) return (0);
@@ -1514,7 +1687,7 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
    *
    * Indeed the program gives "0" as a result if we force the deficiency to
    * be one, e.g. by giving a presentation such as <a, b, aA>:
-   * $ echo "fpgroup{<a,b; aA>}" | contour --out alexander
+   * $ echo "fpgroup{<a,b; aA>}" | contour --nosimplify --out alexander
    * *** Warning: result can be noncanonical ***
    * Alexander polynomial:
    * 0
@@ -1526,76 +1699,15 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
    * value selected on output, to avoid confusion.
    */
 
-  numrows = p->gennum - 1;
-  /*
-   * last row will contain the common extra factor
-   */
-
-  matrix = (struct laurentpoly2 ***) malloc (numcols*sizeof(struct laurentpoly2 **));
-  for (j = 0; j < numcols; j++)
-  {
-    matrix[j] = (struct laurentpoly2 **) malloc (numrows*sizeof(struct laurentpoly2 *));
-  }
-
-  /*
-   * fill matrix
-   */
-
+  lastrow = matrix->numrows - 1;
   for (j = 0, r = p->rules; r; j++, r = r->next)
   {
-    matrixcolumn = matrix[j];
-    for (i = 1, ii = 0; i <= p->gennum; i++)
-    {
-      if (i == e1 || i == e2) continue;
-      matrixcolumn[ii++] = laurent_get_exp_sum2 (r, i, e1, e2);
-    }
-    assert (ii == numrows - 1);
-    matrixcolumn[ii] = laurent_common_factor2 (r, e1, e2);
-    if (matrixcolumn[ii]) extrafound++;
-  }
-
-  if (debug)
-  {
-    for (j = 1, r = p->rules; r; j++, r = r->next)
-    {
-      printf ("Extra row 1, entry %d: ", j);
-      print_laurentpoly2 (laurent_get_exp_sum2 (r, e1, e1, e2), 'u', 'v');
-      printf (";\n");
-      printf ("Extra row 2, entry %d: ", j);
-      print_laurentpoly2 (laurent_get_exp_sum2 (r, e2, e1, e2), 'u', 'v');
-      printf (";\n");
-      printf ("Fox mixed derivative, entry %d: ", j);
-      print_laurentpoly2 (laurent_mixed_derivative2 (r, e1, e2), 'u', 'v');
-      printf (";\n");
-      printf ("Common factor, entry %d: ", j);
-      print_laurentpoly2 (matrix[j-1][numrows-1], 'u', 'v');
-      printf (";\n");
-    }
-  }
-
-  /*
-   * stampa della matrice
-   */
-
-  if (verbose)
-  {
-    printf ("Matrix entries:\n");
-    for (i = 0; i < numrows; i++)
-    {
-      for (j = 0; j < numcols; j++)
-      {
-        matrixcolumn = matrix[j];
-        l = matrixcolumn[i];
-        print_laurentpoly2 (l, 'u', 'v');
-        printf ("; \t");
-      }
-      printf ("\n");
-    }
-    printf ("The last row contains the commutator factors.\n");
+    matrixcolumn = matrix->columns[j];
+    if (matrixcolumn[lastrow]) extrafound++;
   }
 
   /* determinant of the square matrix in case of links, of the principal minor otherwise */
-  determinant = laurent_compute_determinant2 (matrix, numcols);
+  determinant = laurent_compute_determinant2 (matrix->columns, numcols);
 
   switch (deficiency)
   {
@@ -1620,7 +1732,7 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
     break;
 
     case 2:  /* bouquet of two loops */
-    assert (numrows == numcols + 1);
+    assert (matrix->numrows == numcols + 1);
     if (extrafound && extradeterminantspt == 0)
     {
       printf ("FATAL: extra commutator factors found but computation forbidden!\n");
@@ -1632,7 +1744,7 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
            (struct laurentpoly2 **) malloc (numcols*sizeof(struct laurentpoly2 *));
       for (j = 0; j < numcols; j++)
       {
-        extradeterminants[j] = laurent_minor_determinant2 (matrix, numcols, j);
+        extradeterminants[j] = laurent_minor_determinant2 (matrix->columns, numcols, j);
       }
     }
     if (extrafound == 0 && extradeterminantspt) *extradeterminantspt = 0;
@@ -1642,21 +1754,7 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
     printf ("FATAL: invalid deficiency: %d\n", deficiency);
   }
 
-  /*
-   * free allocated space
-   */
-
-  for (j = 0; j < numcols; j++)
-  {
-    matrixcolumn = matrix[j];
-    for (i = 0; i < numrows; i++)
-    {
-      l = matrixcolumn[i];
-      if (l) free_laurentpoly2 (l);
-    }
-    free (matrixcolumn);
-  }
-  free (matrix);
+  laurent_free_matrix2 (matrix);
 
   return (determinant);
 }
@@ -2132,6 +2230,7 @@ base_canonify2 (struct laurentpoly2 **ppt)
   extern int nobasecanonify;
   int suppdim;
 
+  if (ppt == 0) return (1);
   suppdim = laurent_suppdim2 (*ppt);
  
   if (suppdim < 0) return (1);

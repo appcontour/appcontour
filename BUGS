@@ -1,3 +1,10 @@
+2016.06.08 (SOLVED)
+
+$ echo "fpgroup{<a,b; aA>}" | contour --nosimplify --out alexander
+Computing first Alexander ideal (--foxd = 1)
+Segmentation fault (core dumped)
+
+
 2016.05.21
 
 $ ./utils/kanenobu.sh 10 -2 | ./contour --out alexander --foxd 2
