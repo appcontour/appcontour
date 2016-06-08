@@ -968,11 +968,9 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
     /* this is the corank 1 case, with rank larger than 1 */
     /* the main part of the ideal comes from a single loop: last row is excluded */
     ai->l2num = ai->fl2num = 0;
-printf ("Matrix is %d rows by %d columns\n", matrix->numrows, matrix->numcols);
     lastrow = matrix->numrows - 1;
     for (j = 0; j < matrix->numcols; j++)
     {
-printf ("Exclude column %d (and last row)\n", j);
       if (ai->l2num >= ai->fl2offset) ai = ai_increase_size (ai);
       if (ai->l2num >= ai->fl2offset)
       {
@@ -992,7 +990,6 @@ printf ("Exclude column %d (and last row)\n", j);
     {
       for (i = 0; i < matrix->numrows - 1; i++)
       {
-printf ("Exclude column %d and row %d\n", j, i);
         if (ai->fl2num + ai->fl2offset >= ai->max_generators_num) ai = ai_increase_size (ai);
         if (ai->fl2num + ai->fl2offset >= ai->max_generators_num)
         {
