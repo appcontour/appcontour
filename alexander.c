@@ -219,12 +219,16 @@ alexander (struct presentation *p)
       break;
 
       case 1:
+      case 2:
+      case 3:
+      case 4:
+      case 5:
       if (deficiency > 1) { foxdtoolarge++; break; }
       /* case of link and request of second elementary ideal */
       ai = laurent_notfirst_elementary_ideal2 (p, gconj2, gconj, foxd - 1);
       if (ai == 0) { foxdtoolarge++; break; }
-      //if (ai->l2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
-      //alexander_fromideal (ai);
+      if (ai->l2num + ai->fl2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
+      printout_ideal2 (ai, 0, 0, 0, 0);
       break;
 
       default:
@@ -852,25 +856,29 @@ struct alexanderideal *
 laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int corank)
 {
   extern int verbose;
-  struct laurentmatrix2 *matrix;
+  struct laurentmatrix2 *matrix, *minor;
+  struct laurentpoly2 *l, **matrixcolumn;
   struct alexanderideal *ai;
-  int i, j, rank;
-
-  assert (corank == 1);
+  int i, j, jj, rank, lastrow;
 
   matrix = laurent_build_matrix2 (p, e1, e2);
 
   assert (matrix->numcols <= matrix->numrows);
-  if (matrix->numcols < matrix->numrows - corank) return (0); /* TODO this should be the trivial "0" ideal, instead */
-
   rank = matrix->numrows - corank;
+
   ai = (struct alexanderideal *) malloc (IDEAL_DEF_GENERATORS_NUM*sizeof(void *) + sizeof (struct alexanderideal));
   ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
   ai->indets = 2;
+  ai->fl2offset = ai->max_generators_num/2;
   ai->spread = 1;
+  if (rank > matrix->numcols)
+  {
+    ai->indets = 0;
+    ai->val = 0;
+    return (ai);
+  }
 
-  //if (rank <= corank)
-  if (rank < corank)  /* TODO for now fall back in the corank case */
+  if (rank <= corank)
   {
     switch (rank)
     {
@@ -883,23 +891,44 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
       break;
 
       case 1:
-printf ("Matrix is %d rows by %d columns\n", matrix->numrows, matrix->numcols);
       /* the main part of the ideal comes from a double loop: last row is excluded */
+      ai->l2num = ai->fl2num = 0;
       for (j = 0; j < matrix->numcols; j++)
       {
+        matrixcolumn = matrix->columns[j];
         for (i = 0; i < matrix->numrows - 1; i++)
         {
-printf ("Element in column %d and row %d\n", j, i);
+          l = matrixcolumn[i];
+          if (l == 0) continue;
+          if (ai->l2num >= ai->fl2offset) ai = ai_increase_size (ai);
+          if (ai->l2num >= ai->fl2offset)
+          {
+            printf ("Fatal: too many generators in two indets (%d) for the ideal\n", ai->l2num);
+            laurent_free_matrix2 (matrix);
+            free (ai);
+            return (0);
+          }
+          ai->lx[ai->l2num++].l2 = laurent_dup2(l);
         }
       }
       /* the "fundamental" part of the ideal comes from a single loop: last row is included */
+      lastrow = matrix->numrows - 1;
       for (j = 0; j < matrix->numcols; j++)
       {
-printf ("Element column %d (and last row)\n", j);
+        matrixcolumn = matrix->columns[j];
+        l = matrixcolumn[lastrow];
+        if (l == 0) continue;
+        if (ai->fl2num + ai->fl2offset >= ai->max_generators_num) ai = ai_increase_size (ai);
+        if (ai->fl2num + ai->fl2offset >= ai->max_generators_num)
+        { 
+          printf ("Fatal: too many f-generators in two indets (%d) for the ideal\n", ai->fl2num);
+          laurent_free_matrix2 (matrix);
+          free (ai);
+          return (0);
+        }
+        ai->lx[ai->fl2num++ + ai->fl2offset].l2 = laurent_dup2(l);
       }
-      printf ("WORK in progress...\n");
-
-      laurent_free_matrix2 (matrix);
+      if (verbose) printout_ideal2 (ai, 0, 0, 0, 0);
       break;
 
       default:
@@ -936,11 +965,27 @@ printf ("Element column %d (and last row)\n", j);
      * by one last row containing the common factors
      */
 
+    /* this is the corank 1 case, with rank larger than 1 */
     /* the main part of the ideal comes from a single loop: last row is excluded */
+    ai->l2num = ai->fl2num = 0;
 printf ("Matrix is %d rows by %d columns\n", matrix->numrows, matrix->numcols);
+    lastrow = matrix->numrows - 1;
     for (j = 0; j < matrix->numcols; j++)
     {
 printf ("Exclude column %d (and last row)\n", j);
+      if (ai->l2num >= ai->fl2offset) ai = ai_increase_size (ai);
+      if (ai->l2num >= ai->fl2offset)
+      {
+        printf ("Fatal: too many generators in two indets (%d) for the ideal\n", ai->l2num);
+        laurent_free_matrix2 (matrix);
+        free (ai);
+        return (0);
+      }
+      minor = minor_matrix2_corank1 (matrix, lastrow, j);
+      ai->lx[ai->l2num++].l2 = laurent_compute_determinant2 (minor->columns, minor->numcols);
+      for (jj = 0; jj < minor->numcols; jj++) free (minor->columns[jj]);
+      free (minor->columns);
+      free (minor);
     }
     /* the "fundamental" part of the ideal comes from a couple of loops: last row is included */
     for (j = 0; j < matrix->numcols; j++)
@@ -948,16 +993,27 @@ printf ("Exclude column %d (and last row)\n", j);
       for (i = 0; i < matrix->numrows - 1; i++)
       {
 printf ("Exclude column %d and row %d\n", j, i);
+        if (ai->fl2num + ai->fl2offset >= ai->max_generators_num) ai = ai_increase_size (ai);
+        if (ai->fl2num + ai->fl2offset >= ai->max_generators_num)
+        {
+          printf ("Fatal: too many f-generators in two indets (%d) for the ideal\n", ai->fl2num);
+          laurent_free_matrix2 (matrix);
+          free (ai);
+          return (0);
+        }
+        minor = minor_matrix2_corank1 (matrix, i, j);
+        ai->lx[ai->fl2num++ + ai->fl2offset].l2 = laurent_compute_determinant2 (minor->columns, minor->numcols);
+        for (jj = 0; jj < minor->numcols; jj++) free (minor->columns[jj]);
+        free (minor->columns);
+        free (minor);
       }
     }
-    printf ("WORK in progress...\n");
-
-    laurent_free_matrix2 (matrix);
-    /* this is the corank 1 case, with rank larger than 1 */
+    if (verbose) printout_ideal2 (ai, 0, 0, 0, 0);
   }
 
-  printf ("Second elementary ideal for two-component links is not yet implemented\n");
-  return (0);
+  laurent_free_matrix2 (matrix);
+  //ai = laurent_simplify_ideal (ai);
+  return (ai);
 }
 
 /*
@@ -1159,6 +1215,37 @@ minor_matrix_corank1 (struct laurentmatrix *matrix, int dropi, int dropj)
   for (j = 0; j < minor->numcols; j++)
   {
     minor->columns[j] = (struct laurentpoly **) malloc (minor->numrows*sizeof(struct laurentpoly *));
+  }
+
+  for (j = 0, jj = 0; j < matrix->numcols; j++)
+  {
+    if (j == dropj) continue;
+    matrixcolumn = matrix->columns[j];
+    minorcolumn = minor->columns[jj++];
+    for (i = 0, ii = 0; i < matrix->numrows; i++)
+    {
+      if (i == dropi) continue;
+      minorcolumn[ii++] = matrixcolumn[i];
+    }
+  }
+  return (minor);
+}
+
+struct laurentmatrix2 *
+minor_matrix2_corank1 (struct laurentmatrix2 *matrix, int dropi, int dropj)
+{
+  struct laurentmatrix2 *minor;
+  struct laurentpoly2 **matrixcolumn, **minorcolumn;
+  int i, j, ii, jj;
+
+  minor = (struct laurentmatrix2 *) malloc (sizeof (struct laurentmatrix2));
+  minor->numcols = matrix->numcols - 1;
+  minor->numrows = matrix->numrows - 1;
+
+  minor->columns = (struct laurentpoly2 ***) malloc (minor->numcols*sizeof(struct laurentpoly2 **));
+  for (j = 0; j < minor->numcols; j++)
+  {
+    minor->columns[j] = (struct laurentpoly2 **) malloc (minor->numrows*sizeof(struct laurentpoly2 *));
   }
 
   for (j = 0, jj = 0; j < matrix->numcols; j++)
@@ -2895,6 +2982,8 @@ ai_increase_size (struct alexanderideal *ai)
       if (fincrease <= 0) fincrease = 1;
       assert (newsize - oldsize - fincrease > 0);
       newai->fl2offset = ai->fl2offset + fincrease;
+      newai->l2num = ai->l2num;
+      newai->fl2num = ai->fl2num;
       for (i = 0; i < ai->l2num; i++) newai->lx[i].l2 = ai->lx[i].l2;
       for (i = 0; i < ai->fl2num; i++) newai->lx[i+newai->fl2offset] = ai->lx[i+ai->fl2offset];
       break;

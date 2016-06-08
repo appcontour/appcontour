@@ -1,0 +1,13 @@
+#
+# link with name L7a1, corresponding to 7^2_6 in Rolfsen
+#
+knot {
+ ^  ^  ;
+| X ^ |;
+|| x x ;
+| X X |;
+|| U x ;
+||   x ;
+|  U  |;
+   U   ;
+}

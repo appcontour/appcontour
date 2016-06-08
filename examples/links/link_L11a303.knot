@@ -1,0 +1,17 @@
+#
+# http://katlas.math.toronto.edu/wiki/L11a303
+#
+knot {
+ ^   ^   ;
+| X  ^  |;
+| X |  x ;
+| X |  x ;
+|| x  | |;
+|| x  | |;
+| X  X  |;
+|| || x  ;
+|| | X | ;
+||  U || ;
+|   U  | ;
+    U;
+}
