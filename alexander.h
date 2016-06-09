@@ -1,8 +1,9 @@
+#include "laurent.h"
+
 /*
  * definitions for alexander polynomial
  */
 
-//#define IDEAL_MAX_GENERATORS_NUM 40
 #define IDEAL_DEF_GENERATORS_NUM 10
 
 /*

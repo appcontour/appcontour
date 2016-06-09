@@ -10,7 +10,6 @@
 #include "contour.h"
 #include "fundamental.h"
 #include "alexander.h"
-#include "laurent.h"
 #include "parser.h"
 
 static int int_overflow_encountered = 0;
