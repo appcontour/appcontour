@@ -58,6 +58,7 @@
 #define ACTION_ALEXANDER 50
 #define ACTION_LINKINGNUMBER 51
 #define ACTION_SUGGEST_P_SURGERY 52
+#define ACTION_FOXJACOBIAN 53
 
 struct global_data {
   int rulenames;

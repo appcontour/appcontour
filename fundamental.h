@@ -127,6 +127,7 @@ void print_exponent_matrix (struct presentation *p);
 void fg_interactive (struct presentation *p);
 int simplify_presentation (struct presentation *p);
 void topreabelian (struct presentation *p);
+int compute_fg_rank (struct presentation *p);
 void remove_all_relators (struct presentation *p);
 void read_group_presentation (FILE *file, struct presentation *p);
 int get_exp_sum (struct presentationrule *r, int n);

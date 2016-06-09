@@ -14,6 +14,7 @@
 #include "parser.h"
 #include "mendes.h"
 #include "fundamental.h"
+#include "fox.h"
 #include "alexander.h"
 #include "giovecanonify.h"
 
@@ -500,6 +501,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"insideabelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"oafg") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"outsideabelianizedfundamental") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"foxjacobian") == 0) action = ACTION_FOXJACOBIAN;
     if (strcmp(argv[i],"alexander") == 0) action = ACTION_ALEXANDER;
     if (strcmp(argv[i],"linkingnumber") == 0) action = ACTION_LINKINGNUMBER;
     if (strcmp(argv[i],"scharacteristic") == 0) {action = ACTION_CHARACTERISTIC; viacc = 1;}
@@ -1111,6 +1113,7 @@ main (int argc, char *argv[])
 
     case ACTION_FUNDAMENTAL:
     case ACTION_AFUNDAMENTAL:
+    case ACTION_FOXJACOBIAN:
     case ACTION_ALEXANDER:
     case ACTION_LINKINGNUMBER:
     focus_on_fundamental++;
@@ -1130,6 +1133,10 @@ main (int argc, char *argv[])
               break;
             case ACTION_AFUNDAMENTAL:
               abelianized_fundamental_group (p);
+              break;
+            case ACTION_FOXJACOBIAN:
+              if (simplify) simplify_presentation (p);
+              foxjacobian (p);
               break;
             case ACTION_ALEXANDER:
               if (simplify) simplify_presentation (p);

@@ -1,5 +1,3 @@
-#include "laurent.h"
-
 /*
  * definitions for alexander polynomial
  */
@@ -16,6 +14,11 @@
  * fundamental ideal
  */
 
+union lxunion {
+  struct laurentpoly *l1;
+  struct laurentpoly2 *l2;
+};
+
 struct alexanderideal {
   int indets;
   int l1num;
@@ -25,13 +28,15 @@ struct alexanderideal {
   int fl2num;
   int val;
   int max_generators_num;
-  union {  struct laurentpoly *l1;
-           struct laurentpoly2 *l2;  /* followed by ex fl2 at fl2offset */
-        } lx[0];
+  union lxunion lx[]; /* followed by ex fl2 at fl2offset */
   //struct laurentpoly *l1[IDEAL_MAX_GENERATORS_NUM];
   //struct laurentpoly2 *l2[IDEAL_MAX_GENERATORS_NUM];  /* followed by ex fl2 at fl2offset */
   //struct laurentpoly2 *fl2[IDEAL_MAX_GENERATORS_NUM];
 };
+
+#define AI_DIM0 (sizeof(struct alexanderideal))
+#define AI_DIMX (sizeof(union lxunion))
+#define AI_DIM(size) ((size)*AI_DIMX + AI_DIM0)
 
 /*
  * laurentmatrix

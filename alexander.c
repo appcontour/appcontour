@@ -9,6 +9,7 @@
 #include <string.h>
 #include "contour.h"
 #include "fundamental.h"
+#include "laurent.h"
 #include "alexander.h"
 #include "parser.h"
 
@@ -28,7 +29,7 @@ alexander (struct presentation *p)
   struct laurentpoly2 *determinant2;
   struct laurentpoly2 **extradeterminants;
   struct alexanderideal *ai;
-  int i, j, sum, rank, matrixrank, deficiency;
+  int j, rank, matrixrank, deficiency;
   int numcols = 0;
   int printdvalue = 0;
   int foxdtoolarge = 0;
@@ -95,23 +96,31 @@ alexander (struct presentation *p)
   if (foxd < deficiency)
     /* Jacobian matrix has too low rank */
     return (printout_constant_ideal ("Alexander polynomial (special large deficiency case):\n", 0));
-  rank = 0;
-  matrixrank = 0;
-  for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  rank = compute_fg_rank (p);
+  if (rank < 0)
   {
-    sum = get_exp_sum (r, i);
-    assert (sum >= 0);
-    if (sum) matrixrank = i;
-      else gconj = i;
-    if (sum && sum != 1)
-    {
-      if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
-      if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
-      printf ("Cannot compute Alexander polynomial for groups with torsion\n");
-      return (0);
-    }
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
+    printf ("Cannot compute Alexander polynomial for groups with torsion\n");
+    return (0);
   }
-  rank = p->gennum - matrixrank;
+  matrixrank = p->gennum - rank;
+  if (rank > 0) gconj = p->gennum;
+  //for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  //{
+  //  sum = get_exp_sum (r, i);
+  //  assert (sum >= 0);
+  //  if (sum) matrixrank = i;
+  //    else gconj = i;
+  //  if (sum && sum != 1)
+  //  {
+  //    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
+  //    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
+  //    printf ("Cannot compute Alexander polynomial for groups with torsion\n");
+  //    return (0);
+  //  }
+  //}
+  //rank = p->gennum - matrixrank;
   if (rank > 2)
   {
     assert (matrixrank > 0 || numcols > 0);
@@ -494,7 +503,7 @@ linkingnumber (struct presentation *p)
   extern int verbose, quiet;
   struct presentationrule *r;
   struct laurentpoly *determinant;
-  int i, sum, rank, matrixrank;
+  int i, rank, matrixrank;
   int deriv, val, e;
   int numcols = 0;
   int gconj;
@@ -504,20 +513,25 @@ linkingnumber (struct presentation *p)
   if (verbose) print_presentation (p);
 
   for (r = p->rules; r; r = r->next) numcols++;
-  rank = 0;
-  matrixrank = 0;
-  for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  rank = compute_fg_rank (p);
+  if (rank < 0)
   {
-    sum = get_exp_sum (r, i);
-    assert (sum >= 0);
-    if (sum) matrixrank = i;
-    if (sum && sum != 1)
-    {
-      printf ("Cannot compute corank one Alexander polynomial for groups with torsion\n");
-      return (0);
-    }
+    printf ("Cannot compute corank one Alexander polynomial for groups with torsion\n");
+    return (0);
   }
-  rank = p->gennum - matrixrank;
+  matrixrank = p->gennum - rank;
+  //for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  //{
+  //  sum = get_exp_sum (r, i);
+  //  assert (sum >= 0);
+  //  if (sum) matrixrank = i;
+  //  if (sum && sum != 1)
+  //  {
+  //    printf ("Cannot compute corank one Alexander polynomial for groups with torsion\n");
+  //    return (0);
+  //  }
+  //}
+  //rank = p->gennum - matrixrank;
   if (rank <= 1)
   {
     printf ("Cannot compute linking number for groups with rank %d\n", rank);
@@ -592,7 +606,7 @@ corank_one_alexander (struct presentation *p)
   extern int verbose, quiet;
   struct presentationrule *r;
   struct laurentpoly *determinant;
-  int i, sum, rank, matrixrank;
+  int i, rank, matrixrank;
   int deriv, val, e;
   int numcols = 0;
   int gconj;
@@ -602,20 +616,26 @@ corank_one_alexander (struct presentation *p)
   if (verbose) print_presentation (p);
 
   for (r = p->rules; r; r = r->next) numcols++;
-  rank = 0;
-  matrixrank = 0;
-  for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  rank = compute_fg_rank (p);
+  if (rank < 0)
   {
-    sum = get_exp_sum (r, i);
-    assert (sum >= 0);
-    if (sum) matrixrank = i;
-    if (sum && sum != 1)
-    {
-      printf ("Cannot compute corank one Alexander polynomial for groups with torsion\n");
-      return (0);
-    }
+    printf ("Cannot compute corank one Alexander polynomial for groups with torsion\n");
+    return (0);
   }
-  rank = p->gennum - matrixrank;
+  matrixrank = p->gennum - rank;
+  //matrixrank = 0;
+  //for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  //{
+  //  sum = get_exp_sum (r, i);
+  //  assert (sum >= 0);
+  //  if (sum) matrixrank = i;
+  //  if (sum && sum != 1)
+  //  {
+  //    printf ("Cannot compute corank one Alexander polynomial for groups with torsion\n");
+  //    return (0);
+  //  }
+  //}
+  //rank = p->gennum - matrixrank;
   if (rank <= 1)
   {
     printf ("Cannot compute corank one Alexander polynomial for groups with rank %d\n", rank);
@@ -712,7 +732,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   if (matrix->numcols < matrix->numrows - corank) return (0); /* TODO: this should be the trivial "0" ideal, instead */
 
   rank = matrix->numrows - corank;
-  ai = (struct alexanderideal *) malloc (IDEAL_DEF_GENERATORS_NUM*sizeof(void *) + sizeof (struct alexanderideal));
+  ai = (struct alexanderideal *) malloc (AI_DIM(IDEAL_DEF_GENERATORS_NUM));
   ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
   ai->indets = 1;
   ai->spread = 1;
@@ -865,7 +885,7 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
   assert (matrix->numcols <= matrix->numrows);
   rank = matrix->numrows - corank;
 
-  ai = (struct alexanderideal *) malloc (IDEAL_DEF_GENERATORS_NUM*sizeof(void *) + sizeof (struct alexanderideal));
+  ai = (struct alexanderideal *) malloc (AI_DIM(IDEAL_DEF_GENERATORS_NUM));
   ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
   ai->indets = 2;
   ai->fl2offset = ai->max_generators_num/2;
@@ -2870,7 +2890,7 @@ read_alexander_ideal (FILE *file)
 
   tok = gettoken (file);
   assert (tok == TOK_LPAREN);
-  ai = (struct alexanderideal *) malloc (IDEAL_DEF_GENERATORS_NUM*sizeof(void *) + sizeof (struct alexanderideal));
+  ai = (struct alexanderideal *) malloc (AI_DIM(IDEAL_DEF_GENERATORS_NUM));
   ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
   ai->l1num = ai->l2num = ai->fl2num = 0;
   ai->fl2offset = IDEAL_DEF_GENERATORS_NUM/3;  /* assume there are more 'F' polynomials */
@@ -2960,7 +2980,7 @@ ai_increase_size (struct alexanderideal *ai)
   if (debug) printf ("IDEAL: size increase from %d to %d\n", oldsize, newsize);
   assert (ai->indets > 0);
   assert (ai->indets <= 2);
-  newai = (struct alexanderideal *) malloc (newsize*sizeof(void *) + sizeof (struct alexanderideal));
+  newai = (struct alexanderideal *) malloc (AI_DIM(newsize));
   newai->indets = ai->indets;
   newai->max_generators_num = newsize;
   newai->spread = ai->spread;

@@ -7,7 +7,9 @@
 #include <limits.h>
 #include <string.h>
 #include "contour.h"
+#include "laurent.h"
 #include "fundamental.h"
+#include "fox.h"
 #include "alexander.h"
 #include "parser.h"
 
@@ -49,6 +51,10 @@ compute_fundamental (struct ccomplex *cc, int action)
         break;
       case ACTION_AFUNDAMENTAL:
         abelianized_fundamental_group (cccc->p);
+        break;
+      case ACTION_FOXJACOBIAN:
+        if (simplify) simplify_presentation (cccc->p);
+        foxjacobian (cccc->p);
         break;
       case ACTION_ALEXANDER:
         simplify_presentation (cccc->p);
@@ -1595,6 +1601,33 @@ get_exp_sum (struct presentationrule *r, int n)
   }
 
   return (sum);
+}
+
+/*
+ * compute the rank of the fundamental group
+ * (it is assumed that the presentation is in
+ * preabelian form!!!)
+ */
+
+int
+compute_fg_rank (struct presentation *p)
+{
+  struct presentationrule *r;
+  int i, ones = 0, zeros = 0, dim = 0, divisor;
+
+  for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
+  {
+    divisor = get_exp_sum (r, i);
+    assert (divisor >= 0);
+    dim++;
+    if (divisor == 1) ones++;
+    if (divisor == 0) zeros++;
+    if (divisor == 1) assert (zeros == 0);
+  }
+
+  if (ones + zeros != dim) return (-1);
+
+  return (p->gennum - ones);
 }
 
 void
