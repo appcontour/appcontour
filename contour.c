@@ -46,7 +46,7 @@ int autosurgery = 0;
 int focus_on_fundamental = 0;
 int principal = 0;
 int internalcheck = 0;
-int abelianize = 1;
+int abelianize = 0;
 int experimental = 0;
 static int renumber = 1;
 
@@ -188,9 +188,9 @@ main (int argc, char *argv[])
       internalcheck++;
       continue;
     }
-    if (strcmp(argv[i],"--noabelianize") == 0)
+    if (strcmp(argv[i],"--abelianize") == 0)
     {
-      abelianize = 0;
+      abelianize = 1;
       continue;
     }
     if (strcmp(argv[i],"--trivialize") == 0)

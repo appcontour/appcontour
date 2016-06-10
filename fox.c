@@ -18,7 +18,7 @@ foxjacobian (struct presentation *pr)
   extern int verbose, abelianize, preabelian;
   struct presentationrule *r;
   struct laurentpolyx *p;
-  int rank, i, j;
+  int rank = 1, i, j;
 
   if (abelianize == 1 && preabelian == 0)
   {
@@ -29,7 +29,7 @@ foxjacobian (struct presentation *pr)
   if (preabelian) topreabelian (pr);
   if (verbose) print_presentation (pr);
 
-  rank = compute_fg_rank (pr);
+  if (preabelian) rank = compute_fg_rank (pr);
   if (abelianize == 2) rank = 0;
 
   assert (rank >= 0);
