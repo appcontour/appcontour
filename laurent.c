@@ -323,6 +323,31 @@ print_laurentpoly2 (struct laurentpoly2 *l, char indet1, char indet2)
 }
 
 /*
+ * print a laurent polynomial in a generic number of indeterminates
+ */
+
+void
+print_laurentpolyx (struct laurentpolyx *p, char *indetnames)
+{
+  int i;
+
+  if (p == 0) {printf ("0"); return;}
+
+  assert (p->indets <= strlen (indetnames));
+  if (p->minexpon) printf ("(%c^(%d))", indetnames[p->indets-1], p->minexpon);
+  printf ("(");
+  for (i = 0; i <= p->stemdegree; i++)
+  {
+    if (p->indets <= 1) printf ("%c%d%c^%d", (p->stem[i].l0>=0)?'+':'-', abs(p->stem[i].l0), *indetnames, i);
+     else {
+      printf ("(");
+      print_laurentpolyx (p->stem[i].lx, indetnames);
+      printf (")");
+    }
+  }
+}
+
+/*
  * read a laurent polynomial in one indet
  */
 
@@ -606,6 +631,52 @@ laurent_normalize2 (struct laurentpoly2 *l)
   return (l);
 }
 
+struct laurentpolyx *
+laurent_normalizex (struct laurentpolyx *l)
+{
+  int k;
+
+  if (l == 0) return (0);
+
+  if (l->indets > 1)
+  {
+    while (l->stem[0].lx == 0)
+    {
+      if (l->stemdegree == 0)
+      {
+        return (0);
+      }
+      for (k = 0; k < l->stemdegree; k++) l->stem[k].lx = l->stem[k+1].lx;
+      l->stemdegree--;
+      l->minexpon++;
+    }
+
+    while (l->stem[l->stemdegree].lx == 0)
+    {
+      assert (l->stemdegree > 0);
+      l->stemdegree--;
+    }
+  } else {
+    while (l->stem[0].l0 == 0)
+    {
+      if (l->stemdegree == 0)
+      {
+        return (0);
+      }
+      for (k = 0; k < l->stemdegree; k++) l->stem[k].l0 = l->stem[k+1].l0;
+      l->stemdegree--;
+      l->minexpon++;
+    }
+
+    while (l->stem[l->stemdegree].l0 == 0)
+    {
+      assert (l->stemdegree > 0);
+      l->stemdegree--;
+    }
+  }
+  return (l);
+}
+
 /*
  * duplicate a laurent polynomial
  */
@@ -761,6 +832,23 @@ free_laurentpoly2 (struct laurentpoly2 *l)
   free (l);
 }
 
+void
+free_laurentpolyx (struct laurentpolyx *l)
+{
+  int i;
+
+  if (l == 0) return;
+
+  if (l->indets > 1)
+  {
+    for (i = 0; i <= l->stemdegree; i++)
+    {
+      if (l->stem[i].lx) free_laurentpolyx (l->stem[i].lx);
+    }
+  }
+  free (l);
+}
+
 /*
  * add a monomial to a laurent_poly
  */
@@ -840,6 +928,53 @@ laurentpoly2_addmonom (struct laurentpoly2 *l, int degu, int degv, int coef)
   free_laurentpoly2 (l);
 
   return (res);
+}
+
+/*
+ * add monomial to a generic laurent polinomial
+ */
+
+struct laurentpolyx *
+laurentpolyx_addmonom (struct laurentpolyx *p, int indets, int *exponvec, int scal)
+{
+  int iv, expon;
+
+  if (scal == 0) return (p);
+  expon = exponvec[indets-1];
+
+  if (p == 0)
+  {
+    p = (struct laurentpolyx *) malloc (POLYXSIZE(1));
+    p->indets = indets;
+    p->minexpon = expon;
+    p->stemdegree = 0;
+    if (indets == 1)
+    {
+      p->stem[0].l0 = scal;
+    } else {
+      p->stem[0].lx = laurentpolyx_addmonom (0, indets-1, exponvec, scal);
+    }
+    return (p);
+  }
+  if (expon >= p->minexpon && expon <= p->minexpon + p->stemdegree)
+  {
+    if (indets == 1)
+    {
+      p->stem[expon - p->minexpon].l0 += scal;
+    } else {
+      iv = expon - p->minexpon;
+      p->stem[iv].lx = laurentpolyx_addmonom (p->stem[iv].lx, indets - 1, exponvec, scal);
+    }
+    if (laurent_normalizex(p) == 0)
+    {
+      free_laurentpolyx (p);
+      return (0);
+    }
+    return (p);
+  }
+
+  printf ("addmonom to be implemented\n");
+  return (p);
 }
 
 /*
