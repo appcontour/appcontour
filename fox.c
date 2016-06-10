@@ -15,12 +15,18 @@
 void
 foxjacobian (struct presentation *pr)
 {
-  extern int verbose, abelianize;
+  extern int verbose, abelianize, preabelian;
   struct presentationrule *r;
   struct laurentpolyx *p;
   int rank, i, j;
 
-  topreabelian (pr);
+  if (abelianize == 1 && preabelian == 0)
+  {
+    printf ("In order to abelianize we need a preabelian presentation, forcing its computation...\n");
+    printf ("You can avoid this message by including the --preabelian option\n");
+    preabelian = 1;
+  }
+  if (preabelian) topreabelian (pr);
   if (verbose) print_presentation (pr);
 
   rank = compute_fg_rank (pr);
