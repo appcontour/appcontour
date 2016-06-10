@@ -16,9 +16,7 @@ struct laurentpolyx {
 
 #define POLYXSIZE(n) (sizeof(struct laurentpolyx) + (n)*sizeof(union intorpointer))
 
-//void laurent_negate (struct laurentpolyx *term);
 void laurent_negatex (struct laurentpolyx *term);
-void print_laurentpoly (struct laurentpolyx *l, char indet);
 void print_laurentpolyx (struct laurentpolyx *l, char *indetlist);
 struct laurentpolyx *read_laurentpoly (FILE *file, char indet_names[2]);
 struct laurentpolyx *read_laurentpolyx (FILE *file, char indet_names[2]);

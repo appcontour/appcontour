@@ -229,44 +229,6 @@ laurent_negatex (struct laurentpolyx *term)
 }
 
 /*
- * print a Laurent polynomial
- */
-
-/*
-void
-print_laurentpoly (struct laurentpolyx *l, char indet)
-{
-  int i, expon;
-
-  if (l == 0) {printf ("0"); return;}
-  assert (l->stem[0].l0);
-  for (i = 0; i <= l->stemdegree; i++)
-  {
-    expon = i + l->minexpon;
-    if (l->stem[i].l0)
-    {
-      if (abs(l->stem[i].l0) != 1 || expon == 0)
-        printf ("%+d", l->stem[i].l0);
-       else
-      {
-        if (l->stem[i].l0 > 0) printf ("+");
-         else printf ("-");
-      }
-      if (expon != 0)
-      {
-        printf ("%c", indet);
-        if (expon != 1)
-        {
-          if (expon > 0) printf ("^%d", expon);
-            else printf ("^(%d)", expon);
-        }
-      }
-    }
-  }
-}
- */
-
-/*
  * print a laurent polynomial in a generic number of indeterminates
  */
 
