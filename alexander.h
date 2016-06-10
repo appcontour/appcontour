@@ -15,7 +15,7 @@
  */
 
 union lxunion {
-  struct laurentpoly *l1;
+  struct laurentpolyx *l1;
   struct laurentpolyx *l2;
 };
 
@@ -42,7 +42,7 @@ struct alexanderideal {
 struct laurentmatrix {
   int numrows;
   int numcols;
-  struct laurentpoly ***columns;
+  struct laurentpolyx ***columns;
 };
 
 /*
@@ -59,23 +59,23 @@ struct laurentmatrixx {
 
 int alexander (struct presentation *p);
 int alexander_fromideal (struct alexanderideal *ai);
-void printout_ideal1 (struct alexanderideal *ai, struct laurentpoly *principal);
+void printout_ideal1 (struct alexanderideal *ai, struct laurentpolyx *principal);
 void printout_idealx (struct alexanderideal *ai, struct laurentpolyx *principal,
                      struct laurentpolyx **fundamentals, int fnum, int printprincipal);
 int printout_constant_ideal (char *msg, int val);
 int linkingnumber (struct presentation *p);
 int linkingnumber_fromideal (struct alexanderideal *ai);
 int corank_one_alexander (struct presentation *p);
-struct laurentpoly *laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate);
+struct laurentpolyx *laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate);
 struct alexanderideal *laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int corank);
 struct laurentpolyx *laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
                       struct laurentpolyx ***extrapt);
 struct alexanderideal *laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int corank);
-struct laurentpoly *laurent_get_exp_sum (struct presentationrule *r, int g, int gconj);
+struct laurentpolyx *laurent_get_exp_sum (struct presentationrule *r, int g, int gconj);
 struct laurentpolyx *laurent_get_exp_sumx (struct presentationrule *r, int g, int e1, int e2);
 struct laurentpolyx *laurent_mixed_derivativex2 (struct presentationrule *r, int x1, int x2);
 struct laurentpolyx *laurent_common_factorx (struct presentationrule *r, int x1, int x2);
-struct laurentpoly *laurent_compute_determinant (struct laurentpoly ***matrix, int n);
+struct laurentpolyx *laurent_compute_determinant (struct laurentpolyx ***matrix, int n);
 struct laurentpolyx *laurent_compute_determinantx (struct laurentpolyx ***matrix, int n);
 struct laurentpolyx *laurent_minor_determinantx (struct laurentpolyx ***matrix, int n,
                           int row_to_substitute);
