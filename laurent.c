@@ -62,7 +62,8 @@ laurent_extended_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
   if (bufsize == 0) /* special case of two nonzero monomials */
   {
     c = abs(gcd(p1->stem[0], p2->stem[0]));
-    res = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + sizeof(int));
+    res = (struct laurentpoly *) malloc (POLYSIZE(1));
+    res->indets = 1;
     res->minexpon = 0;
     res->stemdegree = 0;
     res->stem[0] = c;
@@ -138,7 +139,8 @@ laurent_extended_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
     printf ("  t: "); euclid_printlpol (t_i);
   }
   assert (r_i->start != r_i->end);
-  res = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + (r_i->end-r_i->start)*sizeof(int));
+  res = (struct laurentpoly *) malloc (POLYSIZE(r_i->end-r_i->start));
+  res->indets = 1;
   res->minexpon = 0;
   res->stemdegree = r_i->end - r_i->start - 1;
   for (i = r_i->start, j = 0; i < r_i->end; i++) res->stem[j++] = r_i->buf[i];
@@ -447,9 +449,8 @@ laurent_add (struct laurentpoly *a1, struct laurentpoly *a2)
   maxexp = a1->minexpon + a1->stemdegree;
   if (a2->minexpon + a2->stemdegree > maxexp) maxexp = a2->minexpon + a2->stemdegree;
 
-  res = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) +
-           (maxexp - minexp + 1)*sizeof(int));
-
+  res = (struct laurentpoly *) malloc (POLYSIZE(maxexp - minexp + 1));
+  res->indets = 1;
   res->minexpon = minexp;
   res->stemdegree = maxexp - minexp;
 
@@ -539,8 +540,8 @@ laurent_mul (struct laurentpoly *f1, struct laurentpoly *f2)
 
   resstemdegree = f1->stemdegree + f2->stemdegree;
 
-  res = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) +
-          (resstemdegree + 1)*sizeof (int));
+  res = (struct laurentpoly *) malloc (POLYSIZE(resstemdegree + 1));
+  res->indets = 1;
   res->minexpon = f1->minexpon + f2->minexpon;
   res->stemdegree = resstemdegree;
 
@@ -722,9 +723,8 @@ laurent_dup (struct laurentpoly *l)
 
   if (l == 0) return (0);
 
-  res = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) +
-            (l->stemdegree + 1)*sizeof(int));
-
+  res = (struct laurentpoly *) malloc (POLYSIZE(l->stemdegree + 1));
+  res->indets = 1;
   res->minexpon = l->minexpon;
   res->stemdegree = l->stemdegree;
 
@@ -951,7 +951,8 @@ laurentpoly_addmonom (struct laurentpoly *l, int expon, int coef)
     return (l);
   }
 
-  m = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + sizeof (int));
+  m = (struct laurentpoly *) malloc (POLYSIZE(1));
+  m->indets = 1;
   m->minexpon = expon;
   m->stemdegree = 0;
   m->stem[0] = coef;
@@ -1495,8 +1496,8 @@ laurent_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
    * c is identically zero, b is a multiple of the gcd
    */
 
-  resgcd = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) +
-                                         (degb+1)*sizeof(int) );
+  resgcd = (struct laurentpoly *) malloc (POLYSIZE(degb+1));
+  resgcd->indets = 1;
   for (i = 0; i <= degb; i++)
   {
     resgcd->stem[i] = b[degb - i];

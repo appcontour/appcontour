@@ -3,10 +3,13 @@
  */
 
 struct laurentpoly {
+  int indets;
   int minexpon;
   int stemdegree;
   int stem[];
 };
+
+#define POLYSIZE(n) (sizeof(struct laurentpoly) + (n)*sizeof(int))
 
 union intorpointer {
   struct laurentpolyx *lx;

@@ -1925,7 +1925,8 @@ laurent_get_exp_sum (struct presentationrule *r, int n, int gconj)
 
   if (minexp > maxexp) return (0);
   stemdegree = maxexp - minexp;
-  l = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + (stemdegree + 1)*sizeof(int));
+  l = (struct laurentpoly *) malloc (POLYSIZE(stemdegree + 1));
+  l->indets = 1;
   l->stemdegree = stemdegree;
   l->minexpon = minexp;
   for (d = 0; d <= stemdegree; d++) l->stem[d] = 0;
@@ -2177,7 +2178,8 @@ laurent_compute_determinant (struct laurentpoly ***matrix, int n)
   assert (n >= 0);
   if (n == 0)
   {
-    determinant = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + sizeof (int));
+    determinant = (struct laurentpoly *) malloc (POLYSIZE(1));
+    determinant->indets = 1;
     determinant->minexpon = 0;
     determinant->stemdegree = 0;
     determinant->stem[0] = 1;
