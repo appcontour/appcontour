@@ -16,7 +16,7 @@
 
 union lxunion {
   struct laurentpoly *l1;
-  struct laurentpoly2 *l2;
+  struct laurentpolyx *l2;
 };
 
 struct alexanderideal {
@@ -29,9 +29,6 @@ struct alexanderideal {
   int val;
   int max_generators_num;
   union lxunion lx[]; /* followed by ex fl2 at fl2offset */
-  //struct laurentpoly *l1[IDEAL_MAX_GENERATORS_NUM];
-  //struct laurentpoly2 *l2[IDEAL_MAX_GENERATORS_NUM];  /* followed by ex fl2 at fl2offset */
-  //struct laurentpoly2 *fl2[IDEAL_MAX_GENERATORS_NUM];
 };
 
 #define AI_DIM0 (sizeof(struct alexanderideal))
@@ -52,10 +49,10 @@ struct laurentmatrix {
  * laurentmatrix in two indeterminates
  */
 
-struct laurentmatrix2 {
+struct laurentmatrixx {
   int numrows;
   int numcols;
-  struct laurentpoly2 ***columns;
+  struct laurentpolyx ***columns;
 };
 
 /* prototypes */
@@ -63,42 +60,42 @@ struct laurentmatrix2 {
 int alexander (struct presentation *p);
 int alexander_fromideal (struct alexanderideal *ai);
 void printout_ideal1 (struct alexanderideal *ai, struct laurentpoly *principal);
-void printout_ideal2 (struct alexanderideal *ai, struct laurentpoly2 *principal,
-                     struct laurentpoly2 **fundamentals, int fnum, int printprincipal);
+void printout_idealx (struct alexanderideal *ai, struct laurentpolyx *principal,
+                     struct laurentpolyx **fundamentals, int fnum, int printprincipal);
 int printout_constant_ideal (char *msg, int val);
 int linkingnumber (struct presentation *p);
 int linkingnumber_fromideal (struct alexanderideal *ai);
 int corank_one_alexander (struct presentation *p);
 struct laurentpoly *laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate);
 struct alexanderideal *laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int corank);
-struct laurentpoly2 *laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
-                      struct laurentpoly2 ***extrapt);
+struct laurentpolyx *laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
+                      struct laurentpolyx ***extrapt);
 struct alexanderideal *laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int corank);
 struct laurentpoly *laurent_get_exp_sum (struct presentationrule *r, int g, int gconj);
-struct laurentpoly2 *laurent_get_exp_sum2 (struct presentationrule *r, int g, int e1, int e2);
-struct laurentpoly2 *laurent_mixed_derivative2 (struct presentationrule *r, int x1, int x2);
-struct laurentpoly2 *laurent_common_factor2 (struct presentationrule *r, int x1, int x2);
+struct laurentpolyx *laurent_get_exp_sumx (struct presentationrule *r, int g, int e1, int e2);
+struct laurentpolyx *laurent_mixed_derivativex2 (struct presentationrule *r, int x1, int x2);
+struct laurentpolyx *laurent_common_factorx (struct presentationrule *r, int x1, int x2);
 struct laurentpoly *laurent_compute_determinant (struct laurentpoly ***matrix, int n);
-struct laurentpoly2 *laurent_compute_determinant2 (struct laurentpoly2 ***matrix, int n);
-struct laurentpoly2 *laurent_minor_determinant2 (struct laurentpoly2 ***matrix, int n,
+struct laurentpolyx *laurent_compute_determinantx (struct laurentpolyx ***matrix, int n);
+struct laurentpolyx *laurent_minor_determinantx (struct laurentpolyx ***matrix, int n,
                           int row_to_substitute);
-int canonify_ideal2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets, int extranum);
+int canonify_idealx (struct laurentpolyx **lpt, struct laurentpolyx **extradets, int extranum);
 struct laurentmatrix *laurent_build_matrix (struct presentation *p, int eliminate);
-struct laurentmatrix2 *laurent_build_matrix2 (struct presentation *p, int e1, int e2);
+struct laurentmatrixx *laurent_build_matrixx (struct presentation *p, int e1, int e2);
 struct laurentmatrix *minor_matrix_corank1 (struct laurentmatrix *matrix, int i, int j);
-struct laurentmatrix2 *minor_matrix2_corank1 (struct laurentmatrix2 *matrix, int i, int j);
+struct laurentmatrixx *minor_matrixx_corank1 (struct laurentmatrixx *matrix, int i, int j);
 void laurent_free_matrix (struct laurentmatrix *matrix);
-void laurent_free_matrix2 (struct laurentmatrix2 *matrix);
+void laurent_free_matrixx (struct laurentmatrixx *matrix);
 struct alexanderideal *laurent_simplify_ideal (struct alexanderideal *ai);
 int laurent_try_simplify_ideal (struct alexanderideal *ai);
 
-int laurent_suppdim2 (struct laurentpoly2 *l);
-void laurent_getthree2 (struct laurentpoly2 *l, int *x1, int *x2, int *x3);
-int base_canonify2 (struct laurentpoly2 **lpt);
-int base_canonify2_onedim (struct laurentpoly2 **lpt);
-int base_canonify2_twodim (struct laurentpoly2 **lpt);
-void shuffle_poly2 (struct laurentpoly2 **lpt, struct laurentpoly2 **extradets, int extranum);
-struct laurentpoly2 *base_change2 (struct laurentpoly2 *l, int matrixb[2][2]);
+int laurent_suppdimx2 (struct laurentpolyx *l);
+void laurent_getthreex (struct laurentpolyx *l, int *x1, int *x2, int *x3);
+int base_canonifyx2 (struct laurentpolyx **lpt);
+int base_canonifyx2_onedim (struct laurentpolyx **lpt);
+int base_canonifyx2_twodim (struct laurentpolyx **lpt);
+void shuffle_polyx (struct laurentpolyx **lpt, struct laurentpolyx **extradets, int extranum);
+struct laurentpolyx *base_changex (struct laurentpolyx *l, int matrixb[2][2]);
 
 void base_random (int matrixb[2][2]);
 int isinvertible_base (int b[2][2]);

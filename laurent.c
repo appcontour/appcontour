@@ -226,12 +226,17 @@ laurent_negate (struct laurentpoly *term)
  */
 
 void
-laurent_negate2 (struct laurentpoly2 *term)
+laurent_negatex (struct laurentpolyx *term)
 {
   int i;
 
   if (term == 0) return;
-  for (i = 0; i <= term->stemdegree; i++) laurent_negate (term->stem[i]);
+  if (term->indets <= 1)
+  {
+    for (i = 0; i <= term->stemdegree; i++) term->stem[i].l0 = -term->stem[i].l0;
+    return;
+  }
+  for (i = 0; i <= term->stemdegree; i++) laurent_negatex (term->stem[i].lx);
 
   return;
 }
@@ -266,56 +271,6 @@ print_laurentpoly (struct laurentpoly *l, char indet)
         {
           if (expon > 0) printf ("^%d", expon);
             else printf ("^(%d)", expon);
-        }
-      }
-    }
-  }
-}
-
-/*
- * print a Laurent polynomial with two indeterminates
- */
-
-void
-print_laurentpoly2 (struct laurentpoly2 *l, char indet1, char indet2)
-{
-  int i, j, expon, expon1;
-  struct laurentpoly *l1;
-
-  if (l == 0) {printf ("0"); return;}
-  assert (l->stem[0]);
-  for (i = 0; i <= l->stemdegree; i++)
-  {
-    expon = i + l->minexpon;
-    if ((l1 = l->stem[i]) != 0)
-    {
-      for (j = 0; j <= l1->stemdegree; j++)
-      {
-        expon1 = j + l1->minexpon;
-        if (l1->stem[j] == 0) continue;
-        if (abs(l1->stem[j]) != 1 || ((expon1 == 0)&&(expon == 0)))
-        {
-          printf ("%+d", l1->stem[j]);
-        } else {
-          if (l1->stem[j] > 0) printf ("+"); else printf ("-");
-        }
-        if (expon1 != 0)
-        {
-          printf ("%c", indet1);
-          if (expon1 != 1)
-          {
-            if (expon1 > 0) printf ("^%d", expon1);
-             else printf ("^(%d)", expon1);
-          }
-        }
-        if (expon != 0)
-        {
-          printf ("%c", indet2);
-          if (expon != 1)
-          {
-            if (expon > 0) printf ("^%d", expon);
-             else printf ("^(%d)", expon);
-          }
         }
       }
     }
@@ -446,12 +401,12 @@ read_laurentpoly (FILE *file, char indet_names[2])
  * read a laurent polynomial in two indets
  */
 
-struct laurentpoly2 *
-read_laurentpoly2 (FILE *file, char indet_names[2])
+struct laurentpolyx *
+read_laurentpolyx (FILE *file, char indet_names[2])
 {
   char ch;
   int sign, coef, exp1, exp2;
-  struct laurentpoly2 *l2 = 0;
+  struct laurentpolyx *l2 = 0;
 
   ch = mygetchar (file);
   if (ch == ';') return (l2);
@@ -462,7 +417,7 @@ read_laurentpoly2 (FILE *file, char indet_names[2])
   while (get_unsignedmonomial2 (file, indet_names, &coef, &exp1, &exp2))
   {
     coef = sign*coef;
-    l2 = laurentpoly2_addmonom (l2, exp1, exp2, coef);
+    l2 = laurentpolyx2_addmonom (l2, exp1, exp2, coef);
     ch = mygetchar (file);
     if (ch == ';') return (l2);
     assert (ch == '+' || ch == '-');
@@ -517,50 +472,6 @@ laurent_add (struct laurentpoly *a1, struct laurentpoly *a2)
 /*
  * add two laurent polynomials (two indeterminates)
  */
-
-struct laurentpoly2 *
-laurent_add2 (struct laurentpoly2 *a1, struct laurentpoly2 *a2)
-{
-  int minexp, maxexp, k;
-  struct laurentpoly2 *res;
-  struct laurentpoly *addres;
-
-  if (a1 == 0) return (laurent_dup2(a2));
-  if (a2 == 0) return (laurent_dup2(a1));
-
-  minexp = a1->minexpon;
-  if (a2->minexpon < minexp) minexp = a2->minexpon;
-
-  maxexp = a1->minexpon + a1->stemdegree;
-  if (a2->minexpon + a2->stemdegree > maxexp) maxexp = a2->minexpon + a2->stemdegree;
-
-  res = (struct laurentpoly2 *) malloc (sizeof (struct laurentpoly2) +
-           (maxexp - minexp + 1)*sizeof(struct laurentpoly *));
-
-  res->minexpon = minexp;
-  res->stemdegree = maxexp - minexp;
-
-  for (k = 0; k <= res->stemdegree; k++) res->stem[k] = 0;
-
-  for (k = 0; k <= a1->stemdegree; k++) res->stem[k + a1->minexpon - minexp] = laurent_dup (a1->stem[k]);
-  for (k = 0; k <= a2->stemdegree; k++)
-  {
-    if (a2->stem[k] == 0) continue;
-    addres = laurent_add (res->stem[k + a2->minexpon - minexp], a2->stem[k]);
-    if (res->stem[k + a2->minexpon - minexp]) free (res->stem[k + a2->minexpon - minexp]);
-    res->stem[k + a2->minexpon - minexp] = addres;
-  }
-
-  /* normalize */
-
-  if (res && laurent_normalize2 (res) == 0)
-  {
-    free_laurentpoly2 (res);
-    res = 0;
-  }
-
-  return (res);
-}
 
 struct laurentpolyx *
 laurent_addx (struct laurentpolyx *a1, struct laurentpolyx *a2)
@@ -647,37 +558,72 @@ laurent_mul (struct laurentpoly *f1, struct laurentpoly *f2)
 }
 
 /*
- * multiply two laurent polynomials (two indeterminates)
+ * multiply two laurent polynomials (in one indet)
  */
 
-struct laurentpoly2 *
-laurent_mul2 (struct laurentpoly2 *f1, struct laurentpoly2 *f2)
+struct laurentpolyx *
+laurent_mulx1 (struct laurentpolyx *f1, struct laurentpolyx *f2)
 {
   int i, j;
   int resstemdegree;
-  struct laurentpoly2 *res;
-  struct laurentpoly *mulres, *addres;
+  struct laurentpolyx *res;
 
   if (f1 == 0 || f2 == 0) return (0);
 
+  assert (f1->indets == 1 && f2->indets == 1);
   resstemdegree = f1->stemdegree + f2->stemdegree;
 
-  res = (struct laurentpoly2 *) malloc (sizeof (struct laurentpoly2) +
-          (resstemdegree + 1)*sizeof (struct laurentpoly *));
+  res = (struct laurentpolyx *) malloc (POLYXSIZE(resstemdegree + 1));
+  res->indets = 1;
   res->minexpon = f1->minexpon + f2->minexpon;
   res->stemdegree = resstemdegree;
 
-  for (i = 0; i <= resstemdegree; i++) res->stem[i] = 0;
+  for (i = 0; i <= resstemdegree; i++) res->stem[i].l0 = 0;
 
   for (i = 0; i <= f1->stemdegree; i++)
   {
     for (j = 0; j <= f2->stemdegree; j++)
     {
-      mulres = laurent_mul (f1->stem[i], f2->stem[j]);
-      addres = laurent_add (res->stem[i + j], mulres);
-      if (mulres) free (mulres);
-      if (res->stem[i + j]) free (res->stem[i + j]);
-      res->stem[i + j] = addres;
+      res->stem[i + j].l0 += f1->stem[i].l0*f2->stem[j].l0;
+    }
+  }
+
+  return (res);
+}
+
+/*
+ * multiply two laurent polynomials (two indeterminates)
+ */
+
+struct laurentpolyx *
+laurent_mulx2 (struct laurentpolyx *f1, struct laurentpolyx *f2)
+{
+  int i, j;
+  int resstemdegree;
+  struct laurentpolyx *res;
+  struct laurentpolyx *mulres, *addres;  /* these have one indet */
+
+  if (f1 == 0 || f2 == 0) return (0);
+
+  assert (f1->indets == 2 && f2->indets == 2);
+  resstemdegree = f1->stemdegree + f2->stemdegree;
+
+  res = (struct laurentpolyx *) malloc (POLYXSIZE(resstemdegree + 1));
+  res->indets = 2;
+  res->minexpon = f1->minexpon + f2->minexpon;
+  res->stemdegree = resstemdegree;
+
+  for (i = 0; i <= resstemdegree; i++) res->stem[i].lx = 0;
+
+  for (i = 0; i <= f1->stemdegree; i++)
+  {
+    for (j = 0; j <= f2->stemdegree; j++)
+    {
+      mulres = laurent_mulx1 (f1->stem[i].lx, f2->stem[j].lx);
+      addres = laurent_addx (res->stem[i + j].lx, mulres);
+      if (mulres) free_laurentpolyx (mulres);
+      if (res->stem[i + j].lx) free_laurentpolyx (res->stem[i + j].lx);
+      res->stem[i + j].lx = addres;
     }
   }
 
@@ -694,32 +640,6 @@ laurent_mul2 (struct laurentpoly2 *f1, struct laurentpoly2 *f2)
 
 struct laurentpoly *
 laurent_normalize (struct laurentpoly *l)
-{
-  int k;
-
-  if (l == 0) return (0);
-
-  while (l->stem[0] == 0)
-  {
-    if (l->stemdegree == 0)
-    {
-      return (0);
-    }
-    for (k = 0; k < l->stemdegree; k++) l->stem[k] = l->stem[k+1];
-    l->stemdegree--;
-    l->minexpon++;
-  }
-
-  while (l->stem[l->stemdegree] == 0)
-  {
-    assert (l->stemdegree > 0);
-    l->stemdegree--;
-  }
-  return (l);
-}
-
-struct laurentpoly2 *
-laurent_normalize2 (struct laurentpoly2 *l)
 {
   int k;
 
@@ -817,25 +737,6 @@ laurent_dup (struct laurentpoly *l)
  * duplicate a laurent polynomial (two indeterminates)
  */
 
-struct laurentpoly2 *
-laurent_dup2 (struct laurentpoly2 *l)
-{
-  int k;
-  struct laurentpoly2 *res;
-
-  if (l == 0) return (0);
-
-  res = (struct laurentpoly2 *) malloc (sizeof (struct laurentpoly2) +
-            (l->stemdegree + 1)*sizeof(struct laurentpoly *));
-
-  res->minexpon = l->minexpon;
-  res->stemdegree = l->stemdegree;
-
-  for (k = 0; k <= l->stemdegree; k++) res->stem[k] = laurent_dup (l->stem[k]);
-
-  return (res);
-}
-
 struct laurentpolyx *
 laurent_dupx (struct laurentpolyx *l)
 {
@@ -897,33 +798,65 @@ laurent_canonify (struct laurentpoly *l)
   return;
 }
 
+void
+laurent_canonifyx1 (struct laurentpolyx *l)
+{
+  int k, kk, sign;
+
+  if (l == 0) return;
+  assert (l->indets == 1);
+
+  assert (l->stem[0].l0);
+  assert (l->stem[l->stemdegree].l0);
+  //if (l->stem[0] < 0) laurent_negate (l);
+
+  sign = 1;
+  if (l->stem[l->stemdegree].l0 < 0) sign = -1;
+
+  /* Making lexicographic comparison */
+
+  for (k = 0, kk = l->stemdegree; k < kk; k++, kk--)
+  {
+    if (l->stem[k].l0 > sign*l->stem[kk].l0)
+    {
+      laurentx1_t_to_oneovert (l);
+      if (l->stem[0].l0 < 0) laurent_negatex (l);
+      l->minexpon = 0;
+      return;
+    }
+  }
+  l->minexpon = 0; // we are interested only to the stem
+  return;
+}
+
 /*
- * laurent_canonify2
+ * laurent_canonifyx
  * for now simply shift exponents to minimal nonnegative
  */
 
 void
-laurent_canonify2 (struct laurentpoly2 *l)
+laurent_canonifyx (struct laurentpolyx *l)
 {
   int i, minexpon1;
-  struct laurentpoly *l1;
+  struct laurentpolyx *l1;
 
   if (l == 0) return;
 
-  assert (l->stem[0]);
+  assert (l->indets == 2);
+  assert (l->stem[0].lx);
 
   l->minexpon = 0;
 
-  minexpon1 = (l->stem[0])->minexpon;
+  minexpon1 = (l->stem[0].lx)->minexpon;
   for (i = 0; i <= l->stemdegree; i++)
   {
-    l1 = l->stem[i];
+    l1 = l->stem[i].lx;
     if (l1 == 0) continue;
     if (l1->minexpon < minexpon1) minexpon1 = l1->minexpon;
   }
   for (i = 0; i <= l->stemdegree; i++)
   {
-    l1 = l->stem[i];
+    l1 = l->stem[i].lx;
     if (l1 == 0) continue;
     l1->minexpon -= minexpon1;
   }
@@ -952,22 +885,31 @@ laurent_t_to_oneovert (struct laurentpoly *l)
 }
 
 /*
- * free data associated to a laurent polynomial with 2 indeterminates
+ * transform t->1/t (one indet laurentpolyx)
  */
 
 void
-free_laurentpoly2 (struct laurentpoly2 *l)
+laurentx1_t_to_oneovert (struct laurentpolyx *l)
 {
-  int i;
+  int k, kk, saved;
 
   if (l == 0) return;
+  assert (l->indets == 1);
 
-  for (i = 0; i <= l->stemdegree; i++)
+  l->minexpon = -(l->minexpon + l->stemdegree);
+
+  for (k = 0, kk = l->stemdegree; k < kk; k++, kk--)
   {
-    if (l->stem[i]) free (l->stem[i]);
+    saved = l->stem[k].l0;
+    l->stem[k].l0 = l->stem[kk].l0;
+    l->stem[kk].l0 = saved;
   }
-  free (l);
+  return;
 }
+
+/*
+ * free data associated to a laurent polynomial with 2 indeterminates
+ */
 
 void
 free_laurentpolyx (struct laurentpolyx *l)
@@ -987,7 +929,7 @@ free_laurentpolyx (struct laurentpolyx *l)
 }
 
 /*
- * add a monomial to a laurent_poly
+ * add a monomial to a laurent_poly (TODO: REMOVE!)
  */
 
 struct laurentpoly *
@@ -1024,47 +966,60 @@ laurentpoly_addmonom (struct laurentpoly *l, int expon, int coef)
 }
 
 /*
- * add a monomial to a laurentpoly2
+ * add a monomial to a laurent_poly
  */
 
-struct laurentpoly2 *
-laurentpoly2_addmonom (struct laurentpoly2 *l, int degu, int degv, int coef)
+struct laurentpolyx *
+laurentpolyx1_addmonom (struct laurentpolyx *l, int expon, int coef)
 {
-  struct laurentpoly2 *m = 0;
-  struct laurentpoly *mu = 0;
-  struct laurentpoly2 *res;
-  int iv = 0;
+  struct laurentpolyx *m = 0;
+  struct laurentpolyx *res;
 
   if (coef == 0) return (l);
 
-  if (l) iv = degv - l->minexpon;
-  if (l && iv >= 0 && iv <= l->stemdegree)
+  if (l) assert (l->indets == 1);
+  if (l && expon >= l->minexpon && expon <= l->minexpon + l->stemdegree)
   {
-    l->stem[iv] = laurentpoly_addmonom (l->stem[iv], degu, coef);
-    if (laurent_normalize2(l) == 0)
+    l->stem[expon - l->minexpon].l0 += coef;
+    if (laurent_normalizex(l) == 0)
     {
-      free_laurentpoly2 (l);
+      free_laurentpolyx (l);
       return (0);
     }
     return (l);
   }
 
-  m = (struct laurentpoly2 *) malloc (sizeof (struct laurentpoly2) + sizeof (struct laurentpoly *));
-  mu = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + sizeof (int));
-  m->minexpon = degv;
+  m = (struct laurentpolyx *) malloc (POLYXSIZE(1));
+  m->indets = 1;
+  m->minexpon = expon;
   m->stemdegree = 0;
-  m->stem[0] = mu;
-  mu->minexpon = degu;
-  mu->stemdegree = 0;
-  mu->stem[0] = coef;
+  m->stem[0].l0 = coef;
 
   if (l == 0) return (m);
 
-  res = laurent_add2 (l, m);
-  free_laurentpoly2 (m);
-  free_laurentpoly2 (l);
+  res = laurent_addx (l, m);
+  free_laurentpolyx (m);
+  free_laurentpolyx (l);
 
   return (res);
+}
+
+/*
+ * add a monomial to a laurentpolyx
+ */
+
+struct laurentpolyx *
+laurentpolyx2_addmonom (struct laurentpolyx *l, int degu, int degv, int coef)
+{
+  int exponvec[2];
+
+  if (coef == 0) return (l);
+
+  if (l) assert (l->indets == 2);
+
+  exponvec[0] = degu;
+  exponvec[1] = degv;
+  return (laurentpolyx_addmonom (l, 2, exponvec, coef));
 }
 
 /*
@@ -1134,53 +1089,69 @@ laurent_sum_coefficients (struct laurentpoly *l)
   return (res);
 }
 
+int
+laurent_sum_coefficientsx1 (struct laurentpolyx *l)
+{
+  int k;
+  int res = 0;
+
+  if (l == 0) return (0);
+  assert (l->indets == 1);
+
+  for (k = 0; k <= l->stemdegree; k++) res += l->stem[k].l0;
+  return (res);
+}
+
 /*
- * add up all coefficients of a laurentpoly2
+ * add up all coefficients of a laurentpolyx in two indets
  * (equivalent to evaluation in v=1)
  */
 
-struct laurentpoly *
-laurent_sum_coefficients2 (struct laurentpoly2 *l)
+struct laurentpolyx *
+laurent_sum_coefficientsx2 (struct laurentpolyx *l)
 {
   int k;
-  struct laurentpoly *res, *addres;
+  struct laurentpolyx *res, *addres;
 
   if (l == 0) return (0);
-  res = laurent_dup(l->stem[0]);
+  assert (l->indets == 2);
+  res = laurent_dupx(l->stem[0].lx);
 
   for (k = 1; k <= l->stemdegree; k++)
   {
-    addres = laurent_add (res, l->stem[k]);
-    if (res) free (res);
+    addres = laurent_addx (res, l->stem[k].lx);
+    if (res) free_laurentpolyx (res);
     res = addres;
   }
   return (res);
 }
 
 /*
- * add up all coefficients of each coefficient or a laurentpoly2
+ * add up all coefficients of each coefficient or a laurentpolyx in two indets
  * (equivalent to evaluation in u=1)
  */
 
-struct laurentpoly *
-laurent_sum_each_coefficient2 (struct laurentpoly2 *l)
+struct laurentpolyx *
+laurent_sum_each_coefficientx2 (struct laurentpolyx *l)
 {
   int k;
-  struct laurentpoly *res;
+  struct laurentpolyx *res;
 
   if (l == 0) return (0);
+  assert (l->indets == 2);
 
-  res = (struct laurentpoly *) malloc (sizeof (struct laurentpoly) + (l->stemdegree + 1)*sizeof(int));
+  res = (struct laurentpolyx *) malloc (POLYXSIZE(l->stemdegree + 1));
+  res->indets = 1;
   res->minexpon = l->minexpon;
   res->stemdegree = l->stemdegree;
 
   for (k = 0; k <= l->stemdegree; k++)
   {
-    res->stem[k] = laurent_sum_coefficients (l->stem[k]);
+    res->stem[k].l0 = laurent_sum_coefficientsx1 (l->stem[k].lx);
   }
-  if (laurent_normalize (res) == 0)
+  if (laurent_normalizex (res) == 0)
   {
-    free (res);
+    free_laurentpolyx (res);
     return (0);
   }
 
@@ -1188,29 +1159,30 @@ laurent_sum_each_coefficient2 (struct laurentpoly2 *l)
 }
 
 /*
- * get total degre (after shift) of a laurentpoly2
+ * get total degre (after shift) of a laurentpolyx (two indets)
  */
 
 int
-laurent2_totdegree (struct laurentpoly2 *l)
+laurentx_totdegree (struct laurentpolyx *l)
 {
-  struct laurentpoly *lu;
+  struct laurentpolyx *lu;  /* one indet poly */
   int minexpv, minexpu, maxtotdegree, totdegree;
   int iv;
 
   if (l == 0) return (-1);
-  assert (l->stem[0]);
+  assert (l->indets == 2);
+  assert (l->stem[0].lx);
   minexpv = l->minexpon;
-  lu = l->stem[0];
+  lu = l->stem[0].lx;
   minexpu = lu->minexpon;
-  assert (lu->stem[lu->stemdegree]);
+  assert (lu->stem[lu->stemdegree].l0);
   maxtotdegree = minexpv + minexpu + lu->stemdegree;
   for (iv = 1; iv <= l->stemdegree; iv++)
   {
-    lu = l->stem[iv];
+    lu = l->stem[iv].lx;
     if (lu == 0) continue;
     if (lu->minexpon < minexpu) minexpu = lu->minexpon;
-    assert (lu->stem[lu->stemdegree]);
+    assert (lu->stem[lu->stemdegree].l0);
     totdegree = minexpv + iv + lu->minexpon + lu->stemdegree;
     if (totdegree > maxtotdegree) maxtotdegree = totdegree;
   }
@@ -1218,7 +1190,7 @@ laurent2_totdegree (struct laurentpoly2 *l)
 }
 
 /*
- * lexicographic comparison between two laurent polynomials
+ * lexicographic comparison between two laurent polynomials in two indets
  * assumptions:
  * 1. They are canonified by monomial multiplication
  * 2. They have the same total degree
@@ -1226,18 +1198,19 @@ laurent2_totdegree (struct laurentpoly2 *l)
  */
 
 int
-laurent2_lexicocompare (struct laurentpoly2 *p1, struct laurentpoly2 *p2)
+laurentx_lexicocompare (struct laurentpolyx *p1, struct laurentpolyx *p2)
 {
   int sign1 = 1, sign2 = 1;
   int k, ku;
-  struct laurentpoly *pu1, *pu2;
+  struct laurentpolyx *pu1, *pu2;  /* one indet */
 
   if (p1 == 0 && p2 == 0) return (0);
   if (p1 == 0) return (-1);
   if (p2 == 0) return (1);
 
-  if ((p1->stem[0])->stem[0] < 0) sign1 = -1;
-  if ((p2->stem[0])->stem[0] < 0) sign2 = -1;
+  assert (p1->indets == 2 && p2->indets == 2);
+  if ((p1->stem[0].lx)->stem[0].l0 < 0) sign1 = -1;
+  if ((p2->stem[0].lx)->stem[0].l0 < 0) sign2 = -1;
 
   /* first test: degree with respect to v */
 
@@ -1248,8 +1221,8 @@ laurent2_lexicocompare (struct laurentpoly2 *p1, struct laurentpoly2 *p2)
 
   for (k = p1->stemdegree; k >= 0; k--)
   {
-    pu1 = p1->stem[k];
-    pu2 = p2->stem[k];
+    pu1 = p1->stem[k].lx;
+    pu2 = p2->stem[k].lx;
     if (pu1 == 0 && pu2 == 0) continue;
     if (pu1 == 0) return (-1);
     if (pu2 == 0) return (1);
@@ -1261,8 +1234,8 @@ laurent2_lexicocompare (struct laurentpoly2 *p1, struct laurentpoly2 *p2)
 
   for (k = 0; k <= p1->stemdegree; k++)
   {
-    pu1 = p1->stem[k];
-    pu2 = p2->stem[k];
+    pu1 = p1->stem[k].lx;
+    pu2 = p2->stem[k].lx;
     if (pu1 == 0) continue;
     if (pu1->minexpon > pu2->minexpon) return (-1);
     if (pu1->minexpon < pu2->minexpon) return (1);
@@ -1272,17 +1245,17 @@ laurent2_lexicocompare (struct laurentpoly2 *p1, struct laurentpoly2 *p2)
 
   for (k = 0; k <= p1->stemdegree; k++)
   {
-    pu1 = p1->stem[k];
-    pu2 = p2->stem[k];
+    pu1 = p1->stem[k].lx;
+    pu2 = p2->stem[k].lx;
 
     if (pu1 == 0) continue;
     for (ku = 0; ku <= pu1->stemdegree; ku++)
     {
-      if (abs(pu1->stem[ku]) < abs(pu2->stem[ku])) return (-1);
-      if (abs(pu1->stem[ku]) > abs(pu2->stem[ku])) return (1);
-      if (pu1->stem[ku] == 0) continue;
-      if (sign1*pu1->stem[ku] > sign2*pu2->stem[ku]) return (-1);
-      if (sign1*pu1->stem[ku] < sign2*pu2->stem[ku]) return (1);
+      if (abs(pu1->stem[ku].l0) < abs(pu2->stem[ku].l0)) return (-1);
+      if (abs(pu1->stem[ku].l0) > abs(pu2->stem[ku].l0)) return (1);
+      if (pu1->stem[ku].l0 == 0) continue;
+      if (sign1*pu1->stem[ku].l0 > sign2*pu2->stem[ku].l0) return (-1);
+      if (sign1*pu1->stem[ku].l0 < sign2*pu2->stem[ku].l0) return (1);
     }
   }
   return (0);
@@ -1319,41 +1292,73 @@ laurent_canonifysign (struct laurentpoly *p)
 }
 
 /*
+ * canonify sign such that either p(1) > 0
+ * or the first nonzero coefficient is positive (one indet)
+ */
+
+void
+laurentx1_canonifysign (struct laurentpolyx *p)
+{
+  int val1 = 0;
+  int k;
+
+  if (p == 0) return;
+  assert (p->indets == 1);
+
+  /* evaluate in (1) */
+  for (k = 0; k <= p->stemdegree; k++)
+    val1 += p->stem[k].l0;
+
+  if (val1 > 0) return;
+
+  if (val1 == 0)
+  {
+    assert (p->stem[0].l0 != 0);
+    if (p->stem[0].l0 > 0) return;
+  }
+
+  /* if here change sign */
+  for (k = 0; k <= p->stemdegree; k++)
+    p->stem[k].l0 = - p->stem[k].l0;
+}
+
+/*
  * canonify sign such that either p(1,1) > 0
  * or the first nonzero coefficient is positive
  */
 
 void
-laurent2_canonifysign (struct laurentpoly2 *p)
+laurentx_canonifysign (struct laurentpolyx *p)
 {
   int val11 = 0;
   int kv, ku;
-  struct laurentpoly *pu;
+  struct laurentpolyx *pu; /* one indet */
 
   if (p == 0) return;
+  assert (p->indets == 2);
 
   /* evaluate in (1,1) */
   for (kv = 0; kv <= p->stemdegree; kv++)
   {
-    pu = p->stem[kv];
+    pu = p->stem[kv].lx;
     if (pu == 0) continue;
-    for (ku = 0; ku <= pu->stemdegree; ku++) val11 += pu->stem[ku];
+    for (ku = 0; ku <= pu->stemdegree; ku++) val11 += pu->stem[ku].l0;
   }
 
   if (val11 > 0) return;
 
   if (val11 == 0)
   {
-    assert ((p->stem[0])->stem[0] != 0);
-    if ((p->stem[0])->stem[0] > 0) return;
+    assert ((p->stem[0].lx)->stem[0].l0 != 0);
+    if ((p->stem[0].lx)->stem[0].l0 > 0) return;
   }
 
   /* if here change sign */
   for (kv = 0; kv <= p->stemdegree; kv++)
   {
-    pu = p->stem[kv];
+    pu = p->stem[kv].lx;
     if (pu == 0) continue;
-    for (ku = 0; ku <= pu->stemdegree; ku++) pu->stem[ku] = -pu->stem[ku];
+    for (ku = 0; ku <= pu->stemdegree; ku++) pu->stem[ku].l0 = -pu->stem[ku].l0;
   }
 }
 
