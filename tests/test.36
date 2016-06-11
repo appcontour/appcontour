@@ -1,0 +1,14 @@
+#
+# test the computation of fox jacobian
+#
+
+list="knots/knot_3_1.knot links/link_2_6_3.knot borromeanrings.knot embrace.knot"
+
+for f in $list
+do
+  echo "Example $f:"
+
+  ./contour --out fg examples/$f -q
+  ./contour --out foxjacobian examples/$f
+  ./contour --out foxjacobian examples/$f --preabelian --abelianize
+done
