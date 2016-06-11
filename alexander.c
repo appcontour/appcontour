@@ -167,7 +167,7 @@ alexander (struct presentation *p)
     {
       case 1:  /* this is the most interesting */
       determinant = laurent_eliminate_one_indeterminate (p, gconj);
-      laurent_canonify (determinant);
+      laurent_canonify1 (determinant);
       printout_ideal1 (0, determinant);
       break;
 
@@ -294,7 +294,7 @@ alexander_fromideal (struct alexanderideal *ai)
         //}
         //printf ("}\n");
       }
-      for (i = 0; i < ai->l1num; i++) laurent_canonify (ai->l[i]);
+      for (i = 0; i < ai->l1num; i++) laurent_canonify1 (ai->l[i]);
       printout_ideal1 (ai, 0);
     break;
 
@@ -556,7 +556,7 @@ linkingnumber (struct presentation *p)
 
   determinant = laurent_eliminate_one_indeterminate (p, gconj);
 
-  //laurent_canonify (determinant);
+  //laurent_canonify1 (determinant);
 
   if (verbose)
   {
@@ -660,7 +660,7 @@ corank_one_alexander (struct presentation *p)
 
   determinant = laurent_eliminate_one_indeterminate (p, gconj);
 
-  laurent_canonify (determinant);
+  laurent_canonify1 (determinant);
 
   if (verbose)
   {
@@ -1318,7 +1318,7 @@ laurent_free_matrixx (struct laurentmatrixx *matrix)
     for (i = 0; i < matrix->numrows; i++)
     {
       l = matrixcolumn[i];
-      if (l) free_laurentpolyx (l);
+      if (l) free_laurentpoly (l);
     }
     free (matrixcolumn);
   }
@@ -1389,7 +1389,7 @@ laurent_simplify_ideal (struct alexanderideal *ai)
   }
 
   for (i = 0; i < ai->l1num; i++)
-    laurent_canonifysign (ai->l[i]);
+    laurent_canonifysign1 (ai->l[i]);
 
   if (principal && ai->l1num > 1)
   {
@@ -2001,8 +2001,8 @@ laurent_get_exp_sumx (struct presentationrule *r, int n, int e1, int e2)
     if (abs(r->var[k]) == n)
     {
       d = re2 - minexp2;
-      if (r->var[k] > 0) l->stem[d].lx = laurentpolyx1_addmonom (l->stem[d].lx, re1, 1);
-        else l->stem[d].lx = laurentpolyx1_addmonom (l->stem[d].lx, re1, -1);
+      if (r->var[k] > 0) l->stem[d].lx = laurentpoly1_addmonom (l->stem[d].lx, re1, 1);
+        else l->stem[d].lx = laurentpoly1_addmonom (l->stem[d].lx, re1, -1);
     }
     if (r->var[k] == e1) re1++;
     if (r->var[k] == e2) re2++;
@@ -2011,7 +2011,7 @@ laurent_get_exp_sumx (struct presentationrule *r, int n, int e1, int e2)
   assert (l);
   if (laurent_normalize(l) == 0)
   {
-    free_laurentpolyx (l);
+    free_laurentpoly (l);
     return (0);
   }
   assert (l && l->stem[0].lx);
@@ -2071,14 +2071,14 @@ laurent_mixed_derivativex2 (struct presentationrule *r, int x1, int x2)
   {
     if (r->var[k] == -x1) re1--;
     if (r->var[k] == -x2) re2--;
-    if (r->var[k] == x2) l->stem[re2].lx = laurentpolyx1_addmonom (l->stem[re2].lx, re1, -re1);
-    if (r->var[k] == -x2) l->stem[re2].lx = laurentpolyx1_addmonom (l->stem[re2].lx, re1, re1);
+    if (r->var[k] == x2) l->stem[re2].lx = laurentpoly1_addmonom (l->stem[re2].lx, re1, -re1);
+    if (r->var[k] == -x2) l->stem[re2].lx = laurentpoly1_addmonom (l->stem[re2].lx, re1, re1);
     //if (abs(r->var[k]) == x2)
     //{
     //  d = re2 - minexp2;
     //  coef = -re1;
     //  if (r->var[k] < 0) coef = re1;
-    //  l->stem[d] = laurentpoly_addmonom (l->stem[d], re1, coef);
+    //  l->stem[d] = laurentpoly1_addmonom (l->stem[d], re1, coef);
     //}
     if (r->var[k] == x1) re1++;
     if (r->var[k] == x2) re2++;
@@ -2087,7 +2087,7 @@ laurent_mixed_derivativex2 (struct presentationrule *r, int x1, int x2)
   assert (l);
   if (laurent_normalize(l) == 0)
   {
-    free_laurentpolyx (l);
+    free_laurentpoly (l);
     return (0);
   }
   assert (l && l->stem[0].lx);
@@ -2109,7 +2109,7 @@ laurent_common_factorx (struct presentationrule *r, int x1, int x2)
   poly1 = laurent_get_exp_sumx (r, x1, x1, x2);
   if (poly1) assert (poly1->indets == 2);
   /* this should be divisible by (x2 - 1) */
-  res = laurent_sum_coefficientsx2 (poly1);
+  res = laurent_sum_coefficients2 (poly1);
   assert (res == 0);
 
   /* now divide by x2-1 */
@@ -2118,7 +2118,7 @@ laurent_common_factorx (struct presentationrule *r, int x1, int x2)
     for (k = poly1->stemdegree - 1; k >= 0; k--)
     {
       addres = laurent_add (poly1->stem[k+1].lx, poly1->stem[k].lx);
-      if (poly1->stem[k].lx) free_laurentpolyx (poly1->stem[k].lx);
+      if (poly1->stem[k].lx) free_laurentpoly (poly1->stem[k].lx);
       poly1->stem[k].lx = addres;
     }
     assert (poly1->stem[0].lx == 0);
@@ -2129,7 +2129,7 @@ laurent_common_factorx (struct presentationrule *r, int x1, int x2)
   poly2 = laurent_get_exp_sumx (r, x2, x1, x2);
   if (poly2) assert (poly2->indets == 2);
   /* this should be divisible by (x1 - 1) */
-  res = laurent_sum_each_coefficientx2 (poly2);
+  res = laurent_sum_each_coefficient2 (poly2);
   assert (res == 0);
 
   /* poly2 + (u-1)*poly1 should be zero */
@@ -2149,15 +2149,15 @@ laurent_common_factorx (struct presentationrule *r, int x1, int x2)
     {
       mulres = laurent_mul1 (poly1->stem[k].lx, uminus1);
       addres = laurent_add (poly2->stem[k].lx, mulres);
-      if (mulres) free_laurentpolyx (mulres);
+      if (mulres) free_laurentpoly (mulres);
       assert (addres == 0);
     }
-    free_laurentpolyx (uminus1);
+    free_laurentpoly (uminus1);
   }
 
   l = poly1;
 
-  free_laurentpolyx (poly2);
+  free_laurentpoly (poly2);
   return (l);
 }
 
@@ -2300,11 +2300,11 @@ laurent_compute_determinantx (struct laurentpolyx ***matrix, int n)
 
     subdeterminant = laurent_compute_determinantx (submatrix, n-1);
     product = laurent_mul2 (subdeterminant, firstcolumn[i]);
-    if (subdeterminant) free_laurentpolyx (subdeterminant);
+    if (subdeterminant) free_laurentpoly (subdeterminant);
     if (sign < 0) laurent_negate (product);
     sum = laurent_add (determinant, product);
-    if (product && product != sum) free_laurentpolyx (product);
-    if (determinant && sum != determinant) free_laurentpolyx (determinant);
+    if (product && product != sum) free_laurentpoly (product);
+    if (determinant && sum != determinant) free_laurentpoly (determinant);
     determinant = sum;
   }
 
@@ -2417,8 +2417,8 @@ base_canonifyx2_onedim (struct laurentpolyx **ppt)
   assert (p && p->indets == 2);
   if (p->stemdegree == 0)
   {
-    laurent_canonifyx1 (p->stem[0].lx);
-    laurentx1_canonifysign (p->stem[0].lx);
+    laurent_canonify1 (p->stem[0].lx);
+    laurent_canonifysign1 (p->stem[0].lx);
     return (1);  // already canonical!
   }
 
@@ -2459,12 +2459,12 @@ base_canonifyx2_onedim (struct laurentpolyx **ppt)
   for (xk = 0; xk <= p->stemdegree; xk++)
   {
     if (xk % xstep) assert (p->stem[xk].lx == 0);
-    if (p->stem[xk].lx) free_laurentpolyx (p->stem[xk].lx);
+    if (p->stem[xk].lx) free_laurentpoly (p->stem[xk].lx);
   }
   p->minexpon = 0;
   p->stemdegree = 0;
   p->stem[0].lx = newp1;
-  laurentx1_canonifysign (p->stem[0].lx);
+  laurent_canonifysign1 (p->stem[0].lx);
 
   return (1);
 }
@@ -2585,7 +2585,7 @@ base_canonifyx2_twodim (struct laurentpolyx **ppt)
             laurent_canonifyx (newp);
             if (newtotdegree > optdegree)
             {
-              free_laurentpolyx (newp);
+              free_laurentpoly (newp);
               continue;
             }
             if (newtotdegree < optdegree)
@@ -2604,7 +2604,7 @@ base_canonifyx2_twodim (struct laurentpolyx **ppt)
                 optp = tempp;
               }
             }
-            free_laurentpolyx (newp);
+            free_laurentpoly (newp);
             if (verbose > 1)
             {
               printf ("Found feasible matrix: [%d %d; %d %d]\n", a, b, c, d);
@@ -2618,8 +2618,8 @@ base_canonifyx2_twodim (struct laurentpolyx **ppt)
     }
   }
 
-  free_laurentpolyx (origp);
-  laurentx_canonifysign (optp);
+  free_laurentpoly (origp);
+  laurent_canonifysign2 (optp);
   *ppt = optp;
   return (1);
 }
@@ -2781,11 +2781,11 @@ base_changex (struct laurentpolyx *l, int matrixb[2][2])
       if (coef == 0) continue;
       newdegu = a*degu + b*degv;
       newdegv = c*degu + d*degv;
-      newl = laurentpolyx2_addmonom (newl, newdegu, newdegv, coef);
+      newl = laurentpoly2_addmonom (newl, newdegu, newdegv, coef);
     }
   }
 
-  free_laurentpolyx (l);
+  free_laurentpoly (l);
 
   return (newl);
 }

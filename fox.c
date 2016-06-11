@@ -90,7 +90,7 @@ foxderivative (struct presentationrule *r, int gen, int offset, int rank)
         }
       } else {
         count_and_map (&r->var[0], j, offset, rank, exponvec);
-        p = laurentpolyx_addmonom (p, rank, exponvec, 1);
+        p = laurentpoly_addmonom (p, rank, exponvec, 1);
       }
     } else {
       if (abelianize == 0)
@@ -103,7 +103,7 @@ foxderivative (struct presentationrule *r, int gen, int offset, int rank)
         }
       } else {
         count_and_map (&r->var[0], j + 1, offset, rank, exponvec);
-        p = laurentpolyx_addmonom (p, rank, exponvec, -1);
+        p = laurentpoly_addmonom (p, rank, exponvec, -1);
       }
     }
   }
