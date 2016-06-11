@@ -41,10 +41,10 @@ static int bufsize;
  * resulting in a 2x2 Alexander matrix and 3 should be the least generator of the ideal
  */
 
-struct laurentpolyx *
-laurent_extended_euclid (struct laurentpolyx *p1, struct laurentpolyx *p2)
+struct laurentpoly *
+laurent_extended_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
 {
-  struct laurentpolyx *res;
+  struct laurentpoly *res;
   struct lpol *r_i, *r_im1, *s_i, *s_im1, *t_i, *t_im1, *temp;
   int i, j, k_i, ri0, rim10, c, alpha_i, beta_i;
   extern int verbose;
@@ -62,7 +62,7 @@ laurent_extended_euclid (struct laurentpolyx *p1, struct laurentpolyx *p2)
   if (bufsize == 0) /* special case of two nonzero monomials */
   {
     c = abs(gcd(p1->stem[0].l0, p2->stem[0].l0));
-    res = (struct laurentpolyx *) malloc (POLYSIZE(1));
+    res = (struct laurentpoly *) malloc (POLYSIZE(1));
     res->indets = 1;
     res->minexpon = 0;
     res->stemdegree = 0;
@@ -139,7 +139,7 @@ laurent_extended_euclid (struct laurentpolyx *p1, struct laurentpolyx *p2)
     printf ("  t: "); euclid_printlpol (t_i);
   }
   assert (r_i->start != r_i->end);
-  res = (struct laurentpolyx *) malloc (POLYSIZE(r_i->end-r_i->start));
+  res = (struct laurentpoly *) malloc (POLYSIZE(r_i->end-r_i->start));
   res->indets = 1;
   res->minexpon = 0;
   res->stemdegree = r_i->end - r_i->start - 1;
@@ -213,7 +213,7 @@ euclid_reduce3 (struct lpol *a, struct lpol *b, struct lpol *c)
  */
 
 void
-laurent_negate (struct laurentpolyx *term)
+laurent_negate (struct laurentpoly *term)
 {
   int i;
 
@@ -232,18 +232,18 @@ laurent_negate (struct laurentpolyx *term)
  * print a laurent polynomial in a generic number of indeterminates
  */
 
-void print_laurentpoly_map (struct laurentpolyx *l, char *indetnames, char *mapappend);
+void print_laurentpoly_map (struct laurentpoly *l, char *indetnames, char *mapappend);
 
 void
-print_laurentpoly (struct laurentpolyx *l, char *indetnames)
+print_laurentpoly (struct laurentpoly *l, char *indetnames)
 {
   print_laurentpoly_map (l, indetnames, "");
 }
 
 void
-print_laurentpoly_map (struct laurentpolyx *l, char *indetnames, char *mapappend)
+print_laurentpoly_map (struct laurentpoly *l, char *indetnames, char *mapappend)
 {
-  struct laurentpolyx *l1;
+  struct laurentpoly *l1;
   int i, expon, indets;
   char appstring[80];
 
@@ -319,12 +319,12 @@ print_laurentpoly_map (struct laurentpolyx *l, char *indetnames, char *mapappend
  * read a laurent polynomial in one indet
  */
 
-struct laurentpolyx *
+struct laurentpoly *
 read_laurentpoly1 (FILE *file, char indet_names[2])
 {
   char ch;
   int sign, coef, exp1, exp2;
-  struct laurentpolyx *l1 = 0;
+  struct laurentpoly *l1 = 0;
 
   ch = mygetchar (file);
   if (ch == ';') return (l1);
@@ -352,12 +352,12 @@ read_laurentpoly1 (FILE *file, char indet_names[2])
  * read a laurent polynomial in two indets
  */
 
-struct laurentpolyx *
+struct laurentpoly *
 read_laurentpoly2 (FILE *file, char indet_names[2])
 {
   char ch;
   int sign, coef, exp1, exp2;
-  struct laurentpolyx *l2 = 0;
+  struct laurentpoly *l2 = 0;
 
   ch = mygetchar (file);
   if (ch == ';') return (l2);
@@ -383,12 +383,12 @@ read_laurentpoly2 (FILE *file, char indet_names[2])
  * add two laurent polynomials (k indeterminates)
  */
 
-struct laurentpolyx *
-laurent_add (struct laurentpolyx *a1, struct laurentpolyx *a2)
+struct laurentpoly *
+laurent_add (struct laurentpoly *a1, struct laurentpoly *a2)
 {
   int minexp, maxexp, k;
-  struct laurentpolyx *res;
-  struct laurentpolyx *addres;
+  struct laurentpoly *res;
+  struct laurentpoly *addres;
 
   if (a1 == 0) return (laurent_dup(a2));
   if (a2 == 0) return (laurent_dup(a1));
@@ -400,7 +400,7 @@ laurent_add (struct laurentpolyx *a1, struct laurentpolyx *a2)
   maxexp = a1->minexpon + a1->stemdegree;
   if (a2->minexpon + a2->stemdegree > maxexp) maxexp = a2->minexpon + a2->stemdegree;
 
-  res = (struct laurentpolyx *) malloc (POLYSIZE(maxexp - minexp + 1));
+  res = (struct laurentpoly *) malloc (POLYSIZE(maxexp - minexp + 1));
 
   res->indets = a1->indets;
   res->minexpon = minexp;
@@ -438,19 +438,19 @@ laurent_add (struct laurentpolyx *a1, struct laurentpolyx *a2)
  * multiply two laurent polynomials (in one indet)
  */
 
-struct laurentpolyx *
-laurent_mul1 (struct laurentpolyx *f1, struct laurentpolyx *f2)
+struct laurentpoly *
+laurent_mul1 (struct laurentpoly *f1, struct laurentpoly *f2)
 {
   int i, j;
   int resstemdegree;
-  struct laurentpolyx *res;
+  struct laurentpoly *res;
 
   if (f1 == 0 || f2 == 0) return (0);
 
   assert (f1->indets == 1 && f2->indets == 1);
   resstemdegree = f1->stemdegree + f2->stemdegree;
 
-  res = (struct laurentpolyx *) malloc (POLYSIZE(resstemdegree + 1));
+  res = (struct laurentpoly *) malloc (POLYSIZE(resstemdegree + 1));
   res->indets = 1;
   res->minexpon = f1->minexpon + f2->minexpon;
   res->stemdegree = resstemdegree;
@@ -472,20 +472,20 @@ laurent_mul1 (struct laurentpolyx *f1, struct laurentpolyx *f2)
  * multiply two laurent polynomials (two indeterminates)
  */
 
-struct laurentpolyx *
-laurent_mul2 (struct laurentpolyx *f1, struct laurentpolyx *f2)
+struct laurentpoly *
+laurent_mul2 (struct laurentpoly *f1, struct laurentpoly *f2)
 {
   int i, j;
   int resstemdegree;
-  struct laurentpolyx *res;
-  struct laurentpolyx *mulres, *addres;  /* these have one indet */
+  struct laurentpoly *res;
+  struct laurentpoly *mulres, *addres;  /* these have one indet */
 
   if (f1 == 0 || f2 == 0) return (0);
 
   assert (f1->indets == 2 && f2->indets == 2);
   resstemdegree = f1->stemdegree + f2->stemdegree;
 
-  res = (struct laurentpolyx *) malloc (POLYSIZE(resstemdegree + 1));
+  res = (struct laurentpoly *) malloc (POLYSIZE(resstemdegree + 1));
   res->indets = 2;
   res->minexpon = f1->minexpon + f2->minexpon;
   res->stemdegree = resstemdegree;
@@ -515,8 +515,8 @@ laurent_mul2 (struct laurentpolyx *f1, struct laurentpolyx *f2)
  * is identically zero
  */
 
-struct laurentpolyx *
-laurent_normalize (struct laurentpolyx *l)
+struct laurentpoly *
+laurent_normalize (struct laurentpoly *l)
 {
   int k;
 
@@ -565,15 +565,15 @@ laurent_normalize (struct laurentpolyx *l)
  * duplicate a laurent polynomial (k indeterminates)
  */
 
-struct laurentpolyx *
-laurent_dup (struct laurentpolyx *l)
+struct laurentpoly *
+laurent_dup (struct laurentpoly *l)
 {
   int k;
-  struct laurentpolyx *res;
+  struct laurentpoly *res;
 
   if (l == 0) return (0);
 
-  res = (struct laurentpolyx *) malloc (POLYSIZE(l->stemdegree + 1));
+  res = (struct laurentpoly *) malloc (POLYSIZE(l->stemdegree + 1));
 
   res->indets = l->indets;
   res->minexpon = l->minexpon;
@@ -597,7 +597,7 @@ laurent_dup (struct laurentpolyx *l)
  */
 
 void
-laurent_canonify1 (struct laurentpolyx *l)
+laurent_canonify1 (struct laurentpoly *l)
 {
   int k, kk, sign;
 
@@ -633,10 +633,10 @@ laurent_canonify1 (struct laurentpolyx *l)
  */
 
 void
-laurent_canonifyx (struct laurentpolyx *l)
+laurent_canonifyx (struct laurentpoly *l)
 {
   int i, minexpon1;
-  struct laurentpolyx *l1;
+  struct laurentpoly *l1;
 
   if (l == 0) return;
 
@@ -665,7 +665,7 @@ laurent_canonifyx (struct laurentpolyx *l)
  */
 
 void
-laurent_t_to_oneovert (struct laurentpolyx *l)
+laurent_t_to_oneovert (struct laurentpoly *l)
 {
   int k, kk, saved;
 
@@ -688,7 +688,7 @@ laurent_t_to_oneovert (struct laurentpolyx *l)
  */
 
 void
-free_laurentpoly (struct laurentpolyx *l)
+free_laurentpoly (struct laurentpoly *l)
 {
   int i;
 
@@ -708,11 +708,11 @@ free_laurentpoly (struct laurentpolyx *l)
  * add a monomial to a laurent_poly in one indet
  */
 
-struct laurentpolyx *
-laurentpoly1_addmonom (struct laurentpolyx *l, int expon, int coef)
+struct laurentpoly *
+laurentpoly1_addmonom (struct laurentpoly *l, int expon, int coef)
 {
-  struct laurentpolyx *m = 0;
-  struct laurentpolyx *res;
+  struct laurentpoly *m = 0;
+  struct laurentpoly *res;
 
   if (coef == 0) return (l);
 
@@ -728,7 +728,7 @@ laurentpoly1_addmonom (struct laurentpolyx *l, int expon, int coef)
     return (l);
   }
 
-  m = (struct laurentpolyx *) malloc (POLYSIZE(1));
+  m = (struct laurentpoly *) malloc (POLYSIZE(1));
   m->indets = 1;
   m->minexpon = expon;
   m->stemdegree = 0;
@@ -747,8 +747,8 @@ laurentpoly1_addmonom (struct laurentpolyx *l, int expon, int coef)
  * add a monomial to a laurentpolyx (two indeterminates)
  */
 
-struct laurentpolyx *
-laurentpoly2_addmonom (struct laurentpolyx *l, int degu, int degv, int coef)
+struct laurentpoly *
+laurentpoly2_addmonom (struct laurentpoly *l, int degu, int degv, int coef)
 {
   int exponvec[2];
 
@@ -765,10 +765,10 @@ laurentpoly2_addmonom (struct laurentpolyx *l, int degu, int degv, int coef)
  * add monomial to a generic laurent polinomial
  */
 
-struct laurentpolyx *
-laurentpoly_addmonom (struct laurentpolyx *l, int indets, int *exponvec, int scal)
+struct laurentpoly *
+laurentpoly_addmonom (struct laurentpoly *l, int indets, int *exponvec, int scal)
 {
-  struct laurentpolyx *m, *res;
+  struct laurentpoly *m, *res;
   int iv, expon;
 
   if (scal == 0) return (l);
@@ -791,7 +791,7 @@ laurentpoly_addmonom (struct laurentpolyx *l, int indets, int *exponvec, int sca
     return (l);
   }
 
-  m = (struct laurentpolyx *) malloc (POLYSIZE(1));
+  m = (struct laurentpoly *) malloc (POLYSIZE(1));
   m->indets = indets;
   m->minexpon = expon;
   m->stemdegree = 0;
@@ -817,7 +817,7 @@ laurentpoly_addmonom (struct laurentpolyx *l, int indets, int *exponvec, int sca
  */
 
 int
-laurent_sum_coefficients1 (struct laurentpolyx *l)
+laurent_sum_coefficients1 (struct laurentpoly *l)
 {
   int k;
   int res = 0;
@@ -834,11 +834,11 @@ laurent_sum_coefficients1 (struct laurentpolyx *l)
  * (equivalent to evaluation in v=1)
  */
 
-struct laurentpolyx *
-laurent_sum_coefficients2 (struct laurentpolyx *l)
+struct laurentpoly *
+laurent_sum_coefficients2 (struct laurentpoly *l)
 {
   int k;
-  struct laurentpolyx *res, *addres;
+  struct laurentpoly *res, *addres;
 
   if (l == 0) return (0);
   assert (l->indets == 2);
@@ -858,16 +858,16 @@ laurent_sum_coefficients2 (struct laurentpolyx *l)
  * (equivalent to evaluation in u=1)
  */
 
-struct laurentpolyx *
-laurent_sum_each_coefficient2 (struct laurentpolyx *l)
+struct laurentpoly *
+laurent_sum_each_coefficient2 (struct laurentpoly *l)
 {
   int k;
-  struct laurentpolyx *res;
+  struct laurentpoly *res;
 
   if (l == 0) return (0);
   assert (l->indets == 2);
 
-  res = (struct laurentpolyx *) malloc (POLYSIZE(l->stemdegree + 1));
+  res = (struct laurentpoly *) malloc (POLYSIZE(l->stemdegree + 1));
   res->indets = 1;
   res->minexpon = l->minexpon;
   res->stemdegree = l->stemdegree;
@@ -890,9 +890,9 @@ laurent_sum_each_coefficient2 (struct laurentpolyx *l)
  */
 
 int
-laurentx_totdegree (struct laurentpolyx *l)
+laurentx_totdegree (struct laurentpoly *l)
 {
-  struct laurentpolyx *lu;  /* one indet poly */
+  struct laurentpoly *lu;  /* one indet poly */
   int minexpv, minexpu, maxtotdegree, totdegree;
   int iv;
 
@@ -925,11 +925,11 @@ laurentx_totdegree (struct laurentpolyx *l)
  */
 
 int
-laurentx_lexicocompare (struct laurentpolyx *p1, struct laurentpolyx *p2)
+laurentx_lexicocompare (struct laurentpoly *p1, struct laurentpoly *p2)
 {
   int sign1 = 1, sign2 = 1;
   int k, ku;
-  struct laurentpolyx *pu1, *pu2;  /* one indet */
+  struct laurentpoly *pu1, *pu2;  /* one indet */
 
   if (p1 == 0 && p2 == 0) return (0);
   if (p1 == 0) return (-1);
@@ -994,7 +994,7 @@ laurentx_lexicocompare (struct laurentpolyx *p1, struct laurentpolyx *p2)
  */
 
 void
-laurent_canonifysign1 (struct laurentpolyx *p)
+laurent_canonifysign1 (struct laurentpoly *p)
 {
   int val1 = 0;
   int k;
@@ -1025,11 +1025,11 @@ laurent_canonifysign1 (struct laurentpolyx *p)
  */
 
 void
-laurent_canonifysign2 (struct laurentpolyx *p)
+laurent_canonifysign2 (struct laurentpoly *p)
 {
   int val11 = 0;
   int kv, ku;
-  struct laurentpolyx *pu; /* one indet */
+  struct laurentpoly *pu; /* one indet */
 
   if (p == 0) return;
   assert (p->indets == 2);
@@ -1063,11 +1063,11 @@ laurent_canonifysign2 (struct laurentpolyx *p)
  * if unsure, call with "inspread = 1"
  */
 
-struct laurentpolyx *
-laurent_gcd (int inspread, struct laurentpolyx *p1, struct laurentpolyx *p2, int *spreadpt)
+struct laurentpoly *
+laurent_gcd (int inspread, struct laurentpoly *p1, struct laurentpoly *p2, int *spreadpt)
 {
-  struct laurentpolyx *resgcd;
-  struct laurentpolyx *resgcd2;
+  struct laurentpoly *resgcd;
+  struct laurentpoly *resgcd2;
   int i, alpha, cont_p1, cont_p2, cont_gcd;
   extern int verbose, internalcheck;
 
@@ -1119,10 +1119,10 @@ laurent_gcd (int inspread, struct laurentpolyx *p1, struct laurentpolyx *p2, int
  * the resulting gcd is not guaranteed to be primitive
  */
 
-struct laurentpolyx *
-laurent_euclid (struct laurentpolyx *p1, struct laurentpolyx *p2)
+struct laurentpoly *
+laurent_euclid (struct laurentpoly *p1, struct laurentpoly *p2)
 {
-  struct laurentpolyx *resgcd;
+  struct laurentpoly *resgcd;
   int *a, *b, *c;
   int dega, degb, degc, vecsize;
   int i, g, fa, fb, temp;
@@ -1192,7 +1192,7 @@ laurent_euclid (struct laurentpolyx *p1, struct laurentpolyx *p2)
    * c is identically zero, b is a multiple of the gcd
    */
 
-  resgcd = (struct laurentpolyx *) malloc (POLYSIZE(degb+1));
+  resgcd = (struct laurentpoly *) malloc (POLYSIZE(degb+1));
   resgcd->indets = 1;
   for (i = 0; i <= degb; i++)
   {
@@ -1211,7 +1211,7 @@ laurent_euclid (struct laurentpolyx *p1, struct laurentpolyx *p2)
  */
 
 int
-laurent_factor_content (struct laurentpolyx *p)
+laurent_factor_content (struct laurentpoly *p)
 {
   int i, sign, cont;
 

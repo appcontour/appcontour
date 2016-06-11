@@ -17,17 +17,17 @@ static int int_overflow_encountered = 0;
 
 /* local prototypes */
 void print_matrix (struct laurentmatrix *matrix);
-void print_matrix_n_m (struct laurentpolyx ***matrix, int nrows, int ncols);
-int laurentpoly_linf (struct laurentpolyx *l);
+void print_matrix_n_m (struct laurentpoly ***matrix, int nrows, int ncols);
+int laurentpoly_linf (struct laurentpoly *l);
 
 int
 alexander (struct presentation *p)
 {
   extern int verbose, quiet, foxd, shuffle, outformat;
   struct presentationrule *r;
-  struct laurentpolyx *determinant;
-  struct laurentpolyx *determinant2;
-  struct laurentpolyx **extradeterminants;
+  struct laurentpoly *determinant;
+  struct laurentpoly *determinant2;
+  struct laurentpoly **extradeterminants;
   struct alexanderideal *ai;
   int j, rank, matrixrank, deficiency;
   int numcols = 0;
@@ -268,7 +268,7 @@ alexander_fromideal (struct alexanderideal *ai)
 {
   int i, extradets;
   extern int verbose, quiet;
-  struct laurentpolyx *determinant2, **extradeterminants;
+  struct laurentpoly *determinant2, **extradeterminants;
 
   if (ai == 0)
   {
@@ -327,7 +327,7 @@ alexander_fromideal (struct alexanderideal *ai)
         extradeterminants = 0;
         if (extradets > 0)
         {
-          extradeterminants = (struct laurentpolyx **) malloc (extradets*sizeof (struct laurentpolyx *));
+          extradeterminants = (struct laurentpoly **) malloc (extradets*sizeof (struct laurentpoly *));
           for (i = 0; i < extradets; i++) extradeterminants[i] = ai->l[i + ai->fl2offset];
         }
         if (canonify_idealx (&determinant2, extradeterminants, extradets) == 0)
@@ -350,7 +350,7 @@ alexander_fromideal (struct alexanderideal *ai)
  */
 
 void
-printout_ideal1 (struct alexanderideal *ai, struct laurentpolyx *principal) 
+printout_ideal1 (struct alexanderideal *ai, struct laurentpoly *principal) 
 {
   extern int outformat, quiet;
   int j;
@@ -400,8 +400,8 @@ printout_ideal1 (struct alexanderideal *ai, struct laurentpolyx *principal)
  */
 
 void
-printout_idealx (struct alexanderideal *ai, struct laurentpolyx *principal, 
-                     struct laurentpolyx **fundamentals, int fnum, int printprincipal)
+printout_idealx (struct alexanderideal *ai, struct laurentpoly *principal, 
+                     struct laurentpoly **fundamentals, int fnum, int printprincipal)
 {
   extern int outformat, quiet;
   int j;
@@ -502,7 +502,7 @@ linkingnumber (struct presentation *p)
 {
   extern int verbose, quiet;
   struct presentationrule *r;
-  struct laurentpolyx *determinant;
+  struct laurentpoly *determinant;
   int i, rank, matrixrank;
   int deriv, val, e;
   int numcols = 0;
@@ -605,7 +605,7 @@ corank_one_alexander (struct presentation *p)
 {
   extern int verbose, quiet;
   struct presentationrule *r;
-  struct laurentpolyx *determinant;
+  struct laurentpoly *determinant;
   int i, rank, matrixrank;
   int deriv, val, e;
   int numcols = 0;
@@ -693,11 +693,11 @@ corank_one_alexander (struct presentation *p)
  * eliminate one indeterminate by conjugacy
  */
 
-struct laurentpolyx *
+struct laurentpoly *
 laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
 {
   extern int verbose;
-  struct laurentpolyx *determinant;
+  struct laurentpoly *determinant;
   struct laurentmatrix *matrix;
 
   matrix = laurent_build_matrix (p, eliminate);
@@ -722,7 +722,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   extern int verbose;
   struct alexanderideal *ai;
   struct laurentmatrix *matrix, *minor;
-  struct laurentpolyx *l, **matrixcolumn, **columnj, **columnjj;
+  struct laurentpoly *l, **matrixcolumn, **columnj, **columnjj;
   int rank, i, ii, j, jj;
 
   assert (corank >= 1);
@@ -777,9 +777,9 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
       minor = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
       minor->numcols = 2;
       minor->numrows = 2;
-      minor->columns = (struct laurentpolyx ***) malloc (2*sizeof(struct laurentpolyx **));
-      minor->columns[0] = (struct laurentpolyx **) malloc (2*sizeof(struct laurentpolyx *));
-      minor->columns[1] = (struct laurentpolyx **) malloc (2*sizeof(struct laurentpolyx *));
+      minor->columns = (struct laurentpoly ***) malloc (2*sizeof(struct laurentpoly **));
+      minor->columns[0] = (struct laurentpoly **) malloc (2*sizeof(struct laurentpoly *));
+      minor->columns[1] = (struct laurentpoly **) malloc (2*sizeof(struct laurentpoly *));
       for (j = 0; j < matrix->numcols; j++)
       {
         columnj = matrix->columns[j];
@@ -876,7 +876,7 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
 {
   extern int verbose;
   struct laurentmatrixx *matrix, *minor;
-  struct laurentpolyx *l, **matrixcolumn;
+  struct laurentpoly *l, **matrixcolumn;
   struct alexanderideal *ai;
   int i, j, jj, rank, lastrow;
 
@@ -1041,7 +1041,7 @@ laurent_build_matrix (struct presentation *p, int eliminate)
 {
   struct presentationrule *r;
   struct laurentmatrix *matrix;
-  struct laurentpolyx **matrixcolumn;
+  struct laurentpoly **matrixcolumn;
   int numcols = 0;
   int i, ii, j, numrows;
   extern int verbose, debug;
@@ -1056,10 +1056,10 @@ laurent_build_matrix (struct presentation *p, int eliminate)
   matrix->numcols = numcols;
   matrix->numrows = numrows;
 
-  matrix->columns = (struct laurentpolyx ***) malloc (numcols*sizeof(struct laurentpolyx **));
+  matrix->columns = (struct laurentpoly ***) malloc (numcols*sizeof(struct laurentpoly **));
   for (j = 0; j < numcols; j++)
   {
-    matrix->columns[j] = (struct laurentpolyx **) malloc (numrows*sizeof(struct laurentpolyx *));
+    matrix->columns[j] = (struct laurentpoly **) malloc (numrows*sizeof(struct laurentpoly *));
   }
 
   /*
@@ -1103,7 +1103,7 @@ laurent_build_matrixx (struct presentation *p, int e1, int e2)
 {
   struct presentationrule *r;
   struct laurentmatrixx *matrix;
-  struct laurentpolyx **matrixcolumn, *l;
+  struct laurentpoly **matrixcolumn, *l;
   int numcols = 0;
   int i, ii, j, numrows;
   extern int verbose, debug;
@@ -1125,10 +1125,10 @@ laurent_build_matrixx (struct presentation *p, int e1, int e2)
    * last row will contain the common extra factor
    */
 
-  matrix->columns = (struct laurentpolyx ***) malloc (numcols*sizeof(struct laurentpolyx **));
+  matrix->columns = (struct laurentpoly ***) malloc (numcols*sizeof(struct laurentpoly **));
   for (j = 0; j < numcols; j++)
   {
-    matrix->columns[j] = (struct laurentpolyx **) malloc (numrows*sizeof(struct laurentpolyx *));
+    matrix->columns[j] = (struct laurentpoly **) malloc (numrows*sizeof(struct laurentpoly *));
   }
 
   /*
@@ -1197,9 +1197,9 @@ print_matrix (struct laurentmatrix *matrix)
 }
 
 void
-print_matrix_n_m (struct laurentpolyx ***matrixcolumns, int numrows, int numcols)
+print_matrix_n_m (struct laurentpoly ***matrixcolumns, int numrows, int numcols)
 {
-  struct laurentpolyx *l, **matrixcolumn;
+  struct laurentpoly *l, **matrixcolumn;
   int i, j;
 
   printf ("Matrix entries:\n");
@@ -1220,17 +1220,17 @@ struct laurentmatrix *
 minor_matrix_corank1 (struct laurentmatrix *matrix, int dropi, int dropj)
 {
   struct laurentmatrix *minor;
-  struct laurentpolyx **matrixcolumn, **minorcolumn;
+  struct laurentpoly **matrixcolumn, **minorcolumn;
   int i, j, ii, jj;
 
   minor = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
   minor->numcols = matrix->numcols - 1;
   minor->numrows = matrix->numrows - 1;
 
-  minor->columns = (struct laurentpolyx ***) malloc (minor->numcols*sizeof(struct laurentpolyx **));
+  minor->columns = (struct laurentpoly ***) malloc (minor->numcols*sizeof(struct laurentpoly **));
   for (j = 0; j < minor->numcols; j++)
   {
-    minor->columns[j] = (struct laurentpolyx **) malloc (minor->numrows*sizeof(struct laurentpolyx *));
+    minor->columns[j] = (struct laurentpoly **) malloc (minor->numrows*sizeof(struct laurentpoly *));
   }
 
   for (j = 0, jj = 0; j < matrix->numcols; j++)
@@ -1251,17 +1251,17 @@ struct laurentmatrixx *
 minor_matrixx_corank1 (struct laurentmatrixx *matrix, int dropi, int dropj)
 {
   struct laurentmatrixx *minor;
-  struct laurentpolyx **matrixcolumn, **minorcolumn;
+  struct laurentpoly **matrixcolumn, **minorcolumn;
   int i, j, ii, jj;
 
   minor = (struct laurentmatrixx *) malloc (sizeof (struct laurentmatrixx));
   minor->numcols = matrix->numcols - 1;
   minor->numrows = matrix->numrows - 1;
 
-  minor->columns = (struct laurentpolyx ***) malloc (minor->numcols*sizeof(struct laurentpolyx **));
+  minor->columns = (struct laurentpoly ***) malloc (minor->numcols*sizeof(struct laurentpoly **));
   for (j = 0; j < minor->numcols; j++)
   {
-    minor->columns[j] = (struct laurentpolyx **) malloc (minor->numrows*sizeof(struct laurentpolyx *));
+    minor->columns[j] = (struct laurentpoly **) malloc (minor->numrows*sizeof(struct laurentpoly *));
   }
 
   for (j = 0, jj = 0; j < matrix->numcols; j++)
@@ -1285,7 +1285,7 @@ minor_matrixx_corank1 (struct laurentmatrixx *matrix, int dropi, int dropj)
 void
 laurent_free_matrix (struct laurentmatrix *matrix)
 {
-  struct laurentpolyx *l, **matrixcolumn;
+  struct laurentpoly *l, **matrixcolumn;
   int i, j;
 
   for (j = 0; j < matrix->numcols; j++)
@@ -1309,7 +1309,7 @@ laurent_free_matrix (struct laurentmatrix *matrix)
 void
 laurent_free_matrixx (struct laurentmatrixx *matrix)
 {
-  struct laurentpolyx *l, **matrixcolumn;
+  struct laurentpoly *l, **matrixcolumn;
   int i, j;
 
   for (j = 0; j < matrix->numcols; j++)
@@ -1329,7 +1329,7 @@ laurent_free_matrixx (struct laurentmatrixx *matrix)
 struct alexanderideal *
 laurent_simplify_ideal (struct alexanderideal *ai)
 {
-  struct laurentpolyx *oldgcd, *newgcd;
+  struct laurentpoly *oldgcd, *newgcd;
   extern int principal, verbose;
   int last, i, spread, lspread;
   int linf, maxcoef, loop = 1;
@@ -1419,15 +1419,15 @@ laurent_simplify_ideal (struct alexanderideal *ai)
  * return 1 if at least one simplification was performed
  */
 
-int laurent_try_reduce_pair (struct laurentpolyx *l1, struct laurentpolyx *l2);
-void laurent_sort_entries (int num, struct laurentpolyx *l[]);
+int laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2);
+void laurent_sort_entries (int num, struct laurentpoly *l[]);
 
 int
 laurent_try_simplify_ideal (struct alexanderideal *ai)
 {
-  struct laurentpolyx *l, *l1, *l2;
+  struct laurentpoly *l, *l1, *l2;
 #ifdef USE_EUCLID_GCD
-  struct laurentpolyx *newgcd;
+  struct laurentpoly *newgcd;
 #endif
   int i, j, spread, numreductions;
   extern int verbose;
@@ -1544,7 +1544,7 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
 int l_safety_check (int f, int maxc);
 
 int
-laurent_try_reduce_pair (struct laurentpolyx *l1, struct laurentpolyx *l2)
+laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2)
 {
   int f, i, j, k, c1, c2first, c2last, quotient;
   int deltadegree;
@@ -1691,7 +1691,7 @@ laurent_try_reduce_pair (struct laurentpolyx *l1, struct laurentpolyx *l2)
 }
 
 int
-laurentpoly_linf (struct laurentpolyx *l)
+laurentpoly_linf (struct laurentpoly *l)
 {
   int i;
   int norm = 0;
@@ -1719,25 +1719,25 @@ l_safety_check (int f, int maxc)
   return (1);
 }
 
-void laurent_sort_entries_buf (int num, struct laurentpolyx *l[], struct laurentpolyx *buffer[]);
+void laurent_sort_entries_buf (int num, struct laurentpoly *l[], struct laurentpoly *buffer[]);
 
 void
-laurent_sort_entries (int num, struct laurentpolyx *l[])
+laurent_sort_entries (int num, struct laurentpoly *l[])
 {
-  struct laurentpolyx **buffer;
+  struct laurentpoly **buffer;
 
   if (num <= 1) return;
 
-  buffer = (struct laurentpolyx **) malloc (num * sizeof (struct laurentpolyx *));
+  buffer = (struct laurentpoly **) malloc (num * sizeof (struct laurentpoly *));
 
   laurent_sort_entries_buf (num, l, buffer);
   free (buffer);
 }
 
 void
-laurent_sort_entries_buf (int num, struct laurentpolyx *l[], struct laurentpolyx *buffer[])
+laurent_sort_entries_buf (int num, struct laurentpoly *l[], struct laurentpoly *buffer[])
 {
-  struct laurentpolyx *li, *lj;
+  struct laurentpoly *li, *lj;
   int i, j, k, s;
   int half, iwins;
 
@@ -1789,15 +1789,15 @@ laurent_sort_entries_buf (int num, struct laurentpolyx *l[], struct laurentpolyx
  * eliminate two indeterminates by conjugacy
  */
 
-struct laurentpolyx *
+struct laurentpoly *
 laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
-             struct laurentpolyx ***extradeterminantspt)
+             struct laurentpoly ***extradeterminantspt)
 {
   extern int verbose, debug, quiet;
   struct presentationrule *r;
-  struct laurentpolyx *determinant;
-  struct laurentpolyx **matrixcolumn;
-  struct laurentpolyx **extradeterminants;
+  struct laurentpoly *determinant;
+  struct laurentpoly **matrixcolumn;
+  struct laurentpoly **extradeterminants;
   struct laurentmatrixx *matrix;
   int numcols = 0;
   int lastrow, deficiency, j;
@@ -1861,7 +1861,7 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
         }
       } else {
         *extradeterminantspt = extradeterminants =
-             (struct laurentpolyx **) malloc (sizeof(struct laurentpolyx *));
+             (struct laurentpoly **) malloc (sizeof(struct laurentpoly *));
         extradeterminants[0] = determinant;
         determinant = 0;
       }
@@ -1878,7 +1878,7 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
     if (extrafound && extradeterminantspt)
     {
       *extradeterminantspt = extradeterminants =
-           (struct laurentpolyx **) malloc (numcols*sizeof(struct laurentpolyx *));
+           (struct laurentpoly **) malloc (numcols*sizeof(struct laurentpoly *));
       for (j = 0; j < numcols; j++)
       {
         extradeterminants[j] = laurent_minor_determinantx (matrix->columns, numcols, j);
@@ -1900,13 +1900,13 @@ laurent_eliminate_two_indeterminates (struct presentation *p, int e1, int e2,
  * Compute matrix entries for Alexander polynomial computation
  */
 
-struct laurentpolyx *
+struct laurentpoly *
 laurent_get_exp_sum (struct presentationrule *r, int n, int gconj)
 {
   int k, d;
   int stemdegree;
   int runningexp, minexp, maxexp;
-  struct laurentpolyx *l;
+  struct laurentpoly *l;
 
   runningexp = 0;
   minexp = INT_MAX;
@@ -1925,7 +1925,7 @@ laurent_get_exp_sum (struct presentationrule *r, int n, int gconj)
 
   if (minexp > maxexp) return (0);
   stemdegree = maxexp - minexp;
-  l = (struct laurentpolyx *) malloc (POLYSIZE(stemdegree + 1));
+  l = (struct laurentpoly *) malloc (POLYSIZE(stemdegree + 1));
   l->indets = 1;
   l->stemdegree = stemdegree;
   l->minexpon = minexp;
@@ -1958,13 +1958,13 @@ laurent_get_exp_sum (struct presentationrule *r, int n, int gconj)
  * Compute matrix entries for Alexander polynomial computation (two indeterminates)
  */
 
-struct laurentpolyx *
+struct laurentpoly *
 laurent_get_exp_sumx (struct presentationrule *r, int n, int e1, int e2)
 {
   int k, d;
   int stemdegree;
   int re1, re2, minexp1, minexp2, maxexp1, maxexp2;
-  struct laurentpolyx *l;
+  struct laurentpoly *l;
 
   assert (e1 > 0 && e2 > 0);
   re1 = re2 = 0;
@@ -1987,7 +1987,7 @@ laurent_get_exp_sumx (struct presentationrule *r, int n, int e1, int e2)
 
   if (minexp1 > maxexp1 || minexp2 > maxexp2) return (0);
   stemdegree = maxexp2 - minexp2;
-  l = (struct laurentpolyx *) malloc (POLYSIZE(stemdegree + 1));
+  l = (struct laurentpoly *) malloc (POLYSIZE(stemdegree + 1));
   l->indets = 2;
   l->stemdegree = stemdegree;
   l->minexpon = minexp2;
@@ -2028,13 +2028,13 @@ laurent_get_exp_sumx (struct presentationrule *r, int n, int e1, int e2)
  * polynomial in two indets
  */
 
-struct laurentpolyx *
+struct laurentpoly *
 laurent_mixed_derivativex2 (struct presentationrule *r, int x1, int x2)
 {
   int k, d;
   int stemdegree;
   int re1, re2, minexp1, minexp2, maxexp1, maxexp2;
-  struct laurentpolyx *l;
+  struct laurentpoly *l;
 
   assert (x1 > 0 && x2 > 0);
   re1 = re2 = 0;
@@ -2059,7 +2059,7 @@ laurent_mixed_derivativex2 (struct presentationrule *r, int x1, int x2)
 
   if (minexp1 > maxexp1 || minexp2 > maxexp2) return (0);
   stemdegree = maxexp2 - minexp2;
-  l = (struct laurentpolyx *) malloc (POLYSIZE(stemdegree + 1));
+  l = (struct laurentpoly *) malloc (POLYSIZE(stemdegree + 1));
   l->indets = 2;
   l->stemdegree = stemdegree;
   l->minexpon = minexp2;
@@ -2099,12 +2099,12 @@ laurent_mixed_derivativex2 (struct presentationrule *r, int x1, int x2)
  * expsum is zero for both
  */
 
-struct laurentpolyx *
+struct laurentpoly *
 laurent_common_factorx (struct presentationrule *r, int x1, int x2)
 {
   int k;
-  struct laurentpolyx *l, *poly1, *poly2;
-  struct laurentpolyx *res, *addres, *mulres, *uminus1; /* these must be polynomials in one indet */
+  struct laurentpoly *l, *poly1, *poly2;
+  struct laurentpoly *res, *addres, *mulres, *uminus1; /* these must be polynomials in one indet */
 
   poly1 = laurent_get_exp_sumx (r, x1, x1, x2);
   if (poly1) assert (poly1->indets == 2);
@@ -2139,7 +2139,7 @@ laurent_common_factorx (struct presentationrule *r, int x1, int x2)
   {
     assert (poly2->minexpon == poly1->minexpon);
     assert (poly2->stemdegree == poly1->stemdegree);
-    uminus1 = (struct laurentpolyx *) malloc (POLYSIZE(2));
+    uminus1 = (struct laurentpoly *) malloc (POLYSIZE(2));
     uminus1->indets = 1;
     uminus1->minexpon = 0;
     uminus1->stemdegree = 1;
@@ -2165,20 +2165,20 @@ laurent_common_factorx (struct presentationrule *r, int x1, int x2)
  * compute the determinant of the matrix
  */
 
-struct laurentpolyx *
-laurent_compute_determinant (struct laurentpolyx ***matrix, int n)
+struct laurentpoly *
+laurent_compute_determinant (struct laurentpoly ***matrix, int n)
 {
   extern int debug;
   int i, ii, jj, i1;
   int sign;
-  struct laurentpolyx *determinant = 0, *subdeterminant, *product, *sum;
-  struct laurentpolyx ***submatrix;
-  struct laurentpolyx **matrixcol, **submatrixcol, **firstcolumn;
+  struct laurentpoly *determinant = 0, *subdeterminant, *product, *sum;
+  struct laurentpoly ***submatrix;
+  struct laurentpoly **matrixcol, **submatrixcol, **firstcolumn;
 
   assert (n >= 0);
   if (n == 0)
   {
-    determinant = (struct laurentpolyx *) malloc (POLYSIZE(1));
+    determinant = (struct laurentpoly *) malloc (POLYSIZE(1));
     determinant->indets = 1;
     determinant->minexpon = 0;
     determinant->stemdegree = 0;
@@ -2193,9 +2193,9 @@ laurent_compute_determinant (struct laurentpolyx ***matrix, int n)
 
   if (debug >= 2) printf ("Computing determinant of a %dx%d matrix\n", n, n);
   if (debug >= 2) print_matrix_n_m (matrix, n, n);
-  submatrix = (struct laurentpolyx ***) malloc ( (n-1)*sizeof (struct laurentpolyx **) );
+  submatrix = (struct laurentpoly ***) malloc ( (n-1)*sizeof (struct laurentpoly **) );
   for (jj = 0; jj < n-1; jj++)
-    submatrix[jj] = (struct laurentpolyx **) malloc ( (n-1)*sizeof (struct laurentpolyx *) );
+    submatrix[jj] = (struct laurentpoly **) malloc ( (n-1)*sizeof (struct laurentpoly *) );
 
   firstcolumn = matrix[0];
   sign = 1;
@@ -2247,24 +2247,24 @@ laurent_compute_determinant (struct laurentpolyx ***matrix, int n)
  * compute the determinant of the matrix (two indeterminates)
  */
 
-struct laurentpolyx *
-laurent_compute_determinantx (struct laurentpolyx ***matrix, int n)
+struct laurentpoly *
+laurent_compute_determinantx (struct laurentpoly ***matrix, int n)
 {
   int i, ii, jj, i1;
   int sign;
-  struct laurentpolyx *determinant = 0, *subdeterminant, *product, *sum;
-  struct laurentpolyx ***submatrix;
-  struct laurentpolyx **matrixcol, **submatrixcol, **firstcolumn;
-  struct laurentpolyx *lp1;
+  struct laurentpoly *determinant = 0, *subdeterminant, *product, *sum;
+  struct laurentpoly ***submatrix;
+  struct laurentpoly **matrixcol, **submatrixcol, **firstcolumn;
+  struct laurentpoly *lp1;
 
   assert (n >= 0);
   if (n == 0)
   {
-    determinant = (struct laurentpolyx *) malloc (POLYSIZE(1));
+    determinant = (struct laurentpoly *) malloc (POLYSIZE(1));
     determinant->indets = 2;
     determinant->minexpon = 0;
     determinant->stemdegree = 0;
-    lp1 = (struct laurentpolyx *) malloc (POLYSIZE(1));
+    lp1 = (struct laurentpoly *) malloc (POLYSIZE(1));
     determinant->stem[0].lx = lp1;
     lp1->indets = 1;
     lp1->minexpon = 0;
@@ -2278,9 +2278,9 @@ laurent_compute_determinantx (struct laurentpolyx ***matrix, int n)
    * developping the determinant about the first column
    */
 
-  submatrix = (struct laurentpolyx ***) malloc ( (n-1)*sizeof (struct laurentpolyx **) );
+  submatrix = (struct laurentpoly ***) malloc ( (n-1)*sizeof (struct laurentpoly **) );
   for (jj = 0; jj < n-1; jj++)
-    submatrix[jj] = (struct laurentpolyx **) malloc ( (n-1)*sizeof (struct laurentpolyx *) );
+    submatrix[jj] = (struct laurentpoly **) malloc ( (n-1)*sizeof (struct laurentpoly *) );
 
   firstcolumn = matrix[0];
   sign = 1;
@@ -2319,12 +2319,12 @@ laurent_compute_determinantx (struct laurentpolyx ***matrix, int n)
  * with row 
  */
 
-struct laurentpolyx *
-laurent_minor_determinantx (struct laurentpolyx ***matrix, int numcols, int row_to_subst)
+struct laurentpoly *
+laurent_minor_determinantx (struct laurentpoly ***matrix, int numcols, int row_to_subst)
 {
   int j;
-  struct laurentpolyx **matrixcolumn;
-  struct laurentpolyx *saved, *determinant;
+  struct laurentpoly **matrixcolumn;
+  struct laurentpoly *saved, *determinant;
 
   /* exchange rows */
   for (j = 0; j < numcols; j++)
@@ -2356,7 +2356,7 @@ laurent_minor_determinantx (struct laurentpolyx ***matrix, int numcols, int row_
  */
 
 int
-canonify_idealx (struct laurentpolyx **wpt, struct laurentpolyx **wi, int winum)
+canonify_idealx (struct laurentpoly **wpt, struct laurentpoly **wi, int winum)
 {
   if ((*wpt != 0) && (wi!= 0)) return (0);  // for now do not try to canonify
   if (winum > 1) return (0);
@@ -2371,7 +2371,7 @@ canonify_idealx (struct laurentpolyx **wpt, struct laurentpolyx **wi, int winum)
  */
 
 int
-base_canonifyx2 (struct laurentpolyx **ppt)
+base_canonifyx2 (struct laurentpoly **ppt)
 {
   extern int nobasecanonify;
   int suppdim;
@@ -2405,11 +2405,11 @@ base_canonifyx2 (struct laurentpolyx **ppt)
  */
 
 int
-base_canonifyx2_onedim (struct laurentpolyx **ppt)
+base_canonifyx2_onedim (struct laurentpoly **ppt)
 {
   extern int verbose;
-  struct laurentpolyx *p;
-  struct laurentpolyx *p1, *newp1;  /* one indet polynomials */
+  struct laurentpoly *p;
+  struct laurentpoly *p1, *newp1;  /* one indet polynomials */
   int origy, dx, dy, k, xk;
   int mygcd, xstep, ystep;
 
@@ -2439,7 +2439,7 @@ base_canonifyx2_onedim (struct laurentpolyx **ppt)
 
   assert (mygcd >= 1);
 
-  newp1 = (struct laurentpolyx *) malloc (POLYSIZE(mygcd+1));
+  newp1 = (struct laurentpoly *) malloc (POLYSIZE(mygcd+1));
   newp1->indets = 1;
   newp1->stemdegree = mygcd;
 
@@ -2474,10 +2474,10 @@ base_canonifyx2_onedim (struct laurentpolyx **ppt)
  */
 
 int
-base_canonifyx2_twodim (struct laurentpolyx **ppt)
+base_canonifyx2_twodim (struct laurentpoly **ppt)
 {
-  struct laurentpolyx *origp, *newp, *optp;
-  struct laurentpolyx *tempp;
+  struct laurentpoly *origp, *newp, *optp;
+  struct laurentpoly *tempp;
   extern int verbose;
   int x1[2], x2[2], x3[2], du2, dv2, du3, dv3;
   int origtotdegree, newtotdegree, optdegree;
@@ -2629,9 +2629,9 @@ base_canonifyx2_twodim (struct laurentpolyx **ppt)
  */
 
 int
-laurent_suppdimx2 (struct laurentpolyx *p)
+laurent_suppdimx2 (struct laurentpoly *p)
 {
-  struct laurentpolyx *l1;   /* one indet polynomial */
+  struct laurentpoly *l1;   /* one indet polynomial */
   int dirfound = 0;
   int k, origx, origy, dx, dy, ddx, ddy;
 
@@ -2678,9 +2678,9 @@ laurent_suppdimx2 (struct laurentpolyx *p)
  */
 
 void
-laurent_getthreex (struct laurentpolyx *p, int *x1, int *x2, int *x3)
+laurent_getthreex (struct laurentpoly *p, int *x1, int *x2, int *x3)
 {
-  struct laurentpolyx *l1, *l2; /* one indet polynomials */
+  struct laurentpoly *l1, *l2; /* one indet polynomials */
   int dirfound = 0;
   int k, origv, origu, dv, du, ddv, ddu;
 
@@ -2750,11 +2750,11 @@ laurent_getthreex (struct laurentpolyx *p, int *x1, int *x2, int *x3)
  * apply a change of base to an alexander ideal
  */
 
-struct laurentpolyx *
-base_changex (struct laurentpolyx *l, int matrixb[2][2])
+struct laurentpoly *
+base_changex (struct laurentpoly *l, int matrixb[2][2])
 {
-  struct laurentpolyx *newl = 0;
-  struct laurentpolyx *lu;  /* one indet poly */
+  struct laurentpoly *newl = 0;
+  struct laurentpoly *lu;  /* one indet poly */
   int a, b, c, d, iu, iv, degu, degv, newdegu, newdegv;
   int coef;
 
@@ -2795,7 +2795,7 @@ base_changex (struct laurentpolyx *l, int matrixb[2][2])
  */
 
 void
-shuffle_polyx (struct laurentpolyx **lpt, struct laurentpolyx **extradets, int extranum)
+shuffle_polyx (struct laurentpoly **lpt, struct laurentpoly **extradets, int extranum)
 {
   extern int verbose;
   int b[2][2];
@@ -2891,8 +2891,8 @@ read_alexander_ideal (FILE *file)
 {
   char ch, indet_names[2];
   struct alexanderideal *ai;
-  struct laurentpolyx *l2;
-  struct laurentpolyx *l1;
+  struct laurentpoly *l2;
+  struct laurentpoly *l1;
   int sign, tok, ffound;
 
   tok = gettoken (file);
