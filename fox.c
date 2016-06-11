@@ -47,9 +47,9 @@ foxjacobian (struct presentation *pr)
       if (abelianize == 0) continue;
       if (rank == 1)
       {
-        print_laurentpolyx (p, "t");
+        print_laurentpoly (p, "t");
       } else {
-        print_laurentpolyx (p, "uvwxyz");
+        print_laurentpoly (p, "uvwxyz");
       }
       printf ("\n");
     }

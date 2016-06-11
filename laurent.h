@@ -14,21 +14,20 @@ struct laurentpolyx {
   union intorpointer stem[];
 };
 
-#define POLYXSIZE(n) (sizeof(struct laurentpolyx) + (n)*sizeof(union intorpointer))
+#define POLYSIZE(n) (sizeof(struct laurentpolyx) + (n)*sizeof(union intorpointer))
 
-void laurent_negatex (struct laurentpolyx *term);
-void print_laurentpolyx (struct laurentpolyx *l, char *indetlist);
-struct laurentpolyx *read_laurentpoly (FILE *file, char indet_names[2]);
-struct laurentpolyx *read_laurentpolyx (FILE *file, char indet_names[2]);
+void laurent_negate (struct laurentpolyx *term);
+void print_laurentpoly (struct laurentpolyx *l, char *indetlist);
+struct laurentpolyx *read_laurentpoly1 (FILE *file, char indet_names[2]);
+struct laurentpolyx *read_laurentpoly2 (FILE *file, char indet_names[2]);
 struct laurentpolyx *laurent_add (struct laurentpolyx *add1, struct laurentpolyx *add2);
-struct laurentpolyx *laurent_addx (struct laurentpolyx *add1, struct laurentpolyx *add2);
-struct laurentpolyx *laurent_mul (struct laurentpolyx *fact1, struct laurentpolyx *fact2);
-struct laurentpolyx *laurent_mulx1 (struct laurentpolyx *fact1, struct laurentpolyx *fact2);
-struct laurentpolyx *laurent_mulx2 (struct laurentpolyx *fact1, struct laurentpolyx *fact2);
+struct laurentpolyx *laurent_mul1 (struct laurentpolyx *fact1, struct laurentpolyx *fact2);
+struct laurentpolyx *laurent_mul2 (struct laurentpolyx *fact1, struct laurentpolyx *fact2);
 struct laurentpolyx *laurent_normalize (struct laurentpolyx *l);
-struct laurentpolyx *laurent_normalizex (struct laurentpolyx *l);
 struct laurentpolyx *laurent_dup (struct laurentpolyx *l);
-struct laurentpolyx *laurent_dupx (struct laurentpolyx *l);
+
+/* TODO from here clean up mess with old laurentpoly struct */
+
 void laurent_canonify (struct laurentpolyx *l);
 void laurent_canonifyx1 (struct laurentpolyx *l);
 void laurent_canonifyx (struct laurentpolyx *l);
