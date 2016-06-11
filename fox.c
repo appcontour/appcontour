@@ -17,8 +17,8 @@ foxjacobian (struct presentation *pr)
 {
   extern int verbose, abelianize, preabelian;
   struct presentationrule *r;
-  struct laurentpolyx *p;
-  int rank = 1, i, j;
+  struct laurentpoly *p;
+  int rank = 1, i, j, e;
 
   if (abelianize == 1 && preabelian == 0)
   {
@@ -37,10 +37,12 @@ foxjacobian (struct presentation *pr)
   {
     for (j = 0; j < pr->gennum; j++)
     {
-      printf ("(%d,%d): ", i+1, j+1);
+      //printf ("(%d,%d): ", i+1, j+1);
+      if (j > 0) printf (",\t");
       if (rank == 0)
       {
-        printf ("EXPONENT SUM\n");
+        e = get_exp_sum (r, j+1);
+        printf ("%d", e);
         continue;
       }
       p = foxderivative (r, j, pr->gennum - rank, rank);
@@ -51,8 +53,9 @@ foxjacobian (struct presentation *pr)
       } else {
         print_laurentpoly (p, "uvwxyz");
       }
-      printf ("\n");
+      //printf ("\n");
     }
+    printf (";\n");
   }
 }
 
@@ -65,11 +68,11 @@ foxjacobian (struct presentation *pr)
 #define MAX_RANK_ALLOWED 20
 static int exponvec[MAX_RANK_ALLOWED];
 
-struct laurentpolyx *
+struct laurentpoly *
 foxderivative (struct presentationrule *r, int gen, int offset, int rank)
 {
   extern int abelianize;
-  struct laurentpolyx *p = 0;
+  struct laurentpoly *p = 0;
   int j, k;
 
   assert (rank <= MAX_RANK_ALLOWED);
@@ -107,7 +110,7 @@ foxderivative (struct presentationrule *r, int gen, int offset, int rank)
       }
     }
   }
-  if (abelianize == 0) printf ("\n");
+  //if (abelianize == 0) printf ("\n");
   return (p);
 }
 
