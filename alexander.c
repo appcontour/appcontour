@@ -294,7 +294,7 @@ alexander_fromideal (struct alexanderideal *ai)
         //}
         //printf ("}\n");
       }
-      for (i = 0; i < ai->l1num; i++) laurent_canonify (ai->lx[i].l1);
+      for (i = 0; i < ai->l1num; i++) laurent_canonify (ai->l[i]);
       printout_ideal1 (ai, 0);
     break;
 
@@ -304,38 +304,38 @@ alexander_fromideal (struct alexanderideal *ai)
         printf ("Alexander ideal before canonization:\n{\n");
         for (i = 0; i < ai->l2num; i++)
         {
-          print_laurentpoly (ai->lx[i].l2, "uv");
+          print_laurentpoly (ai->l[i], "uv");
           printf (";\n");
         }
         for (i = 0; i < ai->fl2num; i++)
         {
           printf ("F: ");
-          print_laurentpoly (ai->lx[i + ai->fl2offset].l2, "uv");
+          print_laurentpoly (ai->l[i + ai->fl2offset], "uv");
           printf (";\n");
         }
         printf ("}\n");
       }
       if (ai->l2num > 1) /* cannot use canonify_idealx */
       {
-        for (i = 0; i < ai->l2num; i++) laurent_canonifyx (ai->lx[i].l2);
-        for (i = 0; i < ai->fl2num; i++) laurent_canonifyx (ai->lx[i + ai->fl2offset].l2);
+        for (i = 0; i < ai->l2num; i++) laurent_canonifyx (ai->l[i]);
+        for (i = 0; i < ai->fl2num; i++) laurent_canonifyx (ai->l[i + ai->fl2offset]);
       } else {
         determinant2 = 0;
         assert (ai->l2num <= 1);
-        if (ai->l2num == 1) determinant2 = ai->lx[0].l2;
+        if (ai->l2num == 1) determinant2 = ai->l[0];
         extradets = ai->fl2num;
         extradeterminants = 0;
         if (extradets > 0)
         {
           extradeterminants = (struct laurentpolyx **) malloc (extradets*sizeof (struct laurentpolyx *));
-          for (i = 0; i < extradets; i++) extradeterminants[i] = ai->lx[i + ai->fl2offset].l2;
+          for (i = 0; i < extradets; i++) extradeterminants[i] = ai->l[i + ai->fl2offset];
         }
         if (canonify_idealx (&determinant2, extradeterminants, extradets) == 0)
           printf ("# *** Warning: result can be noncanonical ***\n");
-        if (ai->l2num == 1) ai->lx[0].l2 = determinant2;
+        if (ai->l2num == 1) ai->l[0] = determinant2;
         if (extradets > 0)
         {
-          for (i = 0; i < extradets; i++) ai->lx[i + ai->fl2offset].l2 = extradeterminants[i];
+          for (i = 0; i < extradets; i++) ai->l[i + ai->fl2offset] = extradeterminants[i];
           free (extradeterminants);
         }
       }
@@ -368,7 +368,7 @@ printout_ideal1 (struct alexanderideal *ai, struct laurentpolyx *principal)
     {
       for (j = 0; j < ai->l1num; j++)
       {
-        print_laurentpoly (ai->lx[j].l1, "t");
+        print_laurentpoly (ai->l[j], "t");
         printf (";\n");
       }
     }
@@ -388,7 +388,7 @@ printout_ideal1 (struct alexanderideal *ai, struct laurentpolyx *principal)
     if (ai == 0) print_laurentpoly (principal, "t");
      else {
       assert (ai->l1num == 1);
-      print_laurentpoly (ai->lx[0].l1, "t");
+      print_laurentpoly (ai->l[0], "t");
     }
     printf (";\n");
   }
@@ -422,7 +422,7 @@ printout_idealx (struct alexanderideal *ai, struct laurentpolyx *principal,
       {
         for (j = 0; j < ai->l2num; j++)
         {
-          print_laurentpoly (ai->lx[j].l2, "uv");
+          print_laurentpoly (ai->l[j], "uv");
           printf (";\n");
         }
       }
@@ -448,18 +448,18 @@ printout_idealx (struct alexanderideal *ai, struct laurentpolyx *principal,
     {
       for (j = 0; j < ai->fl2num; j++)
       {
-        if (ai->lx[j + ai->fl2offset].l2 == 0) continue;
+        if (ai->l[j + ai->fl2offset] == 0) continue;
         if (outformat == OUTFORMAT_APPCONTOUR)
         {
           printf ("F: ");
-          print_laurentpoly (ai->lx[j + ai->fl2offset].l2, "uv");
+          print_laurentpoly (ai->l[j + ai->fl2offset], "uv");
           printf (";\n");
         } else {
           printf ("(");
-          print_laurentpoly (ai->lx[j + ai->fl2offset].l2, "uv");
+          print_laurentpoly (ai->l[j + ai->fl2offset], "uv");
           printf (") (u - 1);\n");
           printf ("(");
-          print_laurentpoly (ai->lx[j + ai->fl2offset].l2, "uv");
+          print_laurentpoly (ai->l[j + ai->fl2offset], "uv");
           printf (") (v - 1);\n");
         }
       }
@@ -471,7 +471,7 @@ printout_idealx (struct alexanderideal *ai, struct laurentpolyx *principal,
     if (ai == 0) print_laurentpoly (principal, "uv");
      else {
       assert (ai->l2num == 1);
-      print_laurentpoly (ai->lx[0].l2, "uv");
+      print_laurentpoly (ai->l[0], "uv");
     }
     printf (";\n");
   }
@@ -766,7 +766,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
             return (0);
           } else {
             // assert (idx < ai->l1num);
-            ai->lx[ai->l1num++].l1 = laurent_dup(l);
+            ai->l[ai->l1num++] = laurent_dup(l);
           }
         }
       }
@@ -806,7 +806,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
                 free (ai);
                 return (0);
               }
-              ai->lx[ai->l1num++].l1 = laurent_compute_determinant (minor->columns, minor->numcols);
+              ai->l[ai->l1num++] = laurent_compute_determinant (minor->columns, minor->numcols);
               minor->columns[0][0] = 0;
               minor->columns[0][1] = 0;
               minor->columns[1][0] = 0;
@@ -853,7 +853,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
         }
         assert (ai->l1num < ai->max_generators_num);
         minor = minor_matrix_corank1 (matrix, i, j);
-        ai->lx[ai->l1num++].l1 = laurent_compute_determinant (minor->columns, minor->numcols);
+        ai->l[ai->l1num++] = laurent_compute_determinant (minor->columns, minor->numcols);
         for (jj = 0; jj < minor->numcols; jj++) free (minor->columns[jj]);
         free (minor->columns);
         free (minor);
@@ -927,7 +927,7 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
             free (ai);
             return (0);
           }
-          ai->lx[ai->l2num++].l2 = laurent_dup(l);
+          ai->l[ai->l2num++] = laurent_dup(l);
         }
       }
       /* the "fundamental" part of the ideal comes from a single loop: last row is included */
@@ -945,7 +945,7 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
           free (ai);
           return (0);
         }
-        ai->lx[ai->fl2num++ + ai->fl2offset].l2 = laurent_dup(l);
+        ai->l[ai->fl2num++ + ai->fl2offset] = laurent_dup(l);
       }
       if (verbose) printout_idealx (ai, 0, 0, 0, 0);
       break;
@@ -999,7 +999,7 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
         return (0);
       }
       minor = minor_matrixx_corank1 (matrix, lastrow, j);
-      ai->lx[ai->l2num++].l2 = laurent_compute_determinantx (minor->columns, minor->numcols);
+      ai->l[ai->l2num++] = laurent_compute_determinantx (minor->columns, minor->numcols);
       for (jj = 0; jj < minor->numcols; jj++) free (minor->columns[jj]);
       free (minor->columns);
       free (minor);
@@ -1018,7 +1018,7 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
           return (0);
         }
         minor = minor_matrixx_corank1 (matrix, i, j);
-        ai->lx[ai->fl2num++ + ai->fl2offset].l2 = laurent_compute_determinantx (minor->columns, minor->numcols);
+        ai->l[ai->fl2num++ + ai->fl2offset] = laurent_compute_determinantx (minor->columns, minor->numcols);
         for (jj = 0; jj < minor->numcols; jj++) free (minor->columns[jj]);
         free (minor->columns);
         free (minor);
@@ -1349,7 +1349,7 @@ laurent_simplify_ideal (struct alexanderideal *ai)
         maxcoef = 0;
         for (i = 0; i < ai->l1num; i++)
         {
-          if ((linf = laurentpoly_linf (ai->lx[i].l1)) > maxcoef) maxcoef = linf;
+          if ((linf = laurentpoly_linf (ai->l[i])) > maxcoef) maxcoef = linf;
         }
         if (maxcoef > (INT_MAX >> (4*sizeof(int))))
         {
@@ -1357,17 +1357,17 @@ laurent_simplify_ideal (struct alexanderideal *ai)
           break;
         }
       }
-      newgcd = laurent_gcd (spread, ai->lx[last].l1, ai->lx[last-1].l1, &lspread);
+      newgcd = laurent_gcd (spread, ai->l[last], ai->l[last-1], &lspread);
       spread = lspread;
       for (i = last-2; i >= 0; i--)
       {
         oldgcd = newgcd;
-        newgcd = laurent_gcd (spread, oldgcd, ai->lx[i].l1, &lspread);
+        newgcd = laurent_gcd (spread, oldgcd, ai->l[i], &lspread);
         spread = lspread;
         free (oldgcd);
       }
-      if (newgcd->stemdegree > ai->lx[0].l1->stemdegree ||
-          (newgcd->stemdegree == ai->lx[0].l1->stemdegree && abs(spread*newgcd->stem[0].l0) >= abs(ai->lx[0].l1->stem[0].l0)) )
+      if (newgcd->stemdegree > ai->l[0]->stemdegree ||
+          (newgcd->stemdegree == ai->l[0]->stemdegree && abs(spread*newgcd->stem[0].l0) >= abs(ai->l[0]->stem[0].l0)) )
       {
         free (newgcd);
       } else {
@@ -1376,9 +1376,9 @@ laurent_simplify_ideal (struct alexanderideal *ai)
         if (ai->l1num >= ai->max_generators_num) ai = ai_increase_size (ai);
         if (ai->l1num < ai->max_generators_num)
         {
-          for (i = ai->l1num; i > 0; i--) ai->lx[i].l1 = ai->lx[i-1].l1;
+          for (i = ai->l1num; i > 0; i--) ai->l[i] = ai->l[i-1];
           ai->l1num++;
-          ai->lx[0].l1 = newgcd;
+          ai->l[0] = newgcd;
           loop = 1;
         } else {
           printf ("Warning: no space left to add new generator!\n");
@@ -1389,18 +1389,18 @@ laurent_simplify_ideal (struct alexanderideal *ai)
   }
 
   for (i = 0; i < ai->l1num; i++)
-    laurent_canonifysign (ai->lx[i].l1);
+    laurent_canonifysign (ai->l[i]);
 
   if (principal && ai->l1num > 1)
   {
     spread = 1;
     for (i = 1; i < ai->l1num; i++)
     {
-      newgcd = laurent_gcd (spread, ai->lx[0].l1, ai->lx[i].l1, &lspread);
+      newgcd = laurent_gcd (spread, ai->l[0], ai->l[i], &lspread);
       spread = lspread;
-      free (ai->lx[0].l1);
-      free (ai->lx[i].l1);
-      ai->lx[0].l1 = newgcd;
+      free (ai->l[0]);
+      free (ai->l[i]);
+      ai->l[0] = newgcd;
     }
     ai->l1num = 1;
     ai->spread = spread;
@@ -1444,12 +1444,12 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
 
   if (ai->l1num <= 1) return (0); // at least two generators...
 
-  laurent_sort_entries (ai->l1num, &ai->lx[0].l1);
+  laurent_sort_entries (ai->l1num, &ai->l[0]);
   for (i = 0; i < ai->l1num; i++)
   {
-    if (ai->lx[i].l1 == 0)
+    if (ai->l[i] == 0)
     {
-      for (j = i; j < ai->l1num - 1; j++) ai->lx[j].l1 = ai->lx[j+1].l1;
+      for (j = i; j < ai->l1num - 1; j++) ai->l[j] = ai->l[j+1];
       ai->l1num--;
       if (verbose) printf ("Ideal simplification: zero polynomial removed\n");
       return (1);
@@ -1457,15 +1457,15 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
   }
   for (i = 0; i < ai->l1num; i++)
   {
-    l = ai->lx[i].l1;
+    l = ai->l[i];
     if (l->stemdegree == 0 && abs(l->stem[0].l0) == 1)
     {
       for (j = 0; j < ai->l1num; j++)
       {
-        if (j != i && ai->lx[j].l1) free (ai->lx[j].l1);
-        ai->lx[j].l1 = 0;
+        if (j != i && ai->l[j]) free (ai->l[j]);
+        ai->l[j] = 0;
       }
-      ai->lx[0].l1 = l;
+      ai->l[0] = l;
       ai->l1num = 1;
       if (verbose) printf ("Ideal simplification: unit polynomial generates everything\n");
       return (1);
@@ -1494,7 +1494,7 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
   }
   for (i = 0; i < ai->l1num; i++)
   {
-    l1 = ai->lx[i].l1;
+    l1 = ai->l[i];
     if (l1 == 0) continue;
     assert (l1->stem[0].l0);
     assert (l1->stem[l1->stemdegree].l0);
@@ -1503,7 +1503,7 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
       /*
        * kind of euclidean division step
        */
-      l2 = ai->lx[j].l1;
+      l2 = ai->l[j];
       if (l2 == 0) continue;
       assert (l2->stem[0].l0);
       assert (l2->stem[l2->stemdegree].l0);
@@ -1511,14 +1511,14 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
       if (l2->stemdegree == 0 && l2->stem[0].l0 == 0)
       {
         free (l2);
-        ai->lx[j].l1 = 0;
+        ai->l[j] = 0;
         continue;
       }
       if (l1->stemdegree >= l2->stemdegree) numreductions += laurent_try_reduce_pair (l1, l2);
       if (l1->stemdegree == 0 && l1->stem[0].l0 == 0)
       {
         free (l1);
-        ai->lx[i].l1 = 0;
+        ai->l[i] = 0;
         break;
       }
     }
@@ -2937,7 +2937,7 @@ read_alexander_ideal (FILE *file)
         if (ch == '}') break;
         ungetc (ch, file);
         l1 = read_laurentpoly1 (file, indet_names);
-        ai->lx[ai->l1num++].l1 = l1;
+        ai->l[ai->l1num++] = l1;
       }
     break;
 
@@ -2958,10 +2958,10 @@ read_alexander_ideal (FILE *file)
         {
           if (ai->fl2offset + ai->fl2num >= ai->max_generators_num) ai = ai_increase_size (ai);
           assert (ai->fl2offset + ai->fl2num < ai->max_generators_num);
-          ai->lx[ai->fl2offset + ai->fl2num++].l2 = l2;
+          ai->l[ai->fl2offset + ai->fl2num++] = l2;
         } else {
           assert (ai->l2num < ai->fl2offset);
-          ai->lx[ai->l2num++].l2 = l2;
+          ai->l[ai->l2num++] = l2;
         }
       }
     break;
@@ -3000,7 +3000,7 @@ ai_increase_size (struct alexanderideal *ai)
   {
     case 1:
       newai->l1num = ai->l1num;
-      for (i = 0; i < ai->l1num; i++) newai->lx[i].l1 = ai->lx[i].l1;
+      for (i = 0; i < ai->l1num; i++) newai->l[i] = ai->l[i];
       break;
 
     case 2:
@@ -3011,8 +3011,8 @@ ai_increase_size (struct alexanderideal *ai)
       newai->fl2offset = ai->fl2offset + fincrease;
       newai->l2num = ai->l2num;
       newai->fl2num = ai->fl2num;
-      for (i = 0; i < ai->l2num; i++) newai->lx[i].l2 = ai->lx[i].l2;
-      for (i = 0; i < ai->fl2num; i++) newai->lx[i+newai->fl2offset] = ai->lx[i+ai->fl2offset];
+      for (i = 0; i < ai->l2num; i++) newai->l[i] = ai->l[i];
+      for (i = 0; i < ai->fl2num; i++) newai->l[i+newai->fl2offset] = ai->l[i+ai->fl2offset];
       break;
   }
   free (ai);

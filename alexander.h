@@ -6,18 +6,14 @@
 
 /*
  * if indets == 0, then val holds the constant value
- * if indets == 1, then l1[l1num] is a vector with
+ * if indets == 1, then l[l1num] is a vector with
  * generators of the ideal (for now l1num must be 1)
- * if indets == 2, then l2[l2num] is a vector with
- * generic generators, whereas fl2[fl2num] is a vector
+ * if indets == 2, then l[l2num] is a vector with
+ * generic generators, whereas fl[fl2num] is a vector
  * with generators that must be multiplied by the
- * fundamental ideal
+ * fundamental ideal (it is contained in l[] with
+ * an offset (fl2offset)
  */
-
-union lxunion {
-  struct laurentpolyx *l1;
-  struct laurentpolyx *l2;
-};
 
 struct alexanderideal {
   int indets;
@@ -28,11 +24,11 @@ struct alexanderideal {
   int fl2num;
   int val;
   int max_generators_num;
-  union lxunion lx[]; /* followed by ex fl2 at fl2offset */
+  struct laurentpolyx *l[]; /* followed by ex fl2 at fl2offset */
 };
 
 #define AI_DIM0 (sizeof(struct alexanderideal))
-#define AI_DIMX (sizeof(union lxunion))
+#define AI_DIMX (sizeof(struct laurentpollyx *))
 #define AI_DIM(size) ((size)*AI_DIMX + AI_DIM0)
 
 /*
