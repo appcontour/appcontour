@@ -1225,6 +1225,7 @@ readcontour (FILE *file)
   if (tok == TOK_MORSE) return (readmorse (file));
   if (tok == TOK_SKETCH) return (readsketch (file));
   if (tok == TOK_DTCODE) return (readdtcode (file));
+  if (tok == TOK_GAUSSCODE) return (readgausscode (file));
   if (tok == TOK_KNOTSCAPE) return (readknotscape (file));
 #ifdef HAVE_UNISTD_H
   if (tok == TOK_KNOT)

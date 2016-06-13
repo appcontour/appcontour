@@ -37,16 +37,8 @@ static char *rolfsen_to_dt[] = {
 #include "rolfsen_to_dt.h"
 };
 
-static int numnodes;
-static int numlabels;
-static int numregions;
-static int *dt_involution;
-static int *dtsign;
-static int *dt_realization;
-static int *tagged;
-static int *marknodes;
-
 struct sketch *realize_dtcode (int numnodes, int *vecofint, int *gregionsign);
+struct sketch *realize_gausscode (int nlabels, int *vecofint);
 int reconstruct_sign (int which, int *gregionsign);
 int nextlabel (int label);
 int prevlabel (int label);
@@ -62,7 +54,6 @@ int isconsistent (void);
 int tour_of_region (int label, int velocity);
 void walk_left (int *labelpt, int *velocitypt);
 
-#ifdef ALG_DT
 /*
  * a few preliminary definitions.  See at end for the main
  * function, based on Jim Hoste code
@@ -75,7 +66,6 @@ static void dt_realize (int *anInvolution, int *aRealization, int aNumCrossings)
 
 void uFatalError (char *function, char *file)
 { printf ("FATAL error in function %s, file %s\n", function, file); exit (3); }
-#endif
 
 struct sketch *
 readdtcode (FILE *file)
@@ -151,20 +141,145 @@ readdtcode (FILE *file)
   return (sketch);
 }
 
+struct sketch *
+readgausscode (FILE *file)
+{
+  struct sketch *sketch;
+  int i;
+  int startwithlbracket = 1;
+  int tok, *vecofint;
+
+  /*
+   * read gauss code
+   */
+
+  tok = gettoken (file);
+  if (tok != TOK_LBRACE)
+  {
+    fprintf (stderr, "Error: left brace expected\n");
+    return (0);
+  }
+  tok = gettoken (file);
+  if (tok != TOK_LBRACKET)
+  {
+    startwithlbracket = 0;
+    ungettoken (tok);
+  }
+  vecofint = (int *) malloc (MAXDTCODELEN * sizeof (int));
+  i = 0;
+  while ((tok = gettoken (file)) == ISNUMBER || tok == TOK_MINUS)
+  {
+    if (tok == TOK_MINUS)
+    {
+      tok = gettoken (file);
+      assert (tok == ISNUMBER);
+      vecofint[i] = - gettokennumber ();
+    } else vecofint[i] = gettokennumber ();
+    i++;
+    if (i >= MAXDTCODELEN)
+    {
+      printf ("Error: dtcode exceeds maximum allowed length: %d\n", MAXDTCODELEN);
+      free (vecofint);
+      return (0);
+    }
+    if ((tok = gettoken (file)) != TOK_COMMA)
+    {
+      ungettoken (tok);  /* comma separation is optional */
+    }
+  }
+  if (startwithlbracket && tok != TOK_RBRACKET)
+  {
+    printf ("Error: missing terminating ]\n");
+    free (vecofint);
+    return (0);
+  }
+  if (startwithlbracket) tok = gettoken (file);
+  if (tok != TOK_RBRACE)
+  {
+    printf ("Expected terminating }\n");
+    free (vecofint);
+    return (0);
+  }
+
+  sketch = realize_gausscode (i, vecofint);
+  free (vecofint);
+  return (sketch);
+}
+
+/*
+ * read gauss code and convert it into a dtcode
+ */
+
+struct sketch *
+realize_gausscode (int nlabels, int *vecofint)
+{
+  int *nodeinfo, *nodeinfo2;
+  int i, j, isodd, dtcode, nodename;
+  int nnodes = nlabels/2;
+
+  assert (nlabels == 2*nnodes);
+
+  nodeinfo = (int *) malloc (nnodes*sizeof(int));
+  nodeinfo2 = (int *) malloc (nnodes*sizeof(int));
+  for (i = 0; i < nnodes; i++) nodeinfo[i] = nodeinfo2[i] = 0;
+
+  for (i = 0; i < nlabels; i++)
+  {
+    nodename = abs(vecofint[i]);
+    assert (nodename >= 1 && nodename <= nnodes);
+    if (nodeinfo[nodename - 1] == 0)
+    {
+      nodeinfo[nodename - 1] = i+1;
+      if (vecofint[i] < 0) nodeinfo[nodename - 1] = -i-1;
+      continue;
+    }
+    assert (nodeinfo2[nodename - 1] == 0);
+    if (vecofint[i] > 0)
+    {
+      nodeinfo2[nodename - 1] = i+1;
+      assert (nodeinfo[nodename - 1] < 0);
+    } else {
+      nodeinfo2[nodename - 1] = -i-1;
+      assert (nodeinfo[nodename - 1] > 0);
+    }
+  }
+  for (i = 0, j = 0, isodd = 0; i < nlabels; i++)
+  {
+    isodd = 1 - isodd;
+    if (! isodd) continue;
+    nodename = abs(vecofint[i]);
+    dtcode = -nodeinfo[nodename - 1];
+    if (abs(nodeinfo[nodename - 1]) == i + 1) dtcode = -nodeinfo2[nodename - 1];
+    vecofint[j++] = dtcode;
+  }
+
+  free (nodeinfo);
+  free (nodeinfo2);
+
+  return (realize_dtcode (nnodes, vecofint, 0));
+}
+
 /*
  * main function that reconstructs the correct crossings handedness
  */
+
+static int numnodes;
+static int numlabels;
+static int numregions;
+static int *dt_involution;
+static int *dtsign;
+static int *dt_realization;
+static int *tagged;
+static int *marknodes;
 
 struct sketch *
 realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
 {
   struct sketch *sketch;
   int i, numconsistent, curoddnode, curevennode, rcode;
-#ifdef ALG_DT
   int dt_incomplete;
   int agree, agreeneg;
   char ch;
-#endif
 
   numnodes = lnumnodes;
   numlabels = 2*numnodes;
@@ -214,7 +329,6 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
 
   numregions = 2 + numlabels - numnodes;
 
-#ifdef ALG_DT
   /* this function wants a zero-based vector */
   dt_realize (dt_involution, dt_realization, numnodes);
   dt_incomplete = 0;
@@ -279,23 +393,6 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
     }
     reconstruct_sign (1, gregionsign);
   }
-
-#else
-
-  numconsistent = reconstruct_sign (0, gregionsign);
-  if (numconsistent <= 0)
-  {
-    printf ("No consistent completions found. Perhaps this is a composite knot\n");
-    exit (3);
-  }
-  if (numconsistent > 2)
-  {
-    printf ("More than one (%d) consistent completion found!\n", numconsistent/2);
-    printf ("maybe this is a compound knot\n");
-    exit (2);
-  }
-  reconstruct_sign (1, gregionsign);
-#endif
 
   sketch = newsketch ();
   // printf ("numregions: %d\n", numregions);

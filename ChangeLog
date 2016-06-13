@@ -1,3 +1,9 @@
+2016-06-13: input a knot by its gauss code.  It is simply converted to the corresponding dtcode.
+	(see tests/test.37 for an example).
+
+2016-06-08: new command "foxjacobian" to compute the fox derivatives of a presentation
+	(see fox.c source code).
+
 2016-06-03: allow for extra information in a dt-code.  This can alleviate the exponential-time problem
 	in the diagram reconstruction.  See example examples/knots/hardunknot_haken_satellite.dtcode
 

@@ -1,0 +1,11 @@
+#
+# gauss code of the trefoil knot
+#
+
+echo "trefoil knot by gauss code"
+gausscode="-1, 3, -2, 1, -3, 2"
+echo "gausscode {$gausscode}" | ./contour --out alexander --foxd 1 -q
+
+echo "10_165 knot by gauss code"
+gausscode="-1, 4, -3, 8, -5, 1, -2, 3, -6, 7, -8, -10, 9, 5, -7, 6, -4, 2, 10, -9"
+echo "gausscode {$gausscode}" | ./contour --out alexander --foxd 1 -q
