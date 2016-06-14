@@ -1,6 +1,9 @@
 #
 # http://katlas.math.toronto.edu/wiki/L11a50
 #
+# grep "<knot:L11a50>" Links.rdf | grep "<invariant:Gauss_Code>"
+# <knot:L11a50> <invariant:Gauss_Code> "{1, -10, 5, -3}, {4, -1, 2, -11, 9, -5, 8, -4, 6, -7, 10, -9, 11, -2, 3, -8, 7, -6}" .
+
 knot {
  ^   ^  ;
 | X  ^ |;
