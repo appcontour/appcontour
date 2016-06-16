@@ -71,73 +71,27 @@ struct sketch *
 readdtcode (FILE *file)
 {
   struct sketch *sketch;
+  struct listofintvec *loiv;
   int i;
-  int startwithlbracket = 1;
-  int tok, *vecofint, *gregionsign;
+  int *gregionsign;
 
   /*
    * read dt code
    */
 
-  tok = gettoken (file);
-  if (tok != TOK_LBRACE)
+  loiv = readvecofintlist (file);
+  assert (loiv->next == 0);  /* we do not do links for the moment */
+  if (loiv->handedness == 0)
   {
-    fprintf (stderr, "Error: left brace expected\n");
-    return (0);
-  }
-  tok = gettoken (file);
-  if (tok != TOK_LBRACKET)
-  {
-    startwithlbracket = 0;
-    ungettoken (tok);
-  }
-  vecofint = (int *) malloc (MAXDTCODELEN * sizeof (int));
-  gregionsign = (int *) malloc (MAXDTCODELEN * sizeof (int));
-  i = 0;
-  while ((tok = gettoken (file)) == ISNUMBER || tok == TOK_MINUS)
-  {
-    if (tok == TOK_MINUS)
-    {
-      tok = gettoken (file);
-      assert (tok == ISNUMBER);
-      vecofint[i] = - gettokennumber ();
-    } else vecofint[i] = gettokennumber ();
-    tok = gettoken (file);
-    gregionsign[i] = 0;
-    if (tok == KEY_GT || tok == KEY_LT)
-    {
-      /* handedness is given by the user */
-      if (tok == KEY_GT) gregionsign[i] = 1;
-      else gregionsign[i] = -1;
-    } else ungettoken (tok);
-    i++;
-    if (i >= MAXDTCODELEN)
-    {
-      printf ("Error: dtcode exceeds maximum allowed length: %d\n", MAXDTCODELEN);
-      free (vecofint);
-      return (0);
-    }
-    if ((tok = gettoken (file)) != TOK_COMMA)
-    {
-      ungettoken (tok);  /* comma separation is optional */
-    }
-  }
-  if (startwithlbracket && tok != TOK_RBRACKET)
-  {
-    printf ("Error: missing terminating ]\n");
-    free (vecofint);
-    return (0);
-  }
-  if (startwithlbracket) tok = gettoken (file);
-  if (tok != TOK_RBRACE)
-  {
-    printf ("Expected terminating }\n");
-    free (vecofint);
-    return (0);
+    gregionsign = (int *) malloc (loiv->len*sizeof(int));
+    for (i = 0; i < loiv->len; i++) gregionsign[i] = 0;
+  } else {
+    gregionsign = loiv->handedness;
+    loiv->handedness = 0;
   }
 
-  sketch = realize_dtcode (i, vecofint, gregionsign);
-  free (vecofint);
+  sketch = realize_dtcode (loiv->len, loiv->vec, gregionsign);
+  freeloiv (loiv);
   return (sketch);
 }
 
@@ -156,7 +110,7 @@ readgausscode (FILE *file)
   assert (loiv->handedness == 0);  /* not allowed right now */
 
   sketch = realize_gausscode (loiv->len, loiv->vec);
-  free (loiv);
+  freeloiv (loiv);
   return (sketch);
 }
 
