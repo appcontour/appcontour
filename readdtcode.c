@@ -234,7 +234,7 @@ readnakedvecofintlist (FILE *file)
         printf ("Syntax error in second component of code\n");
         return (0);
       }
-    }
+    } else ungettoken (tok);
   } else ungettoken (tok);
   return (loiv);
 }
