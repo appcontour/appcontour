@@ -71,7 +71,7 @@ struct sketch *
 readdtcode (FILE *file)
 {
   struct sketch *sketch;
-  struct listofintvec *loiv;
+  struct vecofintlist *loiv;
   int i;
   int *gregionsign;
 
@@ -99,13 +99,32 @@ struct sketch *
 readgausscode (FILE *file)
 {
   struct sketch *sketch;
-  struct listofintvec *loiv;
+  struct vecofintlist *loiv;
+  struct vecofintlist *loiv2;
+  int i;
 
   /*
    * read gauss code
    */
 
   loiv = readvecofintlist (file);
+  if (loiv->next)
+  {
+    /* case of link */
+    loiv2 = loiv->next;
+    if (loiv2->next != 0)
+    {
+      printf ("Only links with two components are allowed!\n");
+      freeloiv (loiv);
+      return (0);
+    }
+    printf ("Links with two components: not yet implemented...\n");
+    for (i = 0; i < loiv->len; i++) printf ("%d ", loiv->vec[i]);
+    printf ("\n");
+    for (i = 0; i < loiv2->len; i++) printf ("%d ", loiv2->vec[i]);
+    printf ("\n");
+    assert (0);
+  }
   assert (loiv->next == 0);  /* we do not do links for the moment */
   assert (loiv->handedness == 0);  /* not allowed right now */
 
@@ -118,12 +137,11 @@ readgausscode (FILE *file)
  *
  */
 
-struct listofintvec *
+struct vecofintlist *
 readvecofintlist (FILE *file)
 {
-  struct listofintvec *loiv;
-  int i, j, tok;
-  int startwithlbracket = 1;
+  int tok;
+  struct vecofintlist *loiv;
 
   tok = gettoken (file);
   if (tok != TOK_LBRACE)
@@ -131,13 +149,33 @@ readvecofintlist (FILE *file)
     fprintf (stderr, "Error: left brace expected\n");
     return (0);
   }
+
+  loiv = readnakedvecofintlist (file);
+
   tok = gettoken (file);
-  if (tok != TOK_LBRACKET)
+  if (tok != TOK_RBRACE)
+  {
+    printf ("Expected terminating }\n");
+    freeloiv (loiv);
+    return (0);
+  }
+  return (loiv);
+}
+
+struct vecofintlist *
+readnakedvecofintlist (FILE *file)
+{
+  struct vecofintlist *loiv;
+  int i, j, tok;
+  int startwithlbracket = 1;
+
+  tok = gettoken (file);
+  if (tok != TOK_LBRACKET && tok != TOK_LBRACE)
   {
     startwithlbracket = 0;
     ungettoken (tok);
   }
-  loiv = (struct listofintvec *) malloc (SIZEOFLOIV(MAXDTCODELEN));
+  loiv = (struct vecofintlist *) malloc (SIZEOFLOIV(MAXDTCODELEN));
   loiv->dim = MAXDTCODELEN;
   loiv->next = 0;
   loiv->handedness = 0;
@@ -176,24 +214,33 @@ readvecofintlist (FILE *file)
     }
   }
   loiv->len = i;
-  if (startwithlbracket && tok != TOK_RBRACKET)
+  if (startwithlbracket && tok != TOK_RBRACKET && tok != TOK_RBRACE)
   {
-    printf ("Error: missing terminating ]\n");
+    printf ("Error: missing terminating ] or }\n");
     freeloiv (loiv);
     return (0);
   }
-  if (startwithlbracket) tok = gettoken (file);
-  if (tok != TOK_RBRACE)
+  if (startwithlbracket)
   {
-    printf ("Expected terminating }\n");
-    freeloiv (loiv);
-    return (0);
-  }
+    tok = gettoken (file);
+    if (tok == TOK_COMMA) tok = gettoken (file);  /* skip comma if present */
+    if (tok == TOK_LBRACE || tok == TOK_LBRACKET)
+    {
+      ungettoken (tok);
+      loiv->next = readvecofintlist (file);
+      if (loiv->next == 0)
+      {
+        freeloiv (loiv);
+        printf ("Syntax error in second component of code\n");
+        return (0);
+      }
+    }
+  } else ungettoken (tok);
   return (loiv);
 }
 
 void
-freeloiv (struct listofintvec *loiv)
+freeloiv (struct vecofintlist *loiv)
 {
   if (loiv->next) freeloiv (loiv->next);
   if (loiv->handedness) free (loiv->handedness);

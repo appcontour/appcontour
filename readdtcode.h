@@ -1,19 +1,20 @@
 #define MAXDTCODELEN 200
 
-struct listofintvec {
+struct vecofintlist {
   int len;
   int dim;
-  struct listofintvec *next;
+  struct vecofintlist *next;
   int *handedness;
   int vec[];
 };
 
-#define SIZEOFLOIV(n) (sizeof(struct listofintvec) + n*sizeof(int))
+#define SIZEOFLOIV(n) (sizeof(struct vecofintlist) + n*sizeof(int))
 
 /* prototypes */
 
-struct listofintvec *readvecofintlist (FILE *file);
-void freeloiv (struct listofintvec *loiv);
+struct vecofintlist *readnakedvecofintlist (FILE *file);
+struct vecofintlist *readvecofintlist (FILE *file);
+void freeloiv (struct vecofintlist *loiv);
 struct sketch *realize_dtcode (int numnodes, int *vecofint, int *gregionsign);
 struct sketch *realize_gausscode (int nlabels, int *vecofint);
 int reconstruct_sign (int which, int *gregionsign);
