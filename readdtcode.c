@@ -21,6 +21,7 @@
 #include <string.h>
 #include "contour.h"
 #include "parser.h"
+#include "readdtcode.h"
 
 extern int debug;
 extern int verbose;
@@ -31,7 +32,6 @@ extern int verbose;
  */
 
 #define ALG_DT 1
-#define MAXDTCODELEN 200
 
 static char *rolfsen_to_dt[] = {
 #include "rolfsen_to_dt.h"
@@ -145,13 +145,31 @@ struct sketch *
 readgausscode (FILE *file)
 {
   struct sketch *sketch;
-  int i;
-  int startwithlbracket = 1;
-  int tok, *vecofint;
+  struct listofintvec *loiv;
 
   /*
    * read gauss code
    */
+
+  loiv = readvecofintlist (file);
+  assert (loiv->next == 0);  /* we do not do links for the moment */
+  assert (loiv->handedness == 0);  /* not allowed right now */
+
+  sketch = realize_gausscode (loiv->len, loiv->vec);
+  free (loiv);
+  return (sketch);
+}
+
+/*
+ *
+ */
+
+struct listofintvec *
+readvecofintlist (FILE *file)
+{
+  struct listofintvec *loiv;
+  int i, j, tok;
+  int startwithlbracket = 1;
 
   tok = gettoken (file);
   if (tok != TOK_LBRACE)
@@ -165,7 +183,10 @@ readgausscode (FILE *file)
     startwithlbracket = 0;
     ungettoken (tok);
   }
-  vecofint = (int *) malloc (MAXDTCODELEN * sizeof (int));
+  loiv = (struct listofintvec *) malloc (SIZEOFLOIV(MAXDTCODELEN));
+  loiv->dim = MAXDTCODELEN;
+  loiv->next = 0;
+  loiv->handedness = 0;
   i = 0;
   while ((tok = gettoken (file)) == ISNUMBER || tok == TOK_MINUS)
   {
@@ -173,13 +194,26 @@ readgausscode (FILE *file)
     {
       tok = gettoken (file);
       assert (tok == ISNUMBER);
-      vecofint[i] = - gettokennumber ();
-    } else vecofint[i] = gettokennumber ();
+      loiv->vec[i] = - gettokennumber ();
+    } else loiv->vec[i] = gettokennumber ();
+    if (loiv->handedness) loiv->handedness[i] = 0;
+    tok = gettoken (file);
+    if (tok == KEY_GT || tok == KEY_LT)
+    {
+      if (loiv->handedness == 0)
+      {
+        loiv->handedness = (int *) malloc (loiv->dim*sizeof(int));
+        for (j = 0; j <= i; j++) loiv->handedness[j] = 0;
+      }
+      /* handedness is given by the user */
+      if (tok == KEY_GT) loiv->handedness[i] = 1;
+      else loiv->handedness[i] = -1;
+    } else ungettoken (tok);
     i++;
     if (i >= MAXDTCODELEN)
     {
       printf ("Error: dtcode exceeds maximum allowed length: %d\n", MAXDTCODELEN);
-      free (vecofint);
+      freeloiv (loiv);
       return (0);
     }
     if ((tok = gettoken (file)) != TOK_COMMA)
@@ -187,23 +221,29 @@ readgausscode (FILE *file)
       ungettoken (tok);  /* comma separation is optional */
     }
   }
+  loiv->len = i;
   if (startwithlbracket && tok != TOK_RBRACKET)
   {
     printf ("Error: missing terminating ]\n");
-    free (vecofint);
+    freeloiv (loiv);
     return (0);
   }
   if (startwithlbracket) tok = gettoken (file);
   if (tok != TOK_RBRACE)
   {
     printf ("Expected terminating }\n");
-    free (vecofint);
+    freeloiv (loiv);
     return (0);
   }
+  return (loiv);
+}
 
-  sketch = realize_gausscode (i, vecofint);
-  free (vecofint);
-  return (sketch);
+void
+freeloiv (struct listofintvec *loiv)
+{
+  if (loiv->next) freeloiv (loiv->next);
+  if (loiv->handedness) free (loiv->handedness);
+  free (loiv);
 }
 
 /*
