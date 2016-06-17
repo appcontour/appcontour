@@ -18,6 +18,7 @@ void freeloiv (struct vecofintlist *loiv);
 struct sketch *readgausscodeloiv (struct vecofintlist *loiv);
 struct sketch *readlinkfromtable (char *linkname);
 struct vecofintlist *read_gausscode_from_string (char *gc);
+struct vecofintlist *gausscode_link_to_knot (struct vecofintlist *loiv);
 void gausscode2dtcode (struct vecofintlist *loiv, int *vecofint);
 struct sketch *orientedgauss2sketch (struct vecofintlist *loiv);
 void inherit_gauss2gauss (struct vecofintlist *loiv_knot, struct vecofintlist *loiv_link, int *dt_realization);

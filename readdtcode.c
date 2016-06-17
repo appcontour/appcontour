@@ -94,8 +94,8 @@ struct sketch *
 readgausscodeloiv (struct vecofintlist *loiv)
 {
   struct sketch *sketch;
-  struct vecofintlist *lv, *newloiv, *loiv2;
-  int i, j, js, commonnode, maxint;
+  struct vecofintlist *lv, *newloiv;
+  int i;
   int *dtcode, *dt_involution, *dt_realization;
 
   /*
@@ -105,57 +105,8 @@ readgausscodeloiv (struct vecofintlist *loiv)
   if (loiv->next)
   {
     /* case of link */
-    maxint = 0;
-    for (lv = loiv; lv; lv = lv->next)
-    {
-      for (i = 0; i < lv->len; i++) if (abs(lv->vec[i]) > maxint) maxint = abs(lv->vec[i]);
-    }
-    loiv2 = loiv->next;
-    if (loiv2->next != 0)
-    {
-      printf ("Only links with two components are allowed!\n");
-      freeloiv (loiv);
-      return (0);
-    }
-    commonnode = -1;
-    for (i = 0; i < loiv->len; i++)
-    {
-      for (j = 0; j < loiv2->len; j++)
-      {
-        if (abs(loiv->vec[i]) == abs(loiv2->vec[j]))
-        {
-          commonnode = abs(loiv->vec[i]);
-          break;
-        }
-      }
-      if (commonnode >= 0) break;
-    }
-    if (commonnode < 0)
-    {
-      printf ("Cannot find common crossing between the two components\n");
-      freeloiv (loiv);
-      return (0);
-    }
-    /* creating new unique gauss code with one more node */
-    newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV(2 + loiv->len + loiv2->len));
-    /* fill the new unique gauss code */
-    newloiv->next = 0;
-    newloiv->dim = newloiv->len = 2 + loiv->len + loiv2->len;
-    newloiv->handedness = 0;
-    i = 0;
-    newloiv->vec[i++] = maxint + 1;  /* this is the new node */
-    /* find node in second component */
-    for (js = 0; js < loiv2->len; js++) if (abs(loiv2->vec[js]) == commonnode) break;
-    assert (js < loiv2->len);
-    for (j = js; j < loiv2->len; j++) newloiv->vec[i++] = loiv2->vec[j];
-    for (j = 0; j < js; j++) newloiv->vec[i++] = loiv2->vec[j];
-    newloiv->vec[i++] = -(maxint + 1);
-    /* find node in first component */
-    for (js = 0; js < loiv->len; js++) if (abs(loiv->vec[js]) == commonnode) break;
-    assert (js < loiv->len);
-    for (j = js; j < loiv->len; j++) newloiv->vec[i++] = loiv->vec[j];
-    for (j = 0; j < js; j++) newloiv->vec[i++] = loiv->vec[j];
-    assert (i == 2 + loiv->len + loiv2->len);
+    newloiv = gausscode_link_to_knot (loiv);
+    if (newloiv == 0) return (0);
 
     dtcode = (int *) malloc (newloiv->len/2 * sizeof (int));
     gausscode2dtcode (newloiv, dtcode);
@@ -180,11 +131,14 @@ readgausscodeloiv (struct vecofintlist *loiv)
 
     if (verbose)
     {
-      printf ("Realized gauss code: {");
-      for (i = 0; i < loiv->len; i++) printf ("%d%c ", loiv->vec[i], (loiv->handedness[i]>0)?'<':'>');
-      printf ("}{");
-      for (i = 0; i < loiv2->len; i++) printf ("%d%c ", loiv2->vec[i], (loiv2->handedness[i]>0)?'<':'>');
-      printf ("}\n");
+      printf ("Realized gauss code: ");
+      for (lv = loiv; lv; lv = lv->next)
+      {
+        printf ("{");
+        for (i = 0; i < lv->len; i++) printf ("%d%c ", lv->vec[i], (lv->handedness[i]>0)?'<':'>');
+        printf ("}");
+      }
+      printf ("\n");
     }
 
     sketch = orientedgauss2sketch (loiv);
@@ -201,6 +155,114 @@ readgausscodeloiv (struct vecofintlist *loiv)
   sketch = realize_dtcode (loiv->len/2, loiv->vec, 0);
   freeloiv (loiv);
   return (sketch);
+}
+
+/*
+ * add a few new nodes and make surgeries in order to transform a k-components link
+ * into a single knot
+ */
+
+struct vecofintlist *
+gausscode_link_to_knot (struct vecofintlist *loiv)
+{
+  struct vecofintlist *lv, *loiv2, *newloiv, *newnewloiv;
+  int commonnode, maxint;
+  int i, j, js;
+
+  assert (loiv && loiv->next);
+  maxint = 0;
+  /* we need to find a component that is linked to the first one */
+  for (lv = loiv; lv->next; lv = lv->next)
+  {
+    commonnode = -1;
+    for (i = 0; i < loiv->len; i++)
+    {
+      for (j = 0; j < lv->next->len; j++)
+      {
+        if (abs(loiv->vec[i]) == abs(lv->next->vec[j]))
+        {
+          commonnode = abs(loiv->vec[i]);
+          break;
+        }
+      }
+      if (commonnode >= 0) break;
+    }
+    if (commonnode >= 0)
+    {
+      loiv2 = lv->next;
+      lv->next = loiv2->next; /* remove lv->next from the list */
+      loiv2->next = loiv->next; /* and place it in second position */
+      loiv->next = loiv2;
+      break;
+    }
+  }
+  if (commonnode < 0)
+  {
+    printf ("Cannot find common crossing between the first components and the others\n");
+    freeloiv (loiv);
+    return (0);
+  }
+  for (lv = loiv; lv; lv = lv->next)
+  {
+    for (i = 0; i < lv->len; i++) if (abs(lv->vec[i]) > maxint) maxint = abs(lv->vec[i]);
+  }
+  //loiv2 = loiv->next;
+  //if (loiv2->next != 0)
+  //{
+  //  printf ("Only links with two components are allowed!\n");
+  //  freeloiv (loiv);
+  //  return (0);
+  //}
+  //commonnode = -1;
+  //for (i = 0; i < loiv->len; i++)
+  //{
+  //  for (j = 0; j < loiv2->len; j++)
+  //  {
+  //    if (abs(loiv->vec[i]) == abs(loiv2->vec[j]))
+  //    {
+  //      commonnode = abs(loiv->vec[i]);
+  //      break;
+  //    }
+  //  }
+  //  if (commonnode >= 0) break;
+  //}
+  //if (commonnode < 0)
+  //{
+  //  printf ("Cannot find common crossing between the two components\n");
+  //  freeloiv (loiv);
+  //  return (0);
+  //}
+
+  /* creating new unique gauss code with one more node */
+  newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV(2 + loiv->len + loiv2->len));
+  /* fill the new unique gauss code */
+  newloiv->next = 0;
+  newloiv->dim = newloiv->len = 2 + loiv->len + loiv2->len;
+  newloiv->handedness = 0;
+  i = 0;
+  newloiv->vec[i++] = maxint + 1;  /* this is the new node */
+  /* find node in second component */
+  for (js = 0; js < loiv2->len; js++) if (abs(loiv2->vec[js]) == commonnode) break;
+  assert (js < loiv2->len);
+  for (j = js; j < loiv2->len; j++) newloiv->vec[i++] = loiv2->vec[j];
+  for (j = 0; j < js; j++) newloiv->vec[i++] = loiv2->vec[j];
+  newloiv->vec[i++] = -(maxint + 1);
+  /* find node in first component */
+  for (js = 0; js < loiv->len; js++) if (abs(loiv->vec[js]) == commonnode) break;
+  assert (js < loiv->len);
+  for (j = js; j < loiv->len; j++) newloiv->vec[i++] = loiv->vec[j];
+  for (j = 0; j < js; j++) newloiv->vec[i++] = loiv->vec[j];
+  assert (i == 2 + loiv->len + loiv2->len);
+  if (loiv2->next == 0) return (newloiv); /* finished! */
+
+  newloiv->next = loiv2->next;  /* temporarily join the remaining components */
+  newnewloiv = gausscode_link_to_knot (newloiv); /* recursive call */
+  loiv2->next = newloiv->next;  /* pointers might have changed */
+
+  newloiv->next = 0;
+  free (newloiv);
+
+  return (newnewloiv);
 }
 
 /*
