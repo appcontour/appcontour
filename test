@@ -12,8 +12,10 @@ failed="0"
 
 for f__ile in $l__ist
 do
+  i__nfo=$(grep "^#testname:" $f__ile | cut -f2- -d:)
+  if [ -n "$i__nfo" ]; then i__nfo=" ($i__nfo)"; fi
   test=`echo $f__ile | cut -f2 -d\.`
-  echo "Running test $test..."
+  echo "Running test $test$i__nfo..."
   source $f__ile 2>/dev/null >$tmpf__ile
   exitcode=$?
 
