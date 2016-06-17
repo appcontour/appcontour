@@ -1,1 +1,3 @@
+#testname:compute mendes graph
+#
 ./contour -q --verbose mendes examples/mendes.morse

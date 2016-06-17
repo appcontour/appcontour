@@ -1,2 +1,4 @@
+#testname:check if huffman labelling and if contour
+#
 ./contour ishuffman -q examples/two_rings.morse
 ./contour iscontour -q examples/immersed/boysurface.morse

@@ -1,3 +1,5 @@
+#testname:countcc and extractcc
+#
 ./contour countcc <examples/three_spheres.morse
 ./contour extractcc 1 <examples/sphere_behind_torus.morse
 ./contour extractcc 2 <examples/sphere_behind_torus.morse

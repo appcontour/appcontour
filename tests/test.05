@@ -1,3 +1,5 @@
+#testname:rules k0, k1 and t (new names)
+#
 ./contour applyrule k1 <examples/sphere_behind_torus.morse
 ./contour applyrule k1b <examples/sphere_infrontof_torus.morse
 ./contour applyrule k0:2 <examples/two_rings.morse | ./contour applyrule k1 | ./contour applyrule k1b | ./contour applyrule k2

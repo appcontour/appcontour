@@ -1,2 +1,4 @@
+#testname:list applicable rules
+#
 ./contour testallrules <examples/two_rings.morse
 ./contour testallrules <examples/three_spheres.morse

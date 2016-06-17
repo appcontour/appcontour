@@ -1,1 +1,3 @@
+#testname:compute euler characteristic
+#
 ./contour characteristic examples/genus_2.morse

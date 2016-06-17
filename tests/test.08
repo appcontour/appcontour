@@ -1,3 +1,4 @@
+#testname:composite rules cn3 and cr3 (old names)
 ./contour applyrule cn3:2 examples/test_rule_cn3.morse
 ./contour applyrule cr3l examples/test_rule_cr3.sketch
 ./contour applyrule cr3r examples/test_rule_cr3.sketch

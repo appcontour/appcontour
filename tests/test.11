@@ -1,1 +1,3 @@
+#testname:ishuffman test
+#
 ./contour ishuffman examples/genus_2_linked.morse

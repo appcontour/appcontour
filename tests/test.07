@@ -1,3 +1,5 @@
+#testname:rules n3, cn1, cr2 (old names)
+#
 ./contour applyrule n3 < examples/hill.morse | ./contour applyrule c1
 ./contour applyrule n3 <examples/two_hills.morse | ./contour applyrule n3 | ./contour applyrule c2:3
 ./contour applyrule cn1 <examples/torus2.morse | ./contour applyrule cn1
