@@ -163,8 +163,8 @@ readgausscodeloiv (struct vecofintlist *loiv)
     dt_realization = (int *) malloc (newloiv->len * sizeof (int));
     for (i = 0; i < newloiv->len/2; i++)
     {
-      dt_involution[2*i] = dtcode[i] - 1;
-      dt_involution[dtcode[i] - 1] = 2*i;
+      dt_involution[2*i] = abs(dtcode[i]) - 1;
+      dt_involution[abs(dtcode[i]) - 1] = 2*i;
     }
     dt_realize (dt_involution, dt_realization, newloiv->len/2);
 

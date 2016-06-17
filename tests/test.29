@@ -1,3 +1,4 @@
+#testname:gcd of 2nd alexander ideal of two kanenobu knots
 # case where the Alexander matrix is 3x3
 
 pqlist="4,-2 6,-2"

@@ -1,6 +1,6 @@
 #testname:gauss code of knots and two-component links
 #
-# gauss code of the trefoil knot
+# gauss code of the trefoil knot and other knots/links
 #
 
 echo "trefoil knot by gauss code"
@@ -15,5 +15,10 @@ echo "L11a50 link by gauss code"
 gausscode="{1, -10, 5, -3}, {4, -1, 2, -11, 9, -5, 8, -4, 6, -7, 10, -9, 11, -2, 3, -8, 7, -6}"
 echo "gausscode {$gausscode}" | ./contour --out alexander --foxd 1 -q
 echo -n "Linking number: "
-echo "gausscode {$gausscode}" | ./contour --out linkingnumber --foxd 1 -q
+echo "gausscode {$gausscode}" | ./contour --out linkingnumber -q
 
+echo "L11n254 link by gauss code"
+gausscode="{1 -2 3 -10 4 -11 5 -9 -6 8} {9 -1 2 -3 10 -4 -7 6 -8 7 11 -5}"
+echo "gausscode {$gausscode}" | ./contour --out alexander --foxd 1 -q
+echo -n "Linking number: "
+echo "gausscode {$gausscode}" | ./contour --out linkingnumber -q

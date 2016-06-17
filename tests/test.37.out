@@ -8,3 +8,9 @@ Ideal [
 (+4-10u+10u^2-4u^3-4v+10uv-10u^2v+4u^3v) (v - 1);
 ]
 Linking number: 0
+L11n254 link by gauss code
+Ideal [
+(+u^3+u^4+v-u^2v+u^4v+v^2+uv^2) (u - 1);
+(+u^3+u^4+v-u^2v+u^4v+v^2+uv^2) (v - 1);
+]
+Linking number: 5
