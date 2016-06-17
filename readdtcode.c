@@ -962,8 +962,6 @@ readlinkfromtable (char *linkname)
         {
           loiv = read_gausscode_from_string (gc);
           return (readgausscodeloiv (loiv));
-
-          printf ("Found link %s, gc: %s\n", line, gc);
         }
         break;
       }
@@ -1002,6 +1000,7 @@ read_gausscode_from_string (char *gc)
     i++;
     while (isspace (*chpt)) chpt++;
   }
+  loiv->len = i;
   chpt++;
   loiv->next = read_gausscode_from_string (chpt);
 

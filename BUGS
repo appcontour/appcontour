@@ -1,8 +1,3 @@
-TODAY
-
-echo "knotname {L11a50}" | ./contour info -v
-
-
 2016.06.08 (SOLVED)
 
 $ echo "fpgroup{<a,b; aA>}" | contour --nosimplify --out alexander
