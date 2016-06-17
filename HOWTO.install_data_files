@@ -9,6 +9,8 @@ These include:
    will find a directory named "knotscape_1.01/knotTable/".  Move all .pak files in the appcontour
    data directory "/usr/local/share/appcontour/data/" (change /usr/local/share if necessary).
 
+   pak files up to 12 crossings are included in the appcontour package.
+
 2. links_gausscodes.txt.  This should be authomatically installed after the "make install" step.
    otherwise it can be generated using the script "utils/extract_gausscode_from_links_rdf.sh"
 
