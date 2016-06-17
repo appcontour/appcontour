@@ -95,5 +95,5 @@ AM_CONDITIONAL(ENABLE_GTK, test "$gtk" = "yes")
 # Checks for library functions.
 AC_FUNC_MALLOC
 
-AC_CONFIG_FILES([Makefile show/Makefile utils/Makefile examples/Makefile])
+AC_CONFIG_FILES([Makefile show/Makefile utils/Makefile examples/Makefile data/Makefile])
 AC_OUTPUT

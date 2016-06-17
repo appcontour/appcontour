@@ -1,0 +1,16 @@
+A few files can be installed in /usr/local/share/appcontour/data/ (or whatever path based
+on the outcome of ./configure).
+
+These include:
+
+1. pak files from the knotscape package.  These contain the definitio (dtcode) of all knots up to
+   16 crossings.  You can find them in the subdirectory "knotTable" of
+   an installation of knotscape.  If you unpack (e.g.) knotscape_1.01_linuxglibc.tar.bz2, you
+   will find a directory named "knotscape_1.01/knotTable/".  Move all .pak files in the appcontour
+   data directory "/usr/local/share/appcontour/data/" (change /usr/local/share if necessary).
+
+2. links_gausscodes.txt.  This should be authomatically installed after the "make install" step.
+   otherwise it can be generated using the script "utils/extract_gausscode_from_links_rdf.sh"
+
+These data files are necessary to make the input method "knotname {...}" to work.
+

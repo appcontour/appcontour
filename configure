@@ -4453,7 +4453,7 @@ fi
 
 
 
-ac_config_files="$ac_config_files Makefile show/Makefile utils/Makefile examples/Makefile"
+ac_config_files="$ac_config_files Makefile show/Makefile utils/Makefile examples/Makefile data/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5194,6 +5194,7 @@ do
     "show/Makefile") CONFIG_FILES="$CONFIG_FILES show/Makefile" ;;
     "utils/Makefile") CONFIG_FILES="$CONFIG_FILES utils/Makefile" ;;
     "examples/Makefile") CONFIG_FILES="$CONFIG_FILES examples/Makefile" ;;
+    "data/Makefile") CONFIG_FILES="$CONFIG_FILES data/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

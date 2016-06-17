@@ -708,30 +708,26 @@ orientedgauss2sketch (struct vecofintlist *loiv)
  * They are part of the 'knotscape' program.
  *
  * I would like to thank them for their work!
+ *
+ * The 
  */
+
+#ifndef PKGDATA_DIR
+  #define PKGDATA_DIR ""
+#endif
 
 #define MAXFILELENGTH 2000
 
 static char tokenword[80];
 static char pathname[MAXFILELENGTH];
 
-struct sketch *
-readknotscape (FILE *file)
+FILE *
+open_pak_file (char *pakname)
 {
-  extern int quiet, verbose;
-  struct sketch *sketch;
-  char *knotscape_homes[]={".", "/home", "/usr/local", "/usr/local/share", "/usr/local/share/appcontour", 0};
-  char *pakpaths[]={"knotTable", "knotscape/knotTable", "knotscape/knotscape_1.01/knotTable", 0};
-  char basename[20];
-  int nodeid, i, tok, ip1, ip2, crossings, codelen, alternate, knotnum;
-  int sign, ch, tailstart, high, low;
-  int sum1 = 0;
-  int sum2 = 0;
-  int found = 0;
-  struct stat s = {0};
-  char *namept;
-  int *dtcode, *dtpositive;
   FILE *pakfile;
+  char *knotscape_homes[]={PKGDATA_DIR, ".", "/home", "/usr/local", "/usr/local/share", 0};
+  char *pakpaths[]={"data", "knotTable", "knotscape/knotTable", "knotscape/knotscape_1.01/knotTable", 0};
+  int ip1, ip2;
 
   for (ip1 = 0; knotscape_homes[ip1]; ip1++)
   {
@@ -740,25 +736,61 @@ readknotscape (FILE *file)
       strncpy (pathname, knotscape_homes[ip1], MAXFILELENGTH);
       strncat (pathname, "/", MAXFILELENGTH);
       strncat (pathname, pakpaths[ip2], MAXFILELENGTH);
-      if (!stat(pathname, &s))
-      {
-        if (s.st_mode & S_IFDIR) {found = 1; break;}
-      }
+      strncat (pathname, "/", MAXFILELENGTH);
+      strncat (pathname, pakname, MAXFILELENGTH);
+      strncat (pathname, ".pak", MAXFILELENGTH);
+      if (access (pathname, R_OK)) continue;
+      pakfile = fopen (pathname, "r");
+      return (pakfile);
     }
-    if (found) break;
   }
-  if (!found)
+  printf ("Cannot find knotscape installation.  You should install the knotscape package by\n");
+  printf ("Morwen Thistlethwaite and Jim Hoste in /home/knotscape or /usr/local/knotscake\n");
+  printf ("The pak files should reside in a folder with a name like /home/knotscape/knotscape_1.01/knotTable/\n");
+  printf ("   or /usr/local/share/appcontour/data/\n");
+  exit (2);
+}
+
+/*
+ * drop initial 'K' if present
+ */
+
+void
+canonify_knotname (void)
+{
+  int i;
+
+  if (*tokenword == 'K')
   {
-    printf ("Cannot find knotscape installation.  You should install the knotscape package by\n");
-    printf ("Morwen Thistlethwaite and Jim Hoste in /home/knotscape or /usr/local/knotscake\n");
-    printf ("The pak files should reside in a folder with a name like /home/knotscape/knotscape_1.01/knotTable/\n");
-    exit (2);
+    for (i = 0; tokenword[i+1]; i++)
+    {
+      tokenword[i] = tokenword[i+1];
+    }
+    tokenword[i] = 0;
   }
+  return;
+}
+
+struct sketch *
+readknotscape (FILE *file)
+{
+  extern int quiet, verbose;
+  struct sketch *sketch;
+  char basename[20];
+  int nodeid, i, tok, crossings, codelen, alternate, knotnum;
+  int sign, ch, tailstart, high, low;
+  int sum1 = 0;
+  int sum2 = 0;
+  int found = 0;
+  char *namept;
+  int *dtcode, *dtpositive;
+  FILE *pakfile;
 
   tok = gettoken (file);
   assert (tok == TOK_LBRACE);
 
   if (getword (file, tokenword, 80) == TOK_EOF) return (0);
+  canonify_knotname ();
   for (i = 0; rolfsen_to_dt[i]; i += 2)
   {
     if (strcmp (tokenword, rolfsen_to_dt[i]) == 0)
@@ -779,6 +811,12 @@ readknotscape (FILE *file)
     }
   }
 
+  if (*tokenword == 'L')
+  {
+    /* case of link */
+    printf ("Link names are not yet implemented!\n");
+    exit (1);
+  }
   if (!quiet) printf ("# ['pak' files courtesy of Morwen Thistlethwaite and Jim Hoste, in knotscape package]\n");
   //printf ("Knot name: %s\n", tokenword);
 
@@ -799,7 +837,8 @@ readknotscape (FILE *file)
     exit (2);
     break;
   }
-  assert (*namept++ == '_');
+  if (*namept == '_') namept++;
+  //assert (*namept++ == '_');
   assert (isdigit(*namept));
   knotnum = strtol (namept, &namept, 10);
 
@@ -807,20 +846,20 @@ readknotscape (FILE *file)
   assert (tok == TOK_RBRACE);
 
   sprintf (basename, "%d%c", crossings, (alternate)?'a':'n');
-  strncat (pathname, "/", MAXFILELENGTH);
-  strncat (pathname, basename, MAXFILELENGTH);
-  strncat (pathname, ".pak", MAXFILELENGTH);
-  //printf ("Split: %d %c %d\n", crossings, alternate?'a':'n', knotnum);
-  if (access (pathname, R_OK))
-  {
-    printf ("Cannot open file %s\n", pathname);
-    exit (3);
-  }
+  //strncat (pathname, "/", MAXFILELENGTH);
+  //strncat (pathname, basename, MAXFILELENGTH);
+  //strncat (pathname, ".pak", MAXFILELENGTH);
+  //if (access (pathname, R_OK))
+  //{
+  //  printf ("Cannot open file %s\n", pathname);
+  //  exit (3);
+  //}
 
   dtcode = (int *) malloc (crossings *sizeof (int));
   dtpositive = (int *) malloc (crossings *sizeof (int));
 
-  pakfile = fopen (pathname, "r");
+  //pakfile = fopen (pathname, "r");
+  pakfile = open_pak_file (basename);
   codelen = crossings - 1;
   for (i = 0; i < crossings; i++) {dtcode[i] = 0; dtpositive[i] = 1;}
   nodeid = 0;
