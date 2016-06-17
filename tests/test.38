@@ -1,0 +1,14 @@
+#testname:links with 3, 4 components by their name
+#
+links="L8a21 L10a108 L10n65 L11n459 L11n412 L11a385"
+
+for l in $links
+do
+  nc=$(echo "knotname{$l}" | ./contour countcc -q)
+  echo "link $l: $nc components"
+  for c in $(seq $nc)
+  do
+    echo -n "Component $c, alexander: "
+    echo "knotname{$l}" | ./contour extractcc $c | ./contour --out --foxd 1 alexander -q
+  done
+done
