@@ -9,3 +9,10 @@ echo "gausscode {$gausscode}" | ./contour --out alexander --foxd 1 -q
 echo "10_165 knot by gauss code"
 gausscode="-1, 4, -3, 8, -5, 1, -2, 3, -6, 7, -8, -10, 9, 5, -7, 6, -4, 2, 10, -9"
 echo "gausscode {$gausscode}" | ./contour --out alexander --foxd 1 -q
+
+echo "L11a50 link by gauss code"
+gausscode="{1, -10, 5, -3}, {4, -1, 2, -11, 9, -5, 8, -4, 6, -7, 10, -9, 11, -2, 3, -8, 7, -6}"
+echo "gausscode {$gausscode}" | ./contour --out alexander --foxd 1 -q
+echo -n "Linking number: "
+echo "gausscode {$gausscode}" | ./contour --out linkingnumber --foxd 1 -q
+

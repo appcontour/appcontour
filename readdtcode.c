@@ -37,29 +37,16 @@ static char *rolfsen_to_dt[] = {
 #include "rolfsen_to_dt.h"
 };
 
-struct sketch *realize_dtcode (int numnodes, int *vecofint, int *gregionsign);
-struct sketch *realize_gausscode (int nlabels, int *vecofint);
-int reconstruct_sign (int which, int *gregionsign);
-int nextlabel (int label);
-int prevlabel (int label);
-int inherit (int label);
-int isinpath (int i, int start, int end);
-int propagate (int sign, int label);
-void display_arcs_from_arcs (struct sketch *s);
-void display_arcs_from_nodes (struct sketch *s);
-void display_regions (struct sketch *s);
-void display_regions_from_arcs (struct sketch *s);
-void display_regions_from_nodes (struct sketch *s);
-int isconsistent (void);
-int tour_of_region (int label, int velocity);
-void walk_left (int *labelpt, int *velocitypt);
-
 /*
  * a few preliminary definitions.  See at end for the main
  * function, based on Jim Hoste code
  */
 
 extern int experimental;
+static int link_components = 1;
+static int *start_component = 0;
+static int *ori_component = 0;
+
 //typedef unsigned char   Boolean;
 
 static void dt_realize (int *anInvolution, int *aRealization, int aNumCrossings);
@@ -99,9 +86,9 @@ struct sketch *
 readgausscode (FILE *file)
 {
   struct sketch *sketch;
-  struct vecofintlist *loiv;
-  struct vecofintlist *loiv2;
-  int i;
+  struct vecofintlist *lv, *newloiv, *loiv, *loiv2;
+  int i, j, js, commonnode, maxint;
+  int *dtcode, *dt_involution, *dt_realization;
 
   /*
    * read gauss code
@@ -111,6 +98,11 @@ readgausscode (FILE *file)
   if (loiv->next)
   {
     /* case of link */
+    maxint = 0;
+    for (lv = loiv; lv; lv = lv->next)
+    {
+      for (i = 0; i < lv->len; i++) if (abs(lv->vec[i]) > maxint) maxint = abs(lv->vec[i]);
+    }
     loiv2 = loiv->next;
     if (loiv2->next != 0)
     {
@@ -118,19 +110,118 @@ readgausscode (FILE *file)
       freeloiv (loiv);
       return (0);
     }
-    printf ("Links with two components: not yet implemented...\n");
-    for (i = 0; i < loiv->len; i++) printf ("%d ", loiv->vec[i]);
-    printf ("\n");
-    for (i = 0; i < loiv2->len; i++) printf ("%d ", loiv2->vec[i]);
-    printf ("\n");
-    assert (0);
+    commonnode = -1;
+    for (i = 0; i < loiv->len; i++)
+    {
+      for (j = 0; j < loiv2->len; j++)
+      {
+        if (abs(loiv->vec[i]) == abs(loiv2->vec[j]))
+        {
+          commonnode = abs(loiv->vec[i]);
+          break;
+        }
+      }
+      if (commonnode >= 0) break;
+    }
+    if (commonnode < 0)
+    {
+      printf ("Cannot find common crossing between the two components\n");
+      freeloiv (loiv);
+      return (0);
+    }
+    /* creating new unique gauss code with one more node */
+    newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV(2 + loiv->len + loiv2->len));
+    /* fill the new unique gauss code */
+    newloiv->next = 0;
+    newloiv->dim = newloiv->len = 2 + loiv->len + loiv2->len;
+    newloiv->handedness = 0;
+    i = 0;
+    newloiv->vec[i++] = maxint + 1;  /* this is the new node */
+    /* find node in second component */
+    for (js = 0; js < loiv2->len; js++) if (abs(loiv2->vec[js]) == commonnode) break;
+    assert (js < loiv2->len);
+    for (j = js; j < loiv2->len; j++) newloiv->vec[i++] = loiv2->vec[j];
+    for (j = 0; j < js; j++) newloiv->vec[i++] = loiv2->vec[j];
+    newloiv->vec[i++] = -(maxint + 1);
+    /* find node in first component */
+    for (js = 0; js < loiv->len; js++) if (abs(loiv->vec[js]) == commonnode) break;
+    assert (js < loiv->len);
+    for (j = js; j < loiv->len; j++) newloiv->vec[i++] = loiv->vec[j];
+    for (j = 0; j < js; j++) newloiv->vec[i++] = loiv->vec[j];
+    assert (i == 2 + loiv->len + loiv2->len);
+
+    dtcode = (int *) malloc (newloiv->len/2 * sizeof (int));
+    gausscode2dtcode (newloiv, dtcode);
+    dt_involution = (int *) malloc (newloiv->len * sizeof (int));
+    dt_realization = (int *) malloc (newloiv->len * sizeof (int));
+    for (i = 0; i < newloiv->len/2; i++)
+    {
+      dt_involution[2*i] = dtcode[i] - 1;
+      dt_involution[dtcode[i] - 1] = 2*i;
+    }
+    dt_realize (dt_involution, dt_realization, newloiv->len/2);
+
+    /*
+     * at this point dt_realization[i] contains the handedness
+     * of newloin->vec[i]
+     */
+
+    inherit_gauss2gauss (newloiv, loiv, dt_realization);
+    freeloiv (newloiv);
+    free (dt_involution);
+    free (dt_realization);
+
+    if (verbose)
+    {
+      printf ("Realized gauss code: {");
+      for (i = 0; i < loiv->len; i++) printf ("%d%c ", loiv->vec[i], (loiv->handedness[i]>0)?'<':'>');
+      printf ("}{");
+      for (i = 0; i < loiv2->len; i++) printf ("%d%c ", loiv2->vec[i], (loiv2->handedness[i]>0)?'<':'>');
+      printf ("}\n");
+    }
+
+    sketch = orientedgauss2sketch (loiv);
+
+    free (dtcode);
+    freeloiv (loiv);
+    return (sketch);
   }
   assert (loiv->next == 0);  /* we do not do links for the moment */
   assert (loiv->handedness == 0);  /* not allowed right now */
 
-  sketch = realize_gausscode (loiv->len, loiv->vec);
+  gausscode2dtcode (loiv, loiv->vec);
+
+  sketch = realize_dtcode (loiv->len/2, loiv->vec, 0);
   freeloiv (loiv);
   return (sketch);
+}
+
+/*
+ *
+ */
+
+void
+inherit_gauss2gauss (struct vecofintlist *loiv_knot, struct vecofintlist *loiv_link, int *dt_realization)
+{
+  struct vecofintlist *lv;
+  int i, j;
+
+  for (lv = loiv_link; lv; lv = lv->next)
+  {
+    assert (lv->handedness == 0);
+    lv->handedness = (int *) malloc (lv->len * sizeof(int));
+    for (i = 0; i < lv->len; i++)
+    {
+      for (j = 0; j < loiv_knot->len; j++)
+      if (loiv_knot->vec[j] == lv->vec[i])
+      {
+        lv->handedness[i] = dt_realization[j];
+        break;
+      }
+    }
+  }
+
+  return;
 }
 
 /*
@@ -251,31 +342,35 @@ freeloiv (struct vecofintlist *loiv)
  * read gauss code and convert it into a dtcode
  */
 
-struct sketch *
-realize_gausscode (int nlabels, int *vecofint)
+void
+gausscode2dtcode (struct vecofintlist *loiv, int *vecofint)
 {
   int *nodeinfo, *nodeinfo2;
   int i, j, isodd, dtcode, nodename;
+  int nlabels = loiv->len;
   int nnodes = nlabels/2;
 
   assert (nlabels == 2*nnodes);
+  assert (loiv->next == 0);
+  assert (loiv->handedness == 0);
 
   nodeinfo = (int *) malloc (nnodes*sizeof(int));
   nodeinfo2 = (int *) malloc (nnodes*sizeof(int));
+
   for (i = 0; i < nnodes; i++) nodeinfo[i] = nodeinfo2[i] = 0;
 
   for (i = 0; i < nlabels; i++)
   {
-    nodename = abs(vecofint[i]);
+    nodename = abs(loiv->vec[i]);
     assert (nodename >= 1 && nodename <= nnodes);
     if (nodeinfo[nodename - 1] == 0)
     {
       nodeinfo[nodename - 1] = i+1;
-      if (vecofint[i] < 0) nodeinfo[nodename - 1] = -i-1;
+      if (loiv->vec[i] < 0) nodeinfo[nodename - 1] = -i-1;
       continue;
     }
     assert (nodeinfo2[nodename - 1] == 0);
-    if (vecofint[i] > 0)
+    if (loiv->vec[i] > 0)
     {
       nodeinfo2[nodename - 1] = i+1;
       assert (nodeinfo[nodename - 1] < 0);
@@ -288,7 +383,7 @@ realize_gausscode (int nlabels, int *vecofint)
   {
     isodd = 1 - isodd;
     if (! isodd) continue;
-    nodename = abs(vecofint[i]);
+    nodename = abs(loiv->vec[i]);
     dtcode = -nodeinfo[nodename - 1];
     if (abs(nodeinfo[nodename - 1]) == i + 1) dtcode = -nodeinfo2[nodename - 1];
     vecofint[j++] = dtcode;
@@ -297,7 +392,7 @@ realize_gausscode (int nlabels, int *vecofint)
   free (nodeinfo);
   free (nodeinfo2);
 
-  return (realize_dtcode (nnodes, vecofint, 0));
+  return;
 }
 
 /*
@@ -312,6 +407,7 @@ static int *dtsign;
 static int *dt_realization;
 static int *tagged;
 static int *marknodes;
+static int *componentoflabel;
 
 struct sketch *
 realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
@@ -455,6 +551,146 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   free (dt_realization);
   free (dtsign);
   free (dt_involution);
+  free (marknodes);
+  sketch->huffman_labelling = 1;
+  if (sketch->regions->next == 0) {
+    fprintf (stderr, "Warning: empty sketch!\n");
+    sketch->isempty = sketch->huffman_labelling = 1;
+  }
+  if (debug) printsketch (sketch);
+  postprocesssketch (sketch);
+  return (sketch);
+}
+
+/*
+ *
+ */
+
+static int *dteven = 0;
+static int *dtodd = 0;
+static int *dtnode = 0;
+
+int dt_iseven (int);
+
+struct sketch *
+orientedgauss2sketch (struct vecofintlist *loiv)
+{
+  struct vecofintlist *lv;
+  struct sketch *sketch;
+  int i, nodenum, sum, goon, nf, labelid, numarcs = 0;
+  int component;
+  int *nodesfound;
+
+  /* setup data */
+
+  link_components = 0;
+  for (lv = loiv; lv; lv = lv->next)
+  {
+    link_components++;
+    numarcs += lv->len;
+  }
+
+  assert ( (numarcs % 2) == 0);
+
+  numlabels = numarcs;
+  numnodes = numlabels/2;
+  numregions = 2 + numlabels - numnodes;
+
+  dt_involution = (int *) malloc (numlabels*(sizeof (int)));
+  dtsign = (int *) malloc (numlabels*(sizeof (int)));
+  dt_realization = (int *) malloc (numlabels*(sizeof (int)));
+  tagged = (int *) malloc (numlabels * sizeof(int) );
+  componentoflabel = (int *) malloc (numlabels*(sizeof (int)));
+  dtnode = (int *) malloc (numlabels*(sizeof (int)));
+  dteven = (int *) malloc (numlabels*(sizeof (int)));
+  dtodd = (int *) malloc (numlabels*(sizeof (int)));
+
+  start_component = (int *) malloc (link_components * sizeof(int));
+  ori_component = (int *) malloc (link_components *sizeof(int));
+  for (i = 0; i < link_components; i++) ori_component[i] = 0;
+  ori_component[0] = 1;
+
+  nodesfound = (int *) malloc (numarcs/2 * sizeof (int));
+  for (i = 0; i < numarcs/2; i++) nodesfound[i] = -1;
+
+  labelid = 0;
+  for (lv = loiv, component = 0; lv; lv = lv->next)
+  {
+    start_component[component] = labelid;
+    for (i = 0; i < lv->len; i++)
+    {
+      componentoflabel[labelid] = component;
+      dtsign[labelid] = 1;
+      if (lv->vec[i] < 0) dtsign[labelid] = -1;
+      dt_realization[labelid] = lv->handedness[i];
+      nodenum = abs(lv->vec[i]) - 1;
+      dtnode[labelid] = nodenum;
+      assert (nodenum < numnodes);
+      nf = nodesfound[nodenum];
+      if (nf >= 0)
+      {
+        dt_involution[labelid] = nf;
+        dt_involution[nf] = labelid;
+      } else {
+        nodesfound[nodenum] = labelid;
+      }
+      labelid++;
+    }
+    component++;
+  }
+  free (nodesfound);
+  /* give parity to each link component */
+  goon = 1;
+  while (goon)
+  {
+    goon = 0;
+    for (i = 0; i < numlabels; i++)
+    {
+      component = componentoflabel[i];
+      if (ori_component[component] != 0) continue;
+      /* try to orient this component */
+      if (ori_component[componentoflabel[dt_involution[i]]])
+      {
+        sum = i + dt_involution[i];
+        ori_component[component] = ori_component[componentoflabel[dt_involution[i]]];
+        if ((sum % 2) == 0)
+        {
+          ori_component[component] = - ori_component[component];
+        }
+        goon = 1;
+      }
+    }
+  }
+  for (component = 0; component < link_components; component++)
+  {
+    assert (ori_component[component]);
+  }
+  for (i = 0; i < numnodes; i++) dteven[i] = dtodd[i] = -1;
+  for (i = 0; i < numlabels; i++)
+  {
+    component = componentoflabel[i];
+    nodenum = dtnode[i];
+    if (dt_iseven(i)) dteven[nodenum] = i;
+      else dtodd[nodenum] = i;
+  }
+  for (i = 0; i < numnodes; i++) assert (dteven[i] >= 0 && dtodd[i] >= 0);
+
+  sketch = newsketch ();
+  display_arcs_from_arcs (sketch);
+  display_arcs_from_nodes (sketch);
+  display_regions (sketch);
+  display_regions_from_arcs (sketch);
+  display_regions_from_nodes (sketch);
+  free (tagged);
+  free (dt_realization);
+  free (dtnode);
+  free (dteven);
+  free (dtodd);
+  free (dtsign);
+  free (dt_involution);
+  free (start_component);
+  free (ori_component);
+  free (componentoflabel);
   sketch->huffman_labelling = 1;
   if (sketch->regions->next == 0) {
     fprintf (stderr, "Warning: empty sketch!\n");
@@ -658,10 +894,104 @@ readknotscape (FILE *file)
 }
 
 /*
- * display_arcs_from_arcs
  * node arcs are numbered from 1 to numlabels, each produces two
  * apparent contour arcs, one on the right, same orientation, i -> 2*i - 1
  * one on the left, with opposite orientation, i -> 2*i
+ *
+ * convention: arcs are numbered from 0 to 2n-1 (n is the number of nodes)
+ * after a checkerboard coloring of the regions, arcs are divided into:
+ * even: white on right
+ * odd: white on left
+ *
+ * nodes are numbered from 0 to n-1.  The function node = node(arc) indicates the
+ * arrival node of the given arc.  After a checkerboard coloring, exactly two arcs, one
+ * even and one odd are the preimages of the "node" function, we shall call them
+ * arc = even(node) and arc = odd(node).
+ * If originated by a dtcode, the three functions satisfy:
+ *
+ * even(i) = 2*i
+ * odd(i) = 2*i+1
+ * node(i) = i/2 if i is even, = (i-1)/2 if i is odd
+ *
+ * since this could be used in a different context/numbering we provide explicit functions
+ * (to be changed in the future) for these mappings
+ */
+
+int dt_even (int i)
+{
+  if (dteven == 0) return (2*i);
+  return (dteven[i]);
+}
+
+int dt_odd (int i)
+{
+  if (dtodd == 0) return (2*i + 1);
+  return (dtodd[i]);
+}
+
+int dt_node (int i)
+{
+  assert (dt_iseven (i));
+  if (dtnode == 0) return (i/2);
+  return (dtnode[i]);
+}
+
+int dt_iseven (int i)
+{
+  int isevennumber;
+
+  isevennumber = ((i % 2) == 0);
+  if (ori_component == 0) return (isevennumber);
+  if (ori_component[componentoflabel[i]] > 0) return (isevennumber);
+  return (1 - isevennumber);
+}
+
+/*
+ * nextlabel and prevlabel should cicle through the arcs of each component
+ * of a link
+ */
+
+int
+nextlabel (int label)
+{
+  int component;
+  int startnextcomponent = numlabels;
+  int startcomponent = 0;
+
+  if (link_components > 1)
+  {
+    component = componentoflabel[label];
+    startcomponent = start_component[component];
+    if (component < link_components - 1) startnextcomponent = start_component[component+1];
+  }
+  label++;
+  if (label >= startnextcomponent) label -= startnextcomponent - startcomponent;
+  return (label);
+}
+
+int
+prevlabel (int label)
+{
+  int component;
+  int startnextcomponent = numlabels;
+  int startcomponent = 0;
+
+  if (link_components > 1)
+  {
+    component = componentoflabel[label];
+    startcomponent = start_component[component];
+    if (component < link_components - 1) startnextcomponent = start_component[component+1];
+  }
+  label--;
+  if (label < startcomponent) label += startnextcomponent - startcomponent;
+  return (label);
+}
+
+/*
+ * display_arcs_from_arcs
+ * pair of arcs parallel to arcs of the diagram
+ * the first numbered (+1) is the one on the right
+ * the second numbered (+2) is the one on the left
  */
 
 void
@@ -750,7 +1080,7 @@ display_arcs_from_nodes (struct sketch *s)
     arc3->depths = (int *) malloc (sizeof (int));
     arc4->depths = (int *) malloc (sizeof (int));
     overpass = 0;
-    if (dtsign[2*i] < 0) overpass = 2;
+    if (dtsign[dt_even(i)] < 0) overpass = 2;
     arc1->depths[0] = arc3->depths[0] = 2 - overpass;
     arc2->depths[0] = arc4->depths[0] = overpass;
     arc1->depthsdim = arc2->depthsdim = arc3->depthsdim = arc4->depthsdim = 1;
@@ -765,6 +1095,7 @@ display_arcs_from_nodes (struct sketch *s)
 
 /*
  * display_regions
+ * the first red region starts left of arc labelled 0
  */
 
 void
@@ -830,7 +1161,7 @@ display_regions (struct sketch *s)
       blast = b;
       b->orientation = -1;
 
-      if ( (arc % 2) == 0 )
+      if ( dt_iseven (arc) )
       { /* "odd" arc */
         if (dt_realization[arc] > 0)
         {
@@ -912,7 +1243,7 @@ display_regions (struct sketch *s)
       }
       blast = b;
       b->orientation = -1;
-      if ( (arc % 2) == 0 )
+      if ( dt_iseven (arc) )
       { /* "odd" arc */
         if (dt_realization[prevlabel(arc)] > 0)
         {
@@ -959,7 +1290,7 @@ display_regions (struct sketch *s)
 
 /*
  * display_regions_from_arcs
- * nodes are indexed by using the odd label i: (i-1)/2
+ * nodes are indexed by using the "odd" label i: i/2
  * then we have 4 arcs for each node, so there is a multiplying factor 4
  * for a final 2*(i-1) + h
  * h = 0,1,2,3
@@ -998,13 +1329,13 @@ display_regions_from_arcs (struct sketch *s)
       insert_region_in_list (region, s->regions);
     }
 
-    if ( (i % 2) == 0)
+    if ( dt_iseven (i) )
     {
-      arcahead = 2*i;
-      arcbehind = 2*(dt_involution[prevlabel(i)]) + 3;
+      arcahead = 4*dt_node(i);
+      arcbehind = 4*dt_node((dt_involution[prevlabel(i)])) + 3;
     } else {
-      arcahead = 2*(dt_involution[i]) + 1;
-      arcbehind = 2*(prevlabel(i)) + 2;
+      arcahead = 4*dt_node(dt_involution[i]) + 1;
+      arcbehind = 4*dt_node(prevlabel(i)) + 2;
     }
     //printf ("Region %d: ", offset + i + 1);
     bl = newborderlist_tail (region);
@@ -1105,7 +1436,7 @@ display_regions_from_nodes (struct sketch *s)
   struct arc *a;
   int i, atag, oddarc, ori;
   int offset = numregions + numlabels;
-  int arcsoffset = 2*numlabels - 1;
+  int arcsoffset = 2*numlabels + 1;
 
   //printf ("# small nodal regions\n");
   for (i = 0; i < numnodes; i++)
@@ -1128,9 +1459,9 @@ display_regions_from_nodes (struct sketch *s)
       insert_region_in_list (region, s->regions);
     }
     bl = newborderlist_tail (region);
-    oddarc = 2*i + 1;
-    ori = dt_realization[oddarc-1];
-    oddarc = 2*oddarc + arcsoffset;
+    oddarc = dt_even(i);
+    ori = dt_realization[oddarc];
+    oddarc = arcsoffset + 4*i;
 
     atag = oddarc;
     b = newborder (bl);
@@ -1521,22 +1852,6 @@ walk_left (int *labelpt, int *velocitypt)
       *labelpt = nextlabel(dt_involution[prevlabel(*labelpt)]);
     }
   }
-}
-
-int
-nextlabel (int label)
-{
-  label++;
-  if (label >= numlabels) label -= numlabels;
-  return (label);
-}
-
-int
-prevlabel (int label)
-{
-  label--;
-  if (label < 0) label += numlabels;
-  return (label);
 }
 
 int

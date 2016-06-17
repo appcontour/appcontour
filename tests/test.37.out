@@ -2,3 +2,9 @@ trefoil knot by gauss code
 +1-t+t^2;
 10_165 knot by gauss code
 +2-10t+15t^2-10t^3+2t^4;
+L11a50 link by gauss code
+Ideal [
+(+4-10u+10u^2-4u^3-4v+10uv-10u^2v+4u^3v) (u - 1);
+(+4-10u+10u^2-4u^3-4v+10uv-10u^2v+4u^3v) (v - 1);
+]
+Linking number: 0

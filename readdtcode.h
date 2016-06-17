@@ -8,15 +8,17 @@ struct vecofintlist {
   int vec[];
 };
 
-#define SIZEOFLOIV(n) (sizeof(struct vecofintlist) + n*sizeof(int))
+#define SIZEOFLOIV(n) (sizeof(struct vecofintlist) + (n)*sizeof(int))
 
 /* prototypes */
 
 struct vecofintlist *readnakedvecofintlist (FILE *file);
 struct vecofintlist *readvecofintlist (FILE *file);
 void freeloiv (struct vecofintlist *loiv);
+void gausscode2dtcode (struct vecofintlist *loiv, int *vecofint);
+struct sketch *orientedgauss2sketch (struct vecofintlist *loiv);
+void inherit_gauss2gauss (struct vecofintlist *loiv_knot, struct vecofintlist *loiv_link, int *dt_realization);
 struct sketch *realize_dtcode (int numnodes, int *vecofint, int *gregionsign);
-struct sketch *realize_gausscode (int nlabels, int *vecofint);
 int reconstruct_sign (int which, int *gregionsign);
 int nextlabel (int label);
 int prevlabel (int label);
