@@ -85,8 +85,16 @@ readdtcode (FILE *file)
 struct sketch *
 readgausscode (FILE *file)
 {
+  struct vecofintlist *loiv;
+  loiv = readvecofintlist (file);
+  return (readgausscodeloiv (loiv));
+}
+
+struct sketch *
+readgausscodeloiv (struct vecofintlist *loiv)
+{
   struct sketch *sketch;
-  struct vecofintlist *lv, *newloiv, *loiv, *loiv2;
+  struct vecofintlist *lv, *newloiv, *loiv2;
   int i, j, js, commonnode, maxint;
   int *dtcode, *dt_involution, *dt_realization;
 
@@ -94,7 +102,6 @@ readgausscode (FILE *file)
    * read gauss code
    */
 
-  loiv = readvecofintlist (file);
   if (loiv->next)
   {
     /* case of link */
@@ -814,8 +821,9 @@ readknotscape (FILE *file)
   if (*tokenword == 'L')
   {
     /* case of link */
-    printf ("Link names are not yet implemented!\n");
-    exit (1);
+    tok = gettoken (file);
+    assert (tok == TOK_RBRACE);
+    return (readlinkfromtable (tokenword));
   }
   if (!quiet) printf ("# ['pak' files courtesy of Morwen Thistlethwaite and Jim Hoste, in knotscape package]\n");
   //printf ("Knot name: %s\n", tokenword);
@@ -838,7 +846,6 @@ readknotscape (FILE *file)
     break;
   }
   if (*namept == '_') namept++;
-  //assert (*namept++ == '_');
   assert (isdigit(*namept));
   knotnum = strtol (namept, &namept, 10);
 
@@ -846,19 +853,10 @@ readknotscape (FILE *file)
   assert (tok == TOK_RBRACE);
 
   sprintf (basename, "%d%c", crossings, (alternate)?'a':'n');
-  //strncat (pathname, "/", MAXFILELENGTH);
-  //strncat (pathname, basename, MAXFILELENGTH);
-  //strncat (pathname, ".pak", MAXFILELENGTH);
-  //if (access (pathname, R_OK))
-  //{
-  //  printf ("Cannot open file %s\n", pathname);
-  //  exit (3);
-  //}
 
   dtcode = (int *) malloc (crossings *sizeof (int));
   dtpositive = (int *) malloc (crossings *sizeof (int));
 
-  //pakfile = fopen (pathname, "r");
   pakfile = open_pak_file (basename);
   codelen = crossings - 1;
   for (i = 0; i < crossings; i++) {dtcode[i] = 0; dtpositive[i] = 1;}
@@ -930,6 +928,84 @@ readknotscape (FILE *file)
 
   //printf ("found path: %s\n", pathname);
   return (sketch);
+}
+
+/*
+ * search for the data file for link definition
+ */
+
+struct sketch *
+readlinkfromtable (char *linkname)
+{
+  struct vecofintlist *loiv;
+  FILE *linkfile;
+  char *ch, *gc, line[2000];
+
+  strncpy (pathname, PKGDATA_DIR, MAXFILELENGTH);
+  strncat (pathname, "/data/links_gausscodes.txt", MAXFILELENGTH);
+  if (access (pathname, R_OK))
+  {
+    printf ("Fatal: Cannot open file %s, check installation\n", pathname);
+    exit (1);
+  }
+  linkfile = fopen (pathname, "r");
+
+  while (fgets (line, 2000, linkfile))
+  {
+    for (ch = line; ch; ch++)
+    {
+      if (*ch == ':')
+      {
+        gc = ch+1;
+        *ch = 0;
+        if (strcmp (line, linkname) == 0)
+        {
+          loiv = read_gausscode_from_string (gc);
+          return (readgausscodeloiv (loiv));
+
+          printf ("Found link %s, gc: %s\n", line, gc);
+        }
+        break;
+      }
+    }
+  }
+
+  printf ("Cannot find link name: %s in file %s\n", linkname, pathname);
+  fclose (linkfile);
+  return (0);
+}
+
+struct vecofintlist *
+read_gausscode_from_string (char *gc)
+{
+  struct vecofintlist *loiv;
+  char *chpt = gc;
+  int sign, i;
+
+  while (isspace (*chpt)) chpt++;
+  if (*chpt != '{') return (0);
+  chpt++;
+  loiv = (struct vecofintlist *) malloc (SIZEOFLOIV(MAXDTCODELEN));
+  loiv->dim = MAXDTCODELEN;
+  loiv->next = 0;
+  loiv->handedness = 0;
+  i = 0;
+  while (isspace (*chpt)) chpt++;
+  while (*chpt != '}')
+  {
+    sign = 1;
+    if (*chpt == '-') {sign = -1; chpt++;}
+    if (*chpt == '+') {sign = 1; chpt++;}
+    assert (i < MAXDTCODELEN);
+    loiv->vec[i] = strtol (chpt, &chpt, 10);
+    loiv->vec[i] = sign*loiv->vec[i];
+    i++;
+    while (isspace (*chpt)) chpt++;
+  }
+  chpt++;
+  loiv->next = read_gausscode_from_string (chpt);
+
+  return (loiv);
 }
 
 /*
