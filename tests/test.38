@@ -12,3 +12,10 @@ do
     echo "knotname{$l}" | ./contour extractcc $c | ./contour --out --foxd 1 alexander -q
   done
 done
+
+#
+# this is an example with 3 components producing a 4x5 jacobian matrix
+#
+knotname=L11n257
+echo "knot $knotname: abelianized jacobian matrix"
+echo "knotname{$knotname}" | contour --out foxjacobian --preabelian --abelianize
