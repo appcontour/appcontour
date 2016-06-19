@@ -11,6 +11,7 @@
 #include "fundamental.h"
 #include "laurent.h"
 #include "alexander.h"
+#include "fox.h"
 #include "parser.h"
 
 static int int_overflow_encountered = 0;
@@ -106,31 +107,9 @@ alexander (struct presentation *p)
   }
   matrixrank = p->gennum - rank;
   if (rank > 0) gconj = p->gennum;
-  //for (i = 1, r = p->rules; r && i <= p->gennum; i++, r = r->next)
-  //{
-  //  sum = get_exp_sum1 (r, i);
-  //  assert (sum >= 0);
-  //  if (sum) matrixrank = i;
-  //    else gconj = i;
-  //  if (sum && sum != 1)
-  //  {
-  //    if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {\n");
-  //    if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
-  //    printf ("Cannot compute Alexander polynomial for groups with torsion\n");
-  //    return (0);
-  //  }
-  //}
-  //rank = p->gennum - matrixrank;
-  if (rank > 2)
+  if (rank > 3)
   {
     assert (matrixrank > 0 || numcols > 0);
-    //if (matrixrank == 0 && numcols == 0)
-    //{
-    //  /* special case, trivial polynomial */
-    //  if (!quiet) printf ("Alexander polynomial (special rank=%d case):\n", rank);
-    //  printf ("1\n");
-    //  return (1);
-    //}
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
     printf ("Cannot compute Alexander polynomial for groups with rank %d\n", rank);
     return (0);
@@ -188,7 +167,7 @@ alexander (struct presentation *p)
     }
     break;
 
-    case 2:  /* two-component links or surface of genus 2 */
+    case 2:  /* two-component links (or surface of genus 2?) */
     assert (foxd >= deficiency);
     switch (foxd - deficiency)
     {
@@ -245,6 +224,10 @@ alexander (struct presentation *p)
       break;
     }
     break;
+
+    case 3:
+    assert (deficiency == 1);
+    return (three_components_link (p));
 
     default:
     printf ("Software unable to compute Alexander polynomial with these many indeterminates.\n");

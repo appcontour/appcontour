@@ -221,3 +221,14 @@ foxderivative (int len, int *rvar, int *lincomb1, int *lincomb2, int gen)
     }
   }
 }
+
+/*
+ *
+ */
+
+int
+three_components_link (struct presentation *p)
+{
+  printf ("Case rank 3 under construction.\n");
+  return(0);
+}
