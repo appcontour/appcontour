@@ -123,7 +123,7 @@ alexander (struct presentation *p)
   gconj = p->gennum;
   if (rank >= 2) gconj2 = p->gennum - 1;
 
-  if (verbose) printf ("Matrix has %d rows and %d columns\n", matrixrank, numcols);
+  if (verbose) printf ("Matrix a-la-Magnus-Karrass-Solitar has %d rows and %d columns\n", matrixrank, numcols);
 
   if (matrixrank < numcols && deficiency != 1)  /* deficiency == 1: link */
   {

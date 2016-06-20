@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <fundamental.h>
 #include <laurent.h>
+#include <alexander.h>
 #include <fox.h>
 
 void
@@ -229,6 +230,39 @@ foxderivative (int len, int *rvar, int *lincomb1, int *lincomb2, int gen)
 int
 three_components_link (struct presentation *p)
 {
+  struct laurentmatrix jacobian;
+  struct laurentpoly **column;
+  struct presentationrule *r;
+  int *lincomb1, *lincomb2;
+  int numrelators = 0, maxlen = 0;
+  int i, j, k, rank = 3;
+
+  /* compute the first (n-3) columns of the jacobian (if any) */
+
+  for (r = p->rules; r; r = r->next) numrelators++;
+
+  /* the presentation is assumed to be preabelian, we compute the fox derivatives
+   * of the relators with respect to the first n-3 generators
+   */
+
+  for (i = 0, r = p->rules; r; i++, r = r->next) if (r->length > maxlen) maxlen = r->length;
+  lincomb1 = (int *) malloc ((maxlen+1)*sizeof (int));
+  lincomb2 = (int *) malloc ((maxlen+1)*sizeof (int));
+  jacobian.columns = (struct laurentpoly ***) malloc (p->gennum * sizeof (struct laurentpoly **));
+  assert (p->gennum == numrelators + 1);
+  assert (p->gennum >= 3);
+  for (i = 0; i < p->gennum - 3; i++)
+  {
+    jacobian.columns[i] = column = (struct laurentpoly **) malloc (numrelators * sizeof (struct laurentpoly *));
+    for (j = 0, r = p->rules; r; r = r->next, j++)
+    {
+      for (k = 0; k < r->length; k++) lincomb1[k] = 0;
+      lincomb1[r->length] = 1;
+      foxderivative (r->length, r->var, lincomb1, lincomb2, i+1);
+      column[j] = map_to_abelian (r->var, lincomb2, r->length, p->gennum - rank, rank);
+//printf ("Computed entry: column %d, row %d\n", i, j);
+    }
+  }
   printf ("Case rank 3 under construction.\n");
   return(0);
 }
