@@ -1,3 +1,6 @@
+./contour --out alexander examples/trinacria.knot
+
+
 2016.06.08 (SOLVED)
 
 $ echo "fpgroup{<a,b; aA>}" | contour --nosimplify --out alexander
