@@ -2262,7 +2262,7 @@ laurent_compute_determinant2 (struct laurentpoly ***matrix, int n)
     }
 
     subdeterminant = laurent_compute_determinant2 (submatrix, n-1);
-    product = laurent_mul2 (subdeterminant, firstcolumn[i]);
+    product = laurent_mul (subdeterminant, firstcolumn[i]);
     if (subdeterminant) free_laurentpoly (subdeterminant);
     if (sign < 0) laurent_negate (product);
     sum = laurent_add (determinant, product);

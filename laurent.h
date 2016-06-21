@@ -17,12 +17,15 @@ struct laurentpoly {
 #define POLYSIZE(n) (sizeof(struct laurentpoly) + (n)*sizeof(union intorpointer))
 
 void laurent_negate (struct laurentpoly *term);
+void laurent_mulu (struct laurentpoly *l);
+void laurent_mulv (struct laurentpoly *l);
 void print_laurentpoly (struct laurentpoly *l, char *indetlist);
 struct laurentpoly *read_laurentpoly1 (FILE *file, char indet_names[2]);
 struct laurentpoly *read_laurentpoly2 (FILE *file, char indet_names[2]);
 struct laurentpoly *laurent_add (struct laurentpoly *add1, struct laurentpoly *add2);
+struct laurentpoly *laurent_add_scal (struct laurentpoly *add1, struct laurentpoly *add2, int scal);
 struct laurentpoly *laurent_mul1 (struct laurentpoly *fact1, struct laurentpoly *fact2);
-struct laurentpoly *laurent_mul2 (struct laurentpoly *fact1, struct laurentpoly *fact2);
+struct laurentpoly *laurent_mul (struct laurentpoly *fact1, struct laurentpoly *fact2);
 struct laurentpoly *laurent_normalize (struct laurentpoly *l);
 struct laurentpoly *laurent_dup (struct laurentpoly *l);
 void laurent_canonify1 (struct laurentpoly *l);
@@ -45,5 +48,7 @@ int laurentx_totdegree (struct laurentpoly *l);
 int laurentx_lexicocompare (struct laurentpoly *p1, struct laurentpoly *p2);
 void laurent_canonifysign1 (struct laurentpoly *p);
 void laurent_canonifysign2 (struct laurentpoly *p);
+
+struct laurentpoly *laurent_divide_by_1minusw (struct laurentpoly *l, struct laurentpoly **rpt);
 
 int gcd (int a, int b);

@@ -231,7 +231,8 @@ int
 three_components_link (struct presentation *p)
 {
   struct laurentmatrix jacobian;
-  struct laurentpoly **column;
+  struct laurentpoly *ltemp, *rest, *rest2, **column, **av, **aw, **bw; /* av is in one-less indet! */
+  struct laurentpoly *bj, *cj, *bmod, *ltemp2;
   struct presentationrule *r;
   int *lincomb1, *lincomb2;
   int numrelators = 0, maxlen = 0;
@@ -260,9 +261,77 @@ three_components_link (struct presentation *p)
       lincomb1[r->length] = 1;
       foxderivative (r->length, r->var, lincomb1, lincomb2, i+1);
       column[j] = map_to_abelian (r->var, lincomb2, r->length, p->gennum - rank, rank);
-//printf ("Computed entry: column %d, row %d\n", i, j);
     }
   }
+
+  /*
+   * computing Av and Aw column.  Av is actually composed of polynomials in 2 indets
+   */
+
+  aw = (struct laurentpoly **) malloc (numrelators * sizeof (struct laurentpoly *));
+  av = (struct laurentpoly **) malloc (numrelators * sizeof (struct laurentpoly *));
+  bw = (struct laurentpoly **) malloc (numrelators * sizeof (struct laurentpoly *));
+  for (j = 0, r = p->rules; r; r = r->next, j++)
+  {
+    for (k = 0; k < r->length; k++) lincomb1[k] = 0;
+    lincomb1[r->length] = 1;
+    foxderivative (r->length, r->var, lincomb1, lincomb2, p->gennum - 2);
+    ltemp = map_to_abelian (r->var, lincomb2, r->length, p->gennum - rank, rank);
+    aw[j] = laurent_divide_by_1minusw (ltemp, &rest);
+    av[j] = 0;
+    if (rest)
+    {
+      av[j] = laurent_divide_by_1minusw (rest, &rest2);
+      free_laurentpoly (rest);
+      assert (rest2 == 0);
+    }
+    /* bw is computed by dividing B+Av(1-u) by (1-w) */
+    for (k = 0; k < r->length; k++) lincomb1[k] = 0;
+    lincomb1[r->length] = 1;
+    foxderivative (r->length, r->var, lincomb1, lincomb2, p->gennum - 1);
+    bj = map_to_abelian (r->var, lincomb2, r->length, p->gennum - rank, rank);
+    ltemp = laurent_dup (av[j]);
+    laurent_mulu (ltemp);
+    ltemp2 = laurent_add_scal (av[j],ltemp, -1); /* one less indet */
+    free_laurentpoly (ltemp);
+    ltemp = 0;
+    if (ltemp2)
+    {
+      ltemp = (struct laurentpoly *) malloc (POLYSIZE (1));
+      ltemp->indets = 3;
+      ltemp->minexpon = 0;
+      ltemp->stemdegree = 0;
+      ltemp->stem[0].lx = ltemp2;
+    }
+    bmod = laurent_add (bj, ltemp);
+    free_laurentpoly (ltemp);
+    bw[j] = laurent_divide_by_1minusw (bmod, &rest);
+    assert (rest == 0);
+
+    /* now check that c is cu(1-u) + cv(1-v) with cu = -aw and cv = -bw */
+    for (k = 0; k < r->length; k++) lincomb1[k] = 0;
+    lincomb1[r->length] = 1;
+    foxderivative (r->length, r->var, lincomb1, lincomb2, p->gennum);
+    cj = map_to_abelian (r->var, lincomb2, r->length, p->gennum - rank, rank);
+    ltemp = laurent_dup (aw[j]);
+    laurent_mulu (ltemp);
+    ltemp2 = laurent_add_scal (aw[j], ltemp, -1);
+    free_laurentpoly (ltemp);
+    ltemp = laurent_add (cj, ltemp2);
+    free_laurentpoly (cj);
+    cj = ltemp;   /* this is C - Cu(1-u) */
+    ltemp = laurent_dup (bw[j]);
+    laurent_mulv (ltemp);
+    ltemp2 = laurent_add_scal (bw[j], ltemp, -1);
+    free_laurentpoly (ltemp);
+    ltemp = laurent_add (cj, ltemp2);
+    assert (ltemp == 0);
+    free_laurentpoly (cj);
+
+    /* TODO */
+
+  }
+
   printf ("Case rank 3 under construction.\n");
   return(0);
 }
