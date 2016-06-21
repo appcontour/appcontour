@@ -6,7 +6,7 @@ struct laurentpoly *map_to_abelian (int *rvec, int *lincomb, int len, int offset
 int map_to_trivial (int *rvec, int *lincomb, int len);
 void count_and_map (int *v, int len, int offset, int rank, int *exponvec);
 
-int three_components_link (struct presentation *p);
+struct alexanderideal *three_components_link (struct presentation *p);
 
 void print_relator (int *rvar, int len);
 void print_groupring_el (int *rvar, int *lincomb, int len);

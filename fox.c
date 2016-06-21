@@ -227,12 +227,13 @@ foxderivative (int len, int *rvar, int *lincomb1, int *lincomb2, int gen)
  *
  */
 
-int
+struct alexanderideal *
 three_components_link (struct presentation *p)
 {
-  struct laurentmatrix jacobian;
+  struct alexanderideal *ai;
+  struct laurentmatrix *jacobian;
   struct laurentpoly *ltemp, *rest, *rest2, **column, **av, **aw, **bw; /* av is in one-less indet! */
-  struct laurentpoly *bj, *cj, *bmod, *ltemp2;
+  struct laurentpoly *bj, *cj, *bmod, *ltemp2, *detu, *detv, *detw, *res;
   struct presentationrule *r;
   int *lincomb1, *lincomb2;
   int numrelators = 0, maxlen = 0;
@@ -249,12 +250,15 @@ three_components_link (struct presentation *p)
   for (i = 0, r = p->rules; r; i++, r = r->next) if (r->length > maxlen) maxlen = r->length;
   lincomb1 = (int *) malloc ((maxlen+1)*sizeof (int));
   lincomb2 = (int *) malloc ((maxlen+1)*sizeof (int));
-  jacobian.columns = (struct laurentpoly ***) malloc (p->gennum * sizeof (struct laurentpoly **));
+  jacobian = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
+  jacobian->numrows = numrelators;
+  jacobian->numcols = p->gennum;
+  jacobian->columns = (struct laurentpoly ***) malloc (p->gennum * sizeof (struct laurentpoly **));
   assert (p->gennum == numrelators + 1);
   assert (p->gennum >= 3);
   for (i = 0; i < p->gennum - 3; i++)
   {
-    jacobian.columns[i] = column = (struct laurentpoly **) malloc (numrelators * sizeof (struct laurentpoly *));
+    jacobian->columns[i] = column = (struct laurentpoly **) malloc (numrelators * sizeof (struct laurentpoly *));
     for (j = 0, r = p->rules; r; r = r->next, j++)
     {
       for (k = 0; k < r->length; k++) lincomb1[k] = 0;
@@ -328,10 +332,60 @@ three_components_link (struct presentation *p)
     assert (ltemp == 0);
     free_laurentpoly (cj);
 
-    /* TODO */
-
+    /* transform av into a 3 indets polynomial */
+    if (av[j])
+    {
+      ltemp = (struct laurentpoly *) malloc (POLYSIZE(1));
+      ltemp->indets = 3;
+      ltemp->minexpon = 0;
+      ltemp->stemdegree = 0;
+      ltemp->stem[0].lx = av[j];
+      av[j] = ltemp;
+    }
   }
 
-  printf ("Case rank 3 under construction.\n");
-  return(0);
+  jacobian->numcols = numrelators;
+  jacobian->columns[numrelators - 2] = av;
+  jacobian->columns[numrelators - 1] = aw;
+  detu = laurent_compute_determinant (jacobian->columns, numrelators, 3);
+
+  jacobian->columns[numrelators - 1] = bw;
+  detv = laurent_compute_determinant (jacobian->columns, numrelators, 3);
+
+  jacobian->columns[numrelators - 2] = aw;
+  detw = laurent_compute_determinant (jacobian->columns, numrelators, 3);
+
+  jacobian->columns[numrelators] = av;
+  jacobian->numcols = numrelators + 1;
+  
+  laurent_free_matrix (jacobian);
+
+  res = laurent_dup (detu);
+  res = laurent_addto_scal (res, detv, 1);
+  res = laurent_addto_scal (res, detw, 1);
+
+  laurent_mulu (detu);
+  laurent_mulv (detv);
+  detw->minexpon++;
+
+  res = laurent_addto_scal (res, detu, -1);
+  res = laurent_addto_scal (res, detv, -1);
+  res = laurent_addto_scal (res, detw, -1);
+
+  free_laurentpoly (detu);
+  free_laurentpoly (detv);
+  free_laurentpoly (detw);
+
+  laurent_canonify_exponents (res);
+
+  ai = (struct alexanderideal *) malloc (AI_DIM(3));  /* to be sure there is space in fl2 */
+  ai->max_generators_num = 3;
+  ai->indets = 3;
+  ai->fl2offset = ai->max_generators_num/2;
+  ai->spread = 1;
+  ai->l2num = 0;
+  ai->fl2num = 1;
+  ai->l[ai->fl2offset] = res;
+
+  return(ai);
 }

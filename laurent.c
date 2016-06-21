@@ -209,6 +209,30 @@ euclid_reduce3 (struct lpol *a, struct lpol *b, struct lpol *c)
 }
 
 /*
+ * build constant polynomial in k indeterminates
+ */
+
+struct laurentpoly *
+laurent_buildconstant (int k, int cnst)
+{
+  struct laurentpoly *res;
+
+  assert (k >= 1);
+  res = (struct laurentpoly *) malloc (POLYSIZE(1));
+  res->indets = k;
+  res->minexpon = 0;
+  res->stemdegree = 0;
+
+  if (k == 1)
+  {
+    res->stem[0].l0 = cnst;
+  } else {
+    res->stem[0].lx = laurent_buildconstant (k-1, cnst);
+  }
+  return (res);
+}
+
+/*
  * negate polynomial
  */
 
@@ -224,6 +248,27 @@ laurent_negate (struct laurentpoly *term)
     return;
   }
   for (i = 0; i <= term->stemdegree; i++) laurent_negate (term->stem[i].lx);
+
+  return;
+}
+
+/*
+ * multiply polynomial by scalar
+ */
+
+void
+laurent_mulscal (struct laurentpoly *term, int scal)
+{
+  int i;
+
+  assert (scal != 0);
+  if (term == 0) return;
+  if (term->indets <= 1)
+  {
+    for (i = 0; i <= term->stemdegree; i++) term->stem[i].l0 *= scal;
+    return;
+  }
+  for (i = 0; i <= term->stemdegree; i++) laurent_mulscal (term->stem[i].lx, scal);
 
   return;
 }
@@ -430,6 +475,21 @@ laurent_add (struct laurentpoly *a1, struct laurentpoly *a2)
 
 /*
  * add two laurent polynomials (k indeterminates) with a2 multiplied by scal
+ * first summand is possibly freed
+ */
+
+struct laurentpoly *
+laurent_addto_scal (struct laurentpoly *a1, struct laurentpoly *a2, int scal)
+{
+  struct laurentpoly *res;
+
+  res = laurent_add_scal (a1, a2, scal);
+  if (res != a1) free_laurentpoly (a1);
+  return (res);
+}
+
+/*
+ * add two laurent polynomials (k indeterminates) with a2 multiplied by scal
  */
 
 struct laurentpoly *
@@ -443,8 +503,7 @@ laurent_add_scal (struct laurentpoly *a1, struct laurentpoly *a2, int scal)
   if (a1 == 0)
   {
     res = laurent_dup (a2);
-    assert (abs (scal) == 1); /* for now */
-    if (scal == -1) laurent_negate (res);
+    if (scal != 1) laurent_mulscal (res, scal);
     return (res);
   }
 
@@ -686,35 +745,85 @@ laurent_canonify1 (struct laurentpoly *l)
 }
 
 /*
- * laurent_canonifyx
  * for now simply shift exponents to minimal nonnegative
  */
 
 void
-laurent_canonifyx (struct laurentpoly *l)
+laurent_canonify_exponents (struct laurentpoly *l)
 {
-  int i, minexpon1;
-  struct laurentpoly *l1;
+  int i;
 
   if (l == 0) return;
 
-  assert (l->indets == 2);
-  assert (l->stem[0].lx);
+  for (i = 0; i < l->indets; i++) laurent_canonify_exponent (l, i);
+}
 
-  l->minexpon = 0;
+/*
+ * multiply by power of i-th indeterminate to optimal value
+ */
 
-  minexpon1 = (l->stem[0].lx)->minexpon;
-  for (i = 0; i <= l->stemdegree; i++)
+void
+laurent_canonify_exponent (struct laurentpoly *l, int indet)
+{
+  int minexpon;
+
+  assert (indet < l->indets);
+
+  if (indet == l->indets - 1)
   {
-    l1 = l->stem[i].lx;
-    if (l1 == 0) continue;
-    if (l1->minexpon < minexpon1) minexpon1 = l1->minexpon;
+    l->minexpon = 0;
+    return;
   }
+
+  minexpon = laurent_compute_minexpon (l, indet);
+  laurent_mulpowindet (l, indet, -minexpon);
+}
+
+/*
+ * compute minimum exponent with respect to i-th indeterminate
+ */
+
+int
+laurent_compute_minexpon (struct laurentpoly *l, int indet)
+{
+  int i, lme;
+  int minexpon = INT_MAX;
+
+  assert (indet <= l->indets - 1);
+  if (indet == l->indets - 1) return l->minexpon;
+
   for (i = 0; i <= l->stemdegree; i++)
   {
-    l1 = l->stem[i].lx;
-    if (l1 == 0) continue;
-    l1->minexpon -= minexpon1;
+    if (l->stem[i].lx)
+    {
+      lme = laurent_compute_minexpon (l->stem[i].lx, indet);
+      if (lme < minexpon) minexpon = lme;
+    }
+  }
+  return (minexpon);
+}
+
+/*
+ * multiply by a power of i-th indeterminate
+ */
+
+void
+laurent_mulpowindet (struct laurentpoly *l, int indet, int expon)
+{
+  int i;
+
+  if (l == 0) return;
+  assert (indet <= l->indets - 1);
+
+  if (indet == l->indets - 1)
+  {
+    l->minexpon += expon;
+    return;
+  }
+
+  for (i = 0; i <= l->stemdegree; i++)
+  {
+    laurent_mulpowindet (l->stem[i].lx, indet, expon);
   }
 }
 

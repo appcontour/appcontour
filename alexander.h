@@ -62,9 +62,9 @@ struct laurentpoly *laurent_get_exp_sum (struct presentationrule *r, int g, int 
 struct laurentpoly *laurent_mixed_derivative2 (struct presentationrule *r, int x1, int x2);
 struct laurentpoly *laurent_common_factor (struct presentationrule *r, int x1, int x2);
 struct laurentpoly *laurent_compute_determinant1 (struct laurentpoly ***matrix, int n);
-struct laurentpoly *laurent_compute_determinant2 (struct laurentpoly ***matrix, int n);
-struct laurentpoly *laurent_minor_determinant2 (struct laurentpoly ***matrix, int n,
-                          int row_to_substitute);
+struct laurentpoly *laurent_compute_determinant (struct laurentpoly ***matrix, int n, int indets);
+struct laurentpoly *laurent_minor_determinant (struct laurentpoly ***matrix, int n,
+                          int row_to_substitute, int indets);
 int canonify_ideal2 (struct laurentpoly **lpt, struct laurentpoly **extradets, int extranum);
 struct laurentmatrix *laurent_build_matrix1 (struct presentation *p, int eliminate);
 struct laurentmatrix *laurent_build_matrix2 (struct presentation *p, int e1, int e2);

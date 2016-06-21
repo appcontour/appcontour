@@ -16,7 +16,9 @@ struct laurentpoly {
 
 #define POLYSIZE(n) (sizeof(struct laurentpoly) + (n)*sizeof(union intorpointer))
 
+struct laurentpoly *laurent_buildconstant (int indets, int cnst);
 void laurent_negate (struct laurentpoly *term);
+void laurent_mulscal (struct laurentpoly *term, int scal);
 void laurent_mulu (struct laurentpoly *l);
 void laurent_mulv (struct laurentpoly *l);
 void print_laurentpoly (struct laurentpoly *l, char *indetlist);
@@ -24,12 +26,16 @@ struct laurentpoly *read_laurentpoly1 (FILE *file, char indet_names[2]);
 struct laurentpoly *read_laurentpoly2 (FILE *file, char indet_names[2]);
 struct laurentpoly *laurent_add (struct laurentpoly *add1, struct laurentpoly *add2);
 struct laurentpoly *laurent_add_scal (struct laurentpoly *add1, struct laurentpoly *add2, int scal);
+struct laurentpoly *laurent_addto_scal (struct laurentpoly *add1, struct laurentpoly *add2, int scal);
 struct laurentpoly *laurent_mul1 (struct laurentpoly *fact1, struct laurentpoly *fact2);
 struct laurentpoly *laurent_mul (struct laurentpoly *fact1, struct laurentpoly *fact2);
 struct laurentpoly *laurent_normalize (struct laurentpoly *l);
 struct laurentpoly *laurent_dup (struct laurentpoly *l);
 void laurent_canonify1 (struct laurentpoly *l);
-void laurent_canonifyx (struct laurentpoly *l);
+void laurent_canonify_exponents (struct laurentpoly *l);
+void laurent_canonify_exponent (struct laurentpoly *l, int indet);
+int laurent_compute_minexpon (struct laurentpoly *l, int indet);
+void laurent_mulpowindet (struct laurentpoly *l, int indet, int expon);
 void laurent_t_to_oneovert (struct laurentpoly *l);
 void free_laurentpoly (struct laurentpoly *l);
 struct laurentpoly *laurentpoly_addmonom (struct laurentpoly *l, int rank, int *expuv, int coef);
