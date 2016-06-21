@@ -171,12 +171,6 @@ d = 2
 1;
 
 =====================================
-testing example borromeanrings.knot
-=====================================
-d = 1
-Cannot compute Alexander polynomial for groups with rank 3
-
-=====================================
 testing example conway.knot
 =====================================
 d = 1
@@ -298,12 +292,6 @@ testing example trefoilknot.knot
 =====================================
 d = 1
 +1-t+t^2;
-
-=====================================
-testing example trinacria.knot
-=====================================
-d = 3
-Cannot compute Alexander polynomial for groups with rank 3
 
 =====================================
 testing example two_rings.knot
