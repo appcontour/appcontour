@@ -226,10 +226,11 @@ alexander (struct presentation *p)
     break;
 
     case 3:
-    assert (deficiency == 1 && foxd >= 1);
+    assert (foxd >= 1);
     switch (foxd)
     {
       case 1:
+      assert (deficiency == 1);
       ai = three_components_link (p);
       if (ai == 0) { foxdtoolarge++; break; }
       if (ai->l2num + ai->fl2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
