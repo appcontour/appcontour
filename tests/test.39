@@ -1,0 +1,11 @@
+#testname:links with three components
+#
+# L6a4 is the Borromean rings
+#
+list="L6a4 L6n1 L6a5 L7a7 L8n3 L8n4 L8n5 L8n6 L8a15 L8a16 L11a521 L11a522 L11a523 L11a524 L11a525 L11a526 L11a527 L11a528 L11a529 L11a530"
+
+for l in $list
+do
+  echo -n "link $l: "
+  echo "knotname {$l}" | ./contour --out alexander -Q
+done

@@ -1,0 +1,120 @@
+link L6a4: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: -1+u+v-uv+w-uw-vw+uvw;
+}
+link L6n1: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: -v^2+uw;
+}
+link L6a5: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +1-u-v+uw+vw-uvw;
+}
+link L7a7: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +1-2u-v+uv-w+uw+2vw-uvw;
+}
+link L8n3: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +1-uvw;
+}
+link L8n4: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +1-uv+uv^2-uw+uvw-u^2v^2w;
+}
+link L8n5: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: -1+u+v-uv+w-uw-vw+uvw;
+}
+link L8n6: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +u+v-uv^2w^2-v^3w^2;
+}
+link L8a15: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +1-2u-2v+2uv-2w+2uw+2vw-uvw;
+}
+link L8a16: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: -1+u+v-2uv+u^2v+uv^2-u^2v^2+w-uw-vw+2uvw-u^2vw-uv^2w+u^2v^2w;
+}
+link L11a521: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: -1+2u-u^2+v-2uv+2w-4uw+2u^2w-3vw+5uvw-2u^2vw+v^2w-2uv^2w+2uw^2-u^2w^2+2vw^2-5uvw^2+3u^2vw^2-2v^2w^2+4uv^2w^2-2u^2v^2w^2+2uvw^3-u^2vw^3+v^2w^3-2uv^2w^3+u^2v^2w^3;
+}
+link L11a522: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: -1+2u-u^2+2v-4uv+2u^2v-v^2+3uv^2-u^2v^2-uv^3+w-3uw+u^2w-4vw+8uvw-3u^2vw+3v^2w-8uv^2w+4u^2v^2w-v^3w+3uv^3w-u^2v^3w+uw^2+vw^2-3uvw^2+u^2vw^2-2v^2w^2+4uv^2w^2-2u^2v^2w^2+v^3w^2-2uv^3w^2+u^2v^3w^2;
+}
+link L11a523: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: -u+2u^2+2uv-4u^2v+2u^3v-uv^2+2u^2v^2-u^3v^2-w+3uw-3u^2w+u^3w+2vw-7uvw+7u^2vw-2u^3vw-v^2w+3uv^2w-3u^2v^2w+u^3v^2w+w^2-2uw^2+u^2w^2-2vw^2+4uvw^2-2u^2vw^2-2uv^2w^2+u^2v^2w^2;
+}
+link L11a524: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +1-u-2v+2uv+v^2-uv^2-3w+4uw-u^2w+5vw-9uvw+3u^2vw-2v^2w+5uv^2w-2u^2v^2w+2w^2-5uw^2+2u^2w^2-3vw^2+9uvw^2-5u^2vw^2+v^2w^2-4uv^2w^2+3u^2v^2w^2+uw^3-u^2w^3-2uvw^3+2u^2vw^3+uv^2w^3-u^2v^2w^3;
+}
+link L11a525: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +1-2v+uv+v^2-uv^2-3w+2uw+5vw-6uvw+2u^2vw-v^2w+3uv^2w-2u^2v^2w+2w^2-3uw^2+u^2w^2-2vw^2+6uvw^2-5u^2vw^2-2uv^2w^2+3u^2v^2w^2+uw^3-u^2w^3-uvw^3+2u^2vw^3-u^2v^2w^3;
+}
+link L11a526: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +1-u-2v+3uv+2v^2-4uv^2+u^2v^2-v^3+2uv^3-u^2v^3-2w+3uw-u^2w+4vw-9uvw+3u^2vw-3v^2w+9uv^2w-4u^2v^2w+v^3w-3uv^3w+2u^2v^3w+w^2-2uw^2+u^2w^2-vw^2+4uvw^2-2u^2vw^2-3uv^2w^2+2u^2v^2w^2+uv^3w^2-u^2v^3w^2;
+}
+link L11a527: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: -u-2v+4uv-u^2v+3v^2-4uv^2+u^2v^2-v^3+uv^3+2uw-u^2w+3vw-7uvw+3u^2vw-3v^2w+7uv^2w-3u^2v^2w+v^3w-2uv^3w-uw^2+u^2w^2-vw^2+4uvw^2-3u^2vw^2+v^2w^2-4uv^2w^2+2u^2v^2w^2+uv^3w^2;
+}
+link L11a528: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +u-u^2+v-2uv+2u^2v-v^2+2uv^2-2u^2v^2-uv^3+u^2v^3+w-2uw+u^2w-2vw+2uvw-2u^2vw+2v^2w-2uv^2w+2u^2v^2w-v^3w+2uv^3w-u^2v^3w-w^2+uw^2+2vw^2-2uvw^2+u^2vw^2-2v^2w^2+2uv^2w^2-u^2v^2w^2+v^3w^2-uv^3w^2;
+}
+link L11a529: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: +1-2v+2uv+v^2-2uv^2+u^2v^2-3w+3uw+5vw-7uvw+3u^2vw-2v^2w+5uv^2w-3u^2v^2w+3w^2-5uw^2+2u^2w^2-3vw^2+7uvw^2-5u^2vw^2-3uv^2w^2+3u^2v^2w^2-w^3+2uw^3-u^2w^3-2uvw^3+2u^2vw^3-u^2v^2w^3;
+}
+link L11a530: #
+# --foxd 1
+#
+ideal(u,v,w) {
+F: -u+u^2-2w+4uw-2u^2w+uvw-2u^2vw+3w^2-3uw^2+u^2w^2+3vw^2-8uvw^2+5u^2vw^2-5vw^3+8uvw^3-3u^2vw^3-v^2w^3+3uv^2w^3-3u^2v^2w^3+2vw^4-uvw^4+2v^2w^4-4uv^2w^4+2u^2v^2w^4-v^2w^5+uv^2w^5;
+}

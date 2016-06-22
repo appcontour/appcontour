@@ -409,12 +409,15 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
   int j;
 
   if (fundamentals == 0) assert (fnum == 0);
-  if (ai) assert (ai->indets >= 2);
-  if (ai->indets <= 6)
+  if (ai)
   {
-    extraindets[2*(ai->indets - 2)] = 0;
-  }
-  if (ai) assert (principal == 0 && fundamentals == 0);
+    assert (ai->indets >= 2);
+    if (ai->indets <= 6)
+    {
+      extraindets[2*(ai->indets - 2)] = 0;
+    }
+    assert (principal == 0 && fundamentals == 0);
+  } else extraindets[0] = 0;
 
   if (fnum > 0 || (ai && ai->fl2num > 0) || (ai && ai->l2num >= 2))
   {
@@ -448,7 +451,7 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
         printf ("(");
         print_laurentpoly (fundamentals[j], "uvwxyz");
         printf (") (v - 1);\n");
-        if (ai->indets > 2) printf ("[...];\n");
+        if (ai && ai->indets > 2) printf ("[...];\n");
       }
     }
     if (ai)

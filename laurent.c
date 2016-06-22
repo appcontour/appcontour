@@ -1398,6 +1398,9 @@ laurent_factor_content (struct laurentpoly *p)
  * divide a polynomial in k (2 or more) indeterminates by (1-w) where w indicates
  * the last unknown.
  * return the quotient (in k indets) and the rest (in k-1 indets)
+ *
+ * WARNING: if l->minexpon != 0 the rest should be multiplied by the last indeterminate
+ * of l with exponent l->minexpon
  */
 
 struct laurentpoly *
@@ -1412,6 +1415,12 @@ laurent_divide_by_1minusw (struct laurentpoly *l, struct laurentpoly **rpt)
   if (l == 0) return (0);
 
   assert (l->indets > 1);  /* we shall call this with 3 indets, but it works anyway */
+ 
+  if (l->stemdegree == 0)
+  {
+    *rpt = laurent_dup (l->stem[0].lx);
+    return (0);
+  }
 
   q = (struct laurentpoly *) malloc (POLYSIZE (l->stemdegree));
   q->indets = l->indets;

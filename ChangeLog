@@ -1,5 +1,10 @@
+2016-06-21: allow for links with three components (no canonify at present).
+	Bump to version 2.4.0
+
 2016-06-13: input a knot by its gauss code.  It is simply converted to the corresponding dtcode.
 	(see tests/test.37 for an example).
+	Allow for gauss code of a link (using a trick that allows to use the Dowker-Thistlethwaite code.
+	Allow to enter a link by its "Dowker-Thistlethwaite" name
 
 2016-06-08: new command "foxjacobian" to compute the fox derivatives of a presentation
 	(see fox.c source code).

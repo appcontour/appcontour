@@ -237,7 +237,7 @@ three_components_link (struct presentation *p)
   struct presentationrule *r;
   int *lincomb1, *lincomb2;
   int numrelators = 0, maxlen = 0;
-  int i, j, k, rank = 3;
+  int i, j, k, aminexpon, rank = 3;
 
   /* compute the first (n-3) columns of the jacobian (if any) */
 
@@ -281,6 +281,8 @@ three_components_link (struct presentation *p)
     lincomb1[r->length] = 1;
     foxderivative (r->length, r->var, lincomb1, lincomb2, p->gennum - 2);
     ltemp = map_to_abelian (r->var, lincomb2, r->length, p->gennum - rank, rank);
+    aminexpon = 0;
+    if (ltemp) aminexpon = ltemp->minexpon;
     aw[j] = laurent_divide_by_1minusw (ltemp, &rest);
     av[j] = 0;
     if (rest)
@@ -288,6 +290,9 @@ three_components_link (struct presentation *p)
       av[j] = laurent_divide_by_1minusw (rest, &rest2);
       free_laurentpoly (rest);
       assert (rest2 == 0);
+      /*
+       * remember that av[j] should be multiplied by w^e, with e = a[j]->minexpon
+       */
     }
     /* bw is computed by dividing B+Av(1-u) by (1-w) */
     for (k = 0; k < r->length; k++) lincomb1[k] = 0;
@@ -303,7 +308,7 @@ three_components_link (struct presentation *p)
     {
       ltemp = (struct laurentpoly *) malloc (POLYSIZE (1));
       ltemp->indets = 3;
-      ltemp->minexpon = 0;
+      ltemp->minexpon = aminexpon;
       ltemp->stemdegree = 0;
       ltemp->stem[0].lx = ltemp2;
     }
@@ -337,7 +342,7 @@ three_components_link (struct presentation *p)
     {
       ltemp = (struct laurentpoly *) malloc (POLYSIZE(1));
       ltemp->indets = 3;
-      ltemp->minexpon = 0;
+      ltemp->minexpon = aminexpon;
       ltemp->stemdegree = 0;
       ltemp->stem[0].lx = av[j];
       av[j] = ltemp;
