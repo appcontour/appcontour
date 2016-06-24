@@ -31,8 +31,6 @@ extern int verbose;
  * for each odd/even label
  */
 
-#define ALG_DT 1
-
 static char *rolfsen_to_dt[] = {
 #include "rolfsen_to_dt.h"
 };
@@ -2055,7 +2053,6 @@ propagate (int sign, int label)
   return (1);
 }
 
-#ifdef ALG_DT
 /*
  * this is taken verbatim from decode_new_DT.c of knotscape
  * based on Jim Hoste previous code
@@ -2245,4 +2242,3 @@ static void dt_realize(
     free(phi);
 }
 
-#endif
