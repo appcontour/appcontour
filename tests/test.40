@@ -1,0 +1,8 @@
+#testname:knotsum action
+
+echo "Connected sum between knots K3a1 and K4a1:"
+./contour knotsum examples/knots/knot_3_1.knot examples/knots/knot_4_1.knot | ./contour --out alexander --foxd 1 -q
+
+echo "Again, with different input method K12a120 + K12n55:"
+echo "knotname{K12a120} knotname{K12n55}" | ./contour knotsum | ./contour --out alexander --foxd 1 -q
+

@@ -1,0 +1,4 @@
+Connected sum between knots K3a1 and K4a1:
++1-4t+5t^2-4t^3+t^4;
+Again, with different input method K12a120 + K12n55:
++2-27t+166t^2-629t^3+1653t^4-3198t^5+4700t^6-5335t^7+4700t^8-3198t^9+1653t^10-629t^11+166t^12-27t^13+2t^14;

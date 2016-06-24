@@ -59,6 +59,7 @@
 #define ACTION_LINKINGNUMBER 51
 #define ACTION_SUGGEST_P_SURGERY 52
 #define ACTION_FOXJACOBIAN 53
+#define ACTION_KNOTSUM 54
 
 struct global_data {
   int rulenames;
@@ -296,6 +297,7 @@ void compute_link_num_arcs (struct sketch *s);
 int count_link_components (struct sketch *s);
 int sketch_union (struct sketch *s1, struct sketch *s2);
 int sketch_sum (struct sketch *s1, struct sketch *s2);
+int sketch_knotsum (struct sketch *s1, struct sketch *s2);
 
 struct region *dupregions (struct region *r);
 struct borderlist *dupborderlist (struct borderlist *bl, struct region *r);

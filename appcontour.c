@@ -127,6 +127,64 @@ sketch_sum (struct sketch *s1, struct sketch *s2)
 }
 
 /*
+ * sum as knots
+ */
+
+int
+sketch_knotsum (struct sketch *s1, struct sketch *s2)
+{
+  struct borderlist *bl, *bl1, *bl2;
+  struct arc *a1, *a2;
+  struct border *b1, *b2;
+  int ccount;
+  int count, count1, count2, i;
+
+  ccount = count_connected_components (s1);
+  for (i = 0, count1 = 0; i < ccount; i++)
+  {
+    if (find_connected_component_parent (i, s1) < 0) count1++;
+  }
+  ccount = count_connected_components (s2);
+  for (i = 0, count2 = 0; i < ccount; i++)
+  {
+    if (find_connected_component_parent (i, s2) < 0) count2++;
+  }
+  assert (count1 >= 1 && count2 >= 1);
+  if (count1 + count2 > 2)
+  {
+    fprintf (stderr, "knot sum is not well defined for surfaces with more than one components.\n");
+    return (0);
+  }
+  if (sketch_union (s1, s2) == 0) return (0);
+
+  assert (s1->extregion->border->sponda == 0);
+  count = 0;
+  for (bl = s1->extregion->border; bl; bl = bl->next) count++;
+
+  assert (count == 3);
+
+  bl1 = s1->extregion->border->next;
+  a1 = bl1->sponda->info;
+  bl2 = s1->extregion->border->next->next;
+  a2 = bl2->sponda->info;
+  if (a1->endpoints != 2 || a2->endpoints != 2)
+  {
+    fprintf (stderr, "knot sum is not implemented if an addend is the unknot.\n");
+    return (0);
+  }
+  assert (bl1 && bl2);
+  assert (a1->regionright == bl1->sponda);
+  assert (a2->regionright == bl2->sponda);
+  b1 = a1->regionleft->next->next;
+  b2 = a2->regionleft->next->next;
+  assert (b1->next->next == a1->regionleft);
+  assert (b2->next->next == a2->regionleft);
+  gluearcs_or_pinchneck (s1, a1, a2, 0, 0, -1);
+  gluearcs_or_pinchneck (s1, b1->info, b2->info, 0, 0, 1);
+  return (1);
+}
+
+/*
  * list occurences of horizontal surgery
  */
 

@@ -1,3 +1,8 @@
+2016-06-24: action "knotsum" computes the connected sum of two knots.  Here
+	knots means apparent contour of a tubular neighborhood of a knot, in
+	the form obtained from a knot description.
+	Very few checks are made to ensure that we are in such situation.
+
 2016-06-21: allow for links with three components (no canonify at present).
 	Bump to version 2.4.0
 
