@@ -1,3 +1,14 @@
+2016-06-24: Many new features for dealing with knots and links.  Among these: ability
+	to enter a knot or link by its dtcode or gauss-code; ability to enter a knot
+	by its name (either Rolfsen or Dowker-Thistlethwaite). The project includes the
+	data for knots up to 12 crossings, but it can use the 'pak' files included in
+	the knotscape package (Dowker, Thistlethwait, Jim Hoste, Jeff Weeks); similarly
+	for links (up to 11 crossings).
+	Links with three components (e.g. the borromean links) are now supported for
+	alexander ideal computation.  At the moment the base-canonization is not implemented.
+	The action "knotsum" (similarly to "sum") can compute the connected sum of two knots,
+	if given in the standard form as the result of knot input.
+
 2014-04-19: Computation of the Alexander polynomial in two indeterminates for
 	surfaces of genus 2.  No canonification procedure is implemented at the moment.
 	(2014-05-03) This revealed more tricky than expected, due to the presence of
