@@ -58,8 +58,8 @@ struct sketch *
 readdtcode (FILE *file)
 {
   struct sketch *sketch;
-  struct vecofintlist *loiv;
-  int i;
+  struct vecofintlist *loiv, *lvg, *firstlvg, *prevlvg, *lv;
+  int i, j, alv, slv, labeltag;
   int *gregionsign;
 
   /*
@@ -67,7 +67,37 @@ readdtcode (FILE *file)
    */
 
   loiv = readvecofintlist (file);
-  assert (loiv->next == 0);  /* we do not do links for the moment */
+  if (loiv->next)
+  {
+    /* convert to gauss code */
+    prevlvg = firstlvg = (struct vecofintlist *) malloc (SIZEOFLOIV (0));
+    labeltag = 0;
+    for (lv = loiv; lv; lv = lv->next)
+    {
+      assert (lv->handedness == 0);
+      lvg = (struct vecofintlist *) malloc (SIZEOFLOIV (2*lv->len));
+      prevlvg->next = lvg;
+      lvg->next = 0;
+      lvg->dim = lvg->len = 2*lv->len;
+      for (i = 0, j = 0; i < lv->len;  i++)
+      {
+        alv = abs(lv->vec[i]);
+        slv = 1;
+        if (lv->vec[i] < 0) slv = -1;
+        assert ((alv % 2) == 0);
+        assert (slv > 0);  /* only alternating links for now */
+        lvg->vec[j++] = alv/2; /* a node is tagged by alv/2 */
+        labeltag += 2;
+        lvg->vec[j++] = -labeltag/2;
+      }
+      prevlvg = lvg;
+    }
+    lvg = firstlvg->next;
+    firstlvg->next = 0;
+    freeloiv (firstlvg);
+    freeloiv (loiv);
+    return (readgausscodeloiv (lvg));
+  }
   if (loiv->handedness == 0)
   {
     gregionsign = (int *) malloc (loiv->len*sizeof(int));
@@ -206,32 +236,6 @@ gausscode_link_to_knot (struct vecofintlist *loiv)
   {
     for (i = 0; i < lv->len; i++) if (abs(lv->vec[i]) > maxint) maxint = abs(lv->vec[i]);
   }
-  //loiv2 = loiv->next;
-  //if (loiv2->next != 0)
-  //{
-  //  printf ("Only links with two components are allowed!\n");
-  //  freeloiv (loiv);
-  //  return (0);
-  //}
-  //commonnode = -1;
-  //for (i = 0; i < loiv->len; i++)
-  //{
-  //  for (j = 0; j < loiv2->len; j++)
-  //  {
-  //    if (abs(loiv->vec[i]) == abs(loiv2->vec[j]))
-  //    {
-  //      commonnode = abs(loiv->vec[i]);
-  //      break;
-  //    }
-  //  }
-  //  if (commonnode >= 0) break;
-  //}
-  //if (commonnode < 0)
-  //{
-  //  printf ("Cannot find common crossing between the two components\n");
-  //  freeloiv (loiv);
-  //  return (0);
-  //}
 
   /* creating new unique gauss code with one more node */
   newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV(2 + loiv->len + loiv2->len));
