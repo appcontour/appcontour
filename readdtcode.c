@@ -57,7 +57,7 @@ readdtcode (FILE *file)
 {
   struct sketch *sketch;
   struct vecofintlist *loiv, *lvg, *firstlvg, *prevlvg, *lv;
-  int i, j, alv, slv, labeltag;
+  int i, j, alv, labeltag;
   int *gregionsign;
 
   /*
@@ -80,15 +80,20 @@ readdtcode (FILE *file)
       for (i = 0, j = 0; i < lv->len;  i++)
       {
         alv = abs(lv->vec[i]);
-        slv = 1;
-        if (lv->vec[i] < 0) slv = -1;
         assert ((alv % 2) == 0);
-        assert (slv > 0);  /* only alternating links for now */
         lvg->vec[j++] = alv/2; /* a node is tagged by alv/2 */
         labeltag += 2;
         lvg->vec[j++] = -labeltag/2;
       }
       prevlvg = lvg;
+    }
+    for (lv = loiv; lv; lv = lv->next)
+    {
+      for (i = 0; i < lv->len; i++)
+      {
+        alv = abs(lv->vec[i]);
+        if (lv->vec[i] < 0) chg_underpass (firstlvg->next, alv/2);
+      }
     }
     lvg = firstlvg->next;
     firstlvg->next = 0;
@@ -108,6 +113,30 @@ readdtcode (FILE *file)
   sketch = realize_dtcode (loiv->len, loiv->vec, gregionsign);
   freeloiv (loiv);
   return (sketch);
+}
+
+/*
+ * revert overpass/underpass in a gauss-code for a given nodeid
+ */
+
+void
+chg_underpass (struct vecofintlist *loiv, int nodenum)
+{
+  int i, found = 0;
+  struct vecofintlist *lv;
+
+  for (lv = loiv; lv; lv = lv->next)
+  {
+    for (i = 0; i < lv->len; i++)
+    {
+      if (abs(lv->vec[i]) == nodenum)
+      {
+        found++;
+        lv->vec[i] *= -1;
+      }
+    }
+  }
+  assert (found == 2);
 }
 
 struct sketch *

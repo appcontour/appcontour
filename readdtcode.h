@@ -17,6 +17,7 @@ struct vecofintlist *readvecofintlist (FILE *file);
 void freeloiv (struct vecofintlist *loiv);
 struct sketch *readgausscodeloiv (struct vecofintlist *loiv);
 struct sketch *readlinkfromtable (char *linkname);
+void chg_underpass (struct vecofintlist *loiv, int nodenum);
 struct vecofintlist *read_gausscode_from_string (char *gc);
 struct vecofintlist *gausscode_link_to_knot (struct vecofintlist *loiv);
 void gausscode2dtcode (struct vecofintlist *loiv, int *vecofint);
