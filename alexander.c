@@ -17,8 +17,8 @@
 static int int_overflow_encountered = 0;
 
 /* local prototypes */
-void print_matrix (struct laurentmatrix *matrix);
-void print_matrix_n_m (struct laurentpoly ***matrix, int nrows, int ncols);
+void print_matrix1_n_m (struct laurentpoly ***matrix, int nrows, int ncols);
+void print_matrix_n_m (struct laurentpoly ***matrix, int nrows, int ncols, int indets);
 int laurentpoly_linf (struct laurentpoly *l);
 
 int
@@ -105,7 +105,7 @@ alexander (struct presentation *p)
     printf ("Cannot compute Alexander polynomial for groups with torsion\n");
     return (0);
   }
-  matrixrank = p->gennum - rank;
+  matrixrank = p->gennum - rank;  /* this is probably wrong for rank >= 3! */
   if (rank > 0) gconj = p->gennum;
   if (rank > 3)
   {
@@ -123,16 +123,16 @@ alexander (struct presentation *p)
   gconj = p->gennum;
   if (rank >= 2) gconj2 = p->gennum - 1;
 
-  if (verbose) printf ("Matrix a-la-Magnus-Karrass-Solitar has %d rows and %d columns\n", matrixrank, numcols);
+  if (verbose && rank < 3) printf ("Matrix a-la-Magnus-Karrass-Solitar has %d rows and %d columns\n", matrixrank, numcols);
 
-  if (matrixrank < numcols && deficiency != 1)  /* deficiency == 1: link */
+  if (matrixrank < numcols && deficiency != 1 && rank < 3)  /* deficiency == 1: link */
   {
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
     printf ("Cannot compute Alexander polynomial because there are too many relators\n");
     return (0);
   }
 
-  if (matrixrank > numcols)
+  if (matrixrank > numcols && rank < 3)
   {
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
     printf ("Cannot compute Alexander polynomial because there are too few relators\n");
@@ -233,12 +233,16 @@ alexander (struct presentation *p)
       assert (deficiency == 1);
       ai = three_components_link (p);
       if (ai == 0) { foxdtoolarge++; break; }
-      if (ai->l2num + ai->fl2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
+      //if (ai->l2num + ai->fl2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
+      printf ("# *** Warning: result can be noncanonical ***\n");
       alexander_fromideal (ai);
       break;
 
       default:
-      foxdtoolarge++;
+      ai = generic_ideal_computation (p, rank, p->gennum - foxd);
+      if (ai == 0) return (0);
+      printf ("# *** Warning: result can be noncanonical ***\n");
+      alexander_fromideal (ai);
       break;
     }
     break;
@@ -487,6 +491,7 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
     if (!quiet) printf ("Alexander polynomial:\n");
     if (ai == 0) print_laurentpoly (principal, "uvwxyz");
      else {
+      //if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander(u,v%s) {\n", extraindets);
       assert (ai->l2num == 1);
       print_laurentpoly (ai->l[0], "uvwxyz");
     }
@@ -1107,7 +1112,7 @@ laurent_build_matrix1 (struct presentation *p, int eliminate)
    * stampa della matrice
    */
 
-  if (verbose) print_matrix (matrix);
+  if (verbose) print_matrix1 (matrix);
   return (matrix);
 }
 
@@ -1208,13 +1213,19 @@ laurent_build_matrix2 (struct presentation *p, int e1, int e2)
 }
 
 void
-print_matrix (struct laurentmatrix *matrix)
+print_matrix1 (struct laurentmatrix *matrix)
 {
-  print_matrix_n_m (matrix->columns, matrix->numrows, matrix->numcols);
+  print_matrix1_n_m (matrix->columns, matrix->numrows, matrix->numcols);
 }
 
 void
-print_matrix_n_m (struct laurentpoly ***matrixcolumns, int numrows, int numcols)
+print_matrix (struct laurentmatrix *matrix, int indets)
+{
+  print_matrix_n_m (matrix->columns, matrix->numrows, matrix->numcols, indets);
+}
+
+void
+print_matrix1_n_m (struct laurentpoly ***matrixcolumns, int numrows, int numcols)
 {
   struct laurentpoly *l, **matrixcolumn;
   int i, j;
@@ -1227,6 +1238,26 @@ print_matrix_n_m (struct laurentpoly ***matrixcolumns, int numrows, int numcols)
       matrixcolumn = matrixcolumns[j];
       l = matrixcolumn[i];
       print_laurentpoly (l, "t");
+      printf ("; \t");
+    }
+    printf ("\n");
+  }
+}
+
+void
+print_matrix_n_m (struct laurentpoly ***matrixcolumns, int numrows, int numcols, int indets)
+{
+  struct laurentpoly *l, **matrixcolumn;
+  int i, j;
+
+  printf ("Matrix entries:\n");
+  for (i = 0; i < numrows; i++)
+  {
+    for (j = 0; j < numcols; j++)
+    {
+      matrixcolumn = matrixcolumns[j];
+      l = matrixcolumn[i];
+      print_laurentpoly (l, "uvwxyzabcdefghijklmnopqrst");
       printf ("; \t");
     }
     printf ("\n");
@@ -1321,6 +1352,44 @@ laurent_free_matrix (struct laurentmatrix *matrix)
   }
   free (matrix->columns);
   free (matrix);
+}
+
+/*
+ * compute all the determinants of kxk minors in matrix
+ */
+
+struct alexanderideal *
+compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcols, int minordim, int indets)
+{
+  struct alexanderideal *ai = 0;
+  struct laurentpoly **column;
+  int i, j, k;
+
+  assert (indets >= 2);
+  switch (minordim)
+  {
+    case 1:
+      ai = (struct alexanderideal *) malloc (AI_DIM(numrows*numcols));
+      ai->indets = indets;
+      ai->fl2num = 0;
+      ai->fl2offset = numrows*numcols;
+      ai->max_generators_num = numrows*numcols;
+      k = 0;
+      for (j = 0; j < numcols; j++)
+      {
+        column = columns[j];
+        for (i = 0; i < numrows; i++)
+        {
+          if (column[i]) ai->l[k++] = laurent_dup (column[i]);
+        }
+      }
+      ai->l2num = k;
+    break;
+
+    default:
+    return (0);
+  }
+  return (ai);
 }
 
 struct alexanderideal *
@@ -2189,7 +2258,7 @@ laurent_compute_determinant1 (struct laurentpoly ***matrix, int n)
    */
 
   if (debug >= 2) printf ("Computing determinant of a %dx%d matrix\n", n, n);
-  if (debug >= 2) print_matrix_n_m (matrix, n, n);
+  if (debug >= 2) print_matrix1_n_m (matrix, n, n);
   submatrix = (struct laurentpoly ***) malloc ( (n-1)*sizeof (struct laurentpoly **) );
   for (jj = 0; jj < n-1; jj++)
     submatrix[jj] = (struct laurentpoly **) malloc ( (n-1)*sizeof (struct laurentpoly *) );

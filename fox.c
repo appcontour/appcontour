@@ -348,6 +348,8 @@ three_components_link (struct presentation *p)
       av[j] = ltemp;
     }
   }
+  free (lincomb1);
+  free (lincomb2);
 
   jacobian->numcols = numrelators;
   jacobian->columns[numrelators - 2] = av;
@@ -394,3 +396,60 @@ three_components_link (struct presentation *p)
 
   return(ai);
 }
+
+struct alexanderideal *
+generic_ideal_computation (struct presentation *p, int indets, int minordim)
+{
+  extern int verbose;
+  struct alexanderideal *ai;
+  struct laurentpoly **column;
+  struct presentationrule *r;
+  struct laurentmatrix *jacobian;
+  int i, j, k;
+  int *lincomb1, *lincomb2;
+  int numrelators = 0, maxlen = 0;
+
+  /* compute the columns of the jacobian */
+
+  assert (minordim >= 1);
+  for (r = p->rules; r; r = r->next) numrelators++;
+
+  /* the presentation is assumed to be preabelian, we compute the fox derivatives
+   * of the relators with respect to the generators
+   */
+
+  for (i = 0, r = p->rules; r; i++, r = r->next) if (r->length > maxlen) maxlen = r->length;
+  lincomb1 = (int *) malloc ((maxlen+1)*sizeof (int));
+  lincomb2 = (int *) malloc ((maxlen+1)*sizeof (int));
+  jacobian = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
+  jacobian->numrows = numrelators;
+  jacobian->numcols = p->gennum;
+  jacobian->columns = (struct laurentpoly ***) malloc (p->gennum * sizeof (struct laurentpoly **));
+  for (i = 0; i < p->gennum; i++)
+  {
+    jacobian->columns[i] = column = (struct laurentpoly **) malloc (numrelators * sizeof (struct laurentpoly *));
+    for (j = 0, r = p->rules; r; r = r->next, j++)
+    {
+      for (k = 0; k < r->length; k++) lincomb1[k] = 0;
+      lincomb1[r->length] = 1;
+      foxderivative (r->length, r->var, lincomb1, lincomb2, i+1);
+      column[j] = map_to_abelian (r->var, lincomb2, r->length, p->gennum - indets, indets);
+    }
+  }
+  free (lincomb1);
+  free (lincomb2);
+
+  if (verbose) print_matrix (jacobian, indets);
+
+  ai = compute_invariant_factor (jacobian->columns, jacobian->numrows, jacobian->numcols, minordim, indets);
+
+  if (ai == 0)
+  {
+    printf ("Computation of Alexander ideal is not yet implemented for %d by %d matrices in %d indeterminates, ",
+            jacobian->numrows, jacobian->numcols, indets);
+    printf ("invariant factor: %d\n", minordim);
+  }
+  laurent_free_matrix (jacobian);
+  return (ai);
+}
+

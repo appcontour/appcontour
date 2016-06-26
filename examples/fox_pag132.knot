@@ -1,0 +1,15 @@
+#
+# Fox: Quick trip...
+#
+# example of a graph made with a pentagon and its diagonals
+#
+knot {
+    ^    ;
+  h   h  ;
+ h  x  h ;
+| X ^ X |;
+ y x x y ;
+ y | | y ;
+  y   y  ;
+    U    ;
+}

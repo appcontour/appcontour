@@ -87,3 +87,7 @@ int isinvertible_base (int b[2][2]);
 
 struct alexanderideal *read_alexander_ideal (FILE *file);
 struct alexanderideal *ai_increase_size (struct alexanderideal *ai);
+struct alexanderideal *compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcols, int minordim, int indets);
+
+void print_matrix1 (struct laurentmatrix *matrix);
+void print_matrix (struct laurentmatrix *matrix, int indets);

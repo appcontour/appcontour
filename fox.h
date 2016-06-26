@@ -7,6 +7,7 @@ int map_to_trivial (int *rvec, int *lincomb, int len);
 void count_and_map (int *v, int len, int offset, int rank, int *exponvec);
 
 struct alexanderideal *three_components_link (struct presentation *p);
+struct alexanderideal *generic_ideal_computation (struct presentation *p, int indets, int minordim);
 
 void print_relator (int *rvar, int len);
 void print_groupring_el (int *rvar, int *lincomb, int len);

@@ -1,0 +1,10 @@
+#testname:rank 3 or more
+#
+echo "examples/trinacria.knot is a genus-3 surface (originated by a graph)"
+
+./contour --out alexander examples/trinacria.knot -q
+
+echo "this is a surgical modification of a 3-components link leading to a"
+echo "genus-2 surface linked with a torus"
+echo "knotname{L8a16}" | ./contour gluearcs -a 4 -a 5 | ./contour --out alexander -q
+

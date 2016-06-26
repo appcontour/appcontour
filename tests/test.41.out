@@ -1,0 +1,13 @@
+examples/trinacria.knot is a genus-3 surface (originated by a graph)
+d = 3
+# *** Warning: result can be noncanonical ***
+-1+u+v+w-uw-vw+uvw;
+this is a surgical modification of a 3-components link leading to a
+genus-2 surface linked with a torus
+d = 2
+# *** Warning: result can be noncanonical ***
+Ideal [
++1-v-w+vw;
+-w+uw+w^2-uw^2;
+-1+u+v-uv+w-uw-vw+uvw;
+]
