@@ -8,6 +8,6 @@ d = 2
 # *** Warning: result can be noncanonical ***
 Ideal [
 +1-v-w+vw;
--w+uw+w^2-uw^2;
+-1+u+w-uw;
 -1+u+v-uv+w-uw-vw+uvw;
 ]

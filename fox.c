@@ -400,7 +400,7 @@ three_components_link (struct presentation *p)
 struct alexanderideal *
 generic_ideal_computation (struct presentation *p, int indets, int minordim)
 {
-  extern int verbose;
+  extern int verbose, quiet;
   struct alexanderideal *ai;
   struct laurentpoly **column;
   struct presentationrule *r;
@@ -440,8 +440,16 @@ generic_ideal_computation (struct presentation *p, int indets, int minordim)
   free (lincomb2);
 
   if (verbose) print_matrix (jacobian, indets);
+  if (!quiet) printf ("# generic ideal computation...\n");
 
   ai = compute_invariant_factor (jacobian->columns, jacobian->numrows, jacobian->numcols, minordim, indets);
+  if (ai)
+  {
+    for (k = 0; k < ai->l2num; k++)
+    {
+      laurent_canonify_exponents (ai->l[k]);
+    }
+  }
 
   if (ai == 0)
   {

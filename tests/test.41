@@ -8,3 +8,7 @@ echo "this is a surgical modification of a 3-components link leading to a"
 echo "genus-2 surface linked with a torus"
 echo "knotname{L8a16}" | ./contour gluearcs -a 4 -a 5 | ./contour --out alexander -q
 
+#
+# this is one of 5 links with 3 components with Nakanishi index 4
+#
+#echo "knotname{L11n257}" | ./contour --out alexander --foxd 3 -v

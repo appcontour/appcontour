@@ -1362,8 +1362,9 @@ struct alexanderideal *
 compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcols, int minordim, int indets)
 {
   struct alexanderideal *ai = 0;
-  struct laurentpoly **column;
-  int i, j, k;
+  struct laurentmatrix *minor;
+  struct laurentpoly **column, **columnj, **columnjj, *determinant;
+  int i, ii, j, jj, k, numminors;
 
   assert (indets >= 2);
   switch (minordim)
@@ -1383,6 +1384,53 @@ compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcol
           if (column[i]) ai->l[k++] = laurent_dup (column[i]);
         }
       }
+      ai->l2num = k;
+    break;
+
+    case 2:
+      numminors = numrows*(numrows - 1)*numcols*(numcols - 1)/4;
+      ai = (struct alexanderideal *) malloc (AI_DIM(numminors));
+      ai->indets = indets;
+      ai->fl2num = 0;
+      ai->fl2offset = numminors;
+      ai->max_generators_num = numminors;
+
+      minor = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
+      minor->numcols = 2;
+      minor->numrows = 2;
+      minor->columns = (struct laurentpoly ***) malloc (2*sizeof(struct laurentpoly **));
+      minor->columns[0] = (struct laurentpoly **) malloc (2*sizeof(struct laurentpoly *));
+      minor->columns[1] = (struct laurentpoly **) malloc (2*sizeof(struct laurentpoly *));
+
+      k = 0;
+      for (j = 0; j < numcols - 1; j++)
+      {
+        columnj = columns[j];
+        for (jj = j+1; jj < numcols; jj++)
+        {
+          columnjj = columns[jj];
+          for (i = 0; i < numrows - 1; i++)
+          {
+            for (ii = i + 1; ii < numrows; ii++)
+            {
+              minor->columns[0][0] = columnj[i];
+              minor->columns[0][1] = columnj[ii];
+              minor->columns[1][0] = columnjj[i];
+              minor->columns[1][1] = columnjj[ii];
+              determinant = laurent_compute_determinant (minor->columns, minor->numcols, indets);
+              if (determinant) ai->l[k++] = determinant;
+              minor->columns[0][0] = 0;
+              minor->columns[0][1] = 0;
+              minor->columns[1][0] = 0;
+              minor->columns[1][1] = 0;
+            }
+          }
+        }
+      }
+      free (minor->columns[0]);
+      free (minor->columns[1]);
+      free (minor->columns);
+      free (minor);
       ai->l2num = k;
     break;
 
