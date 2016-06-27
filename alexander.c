@@ -291,12 +291,6 @@ alexander_fromideal (struct alexanderideal *ai)
       {
         printf ("Alexander ideal before canonization:\n{\n");
 	printout_ideal1 (ai, 0);
-        //for (i = 0; i < ai->l1num; i++)
-        //{
-        //  print_laurentpoly (ai->l1[i], "t");
-        //  printf (";\n");
-        //}
-        //printf ("}\n");
       }
       for (i = 0; i < ai->l1num; i++) laurent_canonify1 (ai->l[i]);
       printout_ideal1 (ai, 0);
@@ -346,7 +340,7 @@ alexander_fromideal (struct alexanderideal *ai)
       printout_ideal (ai, 0, 0, 0, 0);
       break;
 
-    case 3:
+    default:
       printout_ideal (ai, 0, 0, 0, 0);
       break;
   }
