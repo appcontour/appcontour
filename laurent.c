@@ -1477,3 +1477,18 @@ gcd (int a, int b)
 
   return (gcd (b, a%b));
 }
+
+/*
+ * compute binomial coefficient
+ */
+
+int
+binomial (int n, int k)
+{
+  if (k < 0 || k > n) return (0);
+  if (k == 0 || k == n) return (1);
+
+  if (k > n - k) return (binomial (n, n-k));
+
+  return (((n-k+1)*binomial(n,k-1))/k);
+}

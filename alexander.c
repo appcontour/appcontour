@@ -1355,13 +1355,16 @@ laurent_free_matrix (struct laurentmatrix *matrix)
  * compute all the determinants of kxk minors in matrix
  */
 
+int next_subset (int *vec, int k, int n);
+
 struct alexanderideal *
 compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcols, int minordim, int indets)
 {
   struct alexanderideal *ai = 0;
   struct laurentmatrix *minor;
-  struct laurentpoly **column, **columnj, **columnjj, *determinant;
-  int i, ii, j, jj, k, numminors;
+  struct laurentpoly **column, *determinant;
+  int i, j, k, numminors;
+  int *veci, *vecj, s, ss;
 
   assert (indets >= 2);
   switch (minordim)
@@ -1384,8 +1387,8 @@ compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcol
       ai->l2num = k;
     break;
 
-    case 2:
-      numminors = numrows*(numrows - 1)*numcols*(numcols - 1)/4;
+    default:
+      numminors = binomial (numrows,minordim)*binomial(numcols,minordim);
       ai = (struct alexanderideal *) malloc (AI_DIM(numminors));
       ai->indets = indets;
       ai->fl2num = 0;
@@ -1393,48 +1396,59 @@ compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcol
       ai->max_generators_num = numminors;
 
       minor = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
-      minor->numcols = 2;
-      minor->numrows = 2;
-      minor->columns = (struct laurentpoly ***) malloc (2*sizeof(struct laurentpoly **));
-      minor->columns[0] = (struct laurentpoly **) malloc (2*sizeof(struct laurentpoly *));
-      minor->columns[1] = (struct laurentpoly **) malloc (2*sizeof(struct laurentpoly *));
+      minor->numcols = minordim;
+      minor->numrows = minordim;
+      minor->columns = (struct laurentpoly ***) malloc (minordim*sizeof(struct laurentpoly **));
+      for (j = 0; j < minordim; j++)
+        minor->columns[j] = (struct laurentpoly **) malloc (minordim*sizeof(struct laurentpoly *));
 
       k = 0;
-      for (j = 0; j < numcols - 1; j++)
+      vecj = (int *) malloc (minordim*sizeof(int));
+      veci = (int *) malloc (minordim*sizeof(int));
+      for (s = 0; s < minordim; s++) vecj[s] = s;
+      do
       {
-        columnj = columns[j];
-        for (jj = j+1; jj < numcols; jj++)
+        for (s = 0; s < minordim; s++) veci[s] = s;
+        do
         {
-          columnjj = columns[jj];
-          for (i = 0; i < numrows - 1; i++)
+          for (s = 0; s < minordim; s++)
           {
-            for (ii = i + 1; ii < numrows; ii++)
+            for (ss = 0; ss  < minordim; ss++)
             {
-              minor->columns[0][0] = columnj[i];
-              minor->columns[0][1] = columnj[ii];
-              minor->columns[1][0] = columnjj[i];
-              minor->columns[1][1] = columnjj[ii];
-              determinant = laurent_compute_determinant (minor->columns, minor->numcols, indets);
-              if (determinant) ai->l[k++] = determinant;
-              minor->columns[0][0] = 0;
-              minor->columns[0][1] = 0;
-              minor->columns[1][0] = 0;
-              minor->columns[1][1] = 0;
+              minor->columns[s][ss] = columns[vecj[s]][veci[ss]];
             }
           }
-        }
-      }
-      free (minor->columns[0]);
-      free (minor->columns[1]);
+          determinant = laurent_compute_determinant (minor->columns, minor->numcols, indets);
+          if (determinant) ai->l[k++] = determinant;
+        } while (next_subset (veci, minordim, numrows));
+      } while (next_subset (vecj, minordim, numcols));
+      free (vecj);
+      free (veci);
+      for (s = 0; s < minordim; s++) free (minor->columns[s]);
       free (minor->columns);
       free (minor);
       ai->l2num = k;
     break;
-
-    default:
-    return (0);
   }
   return (ai);
+}
+
+int
+next_subset (int *vec, int k, int n)
+{
+  if (vec[k-1] < n - 1)
+  {
+    vec[k-1]++;
+    return (1);
+  }
+  if (k == 0) return (0);
+
+  if (next_subset (vec, k-1, n-1))
+  {
+    vec[k-1] = vec[k-2] + 1;
+    return (1);
+  }
+  return (0);
 }
 
 struct alexanderideal *

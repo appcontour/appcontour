@@ -58,3 +58,4 @@ void laurent_canonifysign2 (struct laurentpoly *p);
 struct laurentpoly *laurent_divide_by_1minusw (struct laurentpoly *l, struct laurentpoly **rpt);
 
 int gcd (int a, int b);
+int binomial (int n, int k);
