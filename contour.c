@@ -1164,7 +1164,8 @@ main (int argc, char *argv[])
               break;
             case ACTION_ALEXANDER:
               if (simplify) simplify_presentation (p);
-              alexander (p);
+              res = alexander (p);
+              if (res == 0) exit (1);
               break;
             case ACTION_LINKINGNUMBER:
               if (simplify) simplify_presentation (p);

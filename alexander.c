@@ -107,7 +107,7 @@ alexander (struct presentation *p)
   }
   matrixrank = p->gennum - rank;  /* this is probably wrong for rank >= 3! */
   if (rank > 0) gconj = p->gennum;
-  if (rank > 3)
+  if (rank > 26)
   {
     assert (matrixrank > 0 || numcols > 0);
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
@@ -248,8 +248,11 @@ alexander (struct presentation *p)
     break;
 
     default:
-    printf ("Software unable to compute Alexander polynomial with these many indeterminates.\n");
-    return (0);
+    ai = generic_ideal_computation (p, rank, p->gennum - foxd);
+    if (ai == 0) return (0);
+    printf ("# *** Warning: result can be noncanonical ***\n");
+    alexander_fromideal (ai);
+    break;
   }
 
   if (foxdtoolarge)

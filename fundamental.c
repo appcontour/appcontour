@@ -25,7 +25,7 @@ extern int simplify;
 void
 compute_fundamental (struct ccomplex *cc, int action)
 {
-  int ccnum;
+  int res, ccnum, errors = 0;
   //int count;
   struct ccomplexcc *cccc;
 
@@ -58,7 +58,8 @@ compute_fundamental (struct ccomplex *cc, int action)
         break;
       case ACTION_ALEXANDER:
         simplify_presentation (cccc->p);
-        alexander (cccc->p);
+        res = alexander (cccc->p);
+        if (res == 0) errors++;
         break;
       case ACTION_LINKINGNUMBER:
         simplify_presentation (cccc->p);
@@ -69,6 +70,7 @@ compute_fundamental (struct ccomplex *cc, int action)
         break;
     }
   }
+  if (errors) exit (1);
 }
 
 void
