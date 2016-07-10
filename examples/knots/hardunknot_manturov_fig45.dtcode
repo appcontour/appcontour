@@ -1,0 +1,8 @@
+#
+# "Knot Theory" by V.O. Manturov
+#
+# this is an unknot due to I.M. Nikonov, displayed in figure 4.5
+#
+dtcode {
+10> 8 -12 2 4 -14 -6 18> 24 -28 -26 16 -20 -22
+}

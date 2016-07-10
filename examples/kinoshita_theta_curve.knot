@@ -1,0 +1,13 @@
+#
+# Kinoshita theta curve
+# (fig. 19 in "A Survey of Knot Theory" by Akio Kawauchi
+#
+knot {
+  ^ ^ ^  ;
+|  x x  |;
+||  X  ||;
+| y   y |;
+|   x   |;
+|   x   |;
+  U   U  ;
+}
