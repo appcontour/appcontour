@@ -214,7 +214,12 @@ alexander (struct presentation *p)
       /* case of link and request of second elementary ideal */
       ai = laurent_notfirst_elementary_ideal2 (p, gconj2, gconj, foxd - 1);
       if (ai == 0) { foxdtoolarge++; break; }
-      if (ai->l2num + ai->fl2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
+      /*
+       * test used to be: 
+       *    if (ai->l2num + ai->fl2num > 1) ...
+       * but if ai->l2num == 1 the message would be printed twice
+       */
+      if (ai->l2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
       alexander_fromideal (ai);
       break;
 
@@ -329,7 +334,11 @@ alexander_fromideal (struct alexanderideal *ai)
           for (i = 0; i < extradets; i++) extradeterminants[i] = ai->l[i + ai->fl2offset];
         }
         if (canonify_ideal2 (&determinant2, extradeterminants, extradets) == 0)
+        {
           printf ("# *** Warning: result can be noncanonical ***\n");
+          for (i = 0; i < ai->l2num; i++) laurent_canonify_exponents (ai->l[i]);
+          for (i = 0; i < ai->fl2num; i++) laurent_canonify_exponents (ai->l[i + ai->fl2offset]);
+        }
         if (ai->l2num == 1) ai->l[0] = determinant2;
         if (extradets > 0)
         {
