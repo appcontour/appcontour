@@ -79,6 +79,7 @@ struct global_data {
 
 #define OUTFORMAT_DEFAULT 0
 #define OUTFORMAT_APPCONTOUR 1
+#define OUTFORMAT_MACAULAY2 2
 
 struct tagged_data {
   int mrnum;

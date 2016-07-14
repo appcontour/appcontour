@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include "laurent.h"
 #include "parser.h"
+#include "contour.h"
 
 /*
  * implement extended Euclidean algorithm for two Laurent polynomials
@@ -317,11 +318,23 @@ laurent_mulv (struct laurentpoly *l)
  */
 
 void print_laurentpoly_map (struct laurentpoly *l, char *indetnames, char *mapappend);
+void print_laurentpoly_M2 (struct laurentpoly *l, char *indetnames, char *mapappend);
 
 void
 print_laurentpoly (struct laurentpoly *l, char *indetnames)
 {
-  print_laurentpoly_map (l, indetnames, "");
+  extern int outformat;
+
+  switch (outformat)
+  {
+    case OUTFORMAT_MACAULAY2:
+    print_laurentpoly_M2 (l, indetnames, "");
+    break;
+
+    default:
+    print_laurentpoly_map (l, indetnames, "");
+    break;
+  }
 }
 
 void
@@ -395,6 +408,95 @@ print_laurentpoly_map (struct laurentpoly *l, char *indetnames, char *mapappend)
       }
       strcat (appstring, mapappend);
       print_laurentpoly_map (l->stem[i].lx, indetnames, appstring);
+    }
+  }
+}
+
+void
+print_laurentpoly_M2 (struct laurentpoly *l, char *indetnames, char *mapappend)
+{
+  struct laurentpoly *l1;
+  int i, expon, indets, appstringpt;
+  char appstring[80];
+
+  if (l == 0) {printf ("0"); return;}
+  indets = l->indets;
+  assert (l->indets <= strlen (indetnames));
+
+  if (indets <= 1)
+  {
+    assert (l->stem[0].l0);
+    for (i = 0; i <= l->stemdegree; i++)
+    {
+      expon = i + l->minexpon;
+      if (l->stem[i].l0)
+      {
+        if (abs(l->stem[i].l0) != 1 || expon == 0)
+        {
+          if (*mapappend == 0)
+          {
+            printf ("%+d", l->stem[i].l0);
+            if (expon != 0) printf ("*");
+          } else {
+            if (abs(l->stem[i].l0) == 1)
+            {
+              printf ("%c", (l->stem[i].l0 > 0)?'+':'-');
+            } else {
+              printf ("%+d*", l->stem[i].l0);
+            }
+            if (expon == 0) printf ("%s", mapappend);
+          }
+        } else {
+          if (l->stem[i].l0 > 0) printf ("+");
+           else printf ("-");
+        }
+        if (expon != 0)
+        {
+          printf ("%c", *indetnames);
+          if (expon < 0)
+          {
+            printf ("%c", *indetnames);
+            expon = -expon;
+          }
+          if (expon != 1)
+          {
+            assert (expon > 0);
+            if (expon <= 9) printf ("^%d", expon);
+             else printf ("^(%d)", expon);
+          }
+          if (*mapappend) printf ("*%s", mapappend);
+        }
+      }
+    }
+    return;
+  }
+
+  assert (l->stem[0].lx);
+  for (i = 0; i <= l->stemdegree; i++)
+  {
+    expon = i + l->minexpon;
+    if ((l1 = l->stem[i].lx) != 0)
+    {
+      appstringpt = 0;
+      appstring[appstringpt] = 0;
+      if (expon != 0)
+      {
+        appstring[appstringpt++] = indetnames[indets - 1];
+        if (expon < 0)
+        {
+          appstring[appstringpt++] = indetnames[indets - 1];
+          expon = -expon;
+        }
+        appstring[appstringpt] = 0;
+        if (expon != 1)
+        {
+          assert (expon > 0);
+          if (expon <= 9) sprintf (appstring + appstringpt, "^%d", expon);
+           else sprintf (appstring + appstringpt, "^(%d)", expon);
+        }
+      }
+      strcat (appstring, mapappend);
+      print_laurentpoly_M2 (l->stem[i].lx, indetnames, appstring);
     }
   }
 }
