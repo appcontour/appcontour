@@ -157,7 +157,11 @@ alexander (struct presentation *p)
       case 6:
       ai = laurent_notfirst_elementary_ideal (p, gconj, foxd - 1);
       if (ai == 0) { foxdtoolarge++; break; }
-      if (ai->l1num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
+      if (ai->l1num > 1)
+      {
+        start_comment ();
+        printf ("*** Warning: result can be noncanonical ***\n");
+      }
       alexander_fromideal (ai);
       break;
 
@@ -196,7 +200,10 @@ alexander (struct presentation *p)
         shuffle_poly2 (&determinant2, extradeterminants, extradets);
       }
       if (canonify_ideal2 (&determinant2, extradeterminants, extradets) == 0)
-        printf ("# *** Warning: result can be noncanonical ***\n");
+      {
+        start_comment ();
+        printf ("*** Warning: result can be noncanonical ***\n");
+      }
       if (extradeterminants)
       {
         if (deficiency == 2) laurent_canonify_exponents (determinant2);
@@ -219,7 +226,11 @@ alexander (struct presentation *p)
        *    if (ai->l2num + ai->fl2num > 1) ...
        * but if ai->l2num == 1 the message would be printed twice
        */
-      if (ai->l2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
+      if (ai->l2num > 1)
+      {
+        start_comment ();
+        printf ("*** Warning: result can be noncanonical ***\n");
+      }
       alexander_fromideal (ai);
       break;
 
@@ -239,14 +250,16 @@ alexander (struct presentation *p)
       ai = three_components_link (p);
       if (ai == 0) { foxdtoolarge++; break; }
       //if (ai->l2num + ai->fl2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
-      printf ("# *** Warning: result can be noncanonical ***\n");
+      start_comment ();
+      printf ("*** Warning: result can be noncanonical ***\n");
       alexander_fromideal (ai);
       break;
 
       default:
       ai = generic_ideal_computation (p, rank, p->gennum - foxd);
       if (ai == 0) return (0);
-      printf ("# *** Warning: result can be noncanonical ***\n");
+      start_comment ();
+      printf ("*** Warning: result can be noncanonical ***\n");
       alexander_fromideal (ai);
       break;
     }
@@ -255,7 +268,8 @@ alexander (struct presentation *p)
     default:
     ai = generic_ideal_computation (p, rank, p->gennum - foxd);
     if (ai == 0) return (0);
-    printf ("# *** Warning: result can be noncanonical ***\n");
+    start_comment ();
+    printf ("*** Warning: result can be noncanonical ***\n");
     alexander_fromideal (ai);
     break;
   }
@@ -335,7 +349,8 @@ alexander_fromideal (struct alexanderideal *ai)
         }
         if (canonify_ideal2 (&determinant2, extradeterminants, extradets) == 0)
         {
-          printf ("# *** Warning: result can be noncanonical ***\n");
+          start_comment ();
+          printf ("*** Warning: result can be noncanonical ***\n");
           for (i = 0; i < ai->l2num; i++) laurent_canonify_exponents (ai->l[i]);
           for (i = 0; i < ai->fl2num; i++) laurent_canonify_exponents (ai->l[i + ai->fl2offset]);
         }
@@ -378,7 +393,8 @@ printout_ideal1 (struct alexanderideal *ai, struct laurentpoly *principal)
       break;
 
       case OUTFORMAT_MACAULAY2:
-      printf ("# M2 -- Macaulay2 input commands:\n");
+      start_comment ();
+      printf ("M2 -- Macaulay2 input commands:\n");
       printf ("S = ZZ[t,tt]\n");
       printf ("groebnerBasis ideal (t*tt-1,\n");
       break;
@@ -483,7 +499,8 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
       break;
 
       case OUTFORMAT_MACAULAY2:
-      printf ("# M2 -- Macaulay2 input commands:\n");
+      start_comment ();
+      printf ("M2 -- Macaulay2 input commands:\n");
       printf ("S = ZZ[u,uu,v,vv%s]\n", extraindets2);
       printf ("groebnerBasis ideal (u*uu-1,v*vv-1%s,\n", extraindets3);
       break;
@@ -3246,4 +3263,24 @@ ai_increase_size (struct alexanderideal *ai)
   }
   free (ai);
   return (newai);
+}
+
+/* one-line comment */
+
+void
+start_comment (void)
+{
+  extern int outformat;
+
+  switch (outformat)
+  {
+    case OUTFORMAT_MACAULAY2:
+    printf ("-- ");
+    break;
+
+    case OUTFORMAT_APPCONTOUR:
+    default:
+    printf ("# ");
+    break;
+  }
 }

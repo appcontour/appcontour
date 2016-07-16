@@ -91,3 +91,5 @@ struct alexanderideal *compute_invariant_factor (struct laurentpoly ***columns, 
 
 void print_matrix1 (struct laurentmatrix *matrix);
 void print_matrix (struct laurentmatrix *matrix, int indets);
+
+void start_comment (void);
