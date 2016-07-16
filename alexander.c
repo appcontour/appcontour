@@ -378,6 +378,7 @@ printout_ideal1 (struct alexanderideal *ai, struct laurentpoly *principal)
       break;
 
       case OUTFORMAT_MACAULAY2:
+      printf ("# M2 -- Macaulay2 input commands:\n");
       printf ("S = ZZ[t,tt]\n");
       printf ("groebnerBasis ideal (t*tt-1,\n");
       break;
@@ -482,6 +483,7 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
       break;
 
       case OUTFORMAT_MACAULAY2:
+      printf ("# M2 -- Macaulay2 input commands:\n");
       printf ("S = ZZ[u,uu,v,vv%s]\n", extraindets2);
       printf ("groebnerBasis ideal (u*uu-1,v*vv-1%s,\n", extraindets3);
       break;
