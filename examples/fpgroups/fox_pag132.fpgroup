@@ -1,0 +1,7 @@
+#
+# wirtinger presentation of example 8 of fox quick trip (pag 132)
+#
+fpgroup {
+<a, b, c, d, e, f, g, h, i, j;
+afgHGB, chiHGB, dijHGB, ejfHGB>
+}
