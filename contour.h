@@ -60,6 +60,8 @@
 #define ACTION_SUGGEST_P_SURGERY 52
 #define ACTION_FOXJACOBIAN 53
 #define ACTION_KNOTSUM 54
+#define ACTION_KNOTNAME2DTCODE 55
+#define ACTION_KNOTNAME2GAUSSCODE 56
 
 struct global_data {
   int rulenames;
@@ -389,6 +391,8 @@ void freearc (struct arc *);
 int readsketch_arc (int arcid, struct sketch *sketch, FILE *file);
 int readsketch_region (int regionid, struct sketch *sketch, FILE *file);
 struct borderlist *readsketch_bl (struct region *r, struct sketch *sketch, FILE *file);
+
+void knotname2code (FILE *file, int action);
 
 /* knot2morse */
 int knot2morse (FILE *file);

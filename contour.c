@@ -48,6 +48,7 @@ int principal = 0;
 int internalcheck = 0;
 int abelianize = 0;
 int experimental = 0;
+int userwantscode = 0;
 static int renumber = 1;
 
 struct global_data globals;
@@ -498,6 +499,8 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"canonify") == 0) action = ACTION_CANONIFY;
     if (strcmp(argv[i],"giovecanonify") == 0) action = ACTION_GIOVECANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
+    if (strcmp(argv[i],"knotname2dtcode") == 0) action = ACTION_KNOTNAME2DTCODE;
+    if (strcmp(argv[i],"knotname2gausscode") == 0) action = ACTION_KNOTNAME2GAUSSCODE;
     if (strcmp(argv[i],"any2morse") == 0) action = ACTION_ANY2MORSE;
     if (strcmp(argv[i],"printmorse") == 0) action = ACTION_PRINTMORSE;
     if (strcmp(argv[i],"characteristic") == 0) action = ACTION_CHARACTERISTIC;
@@ -991,6 +994,11 @@ main (int argc, char *argv[])
     any2morse (infile);
     break;
 
+    case ACTION_KNOTNAME2DTCODE:
+    case ACTION_KNOTNAME2GAUSSCODE:
+    knotname2code (infile, action);
+    break;
+
     case ACTION_PRINTMORSE:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     if (docanonify) canonify (sketch);
@@ -1288,6 +1296,22 @@ readcontour (FILE *file)
 #endif
   fprintf (stderr, "Only 'morse'/'sketch' formats implemented\n");
   exit (2);
+}
+
+void
+knotname2code (FILE *file, int action)
+{
+  int tok;
+
+  tok = gettoken (file);
+  if (tok != TOK_KNOTSCAPE)
+  {
+    printf ("knotname/knotscape input syntax required.\n");
+    exit (2);
+  }
+
+  userwantscode = action;
+  readknotscape (file);
 }
 
 void
