@@ -1,0 +1,100 @@
+#!/bin/bash
+#
+knotname="$1"
+
+function usage ()
+{
+  echo "Usage: $0 <knotname> <arguments-to-contour>"
+  echo ""
+  echo "This is a quick way to use contour on input file of the form \"knotname {...}\""
+  echo "i.e. by using the name of the knot in one of the standard forms"
+  echo ""
+  echo "       $0 --info"
+  echo "To get more info."
+}
+
+if [ -z "$knotname" -o "$knotname" == "--help" ]
+then
+  usage
+  exit 0
+fi
+
+if [ "$knotname" == "--info" ]
+then
+  echo "Standard knot names include:"
+  echo
+  echo
+  echo "ROLFSEN and KNOT ATLAS:          \" <n>_<m>\"  or  \"K<n>_<m>\""
+  echo
+  echo "e.g. K8_2 is the second knot with eight crossings in the Rolfsen table."
+  echo "This convention is also used in the knot atlas, without the leading 'K'"
+  echo "'n' is a number between 3 and 10, 'm' has a value from 1 to a maximum"
+  echo "number that depends on 'n':"
+  echo ""
+  echo "  n  max m"
+  echo " ---------"
+  echo "  3    1"
+  echo "  4    1"
+  echo "  5    2"
+  echo "  6    3"
+  echo "  7    7"
+  echo "  8   21"
+  echo "  9   49"
+  echo " 10  165(*)"
+  echo
+
+  echo
+  echo "HT NOTATION:                   \"K<n>a<m>\"   or   \"K<n>n<m>\""
+  echo
+  echo "Due to Hoste and Thistlethwaite.  <n> is the number of crossings,"
+  echo "'a' stands for 'alternating', 'n' stands for 'non-alternating'."
+  echo "Note that the ordering is different then that in the Rolfsen table"
+  echo "<n> can assume values as high as n=12 or as high as n=16 if the appropriate"
+  echo "'.pak' files have been installed in your system.  For the maximum values"
+  echo "of <m> we refer to the Knot Atlas."
+  echo
+
+  echo
+  echo "THISTLETHWAITE LINKS TABLE:     \"L<n>a<m>\"   or   \"L<n>n<m>\""
+  echo
+  echo "Links with two or more components, organized similarly to the knot HT notation"
+  echo "<n> ranges from 2 to 11"
+  echo
+
+  echo
+  echo "SPECIAL ENTRIES:"
+  echo
+  echo "  unknot          (the trivial knot, usually called unknot)"
+  echo "  granny          (connected sum of two trefoil knots 3_1)"
+  echo "  square          (connected sum of trefoil and its mirror image)"
+  echo
+  echo "---"
+  echo "(*) The Rolfsen table has a duplicated entry (10_162, equivalent to 10_161)"
+  echo "The subsequent four knots have numbering in the knot atlas that differ by 1"
+  echo "from the numbering in the Rolfsen table"
+  echo "---"
+  echo "Knot atlas: http://katlas.math.toronto.edu/"
+  echo "---"
+  echo "Dale Rolfsen: Knots and Links, AMS Chelsea publishing (1976)"
+
+  exit 0
+fi
+
+shift
+
+args="$*"
+
+case $knotname in
+  granny|square)
+  contour $args $knotname
+  ;;
+
+  unknot|0_1|K0_1)
+  #echo 'knot{^;U;}' | contour $args
+  contour $args knot_0_1
+  ;;
+
+  *)
+  echo "knotname{$knotname}" | contour $args
+  ;;
+esac
