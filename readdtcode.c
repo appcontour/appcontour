@@ -552,15 +552,25 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   }
   for (i = 0; i < numlabels; i++)
   {
-    if (dt_involution[i] < 0)
+    if (dt_involution[i] < 0 || dt_involution[i] >= numlabels)
     {
       printf ("Must use all even number from 2 to %d\n", numlabels);
       exit (5);
     }
+    if (((dt_involution[i] + i) % 2) != 1)
+    {
+      printf ("Involution is not an even-odd coupling\n");
+      exit (6);
+    }
+    if (i != dt_involution[dt_involution[i]])
+    {
+      printf ("This is not an involution\n");
+      exit (7);
+    }
     if (abs(i - dt_involution[i]) <= 1)
     {
       printf ("No tight loop allowed: %d %d\n", i + 1, dt_involution[i] + 1);
-      exit (6);
+      exit (8);
     }
   }
 
