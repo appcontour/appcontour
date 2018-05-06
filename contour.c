@@ -1195,6 +1195,15 @@ main (int argc, char *argv[])
           switch (action)
           {
             case ACTION_ALEXANDER:
+              if (simplify)
+              {
+                if (ai->l1num > 1)
+                {
+                  start_comment ();
+                  printf ("*** Warning: result can be noncanonical ***\n");
+                }
+                ai = laurent_simplify_ideal (ai);
+              }
               alexander_fromideal (ai);
             break;
 
