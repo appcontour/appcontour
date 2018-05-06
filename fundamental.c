@@ -1754,7 +1754,7 @@ read_generators_list (FILE *file, char *gennames, int maxgennum)
   return (0);
 }
 
-#define BUFSIZE 200
+#define BUFSIZE 2000
 
 struct presentationrule *
 read_relators_list (FILE *file, char *generator_names, int gennum)

@@ -1550,7 +1550,7 @@ countcc_flood_step (struct region *r, int i)
         if (rr->strati[ii] != r->strati[i])
         {
           goon = 1;
-          assert (rr->strati[ii] = -1);
+          assert (rr->strati[ii] == -1);
           rr->strati[ii] = r->strati[i];
         }
       }
