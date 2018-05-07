@@ -46,6 +46,7 @@ alexander (struct presentation *p)
   deficiency = p->gennum - numcols;
   if (deficiency < p->espected_deficiency && numcols > 0)
   {
+    start_comment ();
     printf ("WARNING: deficiency: %d, espected value: %d.", deficiency, p->espected_deficiency);
     if (verbose)
     {
@@ -396,8 +397,8 @@ printout_ideal1 (struct alexanderideal *ai, struct laurentpoly *principal)
       case OUTFORMAT_MACAULAY2:
       start_comment ();
       printf ("M2 -- Macaulay2 input commands:\n");
-      printf ("S = ZZ[t,tt]\n");
-      printf ("groebnerBasis ideal (t*tt-1,\n");
+      printf ("S = ZZ[t,u]\n");
+      printf ("groebnerBasis ideal (t*u-1,\n");
       break;
 
       default:
@@ -874,7 +875,7 @@ laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
 struct alexanderideal *
 laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int corank)
 {
-  extern int verbose;
+  extern int verbose, simplifyideal;
   struct alexanderideal *ai;
   struct laurentmatrix *matrix, *minor;
   struct laurentpoly *l, **matrixcolumn, **columnj, **columnjj;
@@ -1018,7 +1019,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   }
 
   laurent_free_matrix (matrix);
-  ai = laurent_simplify_ideal (ai);
+  if (simplifyideal) ai = laurent_simplify_ideal (ai);
   return (ai);
 }
 
@@ -1587,6 +1588,8 @@ next_subset (int *vec, int k, int n)
   return (0);
 }
 
+void laurent_sort_entries (int num, struct laurentpoly *l[]);
+
 struct alexanderideal *
 laurent_simplify_ideal (struct alexanderideal *ai)
 {
@@ -1595,7 +1598,14 @@ laurent_simplify_ideal (struct alexanderideal *ai)
   int last, i, spread, lspread;
   int linf, maxcoef, loop = 1;
 
-  if (experimental > 0 && ai->indets == 1 && principal == 0) return groebner1 (ai);
+  if (experimental > 0 && ai->indets == 1 && principal == 0)
+  {
+    ai = groebner1 (ai);
+    laurent_sort_entries (ai->l1num, ai->l);
+    for (i = 0; i < ai->l1num; i++)
+      laurent_canonifysign1 (ai->l[i]);
+    return (ai);
+  }
 
   while (loop)
   {
@@ -1616,6 +1626,7 @@ laurent_simplify_ideal (struct alexanderideal *ai)
         }
         if (maxcoef > (INT_MAX >> (4*sizeof(int))))
         {
+          start_comment ();
           printf ("WARNING: inhibiting gcd computation due to integer size\n");
           break;
         }
@@ -1683,7 +1694,6 @@ laurent_simplify_ideal (struct alexanderideal *ai)
  */
 
 int laurent_try_reduce_pair (struct laurentpoly *l1, struct laurentpoly *l2);
-void laurent_sort_entries (int num, struct laurentpoly *l[]);
 
 int
 laurent_try_simplify_ideal (struct alexanderideal *ai)
@@ -1976,7 +1986,10 @@ l_safety_check (int f, int maxc)
   if (maxc > safesize)
   {
     if (int_overflow_encountered++ == 0)
+    {
+      start_comment ();
       printf ("WARNING: above max allowed int size, cannot complete simplification\n");
+    }
     return (0);
   }
   return (1);

@@ -2,6 +2,7 @@
  * definitions for the computation of the fundamental group
  */
 
+#define FUNDAMENTAL_H_INCLUDED 1
 #define FG_UNDEF (-2)
 #define FG_SURFACE 0
 #define FG_INTERNAL 1

@@ -36,7 +36,9 @@ int dorecomputef = 1;
 int doretagregions = 1;
 int finfinity = 0;
 int preabelian = 0;
-int simplify = 1;
+int simplifypresentation = 1;
+int simplifycomplex = 1;
+int simplifyideal = 1;
 int nobasecanonify = 0;
 int mendesge = HGE_TEXT;
 int viacc = 0;
@@ -227,7 +229,22 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--nosimplify") == 0)
     {
-      simplify = 0;
+      simplifypresentation = simplifycomplex = simplifyideal = 0;
+      continue;
+    }
+    if (strcmp(argv[i],"--nopresentationsimplify") == 0)
+    {
+      simplifypresentation = 0;
+      continue;
+    }
+    if (strcmp(argv[i],"--nocomplexsimplify") == 0)
+    {
+      simplifycomplex = 0;
+      continue;
+    }
+    if (strcmp(argv[i],"--noidealsimplify") == 0)
+    {
+      simplifyideal = 0;
       continue;
     }
     if (strcmp(argv[i],"--nobasecanonify") == 0)
@@ -383,7 +400,10 @@ main (int argc, char *argv[])
       printf ("      default value (d=1 for knots and links, d=2 for genus-2 surfaces, etc)\n");
       printf ("  --maxd: compute the elementary ideal corresponding to 1x1 minors of the presentation\n");
       printf ("      matrix\n");
-      printf ("  --nosimplify: do not simplify the presentation of the fundamental group\n");
+      printf ("  --nopresentationsimplify: do not simplify the presentation of the fundamental group\n");
+      printf ("  --nocomplexsimplify: do not try to collapse the cell complex\n");
+      printf ("  --noidealsimplify: do not simplify the alexander ideal\n");
+      printf ("  --nosimplify: all three simplifications above\n");
       printf ("  --nobasecanonify: do not base-canonify Alexander polynomial in two indeterminates\n");
       printf ("  --shuffle: random change of base for Alexander ideal in two indeterminates\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
@@ -1136,7 +1156,7 @@ main (int argc, char *argv[])
     }
     ccomplex = compute_cellcomplex (sketch, fg_type);
 
-    if (simplify) {
+    if (simplifycomplex) {
       count = complex_collapse (ccomplex);
       if (debug) printf ("Collapsed %d cell pairs\n", count);
     }
@@ -1174,16 +1194,16 @@ main (int argc, char *argv[])
               abelianized_fundamental_group (p);
               break;
             case ACTION_FOXJACOBIAN:
-              if (simplify) simplify_presentation (p);
+              if (simplifypresentation) simplify_presentation (p);
               foxjacobian (p);
               break;
             case ACTION_ALEXANDER:
-              if (simplify) simplify_presentation (p);
+              if (simplifypresentation) simplify_presentation (p);
               res = alexander (p);
               if (res == 0) exit (1);
               break;
             case ACTION_LINKINGNUMBER:
-              if (simplify) simplify_presentation (p);
+              if (simplifypresentation) simplify_presentation (p);
               linkingnumber (p);
               break;
           }
@@ -1195,7 +1215,7 @@ main (int argc, char *argv[])
           switch (action)
           {
             case ACTION_ALEXANDER:
-              if (simplify)
+              if (simplifyideal)
               {
                 if (ai->l1num > 1)
                 {

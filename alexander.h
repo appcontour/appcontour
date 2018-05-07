@@ -2,6 +2,10 @@
  * definitions for alexander polynomial
  */
 
+#ifndef FUNDAMENTAL_H_INCLUDED
+  #include "fundamental.h"   // needed for structure definition
+#endif
+
 #define IDEAL_DEF_GENERATORS_NUM 10
 
 /*

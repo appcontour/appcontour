@@ -20,7 +20,7 @@ extern int quiet;
 extern int verbose;
 extern int interactive;
 extern int preabelian;
-extern int simplify;
+extern int simplifypresentation;
 
 void
 compute_fundamental (struct ccomplex *cc, int action)
@@ -53,7 +53,7 @@ compute_fundamental (struct ccomplex *cc, int action)
         abelianized_fundamental_group (cccc->p);
         break;
       case ACTION_FOXJACOBIAN:
-        if (simplify) simplify_presentation (cccc->p);
+        if (simplifypresentation) simplify_presentation (cccc->p);
         foxjacobian (cccc->p);
         break;
       case ACTION_ALEXANDER:
@@ -78,7 +78,7 @@ fundamental_group (struct presentation *p)
 {
   if (verbose >= 2) print_presentation (p);
   if (interactive >= 2) fg_interactive (p);
-  if (simplify) simplify_presentation (p);
+  if (simplifypresentation) simplify_presentation (p);
   if (preabelian) topreabelian (p);
   if (interactive) fg_interactive (p);
   print_presentation (p);
