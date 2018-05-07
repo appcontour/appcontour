@@ -13,6 +13,7 @@
 #include "alexander.h"
 #include "fox.h"
 #include "parser.h"
+#include "groebner.h"
 
 static int int_overflow_encountered = 0;
 
@@ -1590,9 +1591,11 @@ struct alexanderideal *
 laurent_simplify_ideal (struct alexanderideal *ai)
 {
   struct laurentpoly *oldgcd, *newgcd;
-  extern int principal, verbose;
+  extern int principal, verbose, experimental;
   int last, i, spread, lspread;
   int linf, maxcoef, loop = 1;
+
+  if (experimental > 0 && ai->indets == 1 && principal == 0) return groebner1 (ai);
 
   while (loop)
   {
