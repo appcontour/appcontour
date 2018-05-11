@@ -829,7 +829,7 @@ orientedgauss2sketch (struct vecofintlist *loiv)
 #define MAXFILELENGTH 2000
 
 static char tokenword[80];
-static char pathname[MAXFILELENGTH];
+static char pathname[MAXFILELENGTH+1];
 
 FILE *
 open_pak_file (char *pakname)

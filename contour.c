@@ -59,7 +59,7 @@ struct tagged_data user_data;
 /* prototipi locali */
 FILE *open_description_file (char *arg);
 FILE *new_file (FILE *oldfile, FILE *newfile);
-static char examplesfilename[MAXFILELENGTH];
+static char examplesfilename[MAXFILELENGTH+1];
 int readintlistsub1 (int nccmax, int *ccids, char *s);
 
 int
