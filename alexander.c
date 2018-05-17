@@ -1995,6 +1995,26 @@ l_safety_check (int f, int maxc)
   return (1);
 }
 
+int
+ll_safety_check (long long int f, long long int maxc)
+{
+  long long int safesize = LLONG_MAX;
+
+  if (f < 0) f = -f;
+  if (f) safesize /= f;
+  safesize /= 4;
+  if (maxc > safesize)
+  {
+    if (int_overflow_encountered++ == 0)
+    {
+      start_comment ();
+      printf ("WARNING: above max allowed int size, cannot complete simplification\n");
+    }
+    return (0);
+  }
+  return (1);
+}
+
 void laurent_sort_entries_buf (int num, struct laurentpoly *l[], struct laurentpoly *buffer[]);
 
 void

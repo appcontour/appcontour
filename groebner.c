@@ -133,7 +133,9 @@ struct stem *
 groebner1_reduce_using_rule (struct stem *p, struct stem *rule, int *statuspt)
 {
   int bshift, tshift, j, j1, j2, ruledegree, pdegree;
-  int tcoeff, bcoeff, quotient, bzeros, tzeros, dummy;
+  Stemint tcoeff, bcoeff, quotient;
+  int bzeros, tzeros, dummy;
+  Stemint maxcsize;
 
   *statuspt = 0;
   assert (rule && rule->degree >= 0);
@@ -148,13 +150,15 @@ printf ("\n");
 
   tcoeff = rule->coef[rule->degree];
   bcoeff = rule->coef[0];
+  maxcsize = stem_linf (rule);
   for (bshift = 0, tshift = pdegree - ruledegree; tshift >= bshift; bshift++, tshift--)
   {
-    /* TODO: here we need a check on integer overflow */
     quotient = gb_int_div (p->coef[pdegree - bshift], tcoeff);
     if (quotient)
     {
-printf ("TOP, quotient = %d: ", quotient);
+printf ("TOP, quotient = %lld: ", quotient);
+      /* TODO: here we need a check on integer overflow */
+      if (ll_safety_check (quotient, maxcsize) == 0) return (p);
       (*statuspt)++;
       for (j1 = 0, j2 = pdegree - bshift - ruledegree; j1 <= ruledegree; j1++, j2++)
       {
@@ -162,13 +166,23 @@ printf ("TOP, quotient = %d: ", quotient);
       }
 printout_stem (p);
 printf ("\n");
+      if (stem_linf (p) >= LLONG_MAX/2)
+      {
+        /* backtrack if coefficients grow too much */
+        for (j1 = 0, j2 = pdegree - bshift - ruledegree; j1 <= ruledegree; j1++, j2++)
+        {
+          p->coef[j2] += quotient*rule->coef[j1];
+        }
+        return (p);
+      }
     }
     if (tshift > bshift)
     {
       quotient = gb_int_div (p->coef[bshift], bcoeff);
       if (quotient)
       {
-printf ("BOTTOM, quotient = %d: ", quotient);
+printf ("BOTTOM, quotient = %lld: ", quotient);
+        if (ll_safety_check (quotient, maxcsize) == 0) return (p);
         (*statuspt)++;
         for (j1 = 0, j2 = bshift; j1 <= ruledegree; j1++, j2++)
         {
@@ -176,6 +190,15 @@ printf ("BOTTOM, quotient = %d: ", quotient);
         }
 printout_stem (p);
 printf ("\n");
+        if (stem_linf (p) >= LLONG_MAX/2)
+        {
+          /* backtrack if coefficients grow too much */
+          for (j1 = 0, j2 = bshift; j1 <= ruledegree; j1++, j2++)
+          {
+            p->coef[j2] += quotient*rule->coef[j1];
+          }
+          return (p);
+        }
       }
     }
   }
@@ -217,7 +240,7 @@ printf ("CHANGE SIGN of "); printout_stem (p); printf ("\n");
     /* recursively reduce... the leading term will not change and
      * we don't risk infinite recursion
      */
-    groebner1_reduce_using_rule (p, rule, &dummy);
+    p = groebner1_reduce_using_rule (p, rule, &dummy);
 printf ("  ---> "); printout_stem (p); printf ("\n");
   }
   return p;
@@ -294,7 +317,11 @@ stem2lp (struct stem *stem)
   lp->stemdegree = stem->degree;
   lp->minexpon = 0;
   lp->indets = 1;
-  for (i = 0; i <= stem->degree; i++) lp->stem[i].l0 = stem->coef[i];
+  for (i = 0; i <= stem->degree; i++)
+  {
+    assert (INT_MIN <= stem->coef[i] && stem->coef[i] <= INT_MAX);
+    lp->stem[i].l0 = stem->coef[i];
+  }
 
   return (lp);
 }
@@ -335,14 +362,28 @@ printout_stem (struct stem *stem)
 
   for (i = 0; i <= stem->degree; i++)
   {
-    printf ("%+ds^%d", stem->coef[i], i);
+    printf ("%+llds^%d", stem->coef[i], i);
   }
 }
 
-int
-gb_int_div (int dividend, int divisor)
+Stemint
+stem_linf (struct stem *stem)
 {
-  int rest, quotient;
+  Stemint maxc = 0;
+  int i;
+
+  if (stem == 0) return (0);
+  for (i = 0; i <= stem->degree; i++)
+  {
+    if (llabs(stem->coef[i]) > maxc) maxc = llabs(stem->coef[i]);
+  }
+  return maxc;
+}
+
+Stemint
+gb_int_div (Stemint dividend, Stemint divisor)
+{
+  Stemint rest, quotient;
 
   assert (divisor);
   if (divisor < 0) {divisor = -divisor; dividend = -dividend;}

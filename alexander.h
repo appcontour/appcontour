@@ -97,3 +97,7 @@ void print_matrix1 (struct laurentmatrix *matrix);
 void print_matrix (struct laurentmatrix *matrix, int indets);
 
 void start_comment (void);
+
+int l_safety_check (int f, int maxc);
+int ll_safety_check (long long int f, long long int maxc);
+

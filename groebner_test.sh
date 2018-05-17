@@ -29,7 +29,7 @@ ideal(t) {
 +2589-58686413t+787863t^2+17104t^3;
 }"
 
-kanenobu.sh 10 -2 | ./contour --out alexander --foxd 2 2>/dev/null -Q
+#echo "$idealkan8m2" | ./contour --experimental alexander
 
 ideal1="
 ideal(t) {

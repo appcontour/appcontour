@@ -2,7 +2,7 @@
   #include "fundamental.h"   // needed for structure definition
 #endif
 
-typedef int Stemint;
+typedef long long int Stemint;
 
 struct stem {
   int dim;
@@ -36,7 +36,9 @@ int groebner1_add_spolynomials (struct stemideal *si);
 void printout_si (struct stemideal *si);
 void printout_stem (struct stem *si);
 void free_stemideal (struct stemideal *si);
-int gb_int_div (int dividend, int divisor);
+Stemint gb_int_div (Stemint dividend, Stemint divisor);
+Stemint stem_linf (struct stem *stem);
+
 
 /*
  * struct for working with stems in one indeterminate
