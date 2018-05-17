@@ -134,7 +134,7 @@ groebner1_reduce_using_rule (struct stem *p, struct stem *rule, int *statuspt)
 {
   int bshift, tshift, j, j1, j2, ruledegree, pdegree;
   Stemint tcoeff, bcoeff, quotient;
-  int bzeros, tzeros;
+  int bzeros, tzeros, previous_are_zero;
   //int dummy;
   Stemint maxcsize;
 
@@ -152,6 +152,7 @@ printf ("\n");
   tcoeff = rule->coef[rule->degree];
   bcoeff = rule->coef[0];
   maxcsize = stem_linf (rule);
+  previous_are_zero = 1;
   for (bshift = 0, tshift = pdegree - ruledegree; tshift >= bshift; bshift++, tshift--)
   {
     quotient = gb_int_div (p->coef[pdegree - bshift], tcoeff);
@@ -174,7 +175,7 @@ printf ("\n");
         return (p);
       }
     }
-    if (bshift == 0 && p->coef[pdegree] < 0)
+    if (previous_are_zero  && p->coef[pdegree - bshift] < 0)
     {
 printf ("CHANGE SIGN of "); printout_stem (p); printf ("\n");
       /* normalize sign of leading term */
@@ -184,6 +185,7 @@ printf ("CHANGE SIGN of "); printout_stem (p); printf ("\n");
       }
 printf ("  ---> "); printout_stem (p); printf ("\n");
     }
+    if (p->coef[pdegree - bshift]) previous_are_zero = 0;
     if (tshift > bshift)
     {
       quotient = gb_int_div (p->coef[bshift], bcoeff);
@@ -234,20 +236,20 @@ printf ("  ---> "); printout_stem (p); printf ("\n");
   p->degree = pdegree;
 
   assert (p->coef[pdegree]);
-//  if (p->coef[pdegree] < 0)
-//  {
-//printf ("CHANGE SIGN of "); printout_stem (p); printf ("\n");
-//    /* normalize sign of leading term */
-//    for (j = 0; j <= pdegree; j++)
-//    {
-//      p->coef[j] = -p->coef[j];
-//    }
+  if (p->coef[pdegree] < 0)
+  {
+printf ("CHANGE SIGN of "); printout_stem (p); printf ("\n");
+    /* normalize sign of leading term */
+    for (j = 0; j <= pdegree; j++)
+    {
+      p->coef[j] = -p->coef[j];
+    }
 //    /* recursively reduce... the leading term will not change and
 //     * we don't risk infinite recursion
 //     */
 //    p = groebner1_reduce_using_rule (p, rule, &dummy);
-//printf ("  ---> "); printout_stem (p); printf ("\n");
-//  }
+printf ("  ---> "); printout_stem (p); printf ("\n");
+  }
   return p;
 }
 
