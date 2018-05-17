@@ -34,7 +34,9 @@ struct stem * groebner1_reduce_using_rule (struct stem *p,
 int groebner1_dropzeros (struct stemideal *si);
 int groebner1_add_spolynomials (struct stemideal *si);
 void printout_si (struct stemideal *si);
+void printout_stem (struct stem *si);
 void free_stemideal (struct stemideal *si);
+int gb_int_div (int dividend, int divisor);
 
 /*
  * struct for working with stems in one indeterminate
