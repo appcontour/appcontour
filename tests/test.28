@@ -12,7 +12,7 @@ for pq in $pqlist
 do
   p=$(echo "$pq" | cut -f1 -d,)
   q=$(echo "$pq" | cut -f2 -d,)
-  echo "second elementary principal ideal for kanenobu $p $q"
+  echo "second elementary ideal for kanenobu $p $q"
   ./utils/kanenobu.sh $p $q | ./contour --out alexander --internalcheck --principal --foxd 2 -q
 done
 
