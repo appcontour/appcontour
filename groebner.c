@@ -134,7 +134,8 @@ groebner1_reduce_using_rule (struct stem *p, struct stem *rule, int *statuspt)
 {
   int bshift, tshift, j, j1, j2, ruledegree, pdegree;
   Stemint tcoeff, bcoeff, quotient;
-  int bzeros, tzeros, dummy;
+  int bzeros, tzeros;
+  //int dummy;
   Stemint maxcsize;
 
   *statuspt = 0;
@@ -156,7 +157,6 @@ printf ("\n");
     quotient = gb_int_div (p->coef[pdegree - bshift], tcoeff);
     if (quotient)
     {
-printf ("TOP, quotient = %lld: ", quotient);
       /* TODO: here we need a check on integer overflow */
       if (ll_safety_check (quotient, maxcsize) == 0) return (p);
       (*statuspt)++;
@@ -164,8 +164,6 @@ printf ("TOP, quotient = %lld: ", quotient);
       {
         p->coef[j2] -= quotient*rule->coef[j1];
       }
-printout_stem (p);
-printf ("\n");
       if (stem_linf (p) >= LLONG_MAX/2)
       {
         /* backtrack if coefficients grow too much */
@@ -176,20 +174,27 @@ printf ("\n");
         return (p);
       }
     }
+    if (bshift == 0 && p->coef[pdegree] < 0)
+    {
+printf ("CHANGE SIGN of "); printout_stem (p); printf ("\n");
+      /* normalize sign of leading term */
+      for (j = 0; j <= pdegree; j++)
+      {
+        p->coef[j] = -p->coef[j];
+      }
+printf ("  ---> "); printout_stem (p); printf ("\n");
+    }
     if (tshift > bshift)
     {
       quotient = gb_int_div (p->coef[bshift], bcoeff);
       if (quotient)
       {
-printf ("BOTTOM, quotient = %lld: ", quotient);
         if (ll_safety_check (quotient, maxcsize) == 0) return (p);
         (*statuspt)++;
         for (j1 = 0, j2 = bshift; j1 <= ruledegree; j1++, j2++)
         {
           p->coef[j2] -= quotient*rule->coef[j1];
         }
-printout_stem (p);
-printf ("\n");
         if (stem_linf (p) >= LLONG_MAX/2)
         {
           /* backtrack if coefficients grow too much */
@@ -229,20 +234,20 @@ printf ("\n");
   p->degree = pdegree;
 
   assert (p->coef[pdegree]);
-  if (p->coef[pdegree] < 0)
-  {
-printf ("CHANGE SIGN of "); printout_stem (p); printf ("\n");
-    /* normalize sign of leading term */
-    for (j = 0; j <= pdegree; j++)
-    {
-      p->coef[j] = -p->coef[j];
-    }
-    /* recursively reduce... the leading term will not change and
-     * we don't risk infinite recursion
-     */
-    p = groebner1_reduce_using_rule (p, rule, &dummy);
-printf ("  ---> "); printout_stem (p); printf ("\n");
-  }
+//  if (p->coef[pdegree] < 0)
+//  {
+//printf ("CHANGE SIGN of "); printout_stem (p); printf ("\n");
+//    /* normalize sign of leading term */
+//    for (j = 0; j <= pdegree; j++)
+//    {
+//      p->coef[j] = -p->coef[j];
+//    }
+//    /* recursively reduce... the leading term will not change and
+//     * we don't risk infinite recursion
+//     */
+//    p = groebner1_reduce_using_rule (p, rule, &dummy);
+//printf ("  ---> "); printout_stem (p); printf ("\n");
+//  }
   return p;
 }
 
@@ -280,13 +285,15 @@ struct stem *
 lp2stem (struct laurentpoly *lp)
 {
   struct stem *stem;
-  int i;
+  int i, sign;
 
   stem = (struct stem *) malloc (STEMSIZE(lp->stemdegree + 1));
   stem->dim = lp->stemdegree + 1;
   stem->degree = lp->stemdegree;
 
-  for (i = 0; i <= lp->stemdegree; i++) stem->coef[i] = lp->stem[i].l0;
+  sign = 1;
+  if (lp->stem[lp->stemdegree].l0 < 0) sign = -1;
+  for (i = 0; i <= lp->stemdegree; i++) stem->coef[i] = sign*lp->stem[i].l0;
 
   return (stem);
 }
