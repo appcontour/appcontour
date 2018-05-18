@@ -31,6 +31,26 @@ ideal(t) {
 
 #echo "$idealkan8m2" | ./contour --experimental alexander
 
+#
+# questi due sono lo stesso ideale, la base di Groebner deve coincidere
+#
+ideala1="
+ideal(t) {
++4;
++2t^2+t+1;
+}"
+
+ideala2="
+ideal(t) {
++4;
++2t^2-t-1;
+}"
+
+echo "$ideala1" | ./contour --experimental alexander
+echo "$ideala2" | ./contour --experimental alexander
+
+exit
+
 ideal1="
 ideal(t) {
 +9;
