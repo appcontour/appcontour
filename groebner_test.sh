@@ -3,6 +3,9 @@
 # a quick way to obtain a complex set of generators that end up
 # with an ideal generate by just two polynomials
 
+knot=9_49
+./contour --out alexander --foxd 2 --experimental examples/knots/knot_${knot}.knot
+
 giove="
 ideal(t) {
 +4t-3;

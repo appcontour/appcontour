@@ -34,8 +34,6 @@ struct stem * groebner1_reduce_using_rule (struct stem *p,
 int groebner1_dropzeros (struct stemideal *si);
 int groebner1_add_spolynomials (struct stemideal *si);
 int build_S_pols (struct stem *p1, struct stem *p2, struct stem **spoltoppt, struct stem **spolbottompt);
-struct stem * build_S_pol_top (struct stem *p1, struct stem *p2);
-struct stem * build_S_pol_bottom (struct stem *p1, struct stem *p2);
 struct stem * reduce_pol_si (struct stem *p1, struct stemideal *si);
 struct stem * reduce_pol_si_cycle (struct stem *p1, struct stemideal *si, int *statuspt);
 struct stem * stem_normalize (struct stem *stem);

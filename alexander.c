@@ -1601,13 +1601,16 @@ struct alexanderideal *
 laurent_simplify_ideal (struct alexanderideal *ai)
 {
   struct laurentpoly *oldgcd, *newgcd;
-  extern int principal, verbose, experimental;
+  extern int principal, verbose;
   int last, i, spread, lspread;
   int linf, maxcoef, loop = 1;
 
-  if (experimental > 0 && ai->indets == 1 && principal == 0)
+  if (ai->indets == 1 && principal == 0)
   {
     ai = groebner1 (ai);
+    /* BIG WARNING:  it is not yet proved that this is really a UNIQUE Groebner basis */
+    /* moreover, canonization should be performed with respect to t -> 1/t also */
+    /* (simultaneously on all generators) this is not done yet */
     laurent_sort_entries (ai->l1num, ai->l);
     for (i = 0; i < ai->l1num; i++)
       laurent_canonifysign1 (ai->l[i]);

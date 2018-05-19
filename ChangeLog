@@ -1,3 +1,10 @@
+2018-05-19: a first implementation of a Groebner basis computation for the second
+	elementary ideal for a knot, which is in general not principal.  We do not
+	have at the moment a mathematical proof that the implemented procedure gives
+	a canonical base, however we espect at least to have the correct spread.
+	We still miss comparison with the result after t -> 1/t (although we strongly
+	believe that the Alexander ideals are invariant under such change).
+
 2016-06-24: action "knotsum" computes the connected sum of two knots.  Here
 	knots means apparent contour of a tubular neighborhood of a knot, in
 	the form obtained from a knot description.

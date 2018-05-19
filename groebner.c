@@ -259,9 +259,9 @@ groebner1_add_spolynomials (struct stemideal *si)
 
   startnum = si->num;
   assert (si->dim > startnum);  /* make sure we have space for at least one new polynomial */
-  for (i = 0; i < si->num - 1; i++)
+  for (i = 0; i < startnum - 1; i++)
   {
-    for (j = i+1; j < si->num; j++)
+    for (j = i+1; j < startnum; j++)
     {
 //printf ("Building S-pols top and bottom from "); printout_stem(si->stem[i]);
 //printf (" and "); printout_stem(si->stem[j]); printf ("\n");
@@ -308,9 +308,10 @@ build_S_pols (struct stem *p1, struct stem *p2, struct stem **spoltoppt, struct 
 
   p1deg = p1->degree;
   p2deg = p2->degree;
+  spoltop = spolbottom = *spoltoppt = *spolbottompt = 0;
+  if (p1deg == p2deg) return (0);  /* this should lead to reduction in the reduction stage */
   assert (p1deg > p2deg);
 
-  spoltop = spolbottom = 0;
   /* now p1 is the polynomial with larger degree */
   maxcsize = stem_linf (p1);
   /* compute the S-pol from the top */
@@ -358,49 +359,6 @@ build_S_pols (struct stem *p1, struct stem *p2, struct stem **spoltoppt, struct 
   *spolbottompt = spolbottom;
   if (spoltop && spolbottom) return (2);
   if (spoltop || spolbottom) return (1);
-  return (0);
-}
-
-struct stem *
-build_S_pol_top (struct stem *p1, struct stem *p2)
-{
-  int i, j, p1deg, p2deg;
-  Stemint a, b, maxcsize;
-  struct stem *spol;
-
-  if (p2->degree > p1->degree) return (build_S_pol_top (p2, p1));
-
-  p1deg = p1->degree;
-  p2deg = p2->degree;
-  assert (p1deg > p2deg);
-
-  /* now p1 is the polynomial with larger degree */
-  a = gb_int_div (p2->coef[p2deg], p1->coef[p1deg]);
-  if (a == 0) return (0);
-  maxcsize = stem_linf (p1);
-  if (ll_safety_check (a, maxcsize) == 0) return (0);
-  b = p2->coef[p2deg] - a*p1->coef[p1deg];
-
-  spol = (struct stem *) malloc (STEMSIZE(p1deg + 1));
-  spol->dim = p1deg + 1;
-  spol->degree = p1deg;
-  spol->coef[p1deg] = b;
-  for (i = 0; i < p1deg; i++) spol->coef[i] = - a * p1->coef[i];
-  for (i = 0, j = p1deg-p2deg; i < p2deg; i++, j++) spol->coef[j] += p2->coef[i];
-  spol = stem_normalize (spol);
-  if (stem_linf (spol) >= LLONG_MAX/2)
-  {
-    free (spol);
-    signal_int_overflow();
-    return (0);
-  }
-  return (spol);
-}
-
-struct stem *
-build_S_pol_bottom (struct stem *p1, struct stem *p2)
-{
-  printf ("build_S_pol_bottom NOT IMPLEMENTED\n");
   return (0);
 }
 
