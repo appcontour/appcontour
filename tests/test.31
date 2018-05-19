@@ -31,6 +31,14 @@
 # 10_155: {5,t+1}
 # 10_157: {7,t+1}
 # 10_163: {2,t^2+t+1}
+#
+# appcontour can interpret directly the knot name as in
+#
+#echo "knotname {K10_157} | contour ..."
+#
+# but this requires the 'pak' files of Morwen Thistlethwaite and Jim Hoste installed
+# due to the Rolfsen duplicate (Perko pair), the last knot should be spelled 10_163KA to resolve
+# the ambiguity
 
 list="8_18 9_35 9_37 9_40 9_41 9_46 9_47 9_48 9_49"
 
