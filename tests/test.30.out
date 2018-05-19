@@ -265,7 +265,7 @@ Checking with kanenobu -2 8
 Ideal [
 +5;
 +2-t+2t^2;
-+1-2t-2t^2+t^3;
+-1+2t+2t^2-t^3;
 ]
 Checking with kanenobu -2 10
 # *** Warning: result can be noncanonical ***

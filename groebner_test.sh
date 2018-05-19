@@ -11,8 +11,24 @@ ideal(t) {
 
 echo "$giove" | ./contour --experimental alexander
 
-exit
+#
+# this is the ideal (no simplification) from kanenobu -2 8
+#
+idealkanm2_8="
+#
+# --foxd 2
+#
+# *** Warning: result can be noncanonical ***
+ideal(t) {
++4-7t+4t^2;
++4-6t+t^2+t^3;
++4-6t+t^2+t^3;
+-4+5t+2t^2-2t^3;
+}"
 
+echo "$idealkanm2_8" | ./contour --experimental alexander
+
+exit
 
 #kanenobu.sh 8 -2 | ./contour --out alexander --noidealsimplify -Q --foxd 2 | ./contour alexander --experimental
 

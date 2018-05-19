@@ -313,7 +313,14 @@ alexander_fromideal (struct alexanderideal *ai)
         printf ("Alexander ideal before canonization:\n{\n");
 	printout_ideal1 (ai, 0);
       }
-      for (i = 0; i < ai->l1num; i++) laurent_canonify1 (ai->l[i]);
+      if (ai->l1num == 1) laurent_canonify1 (ai->l[0]);
+       else {
+        for (i = 0; i < ai->l1num; i++)
+        {
+          ai->l[i]->minexpon = 0;
+          laurent_canonifysign1 (ai->l[i]);
+        }
+      }
       printout_ideal1 (ai, 0);
       break;
 
