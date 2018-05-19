@@ -28,8 +28,6 @@ ideal(t) {
 
 echo "$idealkanm2_8" | ./contour --experimental alexander
 
-exit
-
 #kanenobu.sh 8 -2 | ./contour --out alexander --noidealsimplify -Q --foxd 2 | ./contour alexander --experimental
 
 #
