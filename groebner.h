@@ -33,6 +33,11 @@ struct stem * groebner1_reduce_using_rule (struct stem *p,
                                                   struct stem *rule, int *retcode);
 int groebner1_dropzeros (struct stemideal *si);
 int groebner1_add_spolynomials (struct stemideal *si);
+struct stem * build_S_pol_top (struct stem *p1, struct stem *p2);
+struct stem * build_S_pol_bottom (struct stem *p1, struct stem *p2);
+struct stem * reduce_pol_si (struct stem *p1, struct stemideal *si);
+struct stem * reduce_pol_si_cycle (struct stem *p1, struct stemideal *si, int *statuspt);
+struct stem * stem_normalize (struct stem *stem);
 void printout_si (struct stemideal *si);
 void printout_stem (struct stem *si);
 void free_stemideal (struct stemideal *si);
@@ -48,4 +53,4 @@ Stemint stem_linf (struct stem *stem);
 #define STEMSIZE(n) (sizeof(struct stem) + (n)*sizeof(Stemint))
 #define STEMIDEALSIZE(n) (sizeof(struct stemideal) + (n)*sizeof(struct stem *))
 /* provide for extra space to avoid reallocation */
-#define GB_EXTRAROOM(n) (0)
+#define GB_EXTRAROOM(n) (1)

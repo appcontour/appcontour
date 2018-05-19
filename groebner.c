@@ -35,20 +35,17 @@ groebner1 (struct alexanderideal *ai)
   while (1)
   {
     reductions = groebner1_tryreduce (si);
-if (experimental)
-{
-  printf ("Performed %d reductions\n", reductions);
-  printout_si (si);
-}
     assert (reductions >= 0);
-    if (experimental || reductions > 0) groebner1_dropzeros (si);
-if (experimental)
-{
-  printf ("after zero polynomials drop\n");
-  printout_si (si);
-}
+    if (reductions > 0) groebner1_dropzeros (si);
+//printf ("after %d reductions:\n", reductions);
+//printout_si (si);
+//printf ("\n");
     newgenerators = groebner1_add_spolynomials (si);
     assert (newgenerators >= 0);
+    if (newgenerators > 0) groebner1_dropzeros (si);
+//printf ("Added %d new S-polynomials to obtain:\n", newgenerators);
+//printout_si (si);
+//printf ("\n");
     if (reductions + newgenerators <= 0) break;
   }
 
@@ -76,7 +73,6 @@ groebner1_dropzeros (struct stemideal *si)
       if (verbose) printf ("Ideal simplification: zero polynomial removed\n");
     }
   }
-  if (experimental) printf ("i - j = %d\n", i - j);
   si->num = j;
   return (i - j);
 }
@@ -118,7 +114,10 @@ groebner1_tryreduce_once (struct stemideal *si)
     for (j = 0; j < si->num; j++)
     {
       if (i == j) continue;
+//printf ("Trying to reduce [%d,%d] - ", i, j); printout_stem (si->stem[j]);
+//printf (" using "); printout_stem (si->stem[i]); printf ("\n");
       si->stem[j] = groebner1_reduce_using_rule (si->stem[j], si->stem[i], &retcode);
+//printf (" -->[retcode = %d] ", retcode); printout_stem (si->stem[j]); printf ("\n");
       if (retcode > 0) reductions += retcode;
     }
   }
@@ -141,11 +140,6 @@ groebner1_reduce_using_rule (struct stem *p, struct stem *rule, int *statuspt)
   *statuspt = 0;
   assert (rule && rule->degree >= 0);
   if (p == 0) return (0);
-printf ("reducing ");
-printout_stem (p);
-printf (" using rule: ");
-printout_stem (rule);
-printf ("\n");
   ruledegree = rule->degree;
   pdegree = p->degree;
 
@@ -177,13 +171,11 @@ printf ("\n");
     }
     if (previous_are_zero  && p->coef[pdegree - bshift] < 0)
     {
-printf ("CHANGE SIGN of "); printout_stem (p); printf ("\n");
       /* normalize sign of leading term */
       for (j = 0; j <= pdegree; j++)
       {
         p->coef[j] = -p->coef[j];
       }
-printf ("  ---> "); printout_stem (p); printf ("\n");
     }
     if (p->coef[pdegree - bshift]) previous_are_zero = 0;
     if (tshift > bshift)
@@ -238,17 +230,11 @@ printf ("  ---> "); printout_stem (p); printf ("\n");
   assert (p->coef[pdegree]);
   if (p->coef[pdegree] < 0)
   {
-printf ("CHANGE SIGN of "); printout_stem (p); printf ("\n");
     /* normalize sign of leading term */
     for (j = 0; j <= pdegree; j++)
     {
       p->coef[j] = -p->coef[j];
     }
-//    /* recursively reduce... the leading term will not change and
-//     * we don't risk infinite recursion
-//     */
-//    p = groebner1_reduce_using_rule (p, rule, &dummy);
-printf ("  ---> "); printout_stem (p); printf ("\n");
   }
   return p;
 }
@@ -260,8 +246,169 @@ printf ("  ---> "); printout_stem (p); printf ("\n");
 int
 groebner1_add_spolynomials (struct stemideal *si)
 {
-  printf ("ADD-S-POLYNOMIALS NOT IMPLEMENTED\n");
+  struct stem *spol;
+  int i, j, startnum;
+  int added = 0;
+
+  startnum = si->num;
+  assert (si->dim > startnum);
+  for (i = 0; i < si->num - 1; i++)
+  {
+    for (j = i+1; j < si->num; j++)
+    {
+//printf ("Building S-pol top from "); printout_stem(si->stem[i]);
+//printf (" and "); printout_stem(si->stem[j]); printf ("\n");
+      spol = build_S_pol_top (si->stem[i], si->stem[j]);
+//if (spol) {printf (" --> "); printout_stem(spol); printf ("\n");}
+      spol = reduce_pol_si (spol, si);
+      if (spol)
+      {
+        added++;
+        assert (si->num < si->dim);
+        si->stem[si->num++] = spol;
+        if (si->num >= si->dim) return (added);
+      }
+//printf ("Building S-pol bottom from "); printout_stem(si->stem[i]);
+//printf (" and "); printout_stem(si->stem[j]); printf ("\n");
+      spol = build_S_pol_bottom (si->stem[i], si->stem[j]);
+      if (spol)
+      {
+        added++;
+        assert (si->num < si->dim);
+        si->stem[si->num++] = spol;
+        if (si->num >= si->dim) return (added);
+      }
+    }
+  }
+  return (added);
+}
+
+/*
+ *
+ */
+
+struct stem *
+build_S_pol_top (struct stem *p1, struct stem *p2)
+{
+  int i, j, p1deg, p2deg;
+  Stemint a, b;
+  struct stem *spol;
+
+  if (p2->degree > p1->degree) return (build_S_pol_top (p2, p1));
+
+  p1deg = p1->degree;
+  p2deg = p2->degree;
+  assert (p1deg > p2deg);
+
+  /* now p1 is the polynomial with larger degree */
+  spol = (struct stem *) malloc (STEMSIZE(p1deg + 1));
+  spol->dim = p1deg + 1;
+  spol->degree = p1deg;
+  a = gb_int_div (p2->coef[p2deg], p1->coef[p1deg]);
+  b = p2->coef[p2deg] - a*p1->coef[p1deg];
+
+  spol->coef[p1deg] = b;
+  for (i = 0; i < p1deg; i++)
+  {
+    spol->coef[i] = - a * p1->coef[i];
+  }
+  for (i = 0, j = p1deg-p2deg; i < p2deg; i++, j++)
+  {
+    spol->coef[j] += p2->coef[i];
+  }
+  spol = stem_normalize (spol);
+  return (spol);
+}
+
+struct stem *
+build_S_pol_bottom (struct stem *p1, struct stem *p2)
+{
+  printf ("build_S_pol_bottom NOT IMPLEMENTED\n");
   return (0);
+}
+
+/*
+ *
+ */
+
+struct stem *
+reduce_pol_si (struct stem *spol, struct stemideal *si)
+{
+  int status;
+
+  while (1)
+  {
+    status = 0;
+    spol = reduce_pol_si_cycle (spol, si, &status);
+    if (status == 0) break;
+  }
+  return spol;
+}
+
+/*
+ *
+ */
+
+struct stem *
+reduce_pol_si_cycle (struct stem *spol, struct stemideal *si, int *statuspt)
+{
+  int i;
+
+  for (i = 0; i < si->num; i++)
+  {
+    spol = groebner1_reduce_using_rule (spol, si->stem[i], statuspt);
+  }
+
+  return spol;
+}
+
+/*
+ * stem_normalize: normalize with respect to a unit
+ */
+
+struct stem *
+stem_normalize (struct stem *stem)
+{
+  int j, j1, j2, bzeros, tzeros, degree;
+
+  bzeros = 0;
+  degree = stem->degree;
+  for (j = 0; j <= degree; j++)
+  {
+    if (stem->coef[j] == 0) bzeros++;
+      else break;
+  }
+  if (bzeros >= degree + 1)
+  {
+    free (stem);
+    return (0);
+  }
+
+  tzeros = 0;
+  for (j = degree; j >= 0; j--)
+  {
+    if (stem->coef[j] == 0) tzeros++;
+      else break;
+  }
+
+  if (bzeros > 0)
+  {
+    for (j1 = 0, j2 = bzeros; j2 <= degree; j1++, j2++) stem->coef[j1] = stem->coef[j2];
+  }
+
+  degree -= bzeros + tzeros;
+  stem->degree = degree;
+
+  assert (stem->coef[degree]);
+  if (stem->coef[degree] < 0)
+  {
+    /* normalize sign of leading term */
+    for (j = 0; j <= degree; j++)
+    {
+      stem->coef[j] = -stem->coef[j];
+    }
+  }
+  return (stem);
 }
 
 /*
