@@ -100,4 +100,5 @@ void start_comment (void);
 
 int l_safety_check (int f, int maxc);
 int ll_safety_check (long long int f, long long int maxc);
+void signal_int_overflow (void);
 

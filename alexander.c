@@ -2015,6 +2015,12 @@ ll_safety_check (long long int f, long long int maxc)
   return (1);
 }
 
+void
+signal_int_overflow (void)
+{
+  int_overflow_encountered++;
+}
+
 void laurent_sort_entries_buf (int num, struct laurentpoly *l[], struct laurentpoly *buffer[]);
 
 void

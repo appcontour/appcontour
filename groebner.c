@@ -32,25 +32,28 @@ groebner1 (struct alexanderideal *ai)
   }
 
   si = ai2si (ai);
+  groebner1_dropzeros (si);
+printout_si (si);
   while (1)
   {
     reductions = groebner1_tryreduce (si);
     assert (reductions >= 0);
     if (reductions > 0) groebner1_dropzeros (si);
-//printf ("after %d reductions:\n", reductions);
-//printout_si (si);
-//printf ("\n");
+printf ("after %d reductions:\n", reductions);
+printout_si (si);
+printf ("\n");
     newgenerators = groebner1_add_spolynomials (si);
     assert (newgenerators >= 0);
     if (newgenerators > 0) groebner1_dropzeros (si);
-//printf ("Added %d new S-polynomials to obtain:\n", newgenerators);
-//printout_si (si);
-//printf ("\n");
+printf ("Added %d new S-polynomials to obtain:\n", newgenerators);
+printout_si (si);
+printf ("\n");
     if (reductions + newgenerators <= 0) break;
   }
 
   ai = si2ai (si, ai);
   free_stemideal (si);
+printout_ideal1 (ai,0);
   return (ai);
 }
 
@@ -152,7 +155,6 @@ groebner1_reduce_using_rule (struct stem *p, struct stem *rule, int *statuspt)
     quotient = gb_int_div (p->coef[pdegree - bshift], tcoeff);
     if (quotient)
     {
-      /* TODO: here we need a check on integer overflow */
       if (ll_safety_check (quotient, maxcsize) == 0) return (p);
       (*statuspt)++;
       for (j1 = 0, j2 = pdegree - bshift - ruledegree; j1 <= ruledegree; j1++, j2++)
@@ -260,7 +262,7 @@ groebner1_add_spolynomials (struct stemideal *si)
 //printf (" and "); printout_stem(si->stem[j]); printf ("\n");
       spol = build_S_pol_top (si->stem[i], si->stem[j]);
 //if (spol) {printf (" --> "); printout_stem(spol); printf ("\n");}
-      spol = reduce_pol_si (spol, si);
+      if (spol) spol = reduce_pol_si (spol, si);
       if (spol)
       {
         added++;
@@ -271,6 +273,7 @@ groebner1_add_spolynomials (struct stemideal *si)
 //printf ("Building S-pol bottom from "); printout_stem(si->stem[i]);
 //printf (" and "); printout_stem(si->stem[j]); printf ("\n");
       spol = build_S_pol_bottom (si->stem[i], si->stem[j]);
+      if (spol) spol = reduce_pol_si (spol, si);
       if (spol)
       {
         added++;
@@ -291,7 +294,7 @@ struct stem *
 build_S_pol_top (struct stem *p1, struct stem *p2)
 {
   int i, j, p1deg, p2deg;
-  Stemint a, b;
+  Stemint a, b, maxcsize;
   struct stem *spol;
 
   if (p2->degree > p1->degree) return (build_S_pol_top (p2, p1));
@@ -301,22 +304,25 @@ build_S_pol_top (struct stem *p1, struct stem *p2)
   assert (p1deg > p2deg);
 
   /* now p1 is the polynomial with larger degree */
+  a = gb_int_div (p2->coef[p2deg], p1->coef[p1deg]);
+  if (a == 0) return (0);
+  maxcsize = stem_linf (p1);
+  if (ll_safety_check (a, maxcsize) == 0) return (0);
+  b = p2->coef[p2deg] - a*p1->coef[p1deg];
+
   spol = (struct stem *) malloc (STEMSIZE(p1deg + 1));
   spol->dim = p1deg + 1;
   spol->degree = p1deg;
-  a = gb_int_div (p2->coef[p2deg], p1->coef[p1deg]);
-  b = p2->coef[p2deg] - a*p1->coef[p1deg];
-
   spol->coef[p1deg] = b;
-  for (i = 0; i < p1deg; i++)
-  {
-    spol->coef[i] = - a * p1->coef[i];
-  }
-  for (i = 0, j = p1deg-p2deg; i < p2deg; i++, j++)
-  {
-    spol->coef[j] += p2->coef[i];
-  }
+  for (i = 0; i < p1deg; i++) spol->coef[i] = - a * p1->coef[i];
+  for (i = 0, j = p1deg-p2deg; i < p2deg; i++, j++) spol->coef[j] += p2->coef[i];
   spol = stem_normalize (spol);
+  if (stem_linf (spol) >= LLONG_MAX/2)
+  {
+    free (spol);
+    signal_int_overflow();
+    return (0);
+  }
   return (spol);
 }
 
@@ -436,6 +442,7 @@ lp2stem (struct laurentpoly *lp)
   struct stem *stem;
   int i, sign;
 
+  if (lp == 0) return (0);
   stem = (struct stem *) malloc (STEMSIZE(lp->stemdegree + 1));
   stem->dim = lp->stemdegree + 1;
   stem->degree = lp->stemdegree;

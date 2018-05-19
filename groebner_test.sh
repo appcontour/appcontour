@@ -3,6 +3,17 @@
 # a quick way to obtain a complex set of generators that end up
 # with an ideal generate by just two polynomials
 
+giove="
+ideal(t) {
++4t-3;
++2t+3;
+}"
+
+echo "$giove" | ./contour --experimental alexander
+
+exit
+
+
 #kanenobu.sh 8 -2 | ./contour --out alexander --noidealsimplify -Q --foxd 2 | ./contour alexander --experimental
 
 #
@@ -46,10 +57,8 @@ ideal(t) {
 +2t^2-t-1;
 }"
 
-echo "$ideala1" | ./contour --experimental alexander
-echo "$ideala2" | ./contour --experimental alexander
-
-exit
+#echo "$ideala1" | ./contour --experimental alexander
+#echo "$ideala2" | ./contour --experimental alexander
 
 ideal1="
 ideal(t) {
@@ -86,6 +95,18 @@ ideal(t) {
 +t^5+t^4+t^3-t^2-t-1;
 +3t^4+6t^3-3t-6;
 }"
+
+echo "$ideal1" | ./contour alexander --experimental
+echo "========="
+
+echo "$ideal2" | ./contour alexander --experimental
+echo "========="
+
+echo "$ideal3" | ./contour alexander --experimental
+echo "========="
+
+echo "$ideal4" | ./contour alexander --experimental
+echo "========="
 
 echo "$ideal4bis" | ./contour alexander --experimental
 
