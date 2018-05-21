@@ -57,12 +57,12 @@ compute_fundamental (struct ccomplex *cc, int action)
         foxjacobian (cccc->p);
         break;
       case ACTION_ALEXANDER:
-        simplify_presentation (cccc->p);
+        if (simplifypresentation) simplify_presentation (cccc->p);
         res = alexander (cccc->p);
         if (res == 0) errors++;
         break;
       case ACTION_LINKINGNUMBER:
-        simplify_presentation (cccc->p);
+        if (simplifypresentation) simplify_presentation (cccc->p);
         linkingnumber (cccc->p);
         break;
       default:
