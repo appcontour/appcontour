@@ -11,7 +11,7 @@ giove="ideal(t) {
 echo "Canonifying ideal:"
 echo "$giove"
 echo "gives"
-echo "$giove" | ./contour --experimental alexander
+echo "$giove" | ./contour alexander
 echo "=================="
 #
 # this is the ideal (no simplification) from kanenobu -2 8
@@ -26,10 +26,10 @@ idealkanm2_8="ideal(t) {
 echo "Canonifying ideal:"
 echo "$idealkanm2_8"
 echo "gives"
-echo "$idealkanm2_8" | ./contour --experimental alexander
+echo "$idealkanm2_8" | ./contour alexander
 echo "=================="
 
-#kanenobu.sh 8 -2 | ./contour --out alexander --noidealsimplify -Q --foxd 2 | ./contour alexander --experimental
+#kanenobu.sh 8 -2 | ./contour --out alexander --noidealsimplify -Q --foxd 2 | ./contour alexander
 
 #
 # this should NOT produce an integer overflow
@@ -54,7 +54,7 @@ idealkan8m2bis="ideal(t) {
 echo "Canonify ideal:"
 echo "$idealkan8m2bis"
 echo "gives"
-echo "$idealkan8m2" | ./contour --experimental alexander
+echo "$idealkan8m2" | ./contour alexander
 echo "=================="
 
 #
@@ -73,9 +73,9 @@ ideal(t) {
 }"
 
 echo "The next two should coincide"
-echo "$ideala1" | ./contour --experimental alexander
+echo "$ideala1" | ./contour alexander
 echo "=================="
-echo "$ideala2" | ./contour --experimental alexander
+echo "$ideala2" | ./contour alexander
 echo "=================="
 
 ideal1="
@@ -115,18 +115,38 @@ ideal(t) {
 }"
 
 echo "Result of some ideals, see source for details:"
-echo "$ideal1" | ./contour alexander --experimental
+echo "$ideal1" | ./contour alexander
 echo "=================="
 
-echo "$ideal2" | ./contour alexander --experimental
+echo "$ideal2" | ./contour alexander
 echo "=================="
 
-echo "$ideal3" | ./contour alexander --experimental
+echo "$ideal3" | ./contour alexander
 echo "=================="
 
-echo "$ideal4" | ./contour alexander --experimental
+echo "$ideal4" | ./contour alexander
 echo "=================="
 
-echo "$ideal4bis" | ./contour alexander --experimental
+echo "$ideal4bis" | ./contour alexander
 echo "=================="
 
+#
+# ecco un nodo (il primo?) con un second elementary ideal con tre generatori
+# (in genere sono due)
+#12a_0396
+dtcode1="[4 10 16 20 2 22 24 6 14 8 18 12]"
+#
+# questo e' un nodo (il primo?) con un gcd non banale
+#12a_0435
+dtcode2="[4 10 18 14 2 22 16 8 20 6 24 12]"
+#
+# dtcodes taken from the pak files from Dowker-Thistlethwaite
+#
+echo "knots 12a_0396 and 12a_0435 have unusual second elementary ideal"
+#
+for dtcode in "$dtcode1" "$dtcode2"
+do
+  echo "Computing second Alexander ideal for knot with dtcode: $dtcode"
+  echo "dtcode {$dtcode}" | ./contour --out alexander --foxd 2
+done
+echo "=================="
