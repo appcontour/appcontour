@@ -1,10 +1,14 @@
+compute gcd and spread with long long int (as in groebner.c)
+
 Example of a complex alexander ideal for genus2 surfaces:
 echo "knotname{16a_1}" | ./contour punchhole -r 45 -s 1 | ./contour --out alexander
 
 spread between two monomials does not work (laurent.c)
+Update: try to use the new groebner algorithm
 
 laurent_try_reduce_pair should also try to reduce the coefficients of the
 bigger polynomial
+Restate in view of the new groebner algorithm
 
 
 1. Add the possibility to personalize default values (e.g. --autosurgery)
@@ -12,5 +16,6 @@ using environment variables or via rc file.
 
 2. Add "--autosurgery" option to authomatically apply surgeries that do not change
 the fundamental group but increases the deficiency of the initial presentation
+(DONE?!?)
 
 3. Improve graphic presentation of Hacon graph
