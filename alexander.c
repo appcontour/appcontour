@@ -1617,6 +1617,8 @@ laurent_simplify_ideal (struct alexanderideal *ai)
     return (ai);
   }
 
+  /* principal = 1 in test.28 and test.29 */
+  /* ai->indets > 1 in test.24 and test.25 */
   while (loop)
   {
     loop = 0;
