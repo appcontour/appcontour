@@ -482,17 +482,119 @@ stemideal_gcd (struct stemideal *si)
 struct stem *
 stem_euclid (struct stem *p1, struct stem *p2)
 {
-  struct stem *gcd;
+  struct stem *resgcd;
+  Stemint *a, *b, *c;
+  int dega, degb, degc, vecsize;
+  int i, temp;
+  Stemint g, fa, fb, ltemp, cont_p1, cont_p2, cont_gcd;
+  Stemint shouldbeone;
+  int c_is_null;
 
-/* XXX copiare qui laurentpoly_euclid come idea di lavoro */
+  dega = p1->degree;
+  degb = p2->degree;
+  cont_p1 = stem_factor_content (p1);
+  cont_p2 = stem_factor_content (p2);
+  cont_gcd = llgcd (cont_p1, cont_p2);
+  if (cont_gcd < 0) cont_gcd = -cont_gcd;
 
-  printf ("stem_gcd not yet implemented, returning 1\n");
-  gcd = (struct stem *) malloc (STEMSIZE(1));
-  gcd->dim = 1;
-  gcd->degree = 0;
-  gcd->coef[0] = 1;
+  vecsize = dega;
+  if (degb > dega) vecsize = degb;
+  vecsize++;
+  a = (Stemint *) malloc ( vecsize*sizeof(Stemint) );
+  b = (Stemint *) malloc ( vecsize*sizeof(Stemint) );
+  c = (Stemint *) malloc ( vecsize*sizeof(Stemint) );
+  for (i = 0; i <= dega; i++) a[i] = p1->coef[dega - i];
+  for (i = 0; i <= degb; i++) b[i] = p2->coef[degb - i];
 
-  return (gcd);
+  /*
+   * the three buffers a, b, c contain the integral coefficients
+   * from the higher degree term of the divisor, dividend, rest
+   * possibly exchanging a <-> b we assume dega >= degb
+   * subtracting from a multiple of 'a' a monomial multiple of 'b'
+   * we decrease the degree of 'a' by one
+   */
+  while (1)
+  {
+    if (degb > dega)
+    {
+      for (i = 0; i <= degb; i++)
+      {
+        ltemp = a[i];
+        a[i] = b[i];
+        b[i] = ltemp;
+      }
+      temp = dega;
+      dega = degb;
+      degb = temp;
+    }
+    for (i = degb + 1; i <= dega; i++) b[i] = 0;
+    g = llgcd (a[0], b[0]);
+    fa = b[0]/g;
+    fb = a[0]/g;
+    c_is_null = 1;
+    for (i = 1; i <= dega; i++)
+    {
+      c[i-1] = fa*a[i] - fb*b[i];
+      if (c[i-1] != 0) c_is_null = 0;
+    }
+    degc = dega - 1;
+    if (c_is_null) break;
+    while (c[0] == 0)
+    {
+      for (i = 0; i < degc; i++) c[i] = c[i+1];
+      degc--;
+    }
+    /*
+     * b becomes the new a, c becomes the new b
+     */
+    dega = degb;
+    for (i = 0; i <= dega; i++) a[i] = b[i];
+    degb = degc;
+    for (i = 0; i <= degb; i++) b[i] = c[i];
+  }
+
+  /*
+   * c is identically zero, b is a multiple of the gcd
+   */
+
+  resgcd = (struct stem *) malloc (STEMSIZE(degb+1));
+  for (i = 0; i <= degb; i++)
+  {
+    resgcd->coef[i] = b[degb - i];
+  }
+  resgcd->degree = degb;
+  free (a);
+  free (b);
+  free (c);
+  shouldbeone = stem_factor_content (resgcd);
+  assert (shouldbeone == 1);
+  for (i = 0; i <= p1->degree; i++) p1->coef[i] *= cont_p1;
+  for (i = 0; i <= p2->degree; i++) p2->coef[i] *= cont_p2;
+  for (i = 0; i <= resgcd->degree; i++) resgcd->coef[i] *= cont_gcd;
+
+  return (resgcd);
+}
+
+/*
+ * factor out common coefficient
+ */
+
+Stemint
+stem_factor_content (struct stem *p)
+{
+  int i, sign;
+  Stemint cont;
+
+  assert (p);
+  assert (p->coef[0] != 0);
+  sign = 1;
+  if (p->coef[0] < 0) sign = -1;
+  cont = p->coef[0];
+  for (i = 1; i <= p->degree; i++) cont = llgcd (cont, p->coef[i]);
+  if (cont*sign < 0) cont = -cont;
+  for (i = 0; i <= p->degree; i++) p->coef[i] /= cont;
+
+  return (cont);
 }
 
 /*
@@ -640,4 +742,28 @@ gb_int_div (Stemint dividend, Stemint divisor)
   if (2*rest > divisor) quotient++;
 
   return (quotient);
+}
+
+/*
+ * compute the GCD of two long long integers
+ */
+
+Stemint
+llgcd (Stemint a, Stemint b)
+{
+  Stemint asaved;
+
+  b = llabs(b);
+  if (a == 0) return (b);
+  a = llabs(a);
+  if (b == 0) return (a);
+
+  if (a < b)
+  {
+    asaved = a;
+    a = b;
+    b = asaved;
+  }
+
+  return (llgcd (b, a%b));
 }

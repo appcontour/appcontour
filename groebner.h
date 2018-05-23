@@ -44,7 +44,8 @@ void printout_stem (struct stem *si);
 void free_stemideal (struct stemideal *si);
 Stemint gb_int_div (Stemint dividend, Stemint divisor);
 Stemint stem_linf (struct stem *stem);
-
+Stemint llgcd (Stemint a, Stemint b);
+Stemint stem_factor_content (struct stem *stem);
 
 /*
  * struct for working with stems in one indeterminate
