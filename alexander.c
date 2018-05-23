@@ -173,7 +173,7 @@ alexander (struct presentation *p)
     }
     break;
 
-    case 2:  /* two-component links (or surface of genus 2?) */
+    case 2:  /* two-component links or surface of genus 2 */
     assert (foxd >= deficiency);
     switch (foxd - deficiency)
     {
@@ -1601,11 +1601,11 @@ struct alexanderideal *
 laurent_simplify_ideal (struct alexanderideal *ai)
 {
   struct laurentpoly *oldgcd, *newgcd;
-  extern int principal, verbose;
+  extern int principal, verbose, experimental;
   int last, i, spread, lspread;
   int linf, maxcoef, loop = 1;
 
-  if (ai->indets == 1 && principal == 0)
+  if (ai->indets == 1 && (experimental || principal == 0))
   {
     ai = groebner1 (ai);
     /* BIG WARNING:  it is not yet proved that this is really a UNIQUE Groebner basis */
@@ -1619,6 +1619,12 @@ laurent_simplify_ideal (struct alexanderideal *ai)
 
   /* principal = 1 in test.28 and test.29 */
   /* ai->indets > 1 in test.24 and test.25 */
+  /* it seems that indets > 1 only if called directly from contour.c! */
+  if (ai->indets > 1 && principal)
+  {
+    fprintf (stderr, "Warning: computation of smallest principal ideal is not implemented for polynomials\n");
+    fprintf (stderr, "in two or more indeterminates.\n");
+  }
   while (loop)
   {
     loop = 0;

@@ -1,4 +1,6 @@
-compute gcd and spread with long long int (as in groebner.c)
+Make --principal work for polynomials in more then one indet (assuming it makes sense)
+
+Compute gcd and spread with long long int (as in groebner.c)
 
 Example of a complex alexander ideal for genus2 surfaces:
 echo "knotname{16a_1}" | ./contour punchhole -r 45 -s 1 | ./contour --out alexander
