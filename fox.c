@@ -393,6 +393,7 @@ three_components_link (struct presentation *p)
   ai->l2num = 0;
   ai->fl2num = 1;
   ai->l[ai->fl2offset] = res;
+  ai->gcd = 0;
 
   return(ai);
 }

@@ -15,8 +15,9 @@ struct alexanderideal *
 groebner1 (struct alexanderideal *ai)
 {
   int i, reductions, newgenerators;
-  extern int verbose;
+  extern int verbose, factorideal;
   struct stemideal *si;
+  struct stem *gcd = 0;
 
   if (ai->indets < 1) return (ai);
   assert (ai->indets == 1);
@@ -57,7 +58,17 @@ groebner1 (struct alexanderideal *ai)
     if (reductions + newgenerators <= 0) break;
   }
 
+  if (factorideal)
+  {
+    if (verbose) printf ("Computing gcd\n");
+    gcd = stemideal_gcd (si);
+  }
   ai = si2ai (si, ai);
+  if (gcd)
+  {
+    ai->gcd = stem2lp (gcd);
+    free (gcd);
+  }
   free_stemideal (si);
   return (ai);
 }
@@ -263,11 +274,7 @@ groebner1_add_spolynomials (struct stemideal *si)
   {
     for (j = i+1; j < startnum; j++)
     {
-//printf ("Building S-pols top and bottom from "); printout_stem(si->stem[i]);
-//printf (" and "); printout_stem(si->stem[j]); printf ("\n");
       build_S_pols (si->stem[i], si->stem[j], &spoltop, &spolbottom);
-//if (spoltop)    {printf (" --> "); printout_stem(spoltop); printf ("\n");}
-//if (spolbottom) {printf (" --> "); printout_stem(spolbottom); printf ("\n");}
       if (spoltop) spoltop = reduce_pol_si (spoltop, si);
       if (spoltop)
       {
@@ -444,6 +451,48 @@ stem_normalize (struct stem *stem)
     }
   }
   return (stem);
+}
+
+/*
+ * compute gcd of the set in a stemideal
+ */
+
+struct stem *
+stemideal_gcd (struct stemideal *si)
+{
+  int i;
+  struct stem *newgcd, *oldgcd;
+
+  assert (si->num > 1);
+
+  newgcd = stem_euclid (si->stem[0], si->stem[1]);
+  for (i = 2; i < si->num; i++)
+  {
+    oldgcd = newgcd;
+    newgcd = stem_euclid (oldgcd, si->stem[i]);
+    free (oldgcd);
+  }
+  return (newgcd);
+}
+
+/*
+ * compute the gcd between two stems
+ */
+
+struct stem *
+stem_euclid (struct stem *p1, struct stem *p2)
+{
+  struct stem *gcd;
+
+/* XXX copiare qui laurentpoly_euclid come idea di lavoro */
+
+  printf ("stem_gcd not yet implemented, returning 1\n");
+  gcd = (struct stem *) malloc (STEMSIZE(1));
+  gcd->dim = 1;
+  gcd->degree = 0;
+  gcd->coef[0] = 1;
+
+  return (gcd);
 }
 
 /*

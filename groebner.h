@@ -37,6 +37,8 @@ int build_S_pols (struct stem *p1, struct stem *p2, struct stem **spoltoppt, str
 struct stem * reduce_pol_si (struct stem *p1, struct stemideal *si);
 struct stem * reduce_pol_si_cycle (struct stem *p1, struct stemideal *si, int *statuspt);
 struct stem * stem_normalize (struct stem *stem);
+struct stem * stemideal_gcd (struct stemideal *si);
+struct stem * stem_euclid (struct stem *p1, struct stem *p2);
 void printout_si (struct stemideal *si);
 void printout_stem (struct stem *si);
 void free_stemideal (struct stemideal *si);

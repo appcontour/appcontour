@@ -28,6 +28,7 @@ struct alexanderideal {
   int fl2num;
   int val;
   int max_generators_num;
+  struct laurentpoly *gcd;
   struct laurentpoly *l[]; /* followed by ex fl2 at fl2offset */
 };
 

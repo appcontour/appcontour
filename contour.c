@@ -47,6 +47,7 @@ int shuffle = 0;
 int autosurgery = 0;
 int focus_on_fundamental = 0;
 int principal = 0;
+int factorideal = 0;
 int internalcheck = 0;
 int abelianize = 0;
 int experimental = 0;
@@ -190,6 +191,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--principal") == 0 || strcmp(argv[i],"--gcd") == 0)
     {
       principal++;
+      continue;
+    }
+    if (strcmp(argv[i],"--factorideal") == 0 || strcmp(argv[i],"--factor") == 0)
+    {
+      factorideal++;
       continue;
     }
     if (strcmp(argv[i],"--internalcheck") == 0)

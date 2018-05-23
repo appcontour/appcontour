@@ -393,6 +393,13 @@ printout_ideal1 (struct alexanderideal *ai, struct laurentpoly *principal)
   if (ai) assert (ai->indets == 1);
   if (ai) assert (principal == 0);
 
+  if (ai && ai->gcd)
+  {
+    start_comment ();
+    printf ("gcd of the ideal (NOT factored out at the moment): ");
+    print_laurentpoly (ai->gcd, "t");
+    printf ("\n");
+  }
   if (ai && ai->l1num > 1)
   {
     switch (outformat)
@@ -899,6 +906,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
   ai->indets = 1;
   ai->spread = 1;
+  ai->gcd = 0;
   if (rank <= corank)
   {
     switch (rank)
@@ -1053,6 +1061,7 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
   ai->indets = 2;
   ai->fl2offset = ai->max_generators_num/2;
   ai->spread = 1;
+  ai->gcd = 0;
   if (rank > matrix->numcols)
   {
     ai->indets = 0;
@@ -1519,6 +1528,7 @@ compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcol
       ai->fl2num = 0;
       ai->fl2offset = numrows*numcols;
       ai->max_generators_num = numrows*numcols;
+      ai->gcd = 0;
       k = 0;
       for (j = 0; j < numcols; j++)
       {
@@ -1538,6 +1548,7 @@ compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcol
       ai->fl2num = 0;
       ai->fl2offset = numminors;
       ai->max_generators_num = numminors;
+      ai->gcd = 0;
 
       minor = (struct laurentmatrix *) malloc (sizeof (struct laurentmatrix));
       minor->numcols = minordim;
@@ -3213,6 +3224,7 @@ read_alexander_ideal (FILE *file)
   ai->fl2offset = IDEAL_DEF_GENERATORS_NUM/3;  /* assume there are more 'F' polynomials */
   ai->spread = 1;
   ai->val = 0;
+  ai->gcd = 0;
   ai->indets = read_generators_list (file, indet_names, 2);
 
   tok = gettoken (file);
@@ -3302,6 +3314,7 @@ ai_increase_size (struct alexanderideal *ai)
   newai->max_generators_num = newsize;
   newai->spread = ai->spread;
   newai->val = ai->val;
+  newai->gcd = ai->gcd;
   switch (ai->indets)
   {
     case 1:
