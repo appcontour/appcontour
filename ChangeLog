@@ -1,3 +1,7 @@
+2018-05-24: Computation of the gcd and spread (option --principal) for an ideal is now
+	moved in groebner.c and uses long long int.  The new option --factorideal factorizes
+	the (nonprincipal) ideal by the gcd of the generators.
+
 2018-05-19: a first implementation of a Groebner basis computation for the second
 	elementary ideal for a knot, which is in general not principal.  We do not
 	have at the moment a mathematical proof that the implemented procedure gives

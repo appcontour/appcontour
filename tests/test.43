@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#testname:groebner basis for Laurent in one indeterminate
+#testname:groebner basis, test gcd and spread computation
 #
 
 giove="ideal(t) {
@@ -11,7 +11,8 @@ giove="ideal(t) {
 echo "Canonifying ideal:"
 echo "$giove"
 echo "gives"
-echo "$giove" | ./contour alexander
+echo "$giove" | ./contour alexander --factorideal
+echo "$giove" | ./contour alexander --principal
 echo "=================="
 #
 # this is the ideal (no simplification) from kanenobu -2 8
@@ -26,7 +27,8 @@ idealkanm2_8="ideal(t) {
 echo "Canonifying ideal:"
 echo "$idealkanm2_8"
 echo "gives"
-echo "$idealkanm2_8" | ./contour alexander
+echo "$idealkanm2_8" | ./contour alexander --factorideal
+echo "$idealkanm2_8" | ./contour alexander --principal
 echo "=================="
 
 #kanenobu.sh 8 -2 | ./contour --out alexander --noidealsimplify -Q --foxd 2 | ./contour alexander
@@ -37,7 +39,8 @@ echo "=================="
 idealkan8m2=`kanenobu.sh 10 -2 | ./contour --out alexander -Q --foxd 2`
 echo "Canonifying ideal obtained from kanenoby 10 -2"
 echo "gives"
-echo "$idealkan8m2" | ./contour alexander
+echo "$idealkanm2_8" | ./contour alexander --factorideal
+echo "$idealkanm2_8" | ./contour alexander --principal
 echo "=================="
 
 idealkan8m2bis="ideal(t) {
@@ -55,7 +58,8 @@ idealkan8m2bis="ideal(t) {
 echo "Canonify ideal:"
 echo "$idealkan8m2bis"
 echo "gives"
-echo "$idealkan8m2" | ./contour alexander
+echo "$idealkan8m2" | ./contour alexander --factorideal
+echo "$idealkan8m2" | ./contour alexander --principal
 echo "=================="
 
 #
@@ -74,9 +78,11 @@ ideal(t) {
 }"
 
 echo "The next two should coincide"
-echo "$ideala1" | ./contour alexander
+echo "$ideala1" | ./contour alexander --factorideal
+echo "$ideala1" | ./contour alexander --principal
 echo "=================="
-echo "$ideala2" | ./contour alexander
+echo "$ideala2" | ./contour alexander --factorideal
+echo "$ideala2" | ./contour alexander --principal
 echo "=================="
 
 ideal1="
@@ -116,19 +122,23 @@ ideal(t) {
 }"
 
 echo "Result of some ideals, see source for details:"
-echo "$ideal1" | ./contour alexander
+echo "$ideal1" | ./contour alexander --factorideal
+echo "$ideal1" | ./contour alexander --principal
+echo "=================="
+echo "$ideal2" | ./contour alexander --factorideal
+echo "$ideal2" | ./contour alexander --principal
 echo "=================="
 
-echo "$ideal2" | ./contour alexander
+echo "$ideal3" | ./contour alexander --factorideal
+echo "$ideal3" | ./contour alexander --principal
 echo "=================="
 
-echo "$ideal3" | ./contour alexander
+echo "$ideal4" | ./contour alexander --factorideal
+echo "$ideal4" | ./contour alexander --principal
 echo "=================="
 
-echo "$ideal4" | ./contour alexander
-echo "=================="
-
-echo "$ideal4bis" | ./contour alexander
+echo "$ideal4bis" | ./contour alexander --factorideal
+echo "$ideal4bis" | ./contour alexander --principal
 echo "=================="
 
 #
@@ -148,6 +158,7 @@ echo "knots 12a_0396 and 12a_0435 have unusual second elementary ideal"
 for dtcode in "$dtcode1" "$dtcode2"
 do
   echo "Computing second Alexander ideal for knot with dtcode: $dtcode"
-  echo "dtcode {$dtcode}" | ./contour --out alexander --foxd 2
+  echo "dtcode {$dtcode}" | ./contour --out alexander --foxd 2 --factorideal
+  echo "dtcode {$dtcode}" | ./contour --out alexander --foxd 2 --principal
 done
 echo "=================="

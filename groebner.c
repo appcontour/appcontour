@@ -591,7 +591,7 @@ stem_euclid (struct stem *p1, struct stem *p2)
   int i, temp;
   Stemint g, fa, fb, ltemp, cont_p1, cont_p2, cont_gcd;
   Stemint shouldbeone;
-  int c_is_null;
+  int sign, c_is_null;
 
   dega = p1->degree;
   degb = p2->degree;
@@ -661,9 +661,11 @@ stem_euclid (struct stem *p1, struct stem *p2)
    */
 
   resgcd = (struct stem *) malloc (STEMSIZE(degb+1));
+  sign = 1;
+  if (b[degb] < 0) sign = -1;
   for (i = 0; i <= degb; i++)
   {
-    resgcd->coef[i] = b[degb - i];
+    resgcd->coef[i] = sign*b[degb - i];
   }
   resgcd->degree = degb;
   free (a);

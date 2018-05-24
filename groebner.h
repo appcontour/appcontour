@@ -40,6 +40,7 @@ struct stem * stem_normalize (struct stem *stem);
 struct stem * stemideal_gcd (struct stemideal *si);
 struct stem * stem_euclid (struct stem *p1, struct stem *p2);
 Stemint stem_division (struct stem *dividend, struct stem *divisor, struct stem **quotientpt, struct stem **remainderpt);
+void stem_canonify_sign (struct stem *p);
 void printout_si (struct stemideal *si);
 void printout_stem (struct stem *si);
 void free_stemideal (struct stemideal *si);
