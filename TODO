@@ -1,23 +1,18 @@
 Make --principal work for polynomials in more then one indet (assuming it makes sense)
 
-Compute gcd and spread with long long int (as in groebner.c)
-
 Example of a complex alexander ideal for genus2 surfaces:
 echo "knotname{16a_1}" | ./contour punchhole -r 45 -s 1 | ./contour --out alexander
 
-spread between two monomials does not work (laurent.c)
-Update: try to use the new groebner algorithm
+4. Il processo di canonizzazione (se funziona) di un ideale non principale dovrebbe
+anche considerare la possibilita' dell'inversione t -> 1/t (simultanea per tutti
+i polinomi.  La questione puo' forse essere evitata semplicemente facendo un controllo
+preliminare se tutti i polinomi sono invarianti rispetto a t->1/t
 
-laurent_try_reduce_pair should also try to reduce the coefficients of the
-bigger polynomial
-Restate in view of the new groebner algorithm
-
-
-1. Add the possibility to personalize default values (e.g. --autosurgery)
+3. Add the possibility to personalize default values (e.g. --autosurgery)
 using environment variables or via rc file.
 
 2. Add "--autosurgery" option to authomatically apply surgeries that do not change
 the fundamental group but increases the deficiency of the initial presentation
 (DONE?!?)
 
-3. Improve graphic presentation of Hacon graph
+1. Improve graphic presentation of Hacon graph
