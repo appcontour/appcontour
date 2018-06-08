@@ -87,6 +87,8 @@ main (int argc, char *argv[])
   ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
   globals.rulenames = RULENAMES_NEW;
+  if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
+    autosurgery++;
   if ((envvar = getenv ("APPCONTOUR_OLDNAMES")) && *envvar) 
     globals.rulenames = RULENAMES_OLD;
   for (i = 1; i < argc; i++)

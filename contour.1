@@ -183,9 +183,11 @@ select set of names for rules
 .\" Per user configuration file. See
 .\" .BR foo (5)
 .\" for further details.
-.\" .SH ENVIRONMENT
-.\" .IP FOOCONF
-.\" If non-null the full pathname for an alternate system wide
+.SH ENVIRONMENT
+.IP APPCONTOUR_AUTOSURGERY
+If non-null, implies option --autosurgery.
+.IP APPCONTOUR_OLDNAMES
+If non-null, use old name of Reidemeister-type rules.
 .\" .IR foo.conf .
 .\" Overridden by the
 .\" .B -c

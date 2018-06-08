@@ -3,16 +3,16 @@ Make --principal work for polynomials in more then one indet (assuming it makes 
 Example of a complex alexander ideal for genus2 surfaces:
 echo "knotname{16a_1}" | ./contour punchhole -r 45 -s 1 | ./contour --out alexander
 
-4. Il processo di canonizzazione (se funziona) di un ideale non principale dovrebbe
+4. Update man page.  It is now incredibly outdated
+
+3. Il processo di canonizzazione (se funziona) di un ideale non principale dovrebbe
 anche considerare la possibilita' dell'inversione t -> 1/t (simultanea per tutti
 i polinomi.  La questione puo' forse essere evitata semplicemente facendo un controllo
 preliminare se tutti i polinomi sono invarianti rispetto a t->1/t
 
-3. Add the possibility to personalize default values (e.g. --autosurgery)
+2. Add the possibility to personalize default values (e.g. --autosurgery)
 using environment variables or via rc file.
-
-2. Add "--autosurgery" option to authomatically apply surgeries that do not change
-the fundamental group but increases the deficiency of the initial presentation
-(DONE?!?)
+Use of environment variable is already there for APPCONTOUR_OLDNAMES, e.g.
+(see main() in "contour.c".
 
 1. Improve graphic presentation of Hacon graph
