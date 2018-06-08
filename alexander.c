@@ -491,20 +491,35 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
   char extraindets[]=",w,x,y,z,...";
   char extraindets2[]=",w,ww,x,xx,y,yy,z,zz,...";
   char extraindets3[]=",w*ww-1,x*xx-1,y*yy-1,z*zz-1,...";
-  int j;
+  char uvwxyz[] = "uvwxyz";
+  int i, j, nindets;
 
   if (fundamentals == 0) assert (fnum == 0);
+  nindets = 2;
   if (ai)
   {
-    assert (ai->indets >= 2);
-    if (ai->indets <= 6)
-    {
-      extraindets[2*(ai->indets - 2)] = 0;
-      extraindets2[5*(ai->indets - 2)] = 0;
-      extraindets3[7*(ai->indets - 2)] = 0;
-    }
+    //assert (ai->indets >= 2);
+    nindets = ai->indets;
+    //if (ai->indets <= 6)
+    //{
+    //  extraindets[2*(ai->indets - 2)] = 0;
+    //  extraindets2[5*(ai->indets - 2)] = 0;
+    //  extraindets3[7*(ai->indets - 2)] = 0;
+    //}
     assert (principal == 0 && fundamentals == 0);
-  } else extraindets[0] = 0;
+  }
+    // else {
+    //extraindets[0] = 0;
+    //extraindets2[0] = 0;
+    //extraindets3[0] = 0;
+    //}
+  if (nindets <= 6)
+  {
+    assert (nindets >= 2);
+    extraindets[2*(nindets - 2)] = 0;
+    extraindets2[5*(nindets - 2)] = 0;
+    extraindets3[7*(nindets - 2)] = 0;
+  }
 
   if (fnum > 0 || (ai && ai->fl2num > 0) || (ai && ai->l2num >= 2))
   {
@@ -531,14 +546,14 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
     {
       if (principal || printprincipal)
       {
-        print_laurentpoly (principal, "uvwxyz");
+        print_laurentpoly (principal, uvwxyz);
         printf ("%c\n", (outformat == OUTFORMAT_MACAULAY2)?',':';');
       }
       if (ai)
       {
         for (j = 0; j < ai->l2num; j++)
         {
-          print_laurentpoly (ai->l[j], "uvwxyz");
+          print_laurentpoly (ai->l[j], uvwxyz);
           printf ("%c\n", (outformat == OUTFORMAT_MACAULAY2)?',':';');
         }
       }
@@ -550,28 +565,31 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
       {
         case OUTFORMAT_APPCONTOUR:
         printf ("F: ");
-        print_laurentpoly (fundamentals[j], "uvwxyz");
+        print_laurentpoly (fundamentals[j], uvwxyz);
         printf (";\n");
         break;
 
         case OUTFORMAT_MACAULAY2:
-        printf ("(");
-        print_laurentpoly (fundamentals[j], "uvwxyz");
-        printf (")*(u - 1),\n");
-        printf ("(");
-        print_laurentpoly (fundamentals[j], "uvwxyz");
-        printf (")*(v - 1),\n");
-        if (ai && ai->indets > 2) printf ("[...],\n");
+        for (i = 0; i < nindets && i < strlen (uvwxyz); i++)
+        {
+          printf ("(");
+          print_laurentpoly (fundamentals[j], uvwxyz);
+          printf (")*(%c - 1),\n", uvwxyz[i]);
+        }
+        //printf ("(");
+        //print_laurentpoly (fundamentals[j], uvwxyz);
+        //printf (")*(v - 1),\n");
+        if (i >= strlen (uvwxyz)) printf ("[...],\n");
         break;
 
         default:
-        printf ("(");
-        print_laurentpoly (fundamentals[j], "uvwxyz");
-        printf (") (u - 1);\n");
-        printf ("(");
-        print_laurentpoly (fundamentals[j], "uvwxyz");
-        printf (") (v - 1);\n");
-        if (ai && ai->indets > 2) printf ("[...];\n");
+        for (i = 0; i < nindets && i < strlen (uvwxyz); i++)
+        {
+          printf ("(");
+          print_laurentpoly (fundamentals[j], uvwxyz);
+          printf (") (%c - 1);\n", uvwxyz[i]);
+        }
+        if (i >= strlen (uvwxyz)) printf ("[...];\n");
         break;
       }
     }
@@ -584,40 +602,44 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
         {
           case OUTFORMAT_APPCONTOUR:
           printf ("F: ");
-          print_laurentpoly (ai->l[j + ai->fl2offset], "uvwxyz");
+          print_laurentpoly (ai->l[j + ai->fl2offset], uvwxyz);
           printf (";\n");
           break;
 
           case OUTFORMAT_MACAULAY2:
-          printf ("(");
-          print_laurentpoly (ai->l[j + ai->fl2offset], "uvwxyz");
-          printf (")*(u - 1),\n");
-          printf ("(");
-          print_laurentpoly (ai->l[j + ai->fl2offset], "uvwxyz");
-          printf (")*(v - 1),\n");
-          if (ai->indets == 3)
+          //printf ("(");
+          //print_laurentpoly (ai->l[j + ai->fl2offset], uvwxyz);
+          //printf (")*(u - 1),\n");
+          //printf ("(");
+          //print_laurentpoly (ai->l[j + ai->fl2offset], uvwxyz);
+          //printf (")*(v - 1),\n");
+
+          for (i = 0; i < nindets && i < strlen (uvwxyz); i++)
+          //if (ai->indets == 3)
           {
             printf ("(");
-            print_laurentpoly (ai->l[j + ai->fl2offset], "uvwxyz");
-            printf (")*(w - 1),\n");
+            print_laurentpoly (ai->l[j + ai->fl2offset], uvwxyz);
+            printf (")*(%c - 1),\n", uvwxyz[i]);
           }
-          if (ai->indets > 3) printf ("[...],\n");
+          if (i >= strlen (uvwxyz)) printf ("[...],\n");
           break;
 
           default:
-          printf ("(");
-          print_laurentpoly (ai->l[j + ai->fl2offset], "uvwxyz");
-          printf (") (u - 1);\n");
-          printf ("(");
-          print_laurentpoly (ai->l[j + ai->fl2offset], "uvwxyz");
-          printf (") (v - 1);\n");
-          if (ai->indets == 3)
+          //printf ("(");
+          //print_laurentpoly (ai->l[j + ai->fl2offset], uvwxyz);
+          //printf (") (u - 1);\n");
+          //printf ("(");
+          //print_laurentpoly (ai->l[j + ai->fl2offset], uvwxyz);
+          //printf (") (v - 1);\n");
+
+          for (i = 0; i < nindets && i < strlen (uvwxyz); i++)
+          //if (ai->indets == 3)
           {
             printf ("(");
-            print_laurentpoly (ai->l[j + ai->fl2offset], "uvwxyz");
-            printf (") (w - 1);\n");
+            print_laurentpoly (ai->l[j + ai->fl2offset], uvwxyz);
+            printf (") (%c - 1);\n", uvwxyz[i]);
           }
-          if (ai->indets > 3) printf ("[...];\n");
+          if (i >= strlen (uvwxyz)) printf ("[...];\n");
           break;
         }
       }
@@ -629,6 +651,10 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
 
       case OUTFORMAT_MACAULAY2:
       printf ("0)\n");
+      printf ("-- The M2 (Macaulay2) output should be read with the substitutions:\n");
+      printf ("--  uu^n -> u^(-n)\n");
+      printf ("--  uu   -> u^(-1)\n");
+      printf ("-- and similarly for all the indeterminates\n");
       break;
 
       default:
@@ -637,11 +663,11 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
   } else {
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander(u,v%s) {\n", extraindets);
     if (!quiet) printf ("Alexander polynomial:\n");
-    if (ai == 0) print_laurentpoly (principal, "uvwxyz");
+    if (ai == 0) print_laurentpoly (principal, uvwxyz);
      else {
       //if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander(u,v%s) {\n", extraindets);
       assert (ai->l2num == 1);
-      print_laurentpoly (ai->l[0], "uvwxyz");
+      print_laurentpoly (ai->l[0], uvwxyz);
     }
     printf (";\n");
   }
