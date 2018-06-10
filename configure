@@ -4316,7 +4316,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_glut_main" >&5
 $as_echo "$ac_cv_lib_glut_main" >&6; }
 if test "x$ac_cv_lib_glut_main" = xyes; then :
-  GLUTLIBS="-lglut -lGL"
+  GLUTLIBS="-lglut -lGL -lm"
                GLUT_CFLAGS="-I/usr/include/GL"
 
 $as_echo "#define HAVE_GLUT 1" >>confdefs.h
