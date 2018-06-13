@@ -40,6 +40,10 @@
  * ''' ==>  ' | | '
  *          '  U  '
  *          '     '
+ *
+ * there are two type of crossings: x and X
+ * x has the overpass travelling in the direction NW-SE (backslash)
+ * X has the overpass travelling in the direction NE-SW (slash)
  */
 
 #include <stdio.h>

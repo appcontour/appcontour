@@ -1375,7 +1375,7 @@ FILE *
 open_description_file (char *arg)
 {
   FILE *infile;
-  char *subdirs[]={".", "immersed", "knots", "links", 0};
+  char *subdirs[]={".", "immersed", "knots", "links", "handlebody_knots", 0};
   char *exts[]={"morse", "sketch", "knot", "dtcode", 0};
   int subdirid, extid, len;
 

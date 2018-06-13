@@ -1,0 +1,11 @@
+#
+# handlebody-knot 4_1 in the table by Ishii et al
+#
+knot {
+ ^  ^  ;
+| X  | ;
+| X  h ;
+ y x  |;
+|  x  |;
+ U  U  ;
+}

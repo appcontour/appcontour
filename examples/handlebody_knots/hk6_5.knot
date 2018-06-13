@@ -1,0 +1,13 @@
+#
+# handlebody-knot 6_6 in the table by Ishii et al
+#
+knot {
+ ^  ^  ;
+| X  | ;
+| X  | ;
+| X  h ;
+ y X  |;
+|  X  |;
+|  X  |;
+ U  U  ;
+}

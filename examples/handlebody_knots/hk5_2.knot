@@ -1,0 +1,11 @@
+#
+# handlebody-knot 5_2
+#
+knot {
+ ^  ^  ;
+h  X | ;
+| x x  ;
+|| X | ;
+| x y  ;
+ U U   ;
+}

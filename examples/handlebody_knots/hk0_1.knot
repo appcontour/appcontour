@@ -1,0 +1,9 @@
+#
+# the "theta-curve" (equivalent to the "handcuffs")
+#
+knot {
+  ^  ;
+|  h ;
+ y | ;
+  U  ;
+}

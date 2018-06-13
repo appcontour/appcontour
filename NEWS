@@ -213,7 +213,8 @@
 2006-09-28: Nuova funzione "knot2morse", per costruire una descrizione
 	tramite tubicino di un nodo descritto in stile "morse"
 	(X maiuscolo e x minuscolo indicano i due diversi modi con
-	cui un tratto scavalca l'altro).
+	cui un tratto scavalca l'altro: uppercase 'X', overpass is '/';
+        lowercase 'x', overpass is '\').
 
 	Nuova funzione "characteristic" per il calcolo della caratteristica
 	di Eulero della superficie 3D (nel caso sia connessa).
