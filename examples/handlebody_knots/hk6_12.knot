@@ -1,0 +1,15 @@
+#
+# handlebody-knot 6_12
+# (from top to bottom)
+#
+knot {
+    ^    ;
+|   ^   |;
+| | ^ | |;
+|  x x  |;
+ X ||  X ;
+|  y y  |;
+|   x   |;
+|   x   |;
+  U   U  ;
+}
