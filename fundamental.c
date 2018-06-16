@@ -15,6 +15,7 @@
 
 #define MAXGENERATORS 26
 
+extern struct global_data globals;
 extern int debug;
 extern int quiet;
 extern int verbose;
@@ -2253,7 +2254,7 @@ complex_countreferences (struct ccomplex *cc)
 struct ccomplex *
 compute_cellcomplex (struct sketch *s, int fg_type)
 {
-  extern int finfinity, autosurgery, focus_on_fundamental;
+  extern int finfinity, autosurgery;
   struct ccomplex *cc;
   struct region *region;
   int euler, surfeuler, realeuler;
@@ -2295,7 +2296,7 @@ compute_cellcomplex (struct sketch *s, int fg_type)
   if (finfinity != 0) fprintf (stderr, "Value of f at infinity (%d) must be zero\n", finfinity);
   assert (finfinity == 0);
   computefvalue (s, s->regions, 0 /* should be finfinity */);
-  if (fg_type != FG_SURFACE && focus_on_fundamental && autosurgery)
+  if (fg_type != FG_SURFACE && globals.focus_on_fundamental && autosurgery)
   {
     while (suggest_p_surgery (s, &region, &stratum))
     {

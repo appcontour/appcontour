@@ -1,3 +1,9 @@
+2018-06-15: Handlebody-knots of genus 2 up to six crossings, taken from Ishii-Kishimoto-Moriuchi.
+	A handlebody-knot is the result of taking a tubular neighborhood of a trivalent graph in S^3,
+	Their diagram can be described using the "knot" description.
+	The new knot descriptions are placed in the new directory "examples/handlebody_knots/
+	with names like "hk5_2.knot" to indicate the second knot with 5 crossings in the table.
+
 2018-05-24: Computation of the gcd and spread (option --principal) for an ideal is now
 	moved in groebner.c and uses long long int.  The new option --factorideal factorizes
 	the (nonprincipal) ideal by the gcd of the generators.

@@ -23,6 +23,7 @@ struct alexanderideal {
   int indets;
   int l1num;
   int spread;
+  int canonical;
   int l2num;
   int fl2offset;
   int fl2num;

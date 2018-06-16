@@ -54,6 +54,7 @@ alexander (struct presentation *p)
       printf ("affect the fundamental group.  The --autosurgery option automates this process.\n");
       printf ("Alternatively, use \"contour suggest_p_surgery\" on the apparent contour to obtain the correct surgery.\n");
       printf ("Prefix with \"contour wrap\" filter if you are computing the fundamental group of the outside\n\n");
+      printf ("Environment variable APPCONTOUR_AUTOSURGERY can be set to nonempty to imply option --autosurgery\n\n");
     } else printf ("  Use --verbose option to get more details.\n");
   }
   if (foxd != FOXD_UNDEF && outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d\n#\n", foxd);
@@ -159,11 +160,7 @@ alexander (struct presentation *p)
       case 6:
       ai = laurent_notfirst_elementary_ideal (p, gconj, foxd - 1);
       if (ai == 0) { foxdtoolarge++; break; }
-      if (ai->l1num > 1)
-      {
-        start_comment ();
-        printf ("*** Warning: result can be noncanonical ***\n");
-      }
+      if (ai->l1num > 1) ai->canonical = 0;
       alexander_fromideal (ai);
       break;
 
@@ -228,11 +225,7 @@ alexander (struct presentation *p)
        *    if (ai->l2num + ai->fl2num > 1) ...
        * but if ai->l2num == 1 the message would be printed twice
        */
-      if (ai->l2num > 1)
-      {
-        start_comment ();
-        printf ("*** Warning: result can be noncanonical ***\n");
-      }
+      if (ai->l2num > 1) ai->canonical = 0;
       alexander_fromideal (ai);
       break;
 
@@ -251,17 +244,14 @@ alexander (struct presentation *p)
       assert (deficiency == 1);
       ai = three_components_link (p);
       if (ai == 0) { foxdtoolarge++; break; }
-      //if (ai->l2num + ai->fl2num > 1) printf ("# *** Warning: result can be noncanonical ***\n");
-      start_comment ();
-      printf ("*** Warning: result can be noncanonical ***\n");
+      ai->canonical = 0;
       alexander_fromideal (ai);
       break;
 
       default:
       ai = generic_ideal_computation (p, rank, p->gennum - foxd);
       if (ai == 0) return (0);
-      start_comment ();
-      printf ("*** Warning: result can be noncanonical ***\n");
+      ai->canonical = 0;
       alexander_fromideal (ai);
       break;
     }
@@ -270,8 +260,7 @@ alexander (struct presentation *p)
     default:
     ai = generic_ideal_computation (p, rank, p->gennum - foxd);
     if (ai == 0) return (0);
-    start_comment ();
-    printf ("*** Warning: result can be noncanonical ***\n");
+    ai->canonical = 0;
     alexander_fromideal (ai);
     break;
   }
@@ -358,8 +347,7 @@ alexander_fromideal (struct alexanderideal *ai)
         }
         if (canonify_ideal2 (&determinant2, extradeterminants, extradets) == 0)
         {
-          start_comment ();
-          printf ("*** Warning: result can be noncanonical ***\n");
+          ai->canonical = 0;
           for (i = 0; i < ai->l2num; i++) laurent_canonify_exponents (ai->l[i]);
           for (i = 0; i < ai->fl2num; i++) laurent_canonify_exponents (ai->l[i + ai->fl2offset]);
         }
@@ -399,6 +387,11 @@ printout_ideal1 (struct alexanderideal *ai, struct laurentpoly *principal)
     printf ("gcd of the (factored out) ideal: ");
     print_laurentpoly (ai->gcd, "t");
     printf ("\n");
+  }
+  if (ai && ai->canonical == 0)
+  {
+    start_comment ();
+    printf ("*** Warning: result can be noncanonical ***\n");
   }
   if (ai && ai->l1num > 1)
   {
@@ -521,6 +514,11 @@ printout_ideal (struct alexanderideal *ai, struct laurentpoly *principal,
     extraindets3[7*(nindets - 2)] = 0;
   }
 
+  if (ai && ai->canonical == 0)
+  {
+    start_comment ();
+    printf ("*** Warning: result can be noncanonical ***\n");
+  }
   if (fnum > 0 || (ai && ai->fl2num > 0) || (ai && ai->l2num >= 2))
   {
     switch (outformat)
@@ -932,6 +930,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
   ai->indets = 1;
   ai->spread = 1;
+  ai->canonical = 1;
   ai->gcd = 0;
   if (rank <= corank)
   {
@@ -1085,6 +1084,7 @@ laurent_notfirst_elementary_ideal2 (struct presentation *p, int e1, int e2, int 
   ai = (struct alexanderideal *) malloc (AI_DIM(IDEAL_DEF_GENERATORS_NUM));
   ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
   ai->indets = 2;
+  ai->canonical = 1;
   ai->fl2offset = ai->max_generators_num/2;
   ai->spread = 1;
   ai->gcd = 0;
@@ -1551,6 +1551,7 @@ compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcol
     case 1:
       ai = (struct alexanderideal *) malloc (AI_DIM(numrows*numcols));
       ai->indets = indets;
+      ai->canonical = 1;
       ai->fl2num = 0;
       ai->fl2offset = numrows*numcols;
       ai->max_generators_num = numrows*numcols;
@@ -1571,6 +1572,7 @@ compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcol
       numminors = binomial (numrows,minordim)*binomial(numcols,minordim);
       ai = (struct alexanderideal *) malloc (AI_DIM(numminors));
       ai->indets = indets;
+      ai->canonical = 1;
       ai->fl2num = 0;
       ai->fl2offset = numminors;
       ai->max_generators_num = numminors;
@@ -1638,8 +1640,8 @@ struct alexanderideal *
 laurent_simplify_ideal (struct alexanderideal *ai)
 {
   struct laurentpoly *oldgcd, *newgcd;
-  extern int principal, verbose;
-  //extern int experimental;
+  extern struct global_data globals;
+  extern int verbose;
   int last, i, spread, lspread;
   int linf, maxcoef, loop = 1;
 
@@ -1659,7 +1661,7 @@ laurent_simplify_ideal (struct alexanderideal *ai)
   /* principal = 1 in test.28 and test.29 */
   /* ai->indets > 1 in test.24 and test.25 */
   /* it seems that indets > 1 only if called directly from contour.c! */
-  if (ai->indets > 1 && principal)
+  if (ai->indets > 1 && globals.principal)
   {
     fprintf (stderr, "Warning: computation of smallest principal ideal is not implemented for polynomials\n");
     fprintf (stderr, "in two or more indeterminates.\n");
@@ -1722,7 +1724,7 @@ laurent_simplify_ideal (struct alexanderideal *ai)
   for (i = 0; i < ai->l1num; i++)
     laurent_canonifysign1 (ai->l[i]);
 
-  if (principal && ai->l1num > 1)
+  if (globals.principal && ai->l1num > 1)
   {
     spread = 1;
     for (i = 1; i < ai->l1num; i++)
@@ -3250,6 +3252,7 @@ read_alexander_ideal (FILE *file)
   ai->max_generators_num = IDEAL_DEF_GENERATORS_NUM;
   ai->l1num = ai->l2num = ai->fl2num = 0;
   ai->fl2offset = IDEAL_DEF_GENERATORS_NUM/3;  /* assume there are more 'F' polynomials */
+  ai->canonical = 1;
   ai->spread = 1;
   ai->val = 0;
   ai->gcd = 0;
@@ -3339,6 +3342,7 @@ ai_increase_size (struct alexanderideal *ai)
   assert (ai->indets <= 2);
   newai = (struct alexanderideal *) malloc (AI_DIM(newsize));
   newai->indets = ai->indets;
+  newai->canonical = ai->canonical;
   newai->max_generators_num = newsize;
   newai->spread = ai->spread;
   newai->val = ai->val;

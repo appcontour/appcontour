@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "contour.h"
 #include <fundamental.h>
 #include <laurent.h>
 #include <alexander.h>
@@ -16,20 +17,21 @@
 void
 foxjacobian (struct presentation *pr)
 {
-  extern int verbose, abelianize, preabelian, interactive;
+  extern struct global_data globals;
+  extern int verbose, preabelian, interactive;
   struct presentationrule *r;
   struct laurentpoly *p;
   int rank = 1, i, j, e, numrelators = 0;
   int maxlen, rid, k, *lincomb1, *lincomb2, gen;
 
-  if (abelianize == 1 && preabelian == 0)
+  if (globals.abelianize == 1 && preabelian == 0)
   {
     printf ("In order to abelianize we need a preabelian presentation, forcing its computation...\n");
     printf ("You can avoid this message by including the --preabelian option\n");
     preabelian = 1;
   }
   if (preabelian) {topreabelian (pr); rank = compute_fg_rank (pr);}
-  if (abelianize == 2) rank = 0;
+  if (globals.abelianize == 2) rank = 0;
   if (verbose)
   {
     print_presentation (pr);
@@ -59,8 +61,8 @@ foxjacobian (struct presentation *pr)
         printf ("%d", e);
         continue;
       }
-      if (abelianize == 0) print_groupring_el (r->var, lincomb2, r->length);
-      if (abelianize == 0) continue;
+      if (globals.abelianize == 0) print_groupring_el (r->var, lincomb2, r->length);
+      if (globals.abelianize == 0) continue;
       p = map_to_abelian (r->var, lincomb2, r->length, pr->gennum - rank, rank);
       if (rank == 1)
       {

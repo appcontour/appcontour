@@ -153,6 +153,7 @@ char *subst[] = {
 
 static int eatenspaces = 0;
 
+int knot_getline (char *line, int linesize, FILE *file);
 void outpatch (char *p);
 
 int
@@ -176,7 +177,7 @@ knot2morse (FILE *file)
     exit (1);
   }
 
-  while (fgets (line, LINESIZE, file))
+  while (knot_getline (line, LINESIZE, file))
   {
     if (*line == '#' || *line == '\n') continue;
     for (j = 0; j < MULTLINES; j++)
@@ -203,6 +204,31 @@ knot2morse (FILE *file)
   }
   printf ("}\n");
   return (1);
+}
+
+int
+knot_getline (char *line, int linesize, FILE *file)
+{
+  int j = 0;
+  char ch;
+
+  while ((ch = fgetc (file)) != EOF)
+  {
+    if (ch == '\n') continue;
+    if (ch == '#')
+    {
+      while ((ch = fgetc (file)) != '\n' && ch != EOF);
+      continue;
+    }
+    assert (j < linesize - 1);
+    line[j++] = ch;
+    if (ch == ';')
+    {
+      line[j++] = 0;
+      return (j);
+    }
+  }
+  return (0);
 }
 
 void

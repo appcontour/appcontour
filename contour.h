@@ -65,6 +65,14 @@
 
 struct global_data {
   int rulenames;
+  int focus_on_fundamental;
+  int principal;
+  int factorideal;
+  int internalcheck;
+  int abelianize;
+  int experimental;
+  int userwantscode;
+  int assume_groebner_canon;
 };
 
 #define MRPTMAX 4

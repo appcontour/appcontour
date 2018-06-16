@@ -45,13 +45,13 @@ int viacc = 0;
 int foxd = FOXD_UNDEF;
 int shuffle = 0;
 int autosurgery = 0;
-int focus_on_fundamental = 0;
-int principal = 0;
-int factorideal = 0;
-int internalcheck = 0;
-int abelianize = 0;
-int experimental = 0;
-int userwantscode = 0;
+//int focus_on_fundamental = 0;
+//int principal = 0;
+//int factorideal = 0;
+//int internalcheck = 0;
+//int abelianize = 0;
+//int experimental = 0;
+//int userwantscode = 0;
 static int renumber = 1;
 
 struct global_data globals;
@@ -87,10 +87,14 @@ main (int argc, char *argv[])
   ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
   globals.rulenames = RULENAMES_NEW;
+  globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
+  globals.abelianize = globals.experimental = globals.userwantscode = globals.assume_groebner_canon = 0;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     autosurgery++;
   if ((envvar = getenv ("APPCONTOUR_OLDNAMES")) && *envvar) 
     globals.rulenames = RULENAMES_OLD;
+  if ((envvar = getenv ("APPCONTOUR_ASSUMECANON")) && *envvar) 
+    globals.assume_groebner_canon = 1;;
   for (i = 1; i < argc; i++)
   {
     if (strcmp(argv[i],"--newnames") == 0)
@@ -192,27 +196,27 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--principal") == 0 || strcmp(argv[i],"--gcd") == 0)
     {
-      principal++;
+      globals.principal++;
       continue;
     }
     if (strcmp(argv[i],"--factorideal") == 0 || strcmp(argv[i],"--factor") == 0)
     {
-      factorideal++;
+      globals.factorideal++;
       continue;
     }
     if (strcmp(argv[i],"--internalcheck") == 0)
     {
-      internalcheck++;
+      globals.internalcheck++;
       continue;
     }
     if (strcmp(argv[i],"--abelianize") == 0)
     {
-      abelianize = 1;
+      globals.abelianize = 1;
       continue;
     }
     if (strcmp(argv[i],"--trivialize") == 0)
     {
-      abelianize = 2;
+      globals.abelianize = 2;
       continue;
     }
     if (strcmp(argv[i],"--maxd") == 0)
@@ -222,7 +226,7 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--experimental") == 0)
     {
-      experimental++;
+      globals.experimental++;
       continue;
     }
     if (strcmp(argv[i],"--debug") == 0)
@@ -1183,7 +1187,7 @@ main (int argc, char *argv[])
     case ACTION_FOXJACOBIAN:
     case ACTION_ALEXANDER:
     case ACTION_LINKINGNUMBER:
-    focus_on_fundamental++;
+    globals.focus_on_fundamental++;
     tok = gettoken (infile);
     ungettoken (tok);
     if (tok == TOK_FPGROUP || tok == TOK_ALEXANDER || tok == TOK_IDEAL)
@@ -1347,7 +1351,7 @@ knotname2code (FILE *file, int action)
     exit (2);
   }
 
-  userwantscode = action;
+  globals.userwantscode = action;
   readknotscape (file);
 }
 

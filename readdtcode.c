@@ -884,7 +884,8 @@ canonify_knotname (void)
 struct sketch *
 readknotscape (FILE *file)
 {
-  extern int quiet, verbose, userwantscode;
+  extern struct global_data globals;
+  extern int quiet, verbose;
   struct sketch *sketch;
   char basename[20];
   int nodeid, i, tok, crossings, codelen, alternate, knotnum;
@@ -1016,9 +1017,9 @@ readknotscape (FILE *file)
   dtcode[i] = sign*(2*(sum1 - sum2) + 2);
   codelen++;
   free (dtpositive);
-  if (verbose || userwantscode)
+  if (verbose || globals.userwantscode)
   {
-    if (userwantscode == ACTION_KNOTNAME2GAUSSCODE)
+    if (globals.userwantscode == ACTION_KNOTNAME2GAUSSCODE)
       printf ("# Conversion to Gauss code not implemented, printing dtcode:\n");
     printf ("dtcode {[");
     for (i = 0; i < codelen; i++)
@@ -1027,7 +1028,7 @@ readknotscape (FILE *file)
       printf ("%d", dtcode[i]);
     }
     printf ("]}\n");
-    if (userwantscode) exit (0);
+    if (globals.userwantscode) exit (0);
   }
   sketch = realize_dtcode (codelen, dtcode, 0);
   free (dtcode);
@@ -1043,7 +1044,7 @@ readknotscape (FILE *file)
 struct sketch *
 readlinkfromtable (char *linkname)
 {
-  extern int userwantscode;
+  extern struct global_data globals;
   struct vecofintlist *loiv, *lv;
   int i;
   FILE *linkfile;
@@ -1069,9 +1070,9 @@ readlinkfromtable (char *linkname)
         if (strcmp (line, linkname) == 0)
         {
           loiv = read_gausscode_from_string (gc);
-          if (userwantscode)
+          if (globals.userwantscode)
           {
-            if (userwantscode == ACTION_KNOTNAME2DTCODE)
+            if (globals.userwantscode == ACTION_KNOTNAME2DTCODE)
               printf ("# Conversion to dt-code not implemented, printing Gauss code:\n");
             printf ("gausscode {");
             for (lv = loiv; lv; lv = lv->next)

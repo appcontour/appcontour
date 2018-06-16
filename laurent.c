@@ -1338,7 +1338,8 @@ laurent_gcd (int inspread, struct laurentpoly *p1, struct laurentpoly *p2, int *
   struct laurentpoly *resgcd;
   struct laurentpoly *resgcd2;
   int i, alpha, cont_p1, cont_p2, cont_gcd;
-  extern int verbose, internalcheck;
+  extern struct global_data globals;
+  extern int verbose;
 
   /* special cases */
   if (p1 == 0)
@@ -1361,7 +1362,7 @@ laurent_gcd (int inspread, struct laurentpoly *p1, struct laurentpoly *p2, int *
 
   alpha = laurent_factor_content (resgcd);
 
-  if (internalcheck)
+  if (globals.internalcheck)
   {
     resgcd2 = laurent_euclid (p1, p2);
     laurent_factor_content (resgcd2);

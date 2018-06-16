@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "contour.h"
 #include "laurent.h"
 #include "alexander.h"
 #include "groebner.h"
@@ -17,7 +18,8 @@ groebner1 (struct alexanderideal *ai)
   int i, reductions, newgenerators;
   int spread = 1;
   Stemint mag;
-  extern int verbose, factorideal, principal;
+  extern struct global_data globals;
+  extern int verbose;
   struct stemideal *si;
   struct stem *gcd = 0;
   struct stem *remainder, *quotient;
@@ -62,7 +64,7 @@ groebner1 (struct alexanderideal *ai)
     if (reductions + newgenerators <= 0) break;
   }
 
-  if (factorideal || principal)
+  if (globals.factorideal || globals.principal)
   {
     if (verbose) printf ("Computing gcd\n");
     gcd = stemideal_gcd (si);
@@ -75,7 +77,7 @@ groebner1 (struct alexanderideal *ai)
       if (si->stem[i]) free (si->stem[i]);
       si->stem[i] = quotient;
     }
-    if (principal)
+    if (globals.principal)
     {
       /* user wants the containing principal ideal! */
       spread = 0;
