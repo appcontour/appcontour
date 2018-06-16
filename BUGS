@@ -1,3 +1,7 @@
+2018.06.15
+echo "knot{^;U;}" | contour knot2info
+
+
 2016.06.08 (SOLVED)
 
 $ echo "fpgroup{<a,b; aA>}" | contour --nosimplify --out alexander
