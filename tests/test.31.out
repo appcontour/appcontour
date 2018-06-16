@@ -5,7 +5,6 @@ second elementary ideal
 first elementary ideal of knot 9_35
 +7-13t+7t^2;
 second elementary ideal
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t;
@@ -13,7 +12,6 @@ Ideal [
 first elementary ideal of knot 9_37
 +2-11t+19t^2-11t^3+2t^4;
 second elementary ideal
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t;
@@ -25,7 +23,6 @@ second elementary ideal
 first elementary ideal of knot 9_41
 +3-12t+19t^2-12t^3+3t^4;
 second elementary ideal
-# *** Warning: result can be noncanonical ***
 Ideal [
 +7;
 +1+t;
@@ -33,7 +30,6 @@ Ideal [
 first elementary ideal of knot 9_46
 -2+5t-2t^2;
 second elementary ideal
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t;
@@ -41,7 +37,6 @@ Ideal [
 first elementary ideal of knot 9_47
 +1-4t+6t^2-5t^3+6t^4-4t^5+t^6;
 second elementary ideal
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t;
@@ -49,7 +44,6 @@ Ideal [
 first elementary ideal of knot 9_48
 +1-7t+11t^2-7t^3+t^4;
 second elementary ideal
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t;
@@ -57,7 +51,6 @@ Ideal [
 first elementary ideal of knot 9_49
 +3-6t+7t^2-6t^3+3t^4;
 second elementary ideal
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+t;

@@ -160,7 +160,6 @@ alexander (struct presentation *p)
       case 6:
       ai = laurent_notfirst_elementary_ideal (p, gconj, foxd - 1);
       if (ai == 0) { foxdtoolarge++; break; }
-      if (ai->l1num > 1) ai->canonical = 0;
       alexander_fromideal (ai);
       break;
 
@@ -1059,6 +1058,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
   }
 
   laurent_free_matrix (matrix);
+  if (ai->l1num > 1) ai->canonical = 0;
   if (simplifyideal) ai = laurent_simplify_ideal (ai);
   return (ai);
 }
@@ -1651,9 +1651,19 @@ laurent_simplify_ideal (struct alexanderideal *ai)
     /* BIG WARNING:  it is not yet proved that this is really a UNIQUE Groebner basis */
     /* moreover, canonization should be performed with respect to t -> 1/t also */
     /* (simultaneously on all generators) this is not done yet */
-    laurent_sort_entries (ai->l1num, ai->l);
-    for (i = 0; i < ai->l1num; i++)
-      laurent_canonifysign1 (ai->l[i]);
+    if (ai->l1num <= 1) ai->canonical = 1;
+    if (ai->l1num == 1)
+    {
+      laurent_canonifysign1 (ai->l[0]);
+      laurent_canonify1 (ai->l[0]);
+    }
+    if (ai->l1num > 1)
+    {
+      laurent_sort_entries (ai->l1num, ai->l);
+      for (i = 0; i < ai->l1num; i++)
+        laurent_canonifysign1 (ai->l[i]);
+      if (generators_are_symmetric (ai)) ai->canonical = 1;
+    }
     return (ai);
   }
 
@@ -1861,6 +1871,30 @@ laurent_try_simplify_ideal (struct alexanderideal *ai)
     }
   }
   return (0);
+}
+
+int
+generators_are_symmetric (struct alexanderideal *ai)
+{
+  int i, k, kk, sign;
+  struct laurentpoly *l;
+
+  assert (ai->indets == 1);
+  for (i = 0; i < ai->l1num; i++)
+  {
+    l = ai->l[i];
+    if (l == 0) continue;
+
+    assert (l->stem[0].l0);
+    assert (l->stem[l->stemdegree].l0);
+
+    sign = 1;
+    if (l->stem[l->stemdegree].l0 != l->stem[0].l0) sign = -1;
+
+    for (k = 0, kk = l->stemdegree; k < kk; k++, kk--)
+      if (l->stem[k].l0 != sign*l->stem[kk].l0) return (0);
+  }
+  return (1);
 }
 
 /*

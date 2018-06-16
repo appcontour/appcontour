@@ -72,7 +72,6 @@ struct global_data {
   int abelianize;
   int experimental;
   int userwantscode;
-  int assume_groebner_canon;
 };
 
 #define MRPTMAX 4

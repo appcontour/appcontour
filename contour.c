@@ -88,13 +88,11 @@ main (int argc, char *argv[])
   user_data.mrnum = user_data.manum = 0;
   globals.rulenames = RULENAMES_NEW;
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
-  globals.abelianize = globals.experimental = globals.userwantscode = globals.assume_groebner_canon = 0;
+  globals.abelianize = globals.experimental = globals.userwantscode = 0;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     autosurgery++;
   if ((envvar = getenv ("APPCONTOUR_OLDNAMES")) && *envvar) 
     globals.rulenames = RULENAMES_OLD;
-  if ((envvar = getenv ("APPCONTOUR_ASSUMECANON")) && *envvar) 
-    globals.assume_groebner_canon = 1;;
   for (i = 1; i < argc; i++)
   {
     if (strcmp(argv[i],"--newnames") == 0)
@@ -1230,11 +1228,6 @@ main (int argc, char *argv[])
               if (simplifyideal)
               {
                 ai = laurent_simplify_ideal (ai);
-                if (ai->l1num > 1)
-                {
-                  start_comment ();
-                  printf ("*** Warning: result can be noncanonical ***\n");
-                }
               }
               alexander_fromideal (ai);
             break;

@@ -3,55 +3,46 @@ Checking with kanenobu -10 -10
 Checking with kanenobu -10 -8
 +1;
 Checking with kanenobu -10 -6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
 ]
 Checking with kanenobu -10 -4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu -10 -2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu -10 0
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu -10 2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +6;
 +1+3t+t^2;
 ]
 Checking with kanenobu -10 4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +7;
 -1+3t-t^2;
 ]
 Checking with kanenobu -10 6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +8;
 -1+3t-t^2;
 ]
 Checking with kanenobu -10 8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +9;
 -1+3t-t^2;
 ]
 Checking with kanenobu -10 10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +10;
 -1+3t-t^2;
@@ -63,55 +54,46 @@ Checking with kanenobu -8 -8
 Checking with kanenobu -8 -6
 +1;
 Checking with kanenobu -8 -4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
 ]
 Checking with kanenobu -8 -2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu -8 0
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu -8 2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu -8 4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +6;
 +1+3t+t^2;
 ]
 Checking with kanenobu -8 6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +7;
 -1+3t-t^2;
 ]
 Checking with kanenobu -8 8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +8;
 -1+3t-t^2;
 ]
 Checking with kanenobu -8 10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +9;
 -1+3t-t^2;
 ]
 Checking with kanenobu -6 -10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
@@ -123,55 +105,46 @@ Checking with kanenobu -6 -6
 Checking with kanenobu -6 -4
 +1;
 Checking with kanenobu -6 -2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
 ]
 Checking with kanenobu -6 0
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu -6 2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu -6 4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu -6 6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +6;
 +1+3t+t^2;
 ]
 Checking with kanenobu -6 8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +7;
 -1+3t-t^2;
 ]
 Checking with kanenobu -6 10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +8;
 -1+3t-t^2;
 ]
 Checking with kanenobu -4 -10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu -4 -8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
@@ -183,55 +156,46 @@ Checking with kanenobu -4 -4
 Checking with kanenobu -4 -2
 +1;
 Checking with kanenobu -4 0
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
 ]
 Checking with kanenobu -4 2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu -4 4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu -4 6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu -4 8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +6;
 +1+3t+t^2;
 ]
 Checking with kanenobu -4 10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +7;
 -1+3t-t^2;
 ]
 Checking with kanenobu -2 -10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu -2 -8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu -2 -6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
@@ -243,55 +207,46 @@ Checking with kanenobu -2 -2
 Checking with kanenobu -2 0
 +1;
 Checking with kanenobu -2 2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
 ]
 Checking with kanenobu -2 4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu -2 6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu -2 8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu -2 10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +6;
 +1+3t+t^2;
 ]
 Checking with kanenobu 0 -10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu 0 -8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu 0 -6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu 0 -4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
@@ -303,55 +258,46 @@ Checking with kanenobu 0 0
 Checking with kanenobu 0 2
 +1;
 Checking with kanenobu 0 4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
 ]
 Checking with kanenobu 0 6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu 0 8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu 0 10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu 2 -10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +6;
 +1+3t+t^2;
 ]
 Checking with kanenobu 2 -8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu 2 -6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu 2 -4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu 2 -2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
@@ -363,55 +309,46 @@ Checking with kanenobu 2 2
 Checking with kanenobu 2 4
 +1;
 Checking with kanenobu 2 6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
 ]
 Checking with kanenobu 2 8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu 2 10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu 4 -10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +7;
 -1+3t-t^2;
 ]
 Checking with kanenobu 4 -8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +6;
 +1+3t+t^2;
 ]
 Checking with kanenobu 4 -6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu 4 -4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu 4 -2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu 4 0
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
@@ -423,55 +360,46 @@ Checking with kanenobu 4 4
 Checking with kanenobu 4 6
 +1;
 Checking with kanenobu 4 8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
 ]
 Checking with kanenobu 4 10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu 6 -10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +8;
 -1+3t-t^2;
 ]
 Checking with kanenobu 6 -8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +7;
 -1+3t-t^2;
 ]
 Checking with kanenobu 6 -6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +6;
 +1+3t+t^2;
 ]
 Checking with kanenobu 6 -4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu 6 -2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu 6 0
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu 6 2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
@@ -483,55 +411,46 @@ Checking with kanenobu 6 6
 Checking with kanenobu 6 8
 +1;
 Checking with kanenobu 6 10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
 ]
 Checking with kanenobu 8 -10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +9;
 -1+3t-t^2;
 ]
 Checking with kanenobu 8 -8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +8;
 -1+3t-t^2;
 ]
 Checking with kanenobu 8 -6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +7;
 -1+3t-t^2;
 ]
 Checking with kanenobu 8 -4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +6;
 +1+3t+t^2;
 ]
 Checking with kanenobu 8 -2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu 8 0
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu 8 2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu 8 4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;
@@ -543,25 +462,21 @@ Checking with kanenobu 8 8
 Checking with kanenobu 8 10
 +1;
 Checking with kanenobu 10 -10
-# *** Warning: result can be noncanonical ***
 Ideal [
 +10;
 -1+3t-t^2;
 ]
 Checking with kanenobu 10 -8
-# *** Warning: result can be noncanonical ***
 Ideal [
 +9;
 -1+3t-t^2;
 ]
 Checking with kanenobu 10 -6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +8;
 -1+3t-t^2;
 ]
 Checking with kanenobu 10 -4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +7;
 -1+3t-t^2;
@@ -569,25 +484,21 @@ Ideal [
 Checking with kanenobu 10 -2
 The case 10 -2 leads to too large integers, see BUGS file
 Checking with kanenobu 10 0
-# *** Warning: result can be noncanonical ***
 Ideal [
 +5;
 +1+2t+t^2;
 ]
 Checking with kanenobu 10 2
-# *** Warning: result can be noncanonical ***
 Ideal [
 +4;
 +1+t+t^2;
 ]
 Checking with kanenobu 10 4
-# *** Warning: result can be noncanonical ***
 Ideal [
 +3;
 +1+t^2;
 ]
 Checking with kanenobu 10 6
-# *** Warning: result can be noncanonical ***
 Ideal [
 +2;
 +1+t+t^2;

@@ -79,6 +79,7 @@ struct laurentmatrix *minor_matrix2_corank1 (struct laurentmatrix *matrix, int i
 void laurent_free_matrix (struct laurentmatrix *matrix);
 struct alexanderideal *laurent_simplify_ideal (struct alexanderideal *ai);
 int laurent_try_simplify_ideal (struct alexanderideal *ai);
+int generators_are_symmetric (struct alexanderideal *ai);
 
 int laurent_suppdimx2 (struct laurentpoly *l);
 void laurent_getthree (struct laurentpoly *l, int *x1, int *x2, int *x3);
