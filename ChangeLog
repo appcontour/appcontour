@@ -1,16 +1,14 @@
-2018-06-17: Started implementing the possibility of passing the knot/link/handlebody-knot directly
-	by name on command line.  This can be disabled altogether by setting the environment variable
-	APPCONTOUR_DISABLEKNFALLBACK to a nonempty value.  Otherwise it *should* allow indication of
-	the knot/link/handlebody-knot with the syntax:
+2018-06-17: knot/link/handlebody-knot name can be used directly on command line.
+	This mechanism can be disabled altogether by setting the environment variable
+	APPCONTOUR_DISABLEKNFALLBACK to a nonempty value.  Otherwise it allows indication of
+	the knot/link/handlebody-knot by using the syntax:
 
-	K<x>_<y>
-	K<x>a_<y>
-	K<x>n_<y>
-	L<x>a_<y>
-	L<x>n_<y>
-	HK<x>_<y>
-
-	At the moment it only works for handlebody-knots
+	K<x>_<y>   (knot with Rolfsen/KnotAtlas syntax)
+	K<x>a_<y>  (alternating knot with Dowder-Thistlethwaite syntax)
+	K<x>n_<y>  (non-alternate knot with DT syntax)
+	L<x>a_<y>  (alternating link by Thistlethwaite syntax)
+	L<x>n_<y>  (non-alternating link by T syntax)
+	HK<x>_<y>  (handlebody-knot as listed in Ishii-Kishimoto-Moriuchi table)
 
 2018-06-17: input file with "knotname {HK<x>_<y>}" now can be used to refer to a handlebody-knot
 	(up to 6 crossings).

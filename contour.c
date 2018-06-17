@@ -58,7 +58,7 @@ struct global_data globals;
 struct tagged_data user_data;
 
 /* prototipi locali */
-FILE *open_description_file (char *arg);
+FILE *open_description_file (char *arg, int argnum);
 FILE *new_file (FILE *oldfile, FILE *newfile);
 static char examplesfilename[MAXFILELENGTH+1];
 int readintlistsub1 (int nccmax, int *ccids, char *s);
@@ -436,8 +436,8 @@ main (int argc, char *argv[])
     {
       if (infile == 0)
       {
-        infile = open_description_file (argv[i]);
-      } else infile2 = open_description_file (argv[i]);
+        infile = open_description_file (argv[i], 1);
+      } else infile2 = open_description_file (argv[i], 2);
       if (action == ACTION_FILEPATH)
       {
          printf ("%s\n", examplesfilename);
@@ -1372,11 +1372,13 @@ ccid_isvalidp (int ncc, int *ccids, int count)
  */
 
 FILE *
-open_description_file (char *arg)
+open_description_file (char *arg, int argnum)
 {
   FILE *infile;
   char *subdirs[]={".", "immersed", "knots", "links", "handlebody_knots", 0};
   char *exts[]={"morse", "sketch", "knot", "dtcode", 0};
+  char internalname1[]="shortcut_internal.knotname";
+  char internalname2[]="shortcut_internal2.knotname";
   int subdirid, extid, len;
 
   strncpy (examplesfilename, arg, MAXFILELENGTH);
@@ -1421,8 +1423,19 @@ open_description_file (char *arg)
       {
         case 'K':
         case 'L':
-          fprintf (stderr, "Fallback to knotname not yet implemented: %s\n", arg);
-          perror ("And cannot open input file");
+          assert (argnum == 1 || argnum == 2);
+          if (argnum == 1) strncpy (globals.knotname1, arg, MAXKNOTNAMELENGTH);
+          if (argnum == 2) strncpy (globals.knotname2, arg, MAXKNOTNAMELENGTH);
+          strncpy (examplesfilename, "examples/", MAXFILELENGTH);
+          strncat (examplesfilename, (argnum == 1)?internalname1:internalname2, MAXFILELENGTH);
+	  infile = fopen (examplesfilename, "r");
+          if (infile) return (infile);
+          strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
+          strncat (examplesfilename, "/", MAXFILELENGTH);
+          strncat (examplesfilename, (argnum == 1)?internalname1:internalname2, MAXFILELENGTH);
+	  infile = fopen (examplesfilename, "r");
+          if (infile) return (infile);
+          perror ("Anyway, cannot internal input file");
           exit (11);
         case 'H':
           strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);

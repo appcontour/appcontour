@@ -831,7 +831,9 @@ orientedgauss2sketch (struct vecofintlist *loiv)
 
 #define MAXFILELENGTH 2000
 
-static char tokenword[80];
+#define TOKENWORDLENGTH 200
+
+static char tokenword[TOKENWORDLENGTH];
 static char pathname[MAXFILELENGTH+1];
 
 FILE *
@@ -903,7 +905,14 @@ readknotscape (FILE *file)
   tok = gettoken (file);
   assert (tok == TOK_LBRACE);
 
-  if (getword (file, tokenword, 80) == TOK_EOF) return (0);
+  if (getword (file, tokenword, TOKENWORDLENGTH) == TOK_EOF) return (0);
+
+  if (*tokenword == '_')
+  {
+    assert (tokenword[1] == '1' || tokenword[1] == '2');
+    strncpy (tokenword, (tokenword[1] == '1')?globals.knotname1:globals.knotname2, TOKENWORDLENGTH);
+  }
+
   if (*tokenword == 'L')
   {
     /* case of link */

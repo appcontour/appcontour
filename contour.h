@@ -63,6 +63,8 @@
 #define ACTION_KNOTNAME2DTCODE 55
 #define ACTION_KNOTNAME2GAUSSCODE 56
 
+#define MAXKNOTNAMELENGTH 1000
+
 struct global_data {
   int rulenames;
   int focus_on_fundamental;
@@ -73,6 +75,8 @@ struct global_data {
   int experimental;
   int userwantscode;
   int knotname_fallback;
+  char knotname1[MAXKNOTNAMELENGTH];
+  char knotname2[MAXKNOTNAMELENGTH];
 };
 
 #define MRPTMAX 4

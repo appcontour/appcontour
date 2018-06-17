@@ -1,0 +1,5 @@
+#
+# this file is for internal use, required to activate direct indication
+# of a knot name given as contour argument
+#
+knotname {_1}
