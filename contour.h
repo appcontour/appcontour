@@ -72,6 +72,7 @@ struct global_data {
   int abelianize;
   int experimental;
   int userwantscode;
+  int knotname_fallback;
 };
 
 #define MRPTMAX 4
@@ -398,6 +399,8 @@ void freearc (struct arc *);
 int readsketch_arc (int arcid, struct sketch *sketch, FILE *file);
 int readsketch_region (int regionid, struct sketch *sketch, FILE *file);
 struct borderlist *readsketch_bl (struct region *r, struct sketch *sketch, FILE *file);
+
+char check_basic_knotname (char *param);
 
 void knotname2code (FILE *file, int action);
 

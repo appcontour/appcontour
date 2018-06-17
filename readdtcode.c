@@ -23,6 +23,8 @@
 #include "parser.h"
 #include "readdtcode.h"
 
+#define MAXFILELENGTH 2000
+
 extern int debug;
 extern int verbose;
 
@@ -48,6 +50,7 @@ static int *ori_component = 0;
 //typedef unsigned char   Boolean;
 
 static void dt_realize (int *anInvolution, int *aRealization, int aNumCrossings);
+static char examplesfilename[MAXFILELENGTH+1];
 
 void uFatalError (char *function, char *file)
 { printf ("FATAL error in function %s, file %s\n", function, file); exit (3); }
@@ -895,12 +898,37 @@ readknotscape (FILE *file)
   int found = 0;
   char *namept;
   int *dtcode, *dtpositive;
-  FILE *pakfile;
+  FILE *pakfile, *infile;
 
   tok = gettoken (file);
   assert (tok == TOK_LBRACE);
 
   if (getword (file, tokenword, 80) == TOK_EOF) return (0);
+  if (*tokenword == 'L')
+  {
+    /* case of link */
+    tok = gettoken (file);
+    assert (tok == TOK_RBRACE);
+    return (readlinkfromtable (tokenword));
+  }
+
+  if (*tokenword == 'H')
+  {
+    if (tokenword[1] != 'K')
+    {
+      fprintf (stderr, "Invalid handlebody-knot name: %s\n", tokenword);
+      exit (12);
+    }
+    strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
+    strncat (examplesfilename, "/handlebody_knots/hk", MAXFILELENGTH);
+    strncat (examplesfilename, &tokenword[2], MAXFILELENGTH);
+    strncat (examplesfilename, ".knot", MAXFILELENGTH);
+    infile = fopen (examplesfilename, "r");
+    if (infile && quiet == 0) fprintf (stderr, "Reading from file %s\n", examplesfilename);
+    if ((sketch = readcontour (infile)) == 0) exit (15);
+    return (sketch);
+  }
+
   canonify_knotname ();
   for (i = 0; rolfsen_to_dt[i]; i += 2)
   {
@@ -922,13 +950,6 @@ readknotscape (FILE *file)
     }
   }
 
-  if (*tokenword == 'L')
-  {
-    /* case of link */
-    tok = gettoken (file);
-    assert (tok == TOK_RBRACE);
-    return (readlinkfromtable (tokenword));
-  }
   if (!quiet) printf ("# ['pak' files courtesy of Morwen Thistlethwaite and Jim Hoste, in knotscape package]\n");
   //printf ("Knot name: %s\n", tokenword);
 

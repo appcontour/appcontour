@@ -1,3 +1,23 @@
+2018-06-17: Started implementing the possibility of passing the knot/link/handlebody-knot directly
+	by name on command line.  This can be disabled altogether by setting the environment variable
+	APPCONTOUR_DISABLEKNFALLBACK to a nonempty value.  Otherwise it *should* allow indication of
+	the knot/link/handlebody-knot with the syntax:
+
+	K<x>_<y>
+	K<x>a_<y>
+	K<x>n_<y>
+	L<x>a_<y>
+	L<x>n_<y>
+	HK<x>_<y>
+
+	At the moment it only works for handlebody-knots
+
+2018-06-17: input file with "knotname {HK<x>_<y>}" now can be used to refer to a handlebody-knot
+	(up to 6 crossings).
+
+2018-06-16: Do not print "Warning: result can be noncanonical" when the new algorithm for groebner
+	basis is used.
+
 2018-06-15: Handlebody-knots of genus 2 up to six crossings, taken from Ishii-Kishimoto-Moriuchi.
 	A handlebody-knot is the result of taking a tubular neighborhood of a trivalent graph in S^3,
 	Their diagram can be described using the "knot" description.

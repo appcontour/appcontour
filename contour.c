@@ -89,10 +89,13 @@ main (int argc, char *argv[])
   globals.rulenames = RULENAMES_NEW;
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = globals.userwantscode = 0;
+  globals.knotname_fallback = 1;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     autosurgery++;
   if ((envvar = getenv ("APPCONTOUR_OLDNAMES")) && *envvar) 
     globals.rulenames = RULENAMES_OLD;
+  if ((envvar = getenv ("APPCONTOUR_DISABLEKNFALLBACK")) && *envvar) 
+    globals.knotname_fallback = 0;
   for (i = 1; i < argc; i++)
   {
     if (strcmp(argv[i],"--newnames") == 0)
@@ -1409,6 +1412,31 @@ open_description_file (char *arg)
       if (infile) return (infile);
     }
   }
+  if (globals.knotname_fallback)
+  {
+    char knchar;
+    if ((knchar = check_basic_knotname (arg)) != 0)
+    {
+      switch (knchar)
+      {
+        case 'K':
+        case 'L':
+          fprintf (stderr, "Fallback to knotname not yet implemented: %s\n", arg);
+          perror ("And cannot open input file");
+          exit (11);
+        case 'H':
+          strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
+          strncat (examplesfilename, "/handlebody_knots/hk", MAXFILELENGTH);
+          strncat (examplesfilename, &arg[2], MAXFILELENGTH);
+          strncat (examplesfilename, ".knot", MAXFILELENGTH);
+          infile = fopen (examplesfilename, "r");
+          if (infile && quiet == 0) fprintf (stderr, "Reading from file %s\n", examplesfilename);
+          if (infile) return (infile);
+          perror ("Cannot open corresponding handlebody-knot file");
+          exit (11);
+      }
+    }
+  }
   perror ("Cannot open input file");
   exit (10);
 }
@@ -1458,4 +1486,26 @@ readintlistsub1 (int nccmax, int *ccids, char *s)
     if (s == spt) return (i-1);
     return (i);
   }
+}
+
+/*
+ * knotname given as argument, check if name is sintactically correct
+ */
+
+char
+check_basic_knotname (char *arg)
+{
+  switch (*arg)
+  {
+    case 'K':
+    case 'L':
+      if (isdigit (arg[1])) return (*arg);
+      return (0);
+
+    case 'H':
+      if (arg[1] != 'K') return (0);
+      if (isdigit (arg[2])) return ('H');
+      return (0);
+  }
+  return (0);
 }

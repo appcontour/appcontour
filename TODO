@@ -1,5 +1,9 @@
-Make --principal work for polynomials in more then one indet (assuming it makes sense)
+7. Find a way to read knot/link name directly from argument.  It is now recognized in 
+"open_description_file (...)", but it should pass the information somehow further in contour.c
 
+6. Make --principal work for polynomials in more then one indet (assuming it makes sense)
+
+5.
 Example of a complex alexander ideal for genus2 surfaces:
 echo "knotname{16a_1}" | ./contour punchhole -r 45 -s 1 | ./contour --out alexander
 
