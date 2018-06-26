@@ -25,7 +25,8 @@ int laurentpoly_linf (struct laurentpoly *l);
 int
 alexander (struct presentation *p)
 {
-  extern int verbose, quiet, foxd, shuffle, outformat;
+  extern struct global_data globals;
+  extern int verbose, quiet, outformat;
   struct presentationrule *r;
   struct laurentpoly *determinant;
   struct laurentpoly *determinant2;
@@ -57,47 +58,49 @@ alexander (struct presentation *p)
       printf ("Environment variable APPCONTOUR_AUTOSURGERY can be set to nonempty to imply option --autosurgery\n\n");
     } else printf ("  Use --verbose option to get more details.\n");
   }
-  if (foxd != FOXD_UNDEF && outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d\n#\n", foxd);
-  if (foxd < 0 && foxd >= FOXD_MINVALID)
+  if (globals.foxd != FOXD_UNDEF && outformat == OUTFORMAT_APPCONTOUR)
+      printf ("#\n# --foxd %d\n#\n", globals.foxd);
+  if (globals.foxd < 0 && globals.foxd >= FOXD_MINVALID)
     return (printout_constant_ideal ("Trivial zero ideal for negative d:\n", 0));
-  if (foxd == 0)
+  if (globals.foxd == 0)
   {
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("alexander() {}\n");
     printf ("Computation of order ideal not implemented\n");
     return (0);
   }
-  if (foxd == FOXD_MAXINTERESTING)
+  if (globals.foxd == FOXD_MAXINTERESTING)
   {
     printdvalue = 1;
-    foxd = numcols;
-    if (foxd < 1) foxd = 1;
-    if (outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d (generators: %d)\n#\n", foxd, p->gennum);
+    globals.foxd = numcols;
+    if (globals.foxd < 1) globals.foxd = 1;
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d (generators: %d)\n#\n",
+                                             globals.foxd, p->gennum);
   }
-  if (foxd == FOXD_UNDEF)
+  if (globals.foxd == FOXD_UNDEF)
   {
     printdvalue = 1;
-    foxd = deficiency;
-    if (foxd < 1) foxd = 1;
-    if (outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d\n#\n", foxd);
+    globals.foxd = deficiency;
+    if (globals.foxd < 1) globals.foxd = 1;
+    if (outformat == OUTFORMAT_APPCONTOUR) printf ("#\n# --foxd %d\n#\n", globals.foxd);
   }
   if (printdvalue && outformat != OUTFORMAT_APPCONTOUR)
   {
-    if (quiet) printf ("d = %d\n", foxd);
+    if (quiet) printf ("d = %d\n", globals.foxd);
     else {
       printf ("Computing ");
-      switch (foxd)
+      switch (globals.foxd)
       {
         case 1: printf ("first"); break;
         case 2: printf ("second"); break;
         case 3: printf ("third"); break;
-        default: printf ("%d-th", foxd); break;
+        default: printf ("%d-th", globals.foxd); break;
       }
-      printf (" Alexander ideal (--foxd = %d)\n", foxd);
+      printf (" Alexander ideal (--foxd = %d)\n", globals.foxd);
     }
   }
-  if (foxd >= p->gennum)
+  if (globals.foxd >= p->gennum)
     return (printout_constant_ideal ("Trivial whole ring ideal:\n", 1));
-  if (foxd < deficiency)
+  if (globals.foxd < deficiency)
     /* Jacobian matrix has too low rank */
     return (printout_constant_ideal ("Alexander polynomial (special large deficiency case):\n", 0));
   rank = compute_fg_rank (p);
@@ -145,7 +148,7 @@ alexander (struct presentation *p)
   switch (rank)
   {
     case 1:  /* case of knot groups */
-    switch (foxd)
+    switch (globals.foxd)
     {
       case 1:  /* this is the most interesting */
       determinant = laurent_eliminate_one_indeterminate (p, gconj);
@@ -158,7 +161,7 @@ alexander (struct presentation *p)
       case 4:
       case 5:
       case 6:
-      ai = laurent_notfirst_elementary_ideal (p, gconj, foxd - 1);
+      ai = laurent_notfirst_elementary_ideal (p, gconj, globals.foxd - 1);
       if (ai == 0) { foxdtoolarge++; break; }
       alexander_fromideal (ai);
       break;
@@ -170,8 +173,8 @@ alexander (struct presentation *p)
     break;
 
     case 2:  /* two-component links or surface of genus 2 */
-    assert (foxd >= deficiency);
-    switch (foxd - deficiency)
+    assert (globals.foxd >= deficiency);
+    switch (globals.foxd - deficiency)
     {
       case 0: /* 2 components link: foxd = 1; genus 2 surface: foxd = 2 */
       determinant2 = laurent_eliminate_two_indeterminates (p, gconj2, gconj, &extradeterminants);
@@ -193,7 +196,7 @@ alexander (struct presentation *p)
         }
         printf ("-------------\n");
       }
-      if (shuffle)
+      if (globals.shuffle)
       {
         shuffle_poly2 (&determinant2, extradeterminants, extradets);
       }
@@ -217,7 +220,7 @@ alexander (struct presentation *p)
       case 5:
       if (deficiency > 1) { foxdtoolarge++; break; }
       /* case of link and request of second elementary ideal */
-      ai = laurent_notfirst_elementary_ideal2 (p, gconj2, gconj, foxd - 1);
+      ai = laurent_notfirst_elementary_ideal2 (p, gconj2, gconj, globals.foxd - 1);
       if (ai == 0) { foxdtoolarge++; break; }
       /*
        * test used to be: 
@@ -236,8 +239,8 @@ alexander (struct presentation *p)
     break;
 
     case 3:
-    assert (foxd >= 1);
-    switch (foxd)
+    assert (globals.foxd >= 1);
+    switch (globals.foxd)
     {
       case 1:
       assert (deficiency == 1);
@@ -248,7 +251,7 @@ alexander (struct presentation *p)
       break;
 
       default:
-      ai = generic_ideal_computation (p, rank, p->gennum - foxd);
+      ai = generic_ideal_computation (p, rank, p->gennum - globals.foxd);
       if (ai == 0) return (0);
       ai->canonical = 0;
       alexander_fromideal (ai);
@@ -257,7 +260,7 @@ alexander (struct presentation *p)
     break;
 
     default:
-    ai = generic_ideal_computation (p, rank, p->gennum - foxd);
+    ai = generic_ideal_computation (p, rank, p->gennum - globals.foxd);
     if (ai == 0) return (0);
     ai->canonical = 0;
     alexander_fromideal (ai);
@@ -266,7 +269,7 @@ alexander (struct presentation *p)
 
   if (foxdtoolarge)
   {
-    printf ("Unable to compute higer d = %d Alexander ideal.\n", foxd);
+    printf ("Unable to compute higer d = %d Alexander ideal.\n", globals.foxd);
     return (0);
   }
   return (1);
@@ -912,7 +915,8 @@ laurent_eliminate_one_indeterminate (struct presentation *p, int eliminate)
 struct alexanderideal *
 laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int corank)
 {
-  extern int verbose, simplifyideal;
+  extern struct global_data globals;
+  extern int verbose;
   struct alexanderideal *ai;
   struct laurentmatrix *matrix, *minor;
   struct laurentpoly *l, **matrixcolumn, **columnj, **columnjj;
@@ -1059,7 +1063,7 @@ laurent_notfirst_elementary_ideal (struct presentation *p, int eliminate, int co
 
   laurent_free_matrix (matrix);
   if (ai->l1num > 1) ai->canonical = 0;
-  if (simplifyideal) ai = laurent_simplify_ideal (ai);
+  if (globals.simplifyideal) ai = laurent_simplify_ideal (ai);
   return (ai);
 }
 
@@ -2754,7 +2758,7 @@ canonify_ideal2 (struct laurentpoly **wpt, struct laurentpoly **wi, int winum)
 int
 base_canonify2 (struct laurentpoly **ppt)
 {
-  extern int nobasecanonify;
+  extern struct global_data globals;
   int suppdim;
 
   if (ppt == 0) return (1);
@@ -2762,7 +2766,7 @@ base_canonify2 (struct laurentpoly **ppt)
  
   if (suppdim < 0) return (1);
 
-  if (nobasecanonify) return (0);
+  if (globals.nobasecanonify) return (0);
   switch (suppdim)
   {
     case 0:

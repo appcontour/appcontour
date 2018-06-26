@@ -66,6 +66,19 @@
 #define MAXKNOTNAMELENGTH 1000
 
 struct global_data {
+  int dorecomputef;
+  int doretagregions;
+  int simplifypresentation;
+  int simplifycomplex;
+  int simplifyideal;
+  int finfinity;
+  int preabelian;
+  int nobasecanonify;
+  int viacc;
+  int mendesge;
+  int foxd;
+  int shuffle;
+  int autosurgery;
   int rulenames;
   int focus_on_fundamental;
   int principal;

@@ -826,7 +826,7 @@ void
 readregioninfo (FILE *file, struct border *actregion)
 {
   int tok, tag;
-  extern int doretagregions;
+  extern struct global_data globals;
 
   while ((tok = gettoken (file)))
   {
@@ -845,7 +845,7 @@ readregioninfo (FILE *file, struct border *actregion)
       }
       tag = gettokennumber ();
       actregion->border->region->tag = tag;
-      doretagregions = 0;
+      globals.doretagregions = 0;
     }
   }
   return;

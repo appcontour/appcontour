@@ -837,9 +837,7 @@ postprocesssketch (struct sketch *sketch)
   struct borderlist *hole;
   struct arc *arc;
   int tag;
-  extern int dorecomputef;
-  extern int doretagregions;
-  extern int finfinity;
+  extern struct global_data globals;
 
   /*
    * sfortunatamente free_connected_components distrugge l'informazione
@@ -853,11 +851,11 @@ postprocesssketch (struct sketch *sketch)
 
   make_extregion_first (sketch);
 
-  if (debug && doretagregions) printf ("2: rinumero gli archi e le regioni\n");
-  if (debug && !doretagregions) printf ("2: rinumero gli archi\n");
+  if (debug && globals.doretagregions) printf ("2: rinumero gli archi e le regioni\n");
+  if (debug && !globals.doretagregions) printf ("2: rinumero gli archi\n");
 
   for (tag = 0, region = sketch->regions; region; tag++, region = region->next)
-          if (doretagregions) region->tag = tag;
+          if (globals.doretagregions) region->tag = tag;
   sketch->regioncount = tag;
   for (tag = 1, arc = sketch->arcs; arc; arc = arc->next)
           arc->tag = tag++;
@@ -902,14 +900,14 @@ postprocesssketch (struct sketch *sketch)
     }
   }
 
-  if (debug && dorecomputef) printf ("5: definizione dei valori di f\n");
+  if (debug && globals.dorecomputef) printf ("5: definizione dei valori di f\n");
 
-  if (dorecomputef)
+  if (globals.dorecomputef)
   {
     extregion = sketch->regions;
     if (sketch->extregion) extregion = sketch->extregion;
     assert (extregion->border->sponda == 0);
-    computefvalue (sketch, extregion, finfinity);
+    computefvalue (sketch, extregion, globals.finfinity);
   }
 
   if (debug) printf ("6: controllo correttezza bordo esterno\n");

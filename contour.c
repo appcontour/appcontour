@@ -32,26 +32,19 @@ int interactive = 0;
 int heisemberg = -1;
 int docanonify = 1;
 int useoldcanonify = 0;
-int dorecomputef = 1;
-int doretagregions = 1;
-int finfinity = 0;
-int preabelian = 0;
-int simplifypresentation = 1;
-int simplifycomplex = 1;
-int simplifyideal = 1;
-int nobasecanonify = 0;
-int mendesge = HGE_TEXT;
-int viacc = 0;
-int foxd = FOXD_UNDEF;
-int shuffle = 0;
-int autosurgery = 0;
-//int focus_on_fundamental = 0;
-//int principal = 0;
-//int factorideal = 0;
-//int internalcheck = 0;
-//int abelianize = 0;
-//int experimental = 0;
-//int userwantscode = 0;
+//int dorecomputef = 1;
+//int doretagregions = 1;
+//int finfinity = 0;
+//int preabelian = 0;
+//int simplifypresentation = 1;
+//int simplifycomplex = 1;
+//int simplifyideal = 1;
+//int nobasecanonify = 0;
+//int mendesge = HGE_TEXT;
+//int viacc = 0;
+//int foxd = FOXD_UNDEF;
+//int shuffle = 0;
+//int autosurgery = 0;
 static int renumber = 1;
 
 struct global_data globals;
@@ -86,12 +79,18 @@ main (int argc, char *argv[])
 
   ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
+  globals.dorecomputef = globals.doretagregions = globals.simplifypresentation = 1;
+  globals.simplifycomplex = globals.simplifyideal = 1;
+  globals.finfinity = globals.preabelian = globals.nobasecanonify = globals.viacc = 0;
+  globals.mendesge = HGE_TEXT;
+  globals.foxd = FOXD_UNDEF;
   globals.rulenames = RULENAMES_NEW;
+  globals.shuffle = globals.autosurgery = 0;
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = globals.userwantscode = 0;
   globals.knotname_fallback = 1;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
-    autosurgery++;
+    globals.autosurgery++;
   if ((envvar = getenv ("APPCONTOUR_OLDNAMES")) && *envvar) 
     globals.rulenames = RULENAMES_OLD;
   if ((envvar = getenv ("APPCONTOUR_DISABLEKNFALLBACK")) && *envvar) 
@@ -187,12 +186,12 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--autosurgery") == 0)
     {
-      autosurgery++;
+      globals.autosurgery++;
       continue;
     }
     if (strcmp(argv[i],"--noautosurgery") == 0)
     {
-      autosurgery = 0;
+      globals.autosurgery = 0;
       continue;
     }
     if (strcmp(argv[i],"--principal") == 0 || strcmp(argv[i],"--gcd") == 0)
@@ -222,7 +221,7 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--maxd") == 0)
     {
-      foxd = FOXD_MAXINTERESTING;
+      globals.foxd = FOXD_MAXINTERESTING;
       continue;
     }
     if (strcmp(argv[i],"--experimental") == 0)
@@ -242,32 +241,33 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--nosimplify") == 0)
     {
-      simplifypresentation = simplifycomplex = simplifyideal = 0;
+      globals.simplifypresentation = globals.simplifycomplex
+                                   = globals.simplifyideal = 0;
       continue;
     }
     if (strcmp(argv[i],"--nopresentationsimplify") == 0)
     {
-      simplifypresentation = 0;
+      globals.simplifypresentation = 0;
       continue;
     }
     if (strcmp(argv[i],"--nocomplexsimplify") == 0)
     {
-      simplifycomplex = 0;
+      globals.simplifycomplex = 0;
       continue;
     }
     if (strcmp(argv[i],"--noidealsimplify") == 0)
     {
-      simplifyideal = 0;
+      globals.simplifyideal = 0;
       continue;
     }
     if (strcmp(argv[i],"--nobasecanonify") == 0)
     {
-      nobasecanonify = 1;
+      globals.nobasecanonify = 1;
       continue;
     }
     if (strcmp(argv[i],"--shuffle") == 0)
     {
-      shuffle = 1;
+      globals.shuffle = 1;
       continue;
     }
     if (strcmp(argv[i],"--inside") == 0 || strcmp(argv[i],"--in") == 0)
@@ -297,7 +297,7 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--foxd") == 0)
     {
-      foxd = atoi (argv[++i]);
+      globals.foxd = atoi (argv[++i]);
       continue;
     }
     if (strcmp(argv[i],"--seed") == 0)
@@ -316,21 +316,21 @@ main (int argc, char *argv[])
         strcmp(argv[i],"--finfinity") == 0 ||
         strcmp(argv[i],"--fi") == 0)
     {
-      finfinity = atoi (argv[++i]);
+      globals.finfinity = atoi (argv[++i]);
       continue;
     }
     if (strcmp(argv[i],"--preabelian") == 0)
     {
-      preabelian++;
+      globals.preabelian++;
       continue;
     }
     if (strcmp(argv[i],"--mendes_ge") == 0 ||
         strcmp(argv[i],"--mge") == 0)
     {
       i++;
-      if (strcmp(argv[i],"text") == 0) mendesge = HGE_TEXT;
-      else if (strcmp(argv[i],"pykig") == 0) mendesge = HGE_PYKIG;
-      else if (strcmp(argv[i],"kig") == 0) mendesge = HGE_KIG;
+      if (strcmp(argv[i],"text") == 0) globals.mendesge = HGE_TEXT;
+      else if (strcmp(argv[i],"pykig") == 0) globals.mendesge = HGE_PYKIG;
+      else if (strcmp(argv[i],"kig") == 0) globals.mendesge = HGE_KIG;
       else
       {
         printf ("Invalid mendes graphic engine selection: %s\n",
@@ -560,7 +560,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"foxjacobian") == 0) action = ACTION_FOXJACOBIAN;
     if (strcmp(argv[i],"alexander") == 0) action = ACTION_ALEXANDER;
     if (strcmp(argv[i],"linkingnumber") == 0) action = ACTION_LINKINGNUMBER;
-    if (strcmp(argv[i],"scharacteristic") == 0) {action = ACTION_CHARACTERISTIC; viacc = 1;}
+    if (strcmp(argv[i],"scharacteristic") == 0) {action = ACTION_CHARACTERISTIC; globals.viacc = 1;}
     if (strcmp(argv[i],"sch") == 0) action = ACTION_CHARACTERISTIC;
     if (strcmp(argv[i],"icharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"ich") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
@@ -867,7 +867,7 @@ main (int argc, char *argv[])
     canonify (sketch);
     res = put_in_s1 (sketch);
     make_extregion_first (sketch);
-    dorecomputef = 0;
+    globals.dorecomputef = 0;
     if (docanonify) postprocesssketch (sketch);
     if (docanonify) canonify (sketch);
     printsketch (sketch);
@@ -1058,7 +1058,7 @@ main (int argc, char *argv[])
 
     case ACTION_CHARACTERISTIC:
     if ((sketch = readcontour (infile)) == 0) exit (14);
-    if (fg_type == FG_SURFACE && viacc == 0)
+    if (fg_type == FG_SURFACE && globals.viacc == 0)
     {
       if (quiet) printf ("%d\n", euler_characteristic (sketch));
         else printf ("Euler characteristic: %d\n", euler_characteristic (sketch));
@@ -1137,7 +1137,7 @@ main (int argc, char *argv[])
     case ACTION_EVERT:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     changeextregion (sketch, newextregion);
-    dorecomputef = 0;
+    globals.dorecomputef = 0;
     if (docanonify) postprocesssketch (sketch);
     if (docanonify) canonify (sketch);
     printsketch (sketch);
@@ -1146,7 +1146,7 @@ main (int argc, char *argv[])
     case ACTION_3DEVERT:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     evert3d (sketch, newextregion);
-    dorecomputef = 0;
+    globals.dorecomputef = 0;
     if (docanonify) postprocesssketch (sketch);
     if (docanonify) canonify (sketch);
     printsketch (sketch);
@@ -1169,7 +1169,7 @@ main (int argc, char *argv[])
     }
     ccomplex = compute_cellcomplex (sketch, fg_type);
 
-    if (simplifycomplex) {
+    if (globals.simplifycomplex) {
       count = complex_collapse (ccomplex);
       if (debug) printf ("Collapsed %d cell pairs\n", count);
     }
@@ -1207,16 +1207,16 @@ main (int argc, char *argv[])
               abelianized_fundamental_group (p);
               break;
             case ACTION_FOXJACOBIAN:
-              if (simplifypresentation) simplify_presentation (p);
+              if (globals.simplifypresentation) simplify_presentation (p);
               foxjacobian (p);
               break;
             case ACTION_ALEXANDER:
-              if (simplifypresentation) simplify_presentation (p);
+              if (globals.simplifypresentation) simplify_presentation (p);
               res = alexander (p);
               if (res == 0) exit (1);
               break;
             case ACTION_LINKINGNUMBER:
-              if (simplifypresentation) simplify_presentation (p);
+              if (globals.simplifypresentation) simplify_presentation (p);
               linkingnumber (p);
               break;
           }
@@ -1228,7 +1228,7 @@ main (int argc, char *argv[])
           switch (action)
           {
             case ACTION_ALEXANDER:
-              if (simplifyideal)
+              if (globals.simplifyideal)
               {
                 ai = laurent_simplify_ideal (ai);
               }

@@ -20,17 +20,13 @@ extern int debug;
 extern int quiet;
 extern int verbose;
 extern int interactive;
-extern int preabelian;
-extern int simplifypresentation;
 
 void
 compute_fundamental (struct ccomplex *cc, int action)
 {
   int res, ccnum, errors = 0;
-  //int count;
   struct ccomplexcc *cccc;
 
-  //count = complex_melt (cc);
   complex_melt (cc);
   if (debug) cellcomplex_checkconsistency (cc);
 
@@ -54,16 +50,16 @@ compute_fundamental (struct ccomplex *cc, int action)
         abelianized_fundamental_group (cccc->p);
         break;
       case ACTION_FOXJACOBIAN:
-        if (simplifypresentation) simplify_presentation (cccc->p);
+        if (globals.simplifypresentation) simplify_presentation (cccc->p);
         foxjacobian (cccc->p);
         break;
       case ACTION_ALEXANDER:
-        if (simplifypresentation) simplify_presentation (cccc->p);
+        if (globals.simplifypresentation) simplify_presentation (cccc->p);
         res = alexander (cccc->p);
         if (res == 0) errors++;
         break;
       case ACTION_LINKINGNUMBER:
-        if (simplifypresentation) simplify_presentation (cccc->p);
+        if (globals.simplifypresentation) simplify_presentation (cccc->p);
         linkingnumber (cccc->p);
         break;
       default:
@@ -79,8 +75,8 @@ fundamental_group (struct presentation *p)
 {
   if (verbose >= 2) print_presentation (p);
   if (interactive >= 2) fg_interactive (p);
-  if (simplifypresentation) simplify_presentation (p);
-  if (preabelian) topreabelian (p);
+  if (globals.simplifypresentation) simplify_presentation (p);
+  if (globals.preabelian) topreabelian (p);
   if (interactive) fg_interactive (p);
   print_presentation (p);
   if (verbose) print_exponent_matrix (p);
@@ -92,7 +88,7 @@ abelianized_fundamental_group (struct presentation *p)
   if (debug) print_presentation (p);
   if (interactive >= 2) fg_interactive (p);
   simplify_presentation (p);
-  if (preabelian) topreabelian (p);
+  if (globals.preabelian) topreabelian (p);
   if (interactive) fg_interactive (p);
   print_invariant_factors (p);
   if (verbose) print_exponent_matrix (p);
@@ -2254,7 +2250,6 @@ complex_countreferences (struct ccomplex *cc)
 struct ccomplex *
 compute_cellcomplex (struct sketch *s, int fg_type)
 {
-  extern int finfinity, autosurgery;
   struct ccomplex *cc;
   struct region *region;
   int euler, surfeuler, realeuler;
@@ -2293,10 +2288,11 @@ compute_cellcomplex (struct sketch *s, int fg_type)
     postprocesssketch (s);
     surfeuler += 2;
   }
-  if (finfinity != 0) fprintf (stderr, "Value of f at infinity (%d) must be zero\n", finfinity);
-  assert (finfinity == 0);
+  if (globals.finfinity != 0) fprintf (stderr, "Value of f at infinity (%d) must be zero\n",
+                              globals.finfinity);
+  assert (globals.finfinity == 0);
   computefvalue (s, s->regions, 0 /* should be finfinity */);
-  if (fg_type != FG_SURFACE && globals.focus_on_fundamental && autosurgery)
+  if (fg_type != FG_SURFACE && globals.focus_on_fundamental && globals.autosurgery)
   {
     while (suggest_p_surgery (s, &region, &stratum))
     {

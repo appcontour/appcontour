@@ -578,11 +578,12 @@ void
 print_mendes (struct mendesgraph *h)
 {
   int ia, in, kigobj, kigobjfa, kigobjflab;
-  extern int mendesge, quiet, verbose;
+  extern struct global_data globals;
+  extern int quiet, verbose;
   char *kigpointstyle[] = {"Round", "RoundEmpty" };
   int ptstyleid;
 
-  switch (mendesge)
+  switch (globals.mendesge)
   {
     case HGE_TEXT:
     if (quiet == 0)
