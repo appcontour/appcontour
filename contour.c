@@ -16,6 +16,7 @@
 #include "fundamental.h"
 #include "fox.h"
 #include "alexander.h"
+#include "representations.h"
 #include "giovecanonify.h"
 
 #ifndef EXAMPLES_DIR
@@ -568,6 +569,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"och") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"suggest_p_surgery") == 0) action = ACTION_SUGGEST_P_SURGERY;
     if (strcmp(argv[i],"filepath") == 0) action = ACTION_FILEPATH;
+    if (strcmp(argv[i],"newfeature") == 0) action = ACTION_NEWFEATURE;
     if (strcmp(argv[i],"evert") == 0)
     {
       action = ACTION_EVERT;
@@ -1251,6 +1253,33 @@ main (int argc, char *argv[])
           exit (11);
           break;
       }
+    } else {
+      if ((sketch = readcontour (infile)) == 0) exit (14);
+      if (docanonify) canonify (sketch);
+      if (sketch->isempty)
+      {
+        fprintf (stderr, "Cannot compute fundamental group of EMPTY contour\n");
+        exit (13);
+      }
+      ccomplex = compute_cellcomplex (sketch, fg_type);
+      count = complex_collapse (ccomplex);
+      if (debug) printf ("%d pairs of cells collapsed\n", count);
+      compute_fundamental (ccomplex, action);
+    }
+    break;
+
+    case ACTION_NEWFEATURE:
+    // printf ("Sorry, there is no new feature to experiment with...\n");
+    // exit (14);
+    globals.focus_on_fundamental++;
+    tok = gettoken (infile);
+    ungettoken (tok);
+    if (tok == TOK_FPGROUP)
+    {
+      p = (struct presentation *) malloc (sizeof (struct presentation));
+      read_group_presentation (infile, p);
+      if (globals.simplifypresentation) simplify_presentation (p);
+      representations (p);
     } else {
       if ((sketch = readcontour (infile)) == 0) exit (14);
       if (docanonify) canonify (sketch);

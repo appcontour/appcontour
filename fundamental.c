@@ -62,6 +62,10 @@ compute_fundamental (struct ccomplex *cc, int action)
         if (globals.simplifypresentation) simplify_presentation (cccc->p);
         linkingnumber (cccc->p);
         break;
+      case ACTION_NEWFEATURE:
+        if (globals.simplifypresentation) simplify_presentation (cccc->p);
+        representations (cccc->p);
+        break;
       default:
         printf ("Invalid action: %d\n", action);
         break;
