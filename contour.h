@@ -62,6 +62,7 @@
 #define ACTION_KNOTSUM 54
 #define ACTION_KNOTNAME2DTCODE 55
 #define ACTION_KNOTNAME2GAUSSCODE 56
+#define ACTION_CCCOUNTSL2ZP 57
 
 #define ACTION_NEWFEATURE 999
 
@@ -90,6 +91,7 @@ struct global_data {
   int experimental;
   int userwantscode;
   int knotname_fallback;
+  int p;
   char knotname1[MAXKNOTNAMELENGTH];
   char knotname2[MAXKNOTNAMELENGTH];
 };

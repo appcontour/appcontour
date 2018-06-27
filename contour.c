@@ -584,6 +584,18 @@ main (int argc, char *argv[])
       if (i >= argc) {fprintf (stderr, "specify a region tag\n"); exit (11);}
       newextregion = atoi (argv[i]);
     }
+    if (strcmp(argv[i],"countsl2zp") == 0)
+    {
+      action = ACTION_CCCOUNTSL2ZP;
+      i++;
+      if (i >= argc) {fprintf (stderr, "specify the value of the prime p\n"); exit (11);}
+      globals.p = atoi (argv[i]);
+    }
+    if (strcmp(argv[i],"countsl2z2") == 0)
+    {
+      action = ACTION_CCCOUNTSL2ZP;
+      globals.p = 2;
+    }
     if (action == ACTION_NONE)
     {
       fprintf (stderr, "invalid arg[%d] = %s\n", i, argv[i]);
@@ -1268,9 +1280,7 @@ main (int argc, char *argv[])
     }
     break;
 
-    case ACTION_NEWFEATURE:
-    // printf ("Sorry, there is no new feature to experiment with...\n");
-    // exit (14);
+    case ACTION_CCCOUNTSL2ZP:
     globals.focus_on_fundamental++;
     tok = gettoken (infile);
     ungettoken (tok);
@@ -1279,7 +1289,7 @@ main (int argc, char *argv[])
       p = (struct presentation *) malloc (sizeof (struct presentation));
       read_group_presentation (infile, p);
       if (globals.simplifypresentation) simplify_presentation (p);
-      representations (p);
+      cccountsl2zp (p);
     } else {
       if ((sketch = readcontour (infile)) == 0) exit (14);
       if (docanonify) canonify (sketch);
@@ -1293,6 +1303,11 @@ main (int argc, char *argv[])
       if (debug) printf ("%d pairs of cells collapsed\n", count);
       compute_fundamental (ccomplex, action);
     }
+    break;
+
+    case ACTION_NEWFEATURE:
+    printf ("Sorry, there is no new feature to experiment with...\n");
+    exit (14);
     break;
 
     default:
