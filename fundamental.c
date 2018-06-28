@@ -10,6 +10,7 @@
 #include "laurent.h"
 #include "fundamental.h"
 #include "fox.h"
+#include "representations.h"
 #include "alexander.h"
 #include "parser.h"
 
