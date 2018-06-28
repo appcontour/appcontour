@@ -1,0 +1,18 @@
+#!/bin/bash
+#
+#testname:representation in SL(2,Z/pZ), count up to conjugacy
+#
+p=5
+knot="K3_1"
+echo "Count representations in SL(2,Z/${p}Z) (Kitano-Suzuki) for $knot"
+./contour --out countsl2zp $p $knot -q
+
+p=3
+knot="K10_7"
+echo "Count representations in SL(2,Z/${p}Z) (Kitano-Suzuki) for $knot"
+./contour --out countsl2zp $p $knot -q
+
+p=5
+knot="HK6_10"
+echo "Count representations in SL(2,Z/${p}Z) (Kitano-Suzuki) for handlebody-knot $knot"
+./contour --out countsl2zp $p $knot -q

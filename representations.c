@@ -32,6 +32,7 @@ count_sl2zp_cclasses (struct presentation *pst, int p)
   struct sl2elem sl2vec[MAXGENNUM];
   struct sl2elem sl2vecinv[MAXGENNUM];
   int i, gennum, rem, count;
+  int clevel;
 
   gennum = pst->gennum;
   assert (gennum <= MAXGENNUM);
@@ -49,18 +50,32 @@ count_sl2zp_cclasses (struct presentation *pst, int p)
   count = 0;
 
   do {
-    if (sl2_iscanon(sl2vec, gennum, p) == 0) continue;
+    if ((clevel = sl2_isnotcanon(sl2vec, gennum, p)))
+    {
+      if (clevel < gennum)
+      {
+        /*
+         * we can prune away a whole branch of homomorphisms
+         * by setting the remaining matrices to the lexicographically "last" value
+         */
+        for (i = clevel; i < gennum; i++)
+        {
+          sl2_set (sl2vec[i].a, p);
+        }
+      }
+      continue;
+    }
     if (sl2_checkrelators(sl2vec, sl2vecinv, pst, p) == 0) continue;
+    count++;
     if (verbose)
     {
-      printf ("Homomorphism defined by the matrices:\n");
+      printf ("Homomorphism #%d defined by the matrices:\n", count);
       for (i = 0; i < gennum; i++)
       {
         sl2_print (sl2vec[i].a);
         printf ("---\n");
       }
     }
-    count++;
   } while (sl2_nextmap (sl2vec, sl2vecinv, gennum, p) == 0);
 
   return (count);
@@ -95,6 +110,16 @@ sl2_clear (int m[2][2])
   for (i = 0; i < 2; i++)
     for (j = 0; j < 2; j++)
       m[i][j] = 0;
+}
+
+void
+sl2_set (int m[2][2], int p)
+{
+  int i, j;
+
+  for (i = 0; i < 2; i++)
+    for (j = 0; j < 2; j++)
+      m[i][j] = p - 1;
 }
 
 /*
@@ -274,7 +299,7 @@ sl2_matcmp (int m1[2][2], int m2[2][2])
 }
 
 /*
- * multiply matrix acc timex matrix mat2; result in acc
+ * multiply matrix acc times matrix mat2; result in acc
  */
 
 void
@@ -298,6 +323,37 @@ sl2_matmul (int acc[2][2], int mat2[2][2], int p)
   acc[0][1] = r01;
   acc[1][0] = r10;
   acc[1][1] = r11;
+}
+
+/*
+ * check if this set is not a canonical representative up to conjugation
+ */
+
+int
+sl2_isnotcanon (struct sl2elem *sl2vec, int gennum, int p)
+{
+  int g[2][2];
+  int ginv[2][2];
+  int acc[2][2];
+  int i, cmpres;
+
+  sl2_clear (g);
+  /* cycle on the elements of SL(2,Zp) */
+  while (sl2_next_det1 (g, p) == 0)
+  {
+    sl2_invert (g, ginv, p);
+    /* now cycle on the elements of the set and compute the conjugate */
+    for (i = 0; i < gennum; i++)
+    {
+      sl2_matcopy (acc, ginv);
+      sl2_matmul (acc, sl2vec[i].a, p);
+      sl2_matmul (acc, g, p);
+      cmpres = sl2_matcmp (acc, sl2vec[i].a);
+      if (cmpres < 0) return (i+1); /* found a better representative: non canonical */
+      if (cmpres > 0) break;      /* it is needless to conjugate the other elements */
+    }
+  }
+  return (0);
 }
 
 /*

@@ -26,4 +26,6 @@ int sl2_checkrelator (struct sl2elem *sl2vec, struct sl2elem *sl2vecinv, int gen
 void sl2_matmul (int acc[2][2], int mat2[2][2], int p);
 void sl2_matcopy (int acc[2][2], int mat[2][2]);
 int sl2_matcmp (int m1[2][2], int m2[2][2]);
+void sl2_set (int m[2][2], int p);
 int sl2_iscanon(struct sl2elem *sl2vec, int gennum, int p);
+int sl2_isnotcanon(struct sl2elem *sl2vec, int gennum, int p);
