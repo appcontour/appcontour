@@ -4,7 +4,7 @@
 #include "contour.h"
 #include "representations.h"
 
-extern int quiet;
+extern int quiet, verbose;
 
 int
 cccountsl2zp (struct presentation *pst)
@@ -51,6 +51,15 @@ count_sl2zp_cclasses (struct presentation *pst, int p)
   do {
     if (sl2_iscanon(sl2vec, gennum, p) == 0) continue;
     if (sl2_checkrelators(sl2vec, sl2vecinv, pst, p) == 0) continue;
+    if (verbose)
+    {
+      printf ("Homomorphism defined by the matrices:\n");
+      for (i = 0; i < gennum; i++)
+      {
+        sl2_print (sl2vec[i].a);
+        printf ("---\n");
+      }
+    }
     count++;
   } while (sl2_nextmap (sl2vec, sl2vecinv, gennum, p) == 0);
 

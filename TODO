@@ -1,5 +1,4 @@
-7. Find a way to read knot/link name directly from argument.  It is now recognized in 
-"open_description_file (...)", but it should pass the information somehow further in contour.c
+7. Make "countsl2zp" more efficient
 
 6. Make --principal work for polynomials in more then one indet (assuming it makes sense)
 
