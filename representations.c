@@ -426,9 +426,9 @@ count_sn_cclasses (struct presentation *pst, int n)
 
   for (i = 0; i < gennum; i++)
   {
-    sn_init (&snvec[i], n);
+    sn_init (snvec + i, n);
     rem = sn_next_cond (snvec + i);
-    assert (rem == 0);
+    assert (rem == 1);
     sn_invert (snvec + i, snvecinv + i);
   }
 
@@ -457,17 +457,38 @@ count_sn_cclasses (struct presentation *pst, int n)
       printf ("Homomorphism #%d defined by the permutations:\n", count);
       for (i = 0; i < gennum; i++)
       {
-        sn_print (snvec + i);
-        printf ("---\n");
+        sn_print (snvec[i].perm, n);
       }
     }
-  } while (sn_nextmap (snvec, snvecinv, gennum, n) == 0);
+  } while (sn_nextmap (snvec, snvecinv, gennum) == 0);
 
   return (count);
 }
 
 /*
- * initialize with the identity permutation
+ * check if a permutation is even
+ */
+
+int
+sn_iseven (int *perm, int n)
+{
+  int i, j, iseven;
+
+  iseven = 1;
+  for (i = 0; i < n; i++)
+  {
+    for (j = 0; j < i; j++)
+    if (perm[j] > perm[i]) iseven = 1 - iseven;
+  }
+  return (iseven);
+}
+
+/*
+ * initialize with the permutation that reverts the order.
+ * This is the last permutation in lexicographic ordering, so that
+ * when we ask for the "next" permutation we should get the
+ * identity permutation (the first in lexicographic order) with
+ * a "rem" = 1
  */
 
 void
@@ -477,22 +498,22 @@ sn_init (struct snelem *perm, int n)
 
   assert (n <= REPR_MAXN);
   perm->n = n;
-  for (i = 0; i < n; i++) perm->perm[i] = i;
+  for (i = 0; i < n; i++) perm->perm[i] = n - i - 1;
 }
 
 int
 sn_next_cond (struct snelem *perm)
 {
-  while (sn_next (&perm->perm[0], perm->n) == 0)
+  //while (sn_next (&perm->perm[0], perm->n) == 0)
+  while (sn_next (perm->perm, perm->n) == 0)
   {
     if (globals.onlyeven == 0) return (0);
-    assert (0);  // add iseven check
+    if (sn_iseven (perm->perm, perm->n)) return (0);
   }
-  while (sn_next (&perm->perm[0], perm->n) == 0)
-  {
+  do {
     if (globals.onlyeven == 0) return (1);
-    assert (0);  // add iseven check
-  }
+    if (sn_iseven (perm->perm, perm->n)) return (1);
+  } while (sn_next (perm->perm, perm->n) == 0);
   printf ("FATAL: Cannot find a suitable permutation\n");
   exit (50);
 }
@@ -500,19 +521,69 @@ sn_next_cond (struct snelem *perm)
 int
 sn_next (int *perm, int n)
 {
-  assert (0);
+  int rem, i, first;
+
+  if (n <= 1) return (1);
+  rem = sn_next (perm + 1, n-1);
+  if (rem == 0) return (0);
+  /*
+   * rem == 1 means that the remainder of the permutation is
+   * now ordered in increasing order; I have something like
+   * in the example
+   *   6 1 3 4 7 9
+   * to be transformed in
+   *   7 1 3 4 6 9
+   * returning 0
+   * or
+   *   9 1 3 4 6 7
+   * to be transformed in
+   *   1 3 4 6 7 9
+   * returning 1
+   */
+  first = perm[0];
+  for (i = 1; i < n; i++)
+  {
+    if (perm[i] > first)
+    {
+      perm[0] = perm[i];
+      perm[i] = first;
+      return (0);
+    }
+  }
+  for (i = 0; i < n-1; i++)
+  {
+    perm[i] = perm[i+1];
+  }
+  perm[n-1] = first;
+  return (1);
 }
+
+/*
+ * of course this works under the assumption that
+ * perm->perm[i] is a permutation
+ */
 
 void
 sn_invert (struct snelem *perm, struct snelem *perminv)
 {
-  assert (0);
+  int i, n;
+  int *p, *pinv;
+
+  n = perm->n;
+  p = perm->perm;
+  pinv = perminv->perm;
+  perminv->n = n;
+  for (i = 0; i < n; i++)
+  {
+    pinv[p[i]] = i;
+  }
 }
 
 int
-sn_isnotcanon(struct snelem *perms, int gennum, int n)
+sn_isnotcanon (struct snelem *perms, int gennum, int n)
 {
-  assert (0);
+  fprintf (stderr, "Error: sn_isnotcanon not yet implemented\n");
+  return (0);
 }
 
 void
@@ -522,30 +593,72 @@ sn_setlast (struct snelem *perm, int n)
 }
 
 int
-sn_checkrelators(struct snelem *perms, struct snelem *permsinv,
-                      struct presentation *pst, int n)
+sn_checkrelators (struct snelem *perms, struct snelem *permsinv,
+                  struct presentation *pst, int n)
 {
-  assert (0);
-}
+  struct presentationrule *rule;
 
-void
-sn_print (struct snelem *perm)
-{
-  int i;
-
-  printf ("[");
-  for (i = 0; i < perm->n; i++)
-  {
-    if (i > 0) printf (" ");
-    printf ("%d", perm->perm[i]);
-  }
-  printf ("] --> ");
-  printf ("== cycle notation not implemented ==\n");
+  for (rule = pst->rules; rule; rule = rule->next)
+    if (sn_checkrelator (perms, permsinv, pst->gennum, rule, n) == 0) return (0);
+  return (1);
 }
 
 int
-sn_nextmap (struct snelem *perms, struct snelem *permsinv, int gennum, int n)
+sn_checkrelator (struct snelem *perms, struct snelem *permsinv, int gennum,
+                 struct presentationrule *rule, int n)
 {
-  assert (0);
+  fprintf (stderr, "Error: sn_checkrelator not yet implemented\n");
+  return (1);
+}
+
+void
+sn_print (int *perm, int n)
+{
+  int i, j, isidentity;
+  int mark[REPR_MAXN];
+
+  assert (n <= REPR_MAXN);
+  printf ("[");
+  for (i = 0; i < n; i++)
+  {
+    if (i > 0) printf (" ");
+    printf ("%d", perm[i] + 1);
+  }
+  printf ("] --> ");
+
+  for (i = 0; i < n; i++) mark[i] = 0;
+
+  isidentity = 1;
+  for (i = 0; i < n; i++)
+  {
+    if (mark[i]) continue;
+    if (perm[i] == i) continue;
+    printf ("(");
+    isidentity = 0;
+    j = i;
+    do {
+      if (i != j) printf (" ");
+      mark[j] = 1;
+      printf ("%d", j + 1);
+      j = perm[j];
+    } while (perm[j] != perm[i]);
+    printf (")");
+  }
+  if (isidentity) printf ("()");
+  printf ("\n");
+}
+
+int
+sn_nextmap (struct snelem *perms, struct snelem *permsinv, int gennum)
+{
+  int rem;
+
+  if (gennum <= 0) return (1);       /* cycling wrapped */
+  rem = sn_nextmap (perms + 1, permsinv + 1, gennum - 1);
+  if (rem == 0) return (0);          /* found next configuration */
+  /* rem == 1 means that the subsequent elements cycled */
+  rem = sn_next_cond (perms + 0);
+  sn_invert (perms + 0, permsinv + 0);
+  return (rem);
 }
 
