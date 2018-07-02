@@ -33,19 +33,6 @@ int interactive = 0;
 int heisemberg = -1;
 int docanonify = 1;
 int useoldcanonify = 0;
-//int dorecomputef = 1;
-//int doretagregions = 1;
-//int finfinity = 0;
-//int preabelian = 0;
-//int simplifypresentation = 1;
-//int simplifycomplex = 1;
-//int simplifyideal = 1;
-//int nobasecanonify = 0;
-//int mendesge = HGE_TEXT;
-//int viacc = 0;
-//int foxd = FOXD_UNDEF;
-//int shuffle = 0;
-//int autosurgery = 0;
 static int renumber = 1;
 
 struct global_data globals;
@@ -87,6 +74,7 @@ main (int argc, char *argv[])
   globals.foxd = FOXD_UNDEF;
   globals.rulenames = RULENAMES_NEW;
   globals.shuffle = globals.autosurgery = 0;
+  globals.onlyeven = 0;
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = globals.userwantscode = 0;
   globals.knotname_fallback = 1;
@@ -583,6 +571,21 @@ main (int argc, char *argv[])
       i++;
       if (i >= argc) {fprintf (stderr, "specify a region tag\n"); exit (11);}
       newextregion = atoi (argv[i]);
+    }
+    if (strcmp(argv[i],"countsn") == 0)
+    {
+      action = ACTION_CCCOUNTSN;
+      i++;
+      if (i >= argc) {fprintf (stderr, "specify the value of n\n"); exit (11);}
+      globals.n = atoi (argv[i]);
+    }
+    if (strcmp(argv[i],"countan") == 0)
+    {
+      globals.onlyeven = 1;
+      action = ACTION_CCCOUNTSN;
+      i++;
+      if (i >= argc) {fprintf (stderr, "specify the value of n\n"); exit (11);}
+      globals.n = atoi (argv[i]);
     }
     if (strcmp(argv[i],"countsl2zp") == 0)
     {
@@ -1281,6 +1284,7 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_CCCOUNTSL2ZP:
+    case ACTION_CCCOUNTSN:
     globals.focus_on_fundamental++;
     tok = gettoken (infile);
     ungettoken (tok);
@@ -1289,7 +1293,16 @@ main (int argc, char *argv[])
       p = (struct presentation *) malloc (sizeof (struct presentation));
       read_group_presentation (infile, p);
       if (globals.simplifypresentation) simplify_presentation (p);
-      cccountsl2zp (p);
+      switch (action)
+      {
+        case ACTION_CCCOUNTSL2ZP:
+        cccountsl2zp (p);
+        break;
+
+        case ACTION_CCCOUNTSN:
+        cccountsn (p);
+        break;
+      }
     } else {
       if ((sketch = readcontour (infile)) == 0) exit (14);
       if (docanonify) canonify (sketch);

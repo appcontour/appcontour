@@ -5,11 +5,11 @@
 #include "representations.h"
 
 extern int quiet, verbose;
+extern struct global_data globals;
 
 int
 cccountsl2zp (struct presentation *pst)
 {
-  extern struct global_data globals;
   int count, p;
 
   p = globals.p;
@@ -385,5 +385,167 @@ sl2_iscanon (struct sl2elem *sl2vec, int gennum, int p)
     }
   }
   return (1);
+}
+
+/*
+ * ======= SIMMETRIC AND ALTERNATING GROUPS =========
+ */
+
+int
+cccountsn (struct presentation *pst)
+{
+  int count, n;
+
+  n = globals.n;
+  count = count_sn_cclasses (pst, n);
+
+  if (quiet) printf ("%d\n", count);
+   else printf ("Result: %d\n", count);
+
+  return (1);
+}
+
+/*
+ * computing the number of conjugate classes of homomorphisms from the
+ * fundamental group into Sn or An (based on globals.onlyeven
+ */
+
+int
+count_sn_cclasses (struct presentation *pst, int n)
+{
+  struct snelem snvec[MAXGENNUM];
+  struct snelem snvecinv[MAXGENNUM];
+  int i, gennum, rem, count;
+  int clevel;
+
+  gennum = pst->gennum;
+  assert (gennum <= MAXGENNUM);
+  assert (n <= REPR_MAXN);
+
+  /* we need space for a vector of gennum permutations  and their inverses */
+
+  for (i = 0; i < gennum; i++)
+  {
+    sn_init (&snvec[i], n);
+    rem = sn_next_cond (snvec + i);
+    assert (rem == 0);
+    sn_invert (snvec + i, snvecinv + i);
+  }
+
+  count = 0;
+
+  do {
+    if ((clevel = sn_isnotcanon(snvec, gennum, n)))
+    {
+      if (clevel < gennum)
+      {
+        /*
+         * we can prune away a whole branch of homomorphisms
+         * by setting the remaining permutations to the lexicographically "last" value
+         */
+        for (i = clevel; i < gennum; i++)
+        {
+          sn_setlast (snvec + i, n);
+        }
+      }
+      continue;
+    }
+    if (sn_checkrelators(snvec, snvecinv, pst, n) == 0) continue;
+    count++;
+    if (verbose)
+    {
+      printf ("Homomorphism #%d defined by the permutations:\n", count);
+      for (i = 0; i < gennum; i++)
+      {
+        sn_print (snvec + i);
+        printf ("---\n");
+      }
+    }
+  } while (sn_nextmap (snvec, snvecinv, gennum, n) == 0);
+
+  return (count);
+}
+
+/*
+ * initialize with the identity permutation
+ */
+
+void
+sn_init (struct snelem *perm, int n)
+{
+  int i;
+
+  assert (n <= REPR_MAXN);
+  perm->n = n;
+  for (i = 0; i < n; i++) perm->perm[i] = i;
+}
+
+int
+sn_next_cond (struct snelem *perm)
+{
+  while (sn_next (&perm->perm[0], perm->n) == 0)
+  {
+    if (globals.onlyeven == 0) return (0);
+    assert (0);  // add iseven check
+  }
+  while (sn_next (&perm->perm[0], perm->n) == 0)
+  {
+    if (globals.onlyeven == 0) return (1);
+    assert (0);  // add iseven check
+  }
+  printf ("FATAL: Cannot find a suitable permutation\n");
+  exit (50);
+}
+
+int
+sn_next (int *perm, int n)
+{
+  assert (0);
+}
+
+void
+sn_invert (struct snelem *perm, struct snelem *perminv)
+{
+  assert (0);
+}
+
+int
+sn_isnotcanon(struct snelem *perms, int gennum, int n)
+{
+  assert (0);
+}
+
+void
+sn_setlast (struct snelem *perm, int n)
+{
+  assert (0);
+}
+
+int
+sn_checkrelators(struct snelem *perms, struct snelem *permsinv,
+                      struct presentation *pst, int n)
+{
+  assert (0);
+}
+
+void
+sn_print (struct snelem *perm)
+{
+  int i;
+
+  printf ("[");
+  for (i = 0; i < perm->n; i++)
+  {
+    if (i > 0) printf (" ");
+    printf ("%d", perm->perm[i]);
+  }
+  printf ("] --> ");
+  printf ("== cycle notation not implemented ==\n");
+}
+
+int
+sn_nextmap (struct snelem *perms, struct snelem *permsinv, int gennum, int n)
+{
+  assert (0);
 }
 
