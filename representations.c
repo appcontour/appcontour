@@ -337,6 +337,7 @@ sl2_isnotcanon (struct sl2elem *sl2vec, int gennum, int p)
   int acc[2][2];
   int i, cmpres;
 
+  if (globals.dontidentify) return (0); /* user request is to not identify by conjugacy */
   sl2_clear (g);
   /* cycle on the elements of SL(2,Zp) */
   while (sl2_next_det1 (g, p) == 0)
@@ -429,7 +430,8 @@ count_sn_cclasses (struct presentation *pst, int n)
     sn_init (snvec + i, n);
     rem = sn_next_cond (snvec + i);
     assert (rem == 1);
-    sn_invert (snvec + i, snvecinv + i);
+    snvecinv[i].n = n;
+    sn_invert (snvec[i].perm, snvecinv[i].perm, n);
   }
 
   count = 0;
@@ -445,7 +447,7 @@ count_sn_cclasses (struct presentation *pst, int n)
          */
         for (i = clevel; i < gennum; i++)
         {
-          sn_setlast (snvec + i, n);
+          sn_setlast (snvec[i].perm, n);
         }
       }
       continue;
@@ -504,7 +506,6 @@ sn_init (struct snelem *perm, int n)
 int
 sn_next_cond (struct snelem *perm)
 {
-  //while (sn_next (&perm->perm[0], perm->n) == 0)
   while (sn_next (perm->perm, perm->n) == 0)
   {
     if (globals.onlyeven == 0) return (0);
@@ -564,32 +565,92 @@ sn_next (int *perm, int n)
  */
 
 void
-sn_invert (struct snelem *perm, struct snelem *perminv)
+sn_invert (int *perm, int *perminv, int n)
 {
-  int i, n;
-  int *p, *pinv;
+  int i;
 
-  n = perm->n;
-  p = perm->perm;
-  pinv = perminv->perm;
-  perminv->n = n;
   for (i = 0; i < n; i++)
   {
-    pinv[p[i]] = i;
+    perminv[perm[i]] = i;
   }
 }
+
+/*
+ * multiplication of permutations (left to right)
+ * result copied in first argument
+ */
+
+void
+sn_permmul (int *acc, int *perm, int n)
+{
+  int i;
+  int result[REPR_MAXN];
+
+  assert (n <= REPR_MAXN);
+
+  for (i = 0; i < n; i++) result[i] = perm[acc[i]];
+  for (i = 0; i < n; i++) acc[i] = result[i];
+}
+
+/*
+ * check if this is the representative (minimal with respect to lexicographic order)
+ * up to conjugation
+ */
 
 int
 sn_isnotcanon (struct snelem *perms, int gennum, int n)
 {
-  fprintf (stderr, "Error: sn_isnotcanon not yet implemented\n");
+  int i, j, cmpres;
+  int g[REPR_MAXN];
+  int ginv[REPR_MAXN];
+  int acc[REPR_MAXN];
+
+  if (globals.dontidentify) return (0); /* user request is to not identify by conjugacy */
+
+  assert (n < REPR_MAXN);
+  for (j = 0; j < n; j++) g[j] = j;
+
+  /* cycle on the elements of S_n */
+  do {
+    sn_invert (g, ginv, n);  // WARNING: should we consider only even permutations?
+
+    /* now cycle on the elements of the set and compute the conjugate */
+    for (i = 0; i < gennum; i++)
+    {
+      for (j = 0; j < n; j++) acc[j] = ginv[j];
+      sn_permmul (acc, perms[i].perm, n);
+      sn_permmul (acc, g, n);
+      cmpres = sn_permcmp (acc, perms[i].perm, n);
+      if (cmpres < 0) return (i+1); /* found a better representative: non canonical */
+      if (cmpres > 0) break;      /* it is needless to conjugate the other elements */
+    }
+  } while (sn_next (g, n) == 0);
+  return (0);
+}
+
+/*
+ * lexicographic comparison between two permutations
+ */
+
+int
+sn_permcmp (int *p1, int *p2, int n)
+{
+  int i;
+
+  for (i = 0; i < n; i++)
+  {
+    if (p1[i] < p2[i]) return (-1);
+    if (p1[i] > p2[i]) return (1);
+  }
   return (0);
 }
 
 void
-sn_setlast (struct snelem *perm, int n)
+sn_setlast (int *perm, int n)
 {
-  assert (0);
+  int i;
+
+  for (i = 0; i < n; i++) perm[i] = n - i - 1;
 }
 
 int
@@ -607,7 +668,24 @@ int
 sn_checkrelator (struct snelem *perms, struct snelem *permsinv, int gennum,
                  struct presentationrule *rule, int n)
 {
-  fprintf (stderr, "Error: sn_checkrelator not yet implemented\n");
+  int i, var;
+  int partial[REPR_MAXN];
+
+  for (i = 0; i < n; i++) partial[i] = i;
+
+  for (i = 0; i < rule->length; i++)
+  {
+    var = rule->var[i];
+    assert (var);
+    if (var > 0)
+      sn_permmul (partial, perms[var-1].perm, n);
+     else
+      sn_permmul (partial, permsinv[-var-1].perm, n);
+  }
+  for (i = 0; i < n; i++)
+  {
+    if (partial[i] != i) return (0);
+  }
   return (1);
 }
 
@@ -658,7 +736,7 @@ sn_nextmap (struct snelem *perms, struct snelem *permsinv, int gennum)
   if (rem == 0) return (0);          /* found next configuration */
   /* rem == 1 means that the subsequent elements cycled */
   rem = sn_next_cond (perms + 0);
-  sn_invert (perms + 0, permsinv + 0);
+  sn_invert (perms[0].perm, permsinv[0].perm, perms[0].n);
   return (rem);
 }
 

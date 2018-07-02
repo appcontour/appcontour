@@ -1,3 +1,14 @@
+2018-07-02: Representation of finitely presented groups.  New actions:
+	countsl2zp <p>
+	where p is a prime.  Count conjugacy classes of homomorphisms of the finitely presented
+	group in SL(2,Z/pZ)
+
+	countsn <n>
+	countan <n>
+
+	Option "--dontidentify" requests a full count without identifying homomorphisms
+	up to conjugacy.
+
 2018-05-28: See Changelog for new recent additions.
 
 2016-06-24: Many new features for dealing with knots and links.  Among these: ability

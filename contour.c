@@ -74,7 +74,7 @@ main (int argc, char *argv[])
   globals.foxd = FOXD_UNDEF;
   globals.rulenames = RULENAMES_NEW;
   globals.shuffle = globals.autosurgery = 0;
-  globals.onlyeven = 0;
+  globals.onlyeven = globals.dontidentify = 0;
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = globals.userwantscode = 0;
   globals.knotname_fallback = 1;
@@ -211,6 +211,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--maxd") == 0)
     {
       globals.foxd = FOXD_MAXINTERESTING;
+      continue;
+    }
+    if (strcmp(argv[i],"--dontidentify") == 0)
+    {
+      globals.dontidentify++;
       continue;
     }
     if (strcmp(argv[i],"--experimental") == 0)
@@ -572,14 +577,14 @@ main (int argc, char *argv[])
       if (i >= argc) {fprintf (stderr, "specify a region tag\n"); exit (11);}
       newextregion = atoi (argv[i]);
     }
-    if (strcmp(argv[i],"countsn") == 0)
+    if (strcasecmp(argv[i],"countsn") == 0)
     {
       action = ACTION_CCCOUNTSN;
       i++;
       if (i >= argc) {fprintf (stderr, "specify the value of n\n"); exit (11);}
       globals.n = atoi (argv[i]);
     }
-    if (strcmp(argv[i],"countan") == 0)
+    if (strcasecmp(argv[i],"countan") == 0)
     {
       globals.onlyeven = 1;
       action = ACTION_CCCOUNTSN;
@@ -587,14 +592,14 @@ main (int argc, char *argv[])
       if (i >= argc) {fprintf (stderr, "specify the value of n\n"); exit (11);}
       globals.n = atoi (argv[i]);
     }
-    if (strcmp(argv[i],"countsl2zp") == 0)
+    if (strcasecmp(argv[i],"countsl2zp") == 0)
     {
       action = ACTION_CCCOUNTSL2ZP;
       i++;
       if (i >= argc) {fprintf (stderr, "specify the value of the prime p\n"); exit (11);}
       globals.p = atoi (argv[i]);
     }
-    if (strcmp(argv[i],"countsl2z2") == 0)
+    if (strcasecmp(argv[i],"countsl2z2") == 0)
     {
       action = ACTION_CCCOUNTSL2ZP;
       globals.p = 2;

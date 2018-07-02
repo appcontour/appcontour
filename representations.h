@@ -40,9 +40,9 @@ int cccountsn (struct presentation *p);
 int count_sn_cclasses (struct presentation *pst, int n);
 void sn_init (struct snelem *perm, int n);
 int sn_next_cond (struct snelem *perm);
-void sn_invert (struct snelem *perm, struct snelem *perminv);
+void sn_invert (int *perm, int *perminv, int n);
 int sn_isnotcanon(struct snelem *perms, int gennum, int n);
-void sn_setlast (struct snelem *perm, int n);
+void sn_setlast (int *perm, int n);
 int sn_checkrelators(struct snelem *perms, struct snelem *permsinv,
                       struct presentation *pst, int n);
 int sn_checkrelator (struct snelem *perms, struct snelem *permsinv, int gennum,
@@ -50,4 +50,6 @@ int sn_checkrelator (struct snelem *perms, struct snelem *permsinv, int gennum,
 void sn_print (int *perm, int n);
 int sn_nextmap (struct snelem *perms, struct snelem *permsinv, int gennum);
 int sn_next (int *perm, int n);
+int sn_permcmp (int *p1, int *p2, int n);
 int sn_iseven (int *perm, int n);
+void sn_permmul (int *acc, int *perm, int n);
