@@ -143,6 +143,7 @@ gettoken (FILE *file)
   if (strcmp(tokenword,"knotscape") == 0) return (TOK_KNOTSCAPE);
   if (strcmp(tokenword,"knotname") == 0) return (TOK_KNOTSCAPE);
   if (strcmp(tokenword,"fpgroup") == 0) return (TOK_FPGROUP);
+  if (strcmp(tokenword,"listoffpgroups") == 0) return (TOK_FPGROUPLIST);
   if (strcmp(tokenword,"alexander") == 0) return (TOK_ALEXANDER);
   if (strcmp(tokenword,"ideal") == 0) return (TOK_IDEAL);
   if (strcmp(tokenword,"knot") == 0) return (TOK_KNOT);

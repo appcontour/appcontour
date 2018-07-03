@@ -50,6 +50,7 @@
 #define TOK_DTCODE 48
 #define TOK_KNOTSCAPE 49
 #define TOK_GAUSSCODE 50
+#define TOK_FPGROUPLIST 51
 
 #define TOK_ERROR  9999
 #define TOK_EOF    9990

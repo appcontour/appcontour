@@ -1,3 +1,28 @@
+2018-07-03: New description token "listoffpgroups" as in
+	--- start of file ---
+        listoffpgroups {
+	<a,b ; ...>
+	<a,b ; ...>
+	<a,b ; ...>
+	[...]
+	}
+	--- end of file ---
+	that can *only* be used to get representation count (countSn and countAn)
+	for many finitely presented groups.  This is implemented just for efficiency
+	reasons.  All groups *must* have the same number of generators.
+	In this case simplification of fpgroups is inhibited.
+
+2018-07-02: Representation of finitely presented groups.  New actions:
+        countsl2zp <p>
+        where p is a prime.  Count conjugacy classes of homomorphisms of the finitely presented
+        group in SL(2,Z/pZ)
+
+        countsn <n>
+        countan <n>
+
+        Option "--dontidentify" requests a full count without identifying homomorphisms
+        up to conjugacy.
+
 2018-06-17: knot/link/handlebody-knot name can be used directly on command line.
 	This mechanism can be disabled altogether by setting the environment variable
 	APPCONTOUR_DISABLEKNFALLBACK to a nonempty value.  Otherwise it allows indication of

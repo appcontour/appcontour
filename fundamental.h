@@ -107,6 +107,11 @@ struct presentation {
     struct presentationrule *rules;
   };
 
+struct presentationlist {
+    struct presentation *p;
+    struct presentationlist *next;
+  };
+
 struct presentationrule {
     int length;
     struct presentationrule *next;
@@ -131,6 +136,7 @@ void topreabelian (struct presentation *p);
 int compute_fg_rank (struct presentation *p);
 void remove_all_relators (struct presentation *p);
 void read_group_presentation (FILE *file, struct presentation *p);
+struct presentationlist *read_group_presentation_list (FILE *file);
 int get_exp_sum (struct presentationrule *r, int n);
 int complex_melt (struct ccomplex *cc);
 int complex_facemelt (struct ccomplex *cc);

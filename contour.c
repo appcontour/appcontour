@@ -1293,8 +1293,10 @@ main (int argc, char *argv[])
     globals.focus_on_fundamental++;
     tok = gettoken (infile);
     ungettoken (tok);
-    if (tok == TOK_FPGROUP)
+    switch (tok)
     {
+      struct presentationlist *pstlist;
+      case TOK_FPGROUP:
       p = (struct presentation *) malloc (sizeof (struct presentation));
       read_group_presentation (infile, p);
       if (globals.simplifypresentation) simplify_presentation (p);
@@ -1308,7 +1310,23 @@ main (int argc, char *argv[])
         cccountsn (p);
         break;
       }
-    } else {
+      break;
+
+      case TOK_FPGROUPLIST:
+      pstlist = read_group_presentation_list (infile);
+      switch (action)
+      {
+        case ACTION_CCCOUNTSL2ZP:
+        assert (0);
+        break;
+
+        case ACTION_CCCOUNTSN:
+        cccountsn_list (pstlist);
+        break;
+      }
+      break;
+
+      default:
       if ((sketch = readcontour (infile)) == 0) exit (14);
       if (docanonify) canonify (sketch);
       if (sketch->isempty)
@@ -1320,6 +1338,7 @@ main (int argc, char *argv[])
       count = complex_collapse (ccomplex);
       if (debug) printf ("%d pairs of cells collapsed\n", count);
       compute_fundamental (ccomplex, action);
+      break;
     }
     break;
 

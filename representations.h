@@ -37,7 +37,8 @@ int sl2_iscanon(struct sl2elem *sl2vec, int gennum, int p);
 int sl2_isnotcanon(struct sl2elem *sl2vec, int gennum, int p);
 
 int cccountsn (struct presentation *p);
-int count_sn_cclasses (struct presentation *pst, int n);
+int cccountsn_list (struct presentationlist *pstlist);
+void count_sn_cclasses (struct presentationlist *pstlist, int n, int *results);
 void sn_init (struct snelem *perm, int n);
 int sn_next_cond (struct snelem *perm);
 void sn_invert (int *perm, int *perminv, int n);

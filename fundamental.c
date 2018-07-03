@@ -1679,6 +1679,47 @@ addcommutator (struct presentation *p, int m, int n)
 /* local prototypes */
 struct presentationrule *read_relators_list (FILE *file, char *generator_names, int gennum);
 
+struct presentationlist *
+read_group_presentation_list (FILE *file)
+{
+  struct presentationlist *pstlist;
+  struct presentationlist *pstl;
+  struct presentationlist *pstnew;
+  struct presentation *pst;
+  int tok;
+
+  tok = gettoken (file);
+  assert (tok == TOK_FPGROUPLIST);
+  tok = gettoken (file);
+  assert (tok == TOK_LBRACE);
+
+  pstlist = pstl = 0;
+  while (1)
+  {
+    tok = gettoken (file);
+    ungettoken (tok);
+    if (tok != KEY_LT) break;
+
+    pst = (struct presentation *) malloc (sizeof (struct presentation));
+    read_group_presentation (file, pst);
+    pstnew = (struct presentationlist *) malloc (sizeof (struct presentationlist));
+    pstnew->p = pst;
+    pstnew->next = 0;
+    if (pstl)
+    {
+      pstl->next = pstnew;
+      pstl = pstnew;
+    } else {
+      pstlist = pstl = pstnew;
+    }
+  }
+
+  tok = gettoken (file);
+  assert (tok == TOK_RBRACE);
+
+  return (pstlist);
+}
+
 void
 read_group_presentation (FILE *file, struct presentation *p)
 {

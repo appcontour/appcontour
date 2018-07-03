@@ -395,13 +395,39 @@ sl2_iscanon (struct sl2elem *sl2vec, int gennum, int p)
 int
 cccountsn (struct presentation *pst)
 {
-  int count, n;
+  int n;
+  struct presentationlist pstlist;
+  int results[1];
 
   n = globals.n;
-  count = count_sn_cclasses (pst, n);
+  pstlist.p = pst;
+  pstlist.next = 0;
+  count_sn_cclasses (&pstlist, n, results);
 
-  if (quiet) printf ("%d\n", count);
-   else printf ("Result: %d\n", count);
+  if (quiet) printf ("%d\n", *results);
+   else printf ("Result: %d\n", *results);
+
+  return (1);
+}
+
+int
+cccountsn_list (struct presentationlist *pstlist)
+{
+  struct presentationlist *pstl;
+  int i, count, n;
+  int *results;
+
+  n = globals.n;
+  for (count = 0, pstl = pstlist; pstl; pstl = pstl->next, count++);
+  results = (int *) malloc (count*sizeof(int));
+
+  count_sn_cclasses (pstlist, n, results);
+
+  for (i = 0; i < count; i++)
+  {
+    if (quiet) printf ("%d\n", results[i]);
+     else printf ("Result: %d\n", results[i]);
+  }
 
   return (1);
 }
@@ -411,15 +437,16 @@ cccountsn (struct presentation *pst)
  * fundamental group into Sn or An (based on globals.onlyeven
  */
 
-int
-count_sn_cclasses (struct presentation *pst, int n)
+void
+count_sn_cclasses (struct presentationlist *pstlist, int n, int *results)
 {
   struct snelem snvec[MAXGENNUM];
   struct snelem snvecinv[MAXGENNUM];
-  int i, gennum, rem, count;
+  struct presentationlist *pstl;
+  int i, k, gennum, rem;
   int clevel;
 
-  gennum = pst->gennum;
+  gennum = pstlist->p->gennum;
   assert (gennum <= MAXGENNUM);
   assert (n <= REPR_MAXN);
 
@@ -434,7 +461,15 @@ count_sn_cclasses (struct presentation *pst, int n)
     sn_invert (snvec[i].perm, snvecinv[i].perm, n);
   }
 
-  count = 0;
+  for (k = 0, pstl = pstlist; pstl; pstl = pstl->next, k++)
+  {
+    results[k] = 0;
+    if (pstl->p->gennum != gennum)
+    {
+      printf ("FATAL: all groups must have the same number of generators!\n");
+      exit (123);
+    }
+  }
 
   do {
     if ((clevel = sn_isnotcanon(snvec, gennum, n)))
@@ -452,19 +487,23 @@ count_sn_cclasses (struct presentation *pst, int n)
       }
       continue;
     }
-    if (sn_checkrelators(snvec, snvecinv, pst, n) == 0) continue;
-    count++;
-    if (verbose)
+    for (k = 0, pstl = pstlist; pstl; pstl = pstl->next, k++)
     {
-      printf ("Homomorphism #%d defined by the permutations:\n", count);
-      for (i = 0; i < gennum; i++)
+      if (sn_checkrelators(snvec, snvecinv, pstl->p, n))
       {
-        sn_print (snvec[i].perm, n);
+        results[k]++;
+        if (verbose)
+        {
+          if (k == 0) printf ("Homomorphism #%d defined by the permutations:\n", results[k]);
+           else printf ("Homomorphism #%d for group #%d defined by the permutations:\n", results[k], k);
+          for (i = 0; i < gennum; i++)
+          {
+            sn_print (snvec[i].perm, n);
+          }
+        }
       }
     }
   } while (sn_nextmap (snvec, snvecinv, gennum) == 0);
-
-  return (count);
 }
 
 /*
