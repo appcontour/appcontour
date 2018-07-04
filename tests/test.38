@@ -18,4 +18,4 @@ done
 #
 knotname=L11n257
 echo "knot $knotname: abelianized jacobian matrix"
-echo "knotname{$knotname}" | contour --out foxjacobian --preabelian --abelianize
+echo "knotname{$knotname}" | ./contour --out foxjacobian --preabelian --abelianize
