@@ -74,7 +74,7 @@ main (int argc, char *argv[])
   globals.foxd = FOXD_UNDEF;
   globals.rulenames = RULENAMES_NEW;
   globals.shuffle = globals.autosurgery = 0;
-  globals.onlyeven = globals.dontidentify = 0;
+  globals.onlyeven = globals.dontidentify = globals.insist = 0;
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = globals.userwantscode = 0;
   globals.knotname_fallback = 1;
@@ -216,6 +216,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--dontidentify") == 0)
     {
       globals.dontidentify++;
+      continue;
+    }
+    if (strcmp(argv[i],"--insist") == 0)
+    {
+      globals.insist++;
       continue;
     }
     if (strcmp(argv[i],"--experimental") == 0)
@@ -1298,6 +1303,7 @@ main (int argc, char *argv[])
       struct presentationlist *pstlist;
       case TOK_FPGROUP:
       p = (struct presentation *) malloc (sizeof (struct presentation));
+      p->rules = 0;
       read_group_presentation (infile, p);
       if (globals.simplifypresentation) simplify_presentation (p);
       switch (action)

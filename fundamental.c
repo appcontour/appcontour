@@ -1701,6 +1701,7 @@ read_group_presentation_list (FILE *file)
     if (tok != KEY_LT) break;
 
     pst = (struct presentation *) malloc (sizeof (struct presentation));
+    pst->rules = 0;
     read_group_presentation (file, pst);
     pstnew = (struct presentationlist *) malloc (sizeof (struct presentationlist));
     pstnew->p = pst;

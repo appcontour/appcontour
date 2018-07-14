@@ -13,6 +13,17 @@ cccountsl2zp (struct presentation *pst)
   int count, p;
 
   p = globals.p;
+  if (!isprime (p))
+  {
+    if (globals.insist)
+    {
+      fprintf (stderr, "Warning p = %d is not prime\n", p);
+    } else {
+      printf ("FATAL: p = %d must be a prime number\n", p);
+      printf ("if you insist in doing this computation add option '--insist'\n");
+      exit (111);
+    }
+  }
   count = count_sl2zp_cclasses (pst, p);
 
   if (quiet) printf ("%d\n", count);
@@ -779,3 +790,33 @@ sn_nextmap (struct snelem *perms, struct snelem *permsinv, int gennum)
   return (rem);
 }
 
+/*
+ * various utilities
+ */
+
+/*
+ * this is crude!
+ * however we do not expect to use this for large values of p
+ */
+
+int
+isprime (int p)
+{
+  int a;
+
+  if (p < 2) return (0);
+
+  for (a = 2; a*a <= p; a++)
+  {
+    if ((p % a) == 0) return (0);
+  }
+
+  return (1);
+}
+
+int
+isprimepower (int q)
+{
+  printf ("NOT IMPL\n");
+  exit (100);
+}

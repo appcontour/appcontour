@@ -1,3 +1,7 @@
+2018.07.14
+test 44 does not work if contour is not installed
+
+
 2018.06.15 (SOLVED)
 echo "knot{^;U;}" | contour knot2info
 

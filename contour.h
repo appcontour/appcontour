@@ -96,6 +96,7 @@ struct global_data {
   int n;
   int onlyeven;
   int dontidentify;  // used in representation.c
+  int insist;  // used in representation.c
   char knotname1[MAXKNOTNAMELENGTH];
   char knotname2[MAXKNOTNAMELENGTH];
 };

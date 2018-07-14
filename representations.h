@@ -54,3 +54,8 @@ int sn_next (int *perm, int n);
 int sn_permcmp (int *p1, int *p2, int n);
 int sn_iseven (int *perm, int n);
 void sn_permmul (int *acc, int *perm, int n);
+
+/* various utilities */
+
+int isprime (int p);
+int isprimepower (int q);
