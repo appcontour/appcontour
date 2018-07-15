@@ -597,12 +597,19 @@ main (int argc, char *argv[])
       if (i >= argc) {fprintf (stderr, "specify the value of n\n"); exit (11);}
       globals.n = atoi (argv[i]);
     }
-    if (strcasecmp(argv[i],"countsl2zp") == 0)
+    if (strcasecmp(argv[i],"countsl2q") == 0 || strcasecmp(argv[i],"countsl2zp") == 0)
     {
       action = ACTION_CCCOUNTSL2ZP;
       i++;
       if (i >= argc) {fprintf (stderr, "specify the value of the prime p\n"); exit (11);}
       globals.p = atoi (argv[i]);
+    }
+    if (strcasecmp(argv[i],"countpsl2q") == 0 || strcasecmp(argv[i],"countpsl2zp") == 0)
+    {
+      action = ACTION_CCCOUNTPSL2Q;
+      i++;
+      if (i >= argc) {fprintf (stderr, "specify the value of the prime p\n"); exit (11);}
+      globals.q = atoi (argv[i]);
     }
     if (strcasecmp(argv[i],"countsl2z2") == 0)
     {
@@ -1295,6 +1302,7 @@ main (int argc, char *argv[])
 
     case ACTION_CCCOUNTSL2ZP:
     case ACTION_CCCOUNTSN:
+    case ACTION_CCCOUNTPSL2Q:
     globals.focus_on_fundamental++;
     tok = gettoken (infile);
     ungettoken (tok);
@@ -1312,6 +1320,10 @@ main (int argc, char *argv[])
         cccountsl2zp (p);
         break;
 
+        case ACTION_CCCOUNTPSL2Q:
+        cccountpsl2q (p);
+        break;
+
         case ACTION_CCCOUNTSN:
         cccountsn (p);
         break;
@@ -1325,6 +1337,9 @@ main (int argc, char *argv[])
         case ACTION_CCCOUNTSL2ZP:
         assert (0);
         break;
+
+        case ACTION_CCCOUNTPSL2Q:
+        cccountpsl2q_list (pstlist);
 
         case ACTION_CCCOUNTSN:
         cccountsn_list (pstlist);

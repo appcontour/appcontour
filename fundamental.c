@@ -67,6 +67,10 @@ compute_fundamental (struct ccomplex *cc, int action)
         if (globals.simplifypresentation) simplify_presentation (cccc->p);
         cccountsl2zp (cccc->p);
         break;
+      case ACTION_CCCOUNTPSL2Q:
+        if (globals.simplifypresentation) simplify_presentation (cccc->p);
+        cccountpsl2q (cccc->p);
+        break;
       case ACTION_CCCOUNTSN:
         if (globals.simplifypresentation) simplify_presentation (cccc->p);
         cccountsn (cccc->p);

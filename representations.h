@@ -16,7 +16,8 @@ struct snelem {
   };
 
 int cccountsl2zp (struct presentation *p);
-int count_sl2zp_cclasses (struct presentation *pst, int p);
+int cccountsl2zp_list (struct presentationlist *pstlist);
+void count_sl2zp_cclasses (struct presentationlist *pstlist, int p, int *results);
 void sl2_clear (int m[2][2]);
 int sl2_next_det1 (int m[2][2], int p);
 int sl2_next (int m[2][2], int p);
@@ -36,11 +37,24 @@ void sl2_set (int m[2][2], int p);
 int sl2_iscanon(struct sl2elem *sl2vec, int gennum, int p);
 int sl2_isnotcanon(struct sl2elem *sl2vec, int gennum, int p);
 
+int cccountpsl2q (struct presentation *p);
+int cccountpsl2q_list (struct presentationlist *pstlist);
+void count_psl2q_cclasses (struct presentationlist *pstlist, int q, int *results);
+int psl2_nextmap (struct sl2elem *sl2vec, struct sl2elem *sl2vecinv, int gennum, int q);
+int psl2_checkrelators(struct sl2elem *sl2vec, struct sl2elem *sl2vecinv,
+                       struct presentation *pst, int q);
+int psl2_checkrelator (struct sl2elem *sl2vec, struct sl2elem *sl2vecinv, int gennum,
+                  struct presentationrule *rule, int p);
+int psl2_isnotcanon(struct sl2elem *sl2vec, int gennum, int q);
+int psl2_next_det1 (int m[2][2], int q);
+int psl_next (int n, int m[2][2], int q);
+void psl2_canon (int m[2][2], int q);
+
 int cccountsn (struct presentation *p);
 int cccountsn_list (struct presentationlist *pstlist);
 void count_sn_cclasses (struct presentationlist *pstlist, int n, int *results);
 void sn_init (struct snelem *perm, int n);
-int sn_next_cond (struct snelem *perm);
+int sn_next_cond (int *perm, int n);
 void sn_invert (int *perm, int *perminv, int n);
 int sn_isnotcanon(struct snelem *perms, int gennum, int n);
 void sn_setlast (int *perm, int n);

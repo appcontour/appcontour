@@ -64,6 +64,7 @@
 #define ACTION_KNOTNAME2GAUSSCODE 56
 #define ACTION_CCCOUNTSL2ZP 57
 #define ACTION_CCCOUNTSN 58
+#define ACTION_CCCOUNTPSL2Q 59
 
 #define ACTION_NEWFEATURE 999
 
@@ -92,7 +93,8 @@ struct global_data {
   int experimental;
   int userwantscode;
   int knotname_fallback;
-  int p;
+  int p;  // typically a prime
+  int q;  // typically a power of a prime
   int n;
   int onlyeven;
   int dontidentify;  // used in representation.c

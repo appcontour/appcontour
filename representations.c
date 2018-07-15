@@ -10,9 +10,60 @@ extern struct global_data globals;
 int
 cccountsl2zp (struct presentation *pst)
 {
-  int count, p;
+  int p;
+  struct presentationlist pstlist;
+  int results[1];
 
   p = globals.p;
+  pstlist.p = pst;
+  pstlist.next = 0;
+  count_sl2zp_cclasses (&pstlist, p, results);
+
+  if (quiet) printf ("%d\n", *results);
+   else printf ("Result: %d\n", *results);
+
+  return (1);
+}
+
+int
+cccountsl2zp_list (struct presentationlist *pstlist)
+{
+  struct presentationlist *pstl;
+  int i, count, p;
+  int *results;
+
+  p = globals.p;
+  for (count = 0, pstl = pstlist; pstl; pstl = pstl->next, count++);
+  results = (int *) malloc (count*sizeof(int));
+
+  count_sl2zp_cclasses (pstlist, p, results);
+
+  for (i = 0; i < count; i++)
+  {
+    if (quiet) printf ("%d\n", results[i]);
+     else printf ("Result: %d\n", results[i]);
+  }
+
+  return (1);
+}
+
+/*
+ * computing the number of conjugate classes of homomorphisms from the
+ * fundamental group into SL(2,Z/pZ)
+ */
+
+void
+count_sl2zp_cclasses (struct presentationlist *pstlist, int p, int *results)
+{
+  struct sl2elem sl2vec[MAXGENNUM];
+  struct sl2elem sl2vecinv[MAXGENNUM];
+  struct presentationlist *pstl;
+  int i, k, gennum, rem;
+  int clevel;
+
+  gennum = pstlist->p->gennum;
+  assert (gennum <= MAXGENNUM);
+
   if (!isprime (p))
   {
     if (globals.insist)
@@ -24,29 +75,6 @@ cccountsl2zp (struct presentation *pst)
       exit (111);
     }
   }
-  count = count_sl2zp_cclasses (pst, p);
-
-  if (quiet) printf ("%d\n", count);
-   else printf ("Result: %d\n", count);
-
-  return (1);
-}
-
-/*
- * computing the number of conjugate classes of homomorphisms from the
- * fundamental group into SL(2,Z/pZ)
- */
-
-int
-count_sl2zp_cclasses (struct presentation *pst, int p)
-{
-  struct sl2elem sl2vec[MAXGENNUM];
-  struct sl2elem sl2vecinv[MAXGENNUM];
-  int i, gennum, rem, count;
-  int clevel;
-
-  gennum = pst->gennum;
-  assert (gennum <= MAXGENNUM);
 
   /* we need space for a vector of gennum matrices and their inverses */
 
@@ -58,7 +86,15 @@ count_sl2zp_cclasses (struct presentation *pst, int p)
     sl2_invert (sl2vec[i].a, sl2vecinv[i].a, p);
   }
 
-  count = 0;
+  for (k = 0, pstl = pstlist; pstl; pstl = pstl->next, k++)
+  {
+    results[k] = 0;
+    if (pstl->p->gennum != gennum)
+    {
+      printf ("FATAL: all groups must have the same number of generators!\n");
+      exit (123);
+    }
+  }
 
   do {
     if ((clevel = sl2_isnotcanon(sl2vec, gennum, p)))
@@ -76,20 +112,24 @@ count_sl2zp_cclasses (struct presentation *pst, int p)
       }
       continue;
     }
-    if (sl2_checkrelators(sl2vec, sl2vecinv, pst, p) == 0) continue;
-    count++;
-    if (verbose)
+    for (k = 0, pstl = pstlist; pstl; pstl = pstl->next, k++)
     {
-      printf ("Homomorphism #%d defined by the matrices:\n", count);
-      for (i = 0; i < gennum; i++)
+      if (sl2_checkrelators(sl2vec, sl2vecinv, pstl->p, p))
       {
-        sl2_print (sl2vec[i].a);
-        printf ("---\n");
+        results[k]++;
+        if (verbose)
+        {
+          if (k == 0) printf ("Homomorphism #%d defined by the matrices:\n", results[k]);
+           else printf ("Homomorphism #%d for group #%d defined by the matrices:\n", results[k], k);
+          for (i = 0; i < gennum; i++)
+          {
+            sl2_print (sl2vec[i].a);
+            printf ("---\n");
+          }
+        }
       }
     }
   } while (sl2_nextmap (sl2vec, sl2vecinv, gennum, p) == 0);
-
-  return (count);
 }
 
 /*
@@ -400,7 +440,311 @@ sl2_iscanon (struct sl2elem *sl2vec, int gennum, int p)
 }
 
 /*
- * ======= SIMMETRIC AND ALTERNATING GROUPS =========
+ * ======= PSL(2,q) =================================
+ */
+
+int
+cccountpsl2q (struct presentation *pst)
+{
+  int q;
+  struct presentationlist pstlist;
+  int results[1];
+
+  q = globals.q;
+  pstlist.p = pst;
+  pstlist.next = 0;
+  count_psl2q_cclasses (&pstlist, q, results);
+
+  if (quiet) printf ("%d\n", *results);
+   else printf ("Result: %d\n", *results);
+
+  return (1);
+}
+
+int
+cccountpsl2q_list (struct presentationlist *pstlist)
+{
+  struct presentationlist *pstl;
+  int i, count, q;
+  int *results;
+
+  q = globals.q;
+  for (count = 0, pstl = pstlist; pstl; pstl = pstl->next, count++);
+  results = (int *) malloc (count*sizeof(int));
+
+  count_psl2q_cclasses (pstlist, q, results);
+
+  for (i = 0; i < count; i++)
+  {
+    if (quiet) printf ("%d\n", results[i]);
+     else printf ("Result: %d\n", results[i]);
+  }
+
+  return (1);
+}
+
+/*
+ * computing the number of conjugate classes of homomorphisms from the
+ * fundamental group into PSL(2,q) (based on globals.q)
+ */
+
+void
+count_psl2q_cclasses (struct presentationlist *pstlist, int q, int *results)
+{
+  struct sl2elem sl2vec[MAXGENNUM];
+  struct sl2elem sl2vecinv[MAXGENNUM];
+  struct presentationlist *pstl;
+  int i, k, gennum, rem;
+  int clevel;
+
+  gennum = pstlist->p->gennum;
+  assert (gennum <= MAXGENNUM);
+
+  if (q <= 2 || !isprime (q))
+  {
+    if (globals.insist)
+    {
+      fprintf (stderr, "Warning p = %d must be an odd prime\n", q);
+    } else {
+      printf ("FATAL: p = %d must be an odd prime number\n", q);
+      printf ("if you insist in doing this computation add option '--insist'\n");
+      exit (111);
+    }
+  }
+
+  /* we need space for a vector of gennum matrices and their inverses */
+
+  for (i = 0; i < gennum; i++)
+  {
+    sl2_clear (sl2vec[i].a);
+    rem = psl2_next_det1 (sl2vec[i].a, q);
+    assert (rem == 0);
+    sl2_invert (sl2vec[i].a, sl2vecinv[i].a, q);
+  }
+
+  for (k = 0, pstl = pstlist; pstl; pstl = pstl->next, k++)
+  {
+    results[k] = 0;
+    if (pstl->p->gennum != gennum)
+    {
+      printf ("FATAL: all groups must have the same number of generators!\n");
+      exit (123);
+    }
+  }
+
+  do {
+    if ((clevel = psl2_isnotcanon(sl2vec, gennum, q)))
+    {
+      if (clevel < gennum)
+      {
+        /*
+         * we can prune away a whole branch of homomorphisms
+         * by setting the remaining matrices to the lexicographically "last" value
+         */
+        for (i = clevel; i < gennum; i++)
+        {
+          sl2_set (sl2vec[i].a, q);
+        }
+      }
+      continue;
+    }
+    for (k = 0, pstl = pstlist; pstl; pstl = pstl->next, k++)
+    {
+      if (psl2_checkrelators(sl2vec, sl2vecinv, pstl->p, q))
+      {
+        results[k]++;
+        if (verbose)
+        {
+          if (k == 0) printf ("Homomorphism #%d defined by the matrices:\n", results[k]);
+           else printf ("Homomorphism #%d for group #%d defined by the matrices:\n", results[k], k);
+          for (i = 0; i < gennum; i++)
+          {
+            sl2_print (sl2vec[i].a);
+            printf ("---\n");
+          }
+        }
+      }
+    }
+  } while (psl2_nextmap (sl2vec, sl2vecinv, gennum, q) == 0);
+}
+
+/*
+ * check if this set is not a canonical representative up to conjugation
+ */
+
+int
+psl2_isnotcanon (struct sl2elem *sl2vec, int gennum, int q)
+{
+  int g[2][2];
+  int ginv[2][2];
+  int acc[2][2];
+  int i, cmpres;
+
+  if (globals.dontidentify) return (0); /* user request is to not identify by conjugacy */
+  sl2_clear (g);
+  /* cycle on the elements of SL(2,Zp) */
+  while (psl2_next_det1 (g, q) == 0)
+  {
+    sl2_invert (g, ginv, q);
+    /* now cycle on the elements of the set and compute the conjugate */
+    for (i = 0; i < gennum; i++)
+    {
+      sl2_matcopy (acc, ginv);
+      sl2_matmul (acc, sl2vec[i].a, q);
+      sl2_matmul (acc, g, q);
+      psl2_canon (acc, q);
+      cmpres = sl2_matcmp (acc, sl2vec[i].a);
+      if (cmpres < 0) return (i+1); /* found a better representative: non canonical */
+      if (cmpres > 0) break;      /* it is needless to conjugate the other elements */
+    }
+  }
+  return (0);
+}
+
+/*
+ * lexicographically next 2x2 matrix mod q with det=1, modulo its sign
+ */
+
+int
+psl2_next_det1 (int m[2][2], int q)
+{
+  while (psl_next (2, m, q) == 0)
+  {
+    if (sl2_det (m, q) == 1) return (0);
+  }
+  do {
+    if (sl2_det (m, q) == 1) return (1);
+  } while (psl_next (2, m, q) == 0);
+  printf ("FATAL: Cannot find a nondegenerate matrix\n");
+  exit (50);
+}
+
+/*
+ * lexicographically next 2x2 matrix mod p, modulo its sign
+ */
+
+int
+psl_next (int n, int m[2][2], int q)
+{
+  int i, j, fi, fj;
+  int firstnzero = 0;
+
+  assert (n == 2);  /* otherwise the final if would be different */
+  assert (q > 2 && (q % 2) == 1);
+  fi = -1;
+  for (i = 0; i < n && firstnzero == 0; i++)
+  {
+    for (j = 0; j < n && firstnzero == 0; j++)
+    {
+      firstnzero = m[i][j];
+      if (firstnzero == 0) continue;
+      fi = i;
+      fj = j;
+    }
+  }
+  for (i = n-1; i >= 0; i--)
+  {
+    for (j = n-1; j >= 0; j--)
+    {
+      m[i][j]++;
+      if (m[i][j] < (q+1)/2) return (0);
+      if ((i != fi || j != fj) && m[i][j] < q) return (0);
+      m[i][j] = 0;
+    }
+  }
+  return (1);
+}
+
+/*
+ * change sign of a 2x2 matrix if it is "negative"
+ */
+
+void
+psl2_canon (int m[2][2], int q)
+{
+  int i, j;
+  int n = 2;
+  int firstnzero = 0;
+
+  assert (q > 2 && (q % 2) == 1);
+
+  for (i = 0; i < n && firstnzero == 0; i++)
+  {
+    for (j = 0; j < n && firstnzero == 0; j++)
+    {
+      firstnzero = m[i][j];
+    }
+  }
+
+  if (firstnzero == 0)
+  {
+    fprintf (stderr, "Zero matrix! This should not happen\n");
+    return;
+  }
+  if (firstnzero < q/2) return;
+  /* change sign */
+  for (i = 0; i < n; i++)
+  {
+    for (j = 0; j < n; j++)
+    {
+      if (m[i][j]) m[i][j] = q - m[i][j];
+    }
+  }
+}
+
+int
+psl2_nextmap (struct sl2elem *sl2vec, struct sl2elem *sl2vecinv, int gennum, int q)
+{
+  int rem;
+
+  if (gennum <= 0) return (1);       /* cycling wrapped */
+  rem = psl2_nextmap (sl2vec + 1, sl2vecinv + 1, gennum - 1, q);
+  if (rem == 0) return (0);          /* found next configuration */
+  /* rem == 1 means that the subsequent elements cycled */
+  rem = psl2_next_det1 (sl2vec[0].a, q);
+  sl2_invert (sl2vec[0].a, sl2vecinv[0].a, q);
+  return (rem);
+}
+
+int
+psl2_checkrelators (struct sl2elem *sl2vec, struct sl2elem *sl2vecinv, struct presentation *pst, int q)
+{
+  struct presentationrule *rule;
+
+  for (rule = pst->rules; rule; rule = rule->next)
+    if (psl2_checkrelator (sl2vec, sl2vecinv, pst->gennum, rule, q) == 0) return (0);
+  return (1);
+}
+
+int
+psl2_checkrelator (struct sl2elem *sl2vec, struct sl2elem *sl2vecinv, int gennum,
+                  struct presentationrule *rule, int q)
+{
+  int i, var;
+  int partial[2][2];
+
+  partial[0][0] = partial[1][1] = 1;
+  partial[0][1] = partial[1][0] = 0;
+
+  for (i = 0; i < rule->length; i++)
+  {
+    var = rule->var[i];
+    assert (var);
+    if (var > 0)
+      sl2_matmul (partial, sl2vec[var-1].a, q);
+     else
+      sl2_matmul (partial, sl2vecinv[-var-1].a, q);
+  }
+  if (partial[0][1] != 0) return (0);
+  if (partial[1][0] != 0) return (0);
+  if (partial[0][0] != partial[1][1]) return (0);
+  if (partial[0][0] == 1) return (1);
+  if (q - partial[0][0] != 1) return (0);
+  return (1);
+}
+
+/*
+ * ======= SYMMETRIC AND ALTERNATING GROUPS =========
  */
 
 int
@@ -466,7 +810,7 @@ count_sn_cclasses (struct presentationlist *pstlist, int n, int *results)
   for (i = 0; i < gennum; i++)
   {
     sn_init (snvec + i, n);
-    rem = sn_next_cond (snvec + i);
+    rem = sn_next_cond (snvec[i].perm, snvec[i].n);
     assert (rem == 1);
     snvecinv[i].n = n;
     sn_invert (snvec[i].perm, snvecinv[i].perm, n);
@@ -554,17 +898,17 @@ sn_init (struct snelem *perm, int n)
 }
 
 int
-sn_next_cond (struct snelem *perm)
+sn_next_cond (int *perm, int n)
 {
-  while (sn_next (perm->perm, perm->n) == 0)
+  while (sn_next (perm, n) == 0)
   {
     if (globals.onlyeven == 0) return (0);
-    if (sn_iseven (perm->perm, perm->n)) return (0);
+    if (sn_iseven (perm, n)) return (0);
   }
   do {
     if (globals.onlyeven == 0) return (1);
-    if (sn_iseven (perm->perm, perm->n)) return (1);
-  } while (sn_next (perm->perm, perm->n) == 0);
+    if (sn_iseven (perm, n)) return (1);
+  } while (sn_next (perm, n) == 0);
   printf ("FATAL: Cannot find a suitable permutation\n");
   exit (50);
 }
@@ -674,7 +1018,9 @@ sn_isnotcanon (struct snelem *perms, int gennum, int n)
       if (cmpres < 0) return (i+1); /* found a better representative: non canonical */
       if (cmpres > 0) break;      /* it is needless to conjugate the other elements */
     }
+  /* chose whether conjugacy should be done in the larger group S_n or in the smaller A_n */
   } while (sn_next (g, n) == 0);
+//  } while (sn_next_cond (g, n) == 0);
   return (0);
 }
 
@@ -785,7 +1131,7 @@ sn_nextmap (struct snelem *perms, struct snelem *permsinv, int gennum)
   rem = sn_nextmap (perms + 1, permsinv + 1, gennum - 1);
   if (rem == 0) return (0);          /* found next configuration */
   /* rem == 1 means that the subsequent elements cycled */
-  rem = sn_next_cond (perms + 0);
+  rem = sn_next_cond (perms[0].perm, perms[0].n);
   sn_invert (perms[0].perm, permsinv[0].perm, perms[0].n);
   return (rem);
 }
