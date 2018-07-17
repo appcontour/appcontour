@@ -681,7 +681,7 @@ psl2_canon (int m[2][2], int q)
     fprintf (stderr, "Zero matrix! This should not happen\n");
     return;
   }
-  if (firstnzero < q/2) return;
+  if (firstnzero < (q+1)/2) return;
   /* change sign */
   for (i = 0; i < n; i++)
   {
