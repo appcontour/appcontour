@@ -582,7 +582,7 @@ psl2_isnotcanon (struct sl2elem *sl2vec, int gennum, int q)
 
   if (globals.dontidentify) return (0); /* user request is to not identify by conjugacy */
   sl2_clear (g);
-  /* cycle on the elements of SL(2,Zp) */
+  /* cycle on the elements of PSL(2,q) */
   while (psl2_next_det1 (g, q) == 0)
   {
     sl2_invert (g, ginv, q);
@@ -1019,9 +1019,19 @@ sn_isnotcanon (struct snelem *perms, int gennum, int n)
       if (cmpres > 0) break;      /* it is needless to conjugate the other elements */
     }
   /* chose whether conjugacy should be done in the larger group S_n or in the smaller A_n */
-  } while (sn_next (g, n) == 0);
-//  } while (sn_next_cond (g, n) == 0);
+  } while (sn_next_conj (g, n) == 0);
   return (0);
+}
+
+/*
+ */
+
+int
+sn_next_conj (int *perm, int n)
+{
+  if (globals.onlyeven == 0) return (sn_next (perm, n));
+  if (globals.inner) return (sn_next_cond (perm, n));
+  return (sn_next (perm, n));
 }
 
 /*

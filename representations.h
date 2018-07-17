@@ -65,6 +65,7 @@ int sn_checkrelator (struct snelem *perms, struct snelem *permsinv, int gennum,
 void sn_print (int *perm, int n);
 int sn_nextmap (struct snelem *perms, struct snelem *permsinv, int gennum);
 int sn_next (int *perm, int n);
+int sn_next_conj (int *perm, int n);
 int sn_permcmp (int *p1, int *p2, int n);
 int sn_iseven (int *perm, int n);
 void sn_permmul (int *acc, int *perm, int n);

@@ -97,6 +97,7 @@ struct global_data {
   int q;  // typically a power of a prime
   int n;
   int onlyeven;
+  int inner;  // user wants only "inner" conjugacy for A_n
   int dontidentify;  // used in representation.c
   int insist;  // used in representation.c
   char knotname1[MAXKNOTNAMELENGTH];
