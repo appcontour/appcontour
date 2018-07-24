@@ -628,6 +628,7 @@ main (int argc, char *argv[])
       i++;
       if (i >= argc) {fprintf (stderr, "specify the value of n\n"); exit (11);}
       globals.n = atoi (argv[i]);
+      fprintf (stderr, "Command 'countsn %d' is deprecated, use 'ks_S%d' instead\n", globals.n, globals.n);
     }
     if (strcasecmp(argv[i],"countan") == 0)
     {
@@ -636,6 +637,7 @@ main (int argc, char *argv[])
       i++;
       if (i >= argc) {fprintf (stderr, "specify the value of n\n"); exit (11);}
       globals.n = atoi (argv[i]);
+      fprintf (stderr, "Command 'countan %d' is deprecated, use 'ks_A%d' instead\n", globals.n, globals.n);
     }
     if (strcasecmp(argv[i],"countsl2q") == 0 || strcasecmp(argv[i],"countsl2zp") == 0)
     {
@@ -643,6 +645,7 @@ main (int argc, char *argv[])
       i++;
       if (i >= argc) {fprintf (stderr, "specify the value of the prime p\n"); exit (11);}
       globals.p = atoi (argv[i]);
+      fprintf (stderr, "Command 'countsl2zp %d' is deprecated, use 'ks_SL2,%d' instead\n", globals.p, globals.p);
     }
     if (strcasecmp(argv[i],"countpsl2q") == 0 || strcasecmp(argv[i],"countpsl2zp") == 0)
     {
@@ -650,11 +653,7 @@ main (int argc, char *argv[])
       i++;
       if (i >= argc) {fprintf (stderr, "specify the value of the prime p\n"); exit (11);}
       globals.q = atoi (argv[i]);
-    }
-    if (strcasecmp(argv[i],"countsl2z2") == 0)
-    {
-      action = ACTION_CCCOUNTSL2ZP;
-      globals.p = 2;
+      fprintf (stderr, "Command 'countpsl2q %d' is deprecated, use 'ks_PSL2,%d' instead\n", globals.q, globals.q);
     }
     if (action == ACTION_NONE)
     {
