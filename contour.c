@@ -394,6 +394,9 @@ main (int argc, char *argv[])
       printf ("  'compare', 'union', 'sum' actions.\n");
       printf ("  alternatively for such actions the two descriptions can be contained\n");
       printf ("  in the same file, typically standard input.\n");
+      printf ("\n Invariants based on representations:\n");
+      printf ("  ks_<group>: compute Kitano-Suzuki invariant with respect to some group,\n");
+      printf ("  [See source code for a list of implemented groups and corresponding options]\n");
       printf ("\n Possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
