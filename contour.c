@@ -25,6 +25,8 @@
 #define MAXFILELENGTH 2000
 #define NCCMAX 100
 
+#define KITANO_SUZUKI_PREFIX "ks_"
+
 int debug = 0;
 int quiet = 0;
 int outformat = 0;
@@ -586,6 +588,39 @@ main (int argc, char *argv[])
       i++;
       if (i >= argc) {fprintf (stderr, "specify a region tag\n"); exit (11);}
       newextregion = atoi (argv[i]);
+    }
+    if (strncasecmp (argv[i], KITANO_SUZUKI_PREFIX, strlen(KITANO_SUZUKI_PREFIX)) == 0) /* one ring to rule them all :-) */
+    {
+      char *group = argv[i] + strlen(KITANO_SUZUKI_PREFIX);
+      if (strncasecmp (group, "sl2,", 4) == 0)
+      {
+        group += 4;
+        globals.p = atoi (group);
+        action = ACTION_CCCOUNTSL2ZP;
+        if (globals.p < 2) {fprintf (stderr, "value %d of p in SL2,p is invalid\n", globals.p); exit (11);}
+      }
+      if (strncasecmp (group, "s", 1) == 0 && isdigit (group[1]))
+      {
+        group += 1;
+        globals.n = atoi (group);
+        action = ACTION_CCCOUNTSN;
+        if (globals.n < 2) {fprintf (stderr, "value %d of n in Sn is invalid\n", globals.n); exit (11);}
+      }
+      if (strncasecmp (group, "a", 1) == 0 && isdigit (group[1]))
+      {
+        group += 1;
+        globals.n = atoi (group);
+        globals.onlyeven = 1;
+        action = ACTION_CCCOUNTSN;
+        if (globals.n < 2) {fprintf (stderr, "value %d of n in An is invalid\n", globals.n); exit (11);}
+      }
+      if (strncasecmp (group, "psl2,", 5) == 0)
+      {
+        group += 5;
+        globals.q = atoi (group);
+        action = ACTION_CCCOUNTPSL2Q;;
+        if (globals.q < 2) {fprintf (stderr, "value %d of q in PSL2,q is invalid\n", globals.q); exit (11);}
+      }
     }
     if (strcasecmp(argv[i],"countsn") == 0)
     {

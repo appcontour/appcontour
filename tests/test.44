@@ -10,5 +10,5 @@ do
   knot=`echo $pair | cut -f1 -d:`
   p=`echo $pair | cut -f2 -d:`
   echo "Count representations in SL(2,Z/${p}Z) (Kitano-Suzuki) for $knot"
-  ./contour --out countsl2zp $p $knot -q
+  ./contour --out ks_SL2,$p $knot -q
 done
