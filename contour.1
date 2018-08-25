@@ -135,19 +135,37 @@ invariants.
   frontback: front-back reflection
   mendes: compute Mendes graph (see Hacon-Mendes-Romero Fuster)
   evert <int>: make region <int> become the unbounded region
+  union: disjoint union of two apparent contours
+  sum: connected sum of two apparent contours
   3devert <int>: evert 3D surface (an internal component becomes the outside)
     <int> indicates a region to be used for the 3d eversion
+  knotsum: connected sum of two knotted tori (as connected sum of knots)
 
 .IP "informational:"
-  info, characteristic, rules, iscontour, ishuffman, countcc
+  info, characteristic, rules, iscontour, islabelled, countcc
   list[ma|invl|invs|strata]
   ccorientation <int>: gives the orientation of a 3D connected component
   ccparent <cc>: finds the 3D component that directly contains "cc" 0 means that "cc" is external
   ccordering: show 3D inclusion between the connected components
-  compare: lessicographic comparison between two contours, in this case the stdin (or file) must contain two descriptions
+  compare: lessicographic comparison between two contours.  The two contours can be described in two distinct files
+    or in one file with two descriptions
 
 .IP "conversion and standardization:"
-  print, printmorse, knot2morse, canonify
+  print, printmorse, knot2morse, any2morse, canonify, giovecanonify
+
+.IP "cell complex and fundamental group:"
+  cellcomplex, insidecomplex, outsidecomplex, fundamental, insidefundamental, outsidefundamental
+   abbreviations: fg, ifg, ofg
+  alexander: compute Alexander polynomial of fundamental group
+  linkingnumber: compute linking number from fundamental group
+  abelianizedfundamental, insideabelianizedfundamental, outsideabelianizedfundamental                                                      
+   abbreviations: afg, iafg, oafg                                                                                                          
+  scharacteristic, icharacteristic, ocharacteristic                                                                                        
+   abbreviations: sch, ich, och                                                                                                            
+  suggest_p_surgery: display 'punchhole' surgery that does not affect fundamental group of inside                                          
+  specific options: --in, --out, --surface[default]                                                                                        
+   indicate which part of space to consider.  E.g. "ifg" is equivalent to "fg --inside"
+   --[no]autosurgery: automatically apply punchhole surgeries to increase the initial presentation deficiency
 
 .SH OPTIONS
 .IP --help 
