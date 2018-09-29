@@ -129,7 +129,7 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
   assert (cccc->betti_2 >= 0);
   p = (struct presentation *) malloc (sizeof (struct presentation));
   p->gennum = 0;
-  p->rules = 0;
+  p->rules = p->elements = 0;
   p->characteristic = 1;  /* the spanning tree has characteristic 1 */
 
   for (n = 0; n < cc->arcdim; n++)
@@ -797,9 +797,8 @@ void
 print_presentation (struct presentation *p)
 {
   struct presentationrule *r;
-  int generator, rulenum, i, g;
+  int rulenum, g;
   extern int outformat;
-  char var;
 
   if (outformat == OUTFORMAT_APPCONTOUR) printf ("fpgroup {\n");
   if (p->gennum == 0)
@@ -834,6 +833,8 @@ print_presentation (struct presentation *p)
   for (r = p->rules; r; r = r->next)
   {
     if (r != p->rules) printf (", ");
+    print_single_rule (r, p->gennum);
+    /*
     for (i = 0; i < r->length; i++)
     {
       generator = r->var[i];
@@ -848,9 +849,33 @@ print_presentation (struct presentation *p)
       if (generator >= p->gennum) var = '?';
       printf ("%c", var);
     }
+     */
   }
   printf (">\n");
   if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
+}
+
+void
+print_single_rule (struct presentationrule *r, int gennum)
+{
+  int i;
+  int generator;
+  char var;
+
+  for (i = 0; i < r->length; i++)
+  {
+    generator = r->var[i];
+    var = 'a';
+    if (generator < 0)
+    {
+      var = 'A';
+      generator *= -1;
+    }
+    generator--;
+    var += generator;
+    if (generator >= gennum) var = '?';
+    printf ("%c", var);
+  }
 }
 
 /*
@@ -1705,7 +1730,7 @@ read_group_presentation_list (FILE *file)
     if (tok != KEY_LT) break;
 
     pst = (struct presentation *) malloc (sizeof (struct presentation));
-    pst->rules = 0;
+    pst->rules = pst->elements = 0;
     read_group_presentation (file, pst);
     pstnew = (struct presentationlist *) malloc (sizeof (struct presentationlist));
     pstnew->p = pst;
@@ -1764,6 +1789,13 @@ read_group_presentation (FILE *file, struct presentation *p)
   p->rules = read_relators_list (file, generator_names, p->gennum);
 
   tok = gettoken (file);
+  if (tok == TOK_SEMICOLON)
+  {
+    fprintf (stderr, "Reading selected elements in group\n");
+    p->elements = read_relators_list (file, generator_names, p->gennum);
+    tok = gettoken (file);
+  }
+
   if (tok != KEY_GT)
   {
     printf ("Invalid syntax, tok = %d; rangle expected\n", tok);

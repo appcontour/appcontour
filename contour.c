@@ -1275,6 +1275,7 @@ main (int argc, char *argv[])
       {
         case TOK_FPGROUP:
           p = (struct presentation *) malloc (sizeof (struct presentation));
+          p->rules = p->elements = 0;
           read_group_presentation (infile, p);
           switch (action)
           {
@@ -1355,7 +1356,7 @@ main (int argc, char *argv[])
       struct presentationlist *pstlist;
       case TOK_FPGROUP:
       p = (struct presentation *) malloc (sizeof (struct presentation));
-      p->rules = 0;
+      p->rules = p->elements = 0;
       read_group_presentation (infile, p);
       if (globals.simplifypresentation) simplify_presentation (p);
       switch (action)

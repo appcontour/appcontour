@@ -126,6 +126,7 @@ count_sl2zp_cclasses (struct presentationlist *pstlist, int p, int *results)
             sl2_print (sl2vec[i].a);
             printf ("---\n");
           }
+          if (pstl->p->elements) printf ("Warning: selected elements present.  Work in progress...\n");
         }
       }
     }
@@ -562,6 +563,7 @@ count_psl2q_cclasses (struct presentationlist *pstlist, int q, int *results)
             sl2_print (sl2vec[i].a);
             printf ("---\n");
           }
+          if (pstl->p->elements) printf ("Warning: selected elements present.  Work in progress...\n");
         }
       }
     }
@@ -798,6 +800,7 @@ count_sn_cclasses (struct presentationlist *pstlist, int n, int *results)
   struct snelem snvec[MAXGENNUM];
   struct snelem snvecinv[MAXGENNUM];
   struct presentationlist *pstl;
+  struct presentationrule *element;
   int i, k, gennum, rem;
   int clevel;
 
@@ -854,6 +857,15 @@ count_sn_cclasses (struct presentationlist *pstlist, int n, int *results)
           for (i = 0; i < gennum; i++)
           {
             sn_print (snvec[i].perm, n);
+          }
+          if (pstl->p->elements)
+          {
+            for (element = pstl->p->elements; element; element = element->next)
+            {
+              print_single_rule (element, pstl->p->gennum);
+              printf (" -> ");
+              sn_map_print_element (snvec, snvecinv, pstl->p->gennum, element, n);
+            }
           }
         }
       }
@@ -1093,6 +1105,27 @@ sn_checkrelator (struct snelem *perms, struct snelem *permsinv, int gennum,
     if (partial[i] != i) return (0);
   }
   return (1);
+}
+
+void
+sn_map_print_element (struct snelem *perms, struct snelem *permsinv, int gennum,
+                 struct presentationrule *rule, int n)
+{
+  int i, var;
+  int partial[REPR_MAXN];
+
+  for (i = 0; i < n; i++) partial[i] = i;
+
+  for (i = 0; i < rule->length; i++)
+  {
+    var = rule->var[i];
+    assert (var);
+    if (var > 0)
+      sn_permmul (partial, perms[var-1].perm, n);
+     else
+      sn_permmul (partial, permsinv[-var-1].perm, n);
+  }
+  sn_print (partial, n);
 }
 
 void

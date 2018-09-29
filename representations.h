@@ -62,6 +62,8 @@ int sn_checkrelators(struct snelem *perms, struct snelem *permsinv,
                       struct presentation *pst, int n);
 int sn_checkrelator (struct snelem *perms, struct snelem *permsinv, int gennum,
                      struct presentationrule *rule, int n);
+void sn_map_print_element (struct snelem *perms, struct snelem *permsinv, int gennum,
+                     struct presentationrule *rule, int n);
 void sn_print (int *perm, int n);
 int sn_nextmap (struct snelem *perms, struct snelem *permsinv, int gennum);
 int sn_next (int *perm, int n);

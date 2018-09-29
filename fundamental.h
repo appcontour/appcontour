@@ -98,6 +98,7 @@ struct ccomplexcc {
 
 /*
  * data structure for group presentation
+ * it can contain a list of selected elements (meridians, longitudes,...)
  */
 
 struct presentation {
@@ -105,6 +106,7 @@ struct presentation {
     int characteristic;
     int espected_deficiency;
     struct presentationrule *rules;
+    struct presentationrule *elements;
   };
 
 struct presentationlist {
@@ -128,6 +130,7 @@ void abelianized_fundamental_group (struct presentation *p);
 int complex_characteristic (struct ccomplex *cc);
 struct presentation *compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc);
 void print_presentation (struct presentation *p);
+void print_single_rule (struct presentationrule *r, int gennum);
 void print_invariant_factors (struct presentation *p);
 void print_exponent_matrix (struct presentation *p);
 void fg_interactive (struct presentation *p);
