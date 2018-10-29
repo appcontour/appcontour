@@ -2,9 +2,9 @@
 # Rolfsen page 108 exercise 5
 #
 knot {
- ^  ^  ^ ;
+ ^ ^     ;
+| x |  ^ ;
 | x  x  |;
-| x | | |;
  Y X  | |;
  ||  x  |;
  | U  Y  ;
