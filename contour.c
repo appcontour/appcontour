@@ -366,7 +366,8 @@ main (int argc, char *argv[])
       printf ("  union: disjoint union of two apparent contours\n");
       printf ("  sum: connected sum of two apparent contours\n");
       printf ("  3devert <int>: evert 3D surface (an internal component becomes the outside)\n");
-      printf ("    <int> indicates a region to be used for the 3d eversion\n");
+      printf ("    <int> indicates a region to be used for the 3d eversion,\n");
+      printf ("    use \"-1\" to indicate the first region with positive f\n");
       printf ("  knotsum: connected sum of two knotted tori (as connected sum of knots)\n");
       printf ("\n Possible informational actions:\n");
       printf ("  info, characteristic, rules, iscontour, islabelled, countcc\n");

@@ -613,6 +613,10 @@ changeextregion (struct sketch *s, int tag)
  * surface.  We compute one obtained by wrapping Sigma into a big ball and then
  * punching a hole connecting this new sphere with the first strata of the selected
  * region
+ *
+ * A negative value for the region tag can be used to automatically select the
+ * first region with f > 0 as the region to be used.  If the inside is not connected
+ * the result can be impredictable
  */
 
 int
@@ -621,9 +625,17 @@ evert3d (struct sketch *s, int tag)
   struct region *r;
   struct region *evertregion = 0;
 
-  for (r = s->regions; r; r = r->next)
+  if (tag >= 0)
   {
-    if (r->tag == tag) evertregion = r;
+    for (r = s->regions; r; r = r->next)
+    {
+      if (r->tag == tag) evertregion = r;
+    }
+  } else {
+    for (r = s->regions; r; r = r->next)
+    {
+      if (r->f > 0) {evertregion = r; break;}
+    }
   }
   assert (evertregion);
   assert (evertregion->f > 0);
