@@ -1,3 +1,8 @@
+2018-11-16: action knotname2rdtcode computes the realization of the dtcode of the given knot.
+	i.e. each even value of the dtcode is postfixed by '<' or '>' according to whether when
+	traversing a even-numbered crossing we see the crossed line oriented from right to left
+	or from left to right.
+
 2018-07-03: New description token "listoffpgroups" as in
 	--- start of file ---
         listoffpgroups {

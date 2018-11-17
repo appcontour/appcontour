@@ -901,6 +901,7 @@ readknotscape (FILE *file)
   char *namept;
   int *dtcode, *dtpositive;
   FILE *pakfile, *infile;
+  int *dt_involution, *dt_realization;
 
   tok = gettoken (file);
   assert (tok == TOK_LBRACE);
@@ -1051,6 +1052,28 @@ readknotscape (FILE *file)
   {
     if (globals.userwantscode == ACTION_KNOTNAME2GAUSSCODE)
       printf ("# Conversion to Gauss code not implemented, printing dtcode:\n");
+    if (globals.userwantscode == ACTION_KNOTNAME2RDTCODE)
+    {
+      printf ("# Conversion to realized dtcode not implemented, printing dtcode:\n");
+      dt_involution = (int *) malloc (2*codelen * sizeof (int));
+      dt_realization = (int *) malloc (2*codelen * sizeof (int));
+      for (i = 0; i < codelen; i++)
+      {
+        dt_involution[2*i] = abs(dtcode[i]) - 1;
+        dt_involution[abs(dtcode[i]) - 1] = 2*i;
+      }
+      dt_realize (dt_involution, dt_realization, codelen);
+      printf ("dtcode {[");
+      for (i = 0; i < codelen; i++)
+      {
+        if (i > 0) printf (" ");
+        printf ("%d%c", dtcode[i], (dt_realization[2*i]>0)?'<':'>');
+      }
+      printf ("]}\n");
+      free (dt_involution);
+      free (dt_realization);
+      exit (0);
+    }
     printf ("dtcode {[");
     for (i = 0; i < codelen; i++)
     {

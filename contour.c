@@ -400,6 +400,16 @@ main (int argc, char *argv[])
       printf ("\n Invariants based on representations:\n");
       printf ("  ks_<group>: compute Kitano-Suzuki invariant with respect to some group,\n");
       printf ("  [See source code for a list of implemented groups and corresponding options]\n");
+      printf ("\n Reading from knot tables by knot name: %s [options] action knotname\n", argv[0]);
+      printf ("  Examples of knotnames include:\n");
+      printf ("    K<x>_<n> (Rofsen table),\n");
+      printf ("    K<x>a_<n>, K<x>n_<n> (Dowker-Thistlethwaite numbering)\n");
+      printf ("    L<x>a_<n>, L<x>n_<n> (Thistlethwaite link table)\n");
+      printf ("    HK<x>_<n> (Handlebody genus 2 knots up to 6 crossings of Ishii-Kishimoto-Moriuchi)\n");
+      printf ("  Possible specific actions include:\n");
+      printf ("    knotname2dtcode\n");
+      printf ("    knotname2rdtcode\n");
+      printf ("    knotname2gausscode\n");
       printf ("\n Possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
@@ -545,6 +555,8 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"giovecanonify") == 0) action = ACTION_GIOVECANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
     if (strcmp(argv[i],"knotname2dtcode") == 0) action = ACTION_KNOTNAME2DTCODE;
+    if (strcmp(argv[i],"knotname2rdtcode") == 0) action = ACTION_KNOTNAME2RDTCODE;
+    if (strcmp(argv[i],"knotname2realizeddtcode") == 0) action = ACTION_KNOTNAME2RDTCODE;
     if (strcmp(argv[i],"knotname2gausscode") == 0) action = ACTION_KNOTNAME2GAUSSCODE;
     if (strcmp(argv[i],"any2morse") == 0) action = ACTION_ANY2MORSE;
     if (strcmp(argv[i],"printmorse") == 0) action = ACTION_PRINTMORSE;
@@ -1107,6 +1119,7 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_KNOTNAME2DTCODE:
+    case ACTION_KNOTNAME2RDTCODE:
     case ACTION_KNOTNAME2GAUSSCODE:
     knotname2code (infile, action);
     break;
