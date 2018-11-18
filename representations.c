@@ -58,7 +58,8 @@ count_sl2zp_cclasses (struct presentationlist *pstlist, int p, int *results)
   struct sl2elem sl2vec[MAXGENNUM];
   struct sl2elem sl2vecinv[MAXGENNUM];
   struct presentationlist *pstl;
-  int i, k, gennum, rem;
+  struct presentationrule *element;
+  int i, k, gennum, rem, se;
   int clevel;
 
   gennum = pstlist->p->gennum;
@@ -126,7 +127,16 @@ count_sl2zp_cclasses (struct presentationlist *pstlist, int p, int *results)
             sl2_print (sl2vec[i].a);
             printf ("---\n");
           }
-          if (pstl->p->elements) printf ("Warning: selected elements present.  Work in progress...\n");
+          if (pstl->p->elements)
+          {
+            for (element = pstl->p->elements, se = 1; element; element = element->next, se++)
+            {
+              printf ("Selected element #%d ->\n", se);
+              //print_single_rule (element, pstl->p->gennum);
+              //printf (" ->\n");
+              sl2_map_print_element (sl2vec, sl2vecinv, pstl->p->gennum, element, p);
+            }
+          }
         }
       }
     }
@@ -264,6 +274,28 @@ inv_modp (int n, int p)
   }
   printf ("FATAL: Cannot find inverse of %d mod %d\n", n, p);
   exit (55);
+}
+
+void
+sl2_map_print_element (struct sl2elem *ms, struct sl2elem *msinv, int gennum,
+                       struct presentationrule *rule, int p)
+{
+  int i, var;
+  int partial[2][2];
+
+  partial[0][0] = partial[1][1] = 1;
+  partial[0][1] = partial[1][0] = 0;
+
+  for (i = 0; i < rule->length; i++)
+  {
+    var = rule->var[i];
+    assert (var);
+    if (var > 0)
+      sl2_matmul (partial, ms[var-1].a, p);
+    else
+      sl2_matmul (partial, msinv[-var-1].a, p);
+  }
+  sl2_print (partial);
 }
 
 void
@@ -495,7 +527,8 @@ count_psl2q_cclasses (struct presentationlist *pstlist, int q, int *results)
   struct sl2elem sl2vec[MAXGENNUM];
   struct sl2elem sl2vecinv[MAXGENNUM];
   struct presentationlist *pstl;
-  int i, k, gennum, rem;
+  struct presentationrule *element;
+  int i, k, gennum, rem, se;
   int clevel;
 
   gennum = pstlist->p->gennum;
@@ -563,7 +596,16 @@ count_psl2q_cclasses (struct presentationlist *pstlist, int q, int *results)
             sl2_print (sl2vec[i].a);
             printf ("---\n");
           }
-          if (pstl->p->elements) printf ("Warning: selected elements present.  Work in progress...\n");
+          if (pstl->p->elements)
+          {
+            for (element = pstl->p->elements, se = 1; element; element = element->next, se++)
+            {
+              printf ("Selected element #%d ->\n", se);
+              //print_single_rule (element, pstl->p->gennum);
+              //printf (" ->\n");
+              sl2_map_print_element (sl2vec, sl2vecinv, pstl->p->gennum, element, q);
+            }
+          }
         }
       }
     }
@@ -801,7 +843,7 @@ count_sn_cclasses (struct presentationlist *pstlist, int n, int *results)
   struct snelem snvecinv[MAXGENNUM];
   struct presentationlist *pstl;
   struct presentationrule *element;
-  int i, k, gennum, rem;
+  int i, k, gennum, rem, se;
   int clevel;
 
   gennum = pstlist->p->gennum;
@@ -860,10 +902,11 @@ count_sn_cclasses (struct presentationlist *pstlist, int n, int *results)
           }
           if (pstl->p->elements)
           {
-            for (element = pstl->p->elements; element; element = element->next)
+            for (element = pstl->p->elements, se = 1; element; element = element->next, se++)
             {
-              print_single_rule (element, pstl->p->gennum);
-              printf (" -> ");
+              printf ("Selected element #%d -> ", se);
+              //print_single_rule (element, pstl->p->gennum);
+              //printf (" -> ");
               sn_map_print_element (snvec, snvecinv, pstl->p->gennum, element, n);
             }
           }
@@ -1135,6 +1178,7 @@ sn_print (int *perm, int n)
   int mark[REPR_MAXN];
 
   assert (n <= REPR_MAXN);
+  /* avoid printing the permutation vector...
   printf ("[");
   for (i = 0; i < n; i++)
   {
@@ -1142,6 +1186,7 @@ sn_print (int *perm, int n)
     printf ("%d", perm[i] + 1);
   }
   printf ("] --> ");
+   */
 
   for (i = 0; i < n; i++) mark[i] = 0;
 

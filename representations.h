@@ -24,6 +24,8 @@ int sl2_next (int m[2][2], int p);
 int sl2_det (int m[2][2], int p);
 void sl2_invert (int m[2][2], int minv [2][2], int p);
 int inv_modp (int n, int p);
+void sl2_map_print_element (struct sl2elem *ms, struct sl2elem *msinv, int gennum,
+                     struct presentationrule *rule, int p);
 void sl2_print (int m[2][2]);
 int sl2_nextmap (struct sl2elem *sl2vec, struct sl2elem *sl2vecinv, int gennum, int p);
 int sl2_checkrelators(struct sl2elem *sl2vec, struct sl2elem *sl2vecinv,
