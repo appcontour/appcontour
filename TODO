@@ -1,3 +1,8 @@
+8. The syntax <[generators]; [relators]> for a finitely presented group now allows
+for the addition of selected elements: <[generators]; [relators]; [elements]> .
+This is presently only used in printout of the representations and only for
+the representations ks_S<n> ks_A<n> .
+
 7. Make "countsl2zp" more efficient
 
 6. Make --principal work for polynomials in more then one indet (assuming it makes sense)
