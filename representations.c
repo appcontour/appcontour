@@ -134,7 +134,7 @@ count_sl2zp_cclasses (struct presentationlist *pstlist, int p, int *results)
               printf ("Selected element #%d ->\n", se);
               //print_single_rule (element, pstl->p->gennum);
               //printf (" ->\n");
-              sl2_map_print_element (sl2vec, sl2vecinv, pstl->p->gennum, element, p);
+              sl2_map_print_element (sl2vec, sl2vecinv, pstl->p->gennum, element, p, 0);
             }
           }
         }
@@ -278,7 +278,7 @@ inv_modp (int n, int p)
 
 void
 sl2_map_print_element (struct sl2elem *ms, struct sl2elem *msinv, int gennum,
-                       struct presentationrule *rule, int p)
+                       struct presentationrule *rule, int p, int uptosign)
 {
   int i, var;
   int partial[2][2];
@@ -295,6 +295,7 @@ sl2_map_print_element (struct sl2elem *ms, struct sl2elem *msinv, int gennum,
     else
       sl2_matmul (partial, msinv[-var-1].a, p);
   }
+  if (uptosign) psl2_canon (partial, p);
   sl2_print (partial);
 }
 
@@ -603,7 +604,7 @@ count_psl2q_cclasses (struct presentationlist *pstlist, int q, int *results)
               printf ("Selected element #%d ->\n", se);
               //print_single_rule (element, pstl->p->gennum);
               //printf (" ->\n");
-              sl2_map_print_element (sl2vec, sl2vecinv, pstl->p->gennum, element, q);
+              sl2_map_print_element (sl2vec, sl2vecinv, pstl->p->gennum, element, q, 1 /* up to sign */);
             }
           }
         }
