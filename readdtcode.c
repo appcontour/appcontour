@@ -61,7 +61,6 @@ readdtcode (FILE *file)
   struct sketch *sketch;
   struct vecofintlist *loiv, *lvg, *firstlvg, *prevlvg, *lv;
   int i, j, alv, labeltag;
-  int *gregionsign;
 
   /*
    * read dt code
@@ -104,16 +103,8 @@ readdtcode (FILE *file)
     freeloiv (loiv);
     return (readgausscodeloiv (lvg));
   }
-  if (loiv->handedness == 0)
-  {
-    gregionsign = (int *) malloc (loiv->len*sizeof(int));
-    for (i = 0; i < loiv->len; i++) gregionsign[i] = 0;
-  } else {
-    gregionsign = loiv->handedness;
-    loiv->handedness = 0;
-  }
 
-  sketch = realize_dtcode (loiv->len, loiv->vec, gregionsign);
+  sketch = realize_dtcode (loiv->len, loiv->vec, loiv->handedness);
   freeloiv (loiv);
   return (sketch);
 }
