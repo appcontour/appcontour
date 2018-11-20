@@ -31,3 +31,9 @@ locfile="examples/knots/hardunknot_kauffman_fig8.dtcode"
 echo "In example $locfile we need to specify which reconstruction we want (-22> in the dt-code)"
 ./contour print $locfile | md5sum
 
+#
+# this is a link described by gausscode
+#
+locfile="examples/links/maple.dtcode"
+echo "Example $locfile describes a link by its Gauss-code"
+./contour print $locfile | md5sum

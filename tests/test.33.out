@@ -31,3 +31,5 @@ reconstruction of from examples/knots/hardunknot_haken_satellite.dtcode
 41f6fb5d3bf1c8a4c9a75769805de865  -
 In example examples/knots/hardunknot_kauffman_fig8.dtcode we need to specify which reconstruction we want (-22> in the dt-code)
 727ac34fc63c8be3b38b8807aef4308e  -
+Example examples/links/maple.dtcode describes a link by its Gauss-code
+5d71b5cda34c9eb3d3d573e9127e2524  -
