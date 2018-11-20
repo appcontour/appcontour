@@ -31,6 +31,8 @@ void gausscode2dtcode (struct vecofintlist *loiv, int *vecofint);
 struct sketch *orientedgauss2sketch (struct vecofintlist *loiv);
 void inherit_gauss2gauss (struct vecofintlist *loiv_knot, struct vecofintlist *loiv_link, int *dt_realization);
 struct sketch *realize_dtcode (int numnodes, int *vecofint, int *gregionsign);
+void realize_loiv (struct vecofintlist *loiv);
+void realize_loiv_split (int len, int *vec, int *gregionsign);
 int reconstruct_sign (int which, int *gregionsign);
 int nextlabel (int label);
 int prevlabel (int label);
@@ -45,4 +47,5 @@ void display_regions_from_nodes (struct sketch *s);
 int isconsistent (void);
 int tour_of_region (int label, int velocity);
 void walk_left (int *labelpt, int *velocitypt);
+void printloiv (struct vecofintlist *loiv);
 

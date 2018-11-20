@@ -67,6 +67,7 @@ main (int argc, char *argv[])
   int infiles = 1;
   struct presentation *p;
   struct alexanderideal *ai;
+  struct vecofintlist *loiv;
 
   ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
@@ -555,6 +556,9 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"canonify") == 0) action = ACTION_CANONIFY;
     if (strcmp(argv[i],"giovecanonify") == 0) action = ACTION_GIOVECANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
+    if (strcmp(argv[i],"dtcode") == 0) action = ACTION_DTCODE;
+    if (strcmp(argv[i],"rdtcode") == 0) action = ACTION_RDTCODE;
+    if (strcmp(argv[i],"gausscode") == 0) action = ACTION_GAUSSCODE;
     if (strcmp(argv[i],"knotname2dtcode") == 0) action = ACTION_KNOTNAME2DTCODE;
     if (strcmp(argv[i],"knotname2rdtcode") == 0) action = ACTION_KNOTNAME2RDTCODE;
     if (strcmp(argv[i],"knotname2realizeddtcode") == 0) action = ACTION_KNOTNAME2RDTCODE;
@@ -1119,6 +1123,14 @@ main (int argc, char *argv[])
     any2morse (infile);
     break;
 
+    case ACTION_DTCODE:
+    case ACTION_RDTCODE:
+    case ACTION_GAUSSCODE:
+    loiv = dtcodefromfile (infile);
+    if (action == ACTION_RDTCODE) realize_loiv (loiv);
+    printloiv (loiv);
+    break;
+
     case ACTION_KNOTNAME2DTCODE:
     case ACTION_KNOTNAME2RDTCODE:
     case ACTION_KNOTNAME2GAUSSCODE:
@@ -1494,6 +1506,29 @@ readcontour (FILE *file)
   }
 #endif
   fprintf (stderr, "Only 'morse'/'sketch' formats implemented\n");
+  exit (2);
+}
+
+struct vecofintlist *
+dtcodefromfile (FILE *file)
+{
+  int tok;
+  struct vecofintlist *loiv;
+
+  tok = gettoken (file);
+
+  if (tok == TOK_DTCODE)
+  {
+    loiv = readvecofintlist (file, LOIV_ISDTCODE);
+    return (loiv);
+  }
+
+  if (tok == TOK_KNOTSCAPE)
+  {
+    fprintf (stderr, "NOT YET IMPLEMENTED\n");
+    exit (2);
+  }
+  fprintf (stderr, "Only 'dtcode'/'knotscape' formats implemented\n");
   exit (2);
 }
 

@@ -509,6 +509,166 @@ gausscode2dtcode (struct vecofintlist *loiv, int *vecofint)
 }
 
 /*
+ * just "realize" an existing dtcode with partial orientation
+ * loiv contains a dtcode
+ *
+ * TODO: cleanup dtsign, curodd, cureven...
+ */
+
+void
+realize_loiv (struct vecofintlist *loiv)
+{
+  int i, *gregionsign;
+
+  if (loiv->type == LOIV_ISRDTCODE) return;
+  assert (loiv->type == LOIV_ISDTCODE);
+  gregionsign = loiv->handedness;
+  if (loiv->handedness == 0)
+  {
+    gregionsign = loiv->handedness = (int *) malloc (loiv->len*sizeof(int));
+    for (i = 0; i < loiv->len; i++) gregionsign[i] = 0;
+  }
+
+  realize_loiv_split (loiv->len, loiv->vec, gregionsign);
+}
+
+void
+realize_loiv_split (int numnodes, int *vecofint, int *gregionsign)
+{
+  int numlabels;
+  int i, numconsistent, curoddnode, curevennode, rcode;
+  int dt_incomplete;
+  int agree, agreeneg;
+  char ch;
+  int *dt_involution, *dtsign, *dt_realization;
+
+  numlabels = 2*numnodes;
+
+  assert (numnodes >= 2);
+
+  dt_involution = (int *) malloc (numlabels*(sizeof (int)));
+  dtsign = (int *) malloc (numlabels*(sizeof (int)));
+  dt_realization = (int *) malloc (numlabels*(sizeof (int)));
+
+  curoddnode = 1;
+  for (i = 0; i < numnodes; i++)
+  {
+    rcode = vecofint[i];
+    if ((rcode/2)*2 != rcode)
+    {
+      printf ("Only even values allowed!\n");
+      exit (4);
+    }
+    dt_involution[curoddnode - 1] = abs(rcode) - 1;
+    dtsign[curoddnode - 1] = 1;
+    if (rcode < 0) dtsign[curoddnode - 1] = -1;
+    dt_involution[abs(rcode) - 1] = curoddnode - 1;
+    curoddnode += 2;
+  }
+
+  curevennode = 1;
+  for (i = 0; i < numnodes; i++)
+  {
+    dtsign[curevennode] = -dtsign[dt_involution[curevennode]];
+    curevennode += 2;
+  }
+  for (i = 0; i < numlabels; i++)
+  {
+    if (dt_involution[i] < 0 || dt_involution[i] >= numlabels)
+    {
+      printf ("Must use all even number from 2 to %d\n", numlabels);
+      exit (5);
+    }
+    if (((dt_involution[i] + i) % 2) != 1)
+    {
+      printf ("Involution is not an even-odd coupling\n");
+      exit (6);
+    }
+    if (i != dt_involution[dt_involution[i]])
+    {
+      printf ("This is not an involution\n");
+      exit (7);
+    }
+    if (abs(i - dt_involution[i]) <= 1)
+    {
+      printf ("No tight loop allowed: %d %d\n", i + 1, dt_involution[i] + 1);
+      exit (8);
+    }
+  }
+
+  /* this function wants a zero-based vector */
+  dt_realize (dt_involution, dt_realization, numnodes);
+  dt_incomplete = 0;
+  for (i = 0; i < numlabels; i++) if (dt_realization[i] == 0) dt_incomplete = 1;
+
+  /*
+   * this (partial?) reconstruction must be consistent with possible informations given
+   * by the user
+   */
+  agree = 1;
+  agreeneg = 1;
+  for (i = 0; i < numnodes; i++)
+  {
+    if (gregionsign[i]*dt_realization[2*i] > 0) agreeneg = 0;
+    if (gregionsign[i]*dt_realization[2*i] < 0) agree = 0;
+  }
+  if ((agree == 0) && (agreeneg == 0))
+  {
+    printf ("Fatal: the reconstruction is inconsistent with user-supplied values.\n");
+    if (verbose)
+    {
+      for (i = 0; i < numnodes; i++)
+      {
+        printf ("%d%c ", dtsign[2*i]*(dt_involution[2*i]+1), (dt_realization[2*i] > 0)?'>':'<');
+      }
+      printf ("\n");
+    }
+    exit (4);
+  }
+  if (agree == 0)
+  {
+    for (i = 0; i < numlabels; i++) dt_realization[i] = -dt_realization[i];
+  }
+  for (i = 0; i < numnodes; i++)
+  {
+    if (dt_realization[2*i]) gregionsign[i] = dt_realization[2*i];
+  }
+  if (verbose)
+  {
+    for (i = 0; i < numnodes; i++)
+    {
+      ch = '?';
+      if (dt_realization[2*i] > 0) ch = '>';
+      if (dt_realization[2*i] < 0) ch = '<';
+      printf ("%d%c ", dtsign[2*i]*(dt_involution[2*i]+1), ch);
+    }
+    printf ("\n");
+  }
+
+  if (dt_incomplete)
+  {
+    /* fallback to my old code */
+    numconsistent = reconstruct_sign (0, gregionsign);
+    if (numconsistent <= 0)
+    {
+      printf ("No consistent completions found. Perhaps this is a composite knot\n");
+      exit (3);
+    }
+    if (numconsistent > 2)
+    {
+      printf ("More than one (%d) consistent completion found!\n", numconsistent/2);
+      printf ("maybe this is a compound knot\n");
+      exit (2);
+    }
+    reconstruct_sign (1, gregionsign);
+  }
+
+  free (dt_realization);
+  free (dtsign);
+  free (dt_involution);
+}
+
+/*
  * main function that reconstructs the correct crossings handedness
  */
 
@@ -2365,3 +2525,52 @@ static void dt_realize(
     free(phi);
 }
 
+/*
+ * print loiv data using dtcode or gausscode syntax
+ */
+
+void
+printloiv (struct vecofintlist *loiv)
+{
+  int i;
+  int *handedness;
+  switch (loiv->type)
+  {
+    case LOIV_ISDTCODE:
+    case LOIV_ISRDTCODE:
+      printf ("dtcode {[");
+      break;
+
+    case LOIV_ISGAUSSCODE:
+      printf ("gausscode {");
+      break;
+
+    default:
+      printf ("unknown {");
+      break;
+  }
+
+  handedness = loiv->handedness;
+  for (i = 0; i < loiv->len; i++)
+  {
+    if (i > 0) printf (" ");
+    printf ("%d", loiv->vec[i]);
+    if (handedness && handedness[i]) printf ("%c", (handedness[i]>0)?'>':'<');
+  }
+
+  switch (loiv->type)
+  {
+    case LOIV_ISDTCODE:
+    case LOIV_ISRDTCODE:
+      printf ("]}\n");
+      break;
+
+    case LOIV_ISGAUSSCODE:
+      printf ("}\n");
+      break;
+  
+    default:
+      printf ("}\n");
+      break;
+  }
+}
