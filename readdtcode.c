@@ -58,7 +58,26 @@ void uFatalError (char *function, char *file)
 struct sketch *
 readdtcode (FILE *file)
 {
+  int isgausscode = 0;
+  struct vecofintlist *loiv;
   struct sketch *sketch;
+
+  loiv = readdtcode2loiv (file, &isgausscode);
+  if (isgausscode)
+  {
+    sketch = readgausscodeloiv (loiv);
+    freeloiv (loiv);
+    return (sketch);
+  }
+
+  sketch = realize_dtcode (loiv->len, loiv->vec, loiv->handedness);
+  freeloiv (loiv);
+  return (sketch);
+}
+
+struct vecofintlist *
+readdtcode2loiv (FILE *file, int *isgausscodept)
+{
   struct vecofintlist *loiv, *lvg, *firstlvg, *prevlvg, *lv;
   int i, j, alv, labeltag;
 
@@ -101,12 +120,11 @@ readdtcode (FILE *file)
     firstlvg->next = 0;
     freeloiv (firstlvg);
     freeloiv (loiv);
-    return (readgausscodeloiv (lvg));
+    *isgausscodept = 1;
+    return (lvg);
   }
 
-  sketch = realize_dtcode (loiv->len, loiv->vec, loiv->handedness);
-  freeloiv (loiv);
-  return (sketch);
+  return (loiv);
 }
 
 /*
@@ -131,14 +149,6 @@ chg_underpass (struct vecofintlist *loiv, int nodenum)
     }
   }
   assert (found == 2);
-}
-
-struct sketch *
-readgausscode (FILE *file)
-{
-  struct vecofintlist *loiv;
-  loiv = readvecofintlist (file);
-  return (readgausscodeloiv (loiv));
 }
 
 struct sketch *

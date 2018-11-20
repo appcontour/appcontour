@@ -18,6 +18,7 @@
 #include "alexander.h"
 #include "representations.h"
 #include "giovecanonify.h"
+#include "readdtcode.h"
 
 #ifndef EXAMPLES_DIR
   #define EXAMPLES_DIR ""
@@ -1494,6 +1495,14 @@ readcontour (FILE *file)
 #endif
   fprintf (stderr, "Only 'morse'/'sketch' formats implemented\n");
   exit (2);
+}
+
+struct sketch *
+readgausscode (FILE *file)
+{
+  struct vecofintlist *loiv;
+  loiv = readvecofintlist (file);
+  return (readgausscodeloiv (loiv));
 }
 
 void

@@ -12,6 +12,7 @@ struct vecofintlist {
 
 /* prototypes */
 
+struct vecofintlist *readdtcode2loiv (FILE *file, int *isgausscodept);
 struct vecofintlist *readnakedvecofintlist (FILE *file);
 struct vecofintlist *readvecofintlist (FILE *file);
 void freeloiv (struct vecofintlist *loiv);
