@@ -58,25 +58,25 @@ void uFatalError (char *function, char *file)
 struct sketch *
 readdtcode (FILE *file)
 {
-  int isgausscode = 0;
   struct vecofintlist *loiv;
   struct sketch *sketch;
 
-  loiv = readdtcode2loiv (file, &isgausscode);
-  if (isgausscode)
+  loiv = readdtcode2loiv (file);
+  if (loiv->type == LOIV_ISGAUSSCODE)
   {
     sketch = readgausscodeloiv (loiv);
     freeloiv (loiv);
     return (sketch);
   }
 
+  assert (loiv->type == LOIV_ISDTCODE);
   sketch = realize_dtcode (loiv->len, loiv->vec, loiv->handedness);
   freeloiv (loiv);
   return (sketch);
 }
 
 struct vecofintlist *
-readdtcode2loiv (FILE *file, int *isgausscodept)
+readdtcode2loiv (FILE *file)
 {
   struct vecofintlist *loiv, *lvg, *firstlvg, *prevlvg, *lv;
   int i, j, alv, labeltag;
@@ -85,16 +85,18 @@ readdtcode2loiv (FILE *file, int *isgausscodept)
    * read dt code
    */
 
-  loiv = readvecofintlist (file);
+  loiv = readvecofintlist (file, LOIV_ISDTCODE);
   if (loiv->next)
   {
     /* convert to gauss code */
     prevlvg = firstlvg = (struct vecofintlist *) malloc (SIZEOFLOIV (0));
+    prevlvg->type = LOIV_ISGAUSSCODE;
     labeltag = 0;
     for (lv = loiv; lv; lv = lv->next)
     {
       assert (lv->handedness == 0);
       lvg = (struct vecofintlist *) malloc (SIZEOFLOIV (2*lv->len));
+      lvg->type = LOIV_ISGAUSSCODE;
       prevlvg->next = lvg;
       lvg->next = 0;
       lvg->dim = lvg->len = 2*lv->len;
@@ -120,7 +122,6 @@ readdtcode2loiv (FILE *file, int *isgausscodept)
     firstlvg->next = 0;
     freeloiv (firstlvg);
     freeloiv (loiv);
-    *isgausscodept = 1;
     return (lvg);
   }
 
@@ -163,6 +164,7 @@ readgausscodeloiv (struct vecofintlist *loiv)
    * read gauss code
    */
 
+  assert (loiv->type == LOIV_ISGAUSSCODE);
   if (loiv->next)
   {
     /* case of link */
@@ -231,6 +233,7 @@ gausscode_link_to_knot (struct vecofintlist *loiv)
   int i, j, js;
 
   assert (loiv && loiv->next);
+  assert (loiv->type == LOIV_ISGAUSSCODE);
   maxint = 0;
   /* we need to find a component that is linked to the first one */
   for (lv = loiv; lv->next; lv = lv->next)
@@ -270,6 +273,7 @@ gausscode_link_to_knot (struct vecofintlist *loiv)
 
   /* creating new unique gauss code with one more node */
   newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV(2 + loiv->len + loiv2->len));
+  newloiv->type = LOIV_ISGAUSSCODE;
   /* fill the new unique gauss code */
   newloiv->next = 0;
   newloiv->dim = newloiv->len = 2 + loiv->len + loiv2->len;
@@ -333,7 +337,7 @@ inherit_gauss2gauss (struct vecofintlist *loiv_knot, struct vecofintlist *loiv_l
  */
 
 struct vecofintlist *
-readvecofintlist (FILE *file)
+readvecofintlist (FILE *file, int type)
 {
   int tok;
   struct vecofintlist *loiv;
@@ -345,7 +349,7 @@ readvecofintlist (FILE *file)
     return (0);
   }
 
-  loiv = readnakedvecofintlist (file);
+  loiv = readnakedvecofintlist (file, type);
 
   tok = gettoken (file);
   if (tok != TOK_RBRACE)
@@ -358,19 +362,24 @@ readvecofintlist (FILE *file)
 }
 
 struct vecofintlist *
-readnakedvecofintlist (FILE *file)
+readnakedvecofintlist (FILE *file, int type)
 {
   struct vecofintlist *loiv;
   int i, j, tok;
   int startwithlbracket = 1;
 
   tok = gettoken (file);
+  loiv = (struct vecofintlist *) malloc (SIZEOFLOIV(MAXDTCODELEN));
+  /*
+   * Gauss-code: {-1 10 -11 16 -5 15 -7 12 -9 13 -3 14} {1 -2 3 -4 5 -6 7 -8 9 -10 11 -12 8 -13 2 -14 4 -15 6 -16}
+   * DT-code: [4 6 2]
+   */
+  loiv->type = type;
   if (tok != TOK_LBRACKET && tok != TOK_LBRACE)
   {
     startwithlbracket = 0;
     ungettoken (tok);
   }
-  loiv = (struct vecofintlist *) malloc (SIZEOFLOIV(MAXDTCODELEN));
   loiv->dim = MAXDTCODELEN;
   loiv->next = 0;
   loiv->handedness = 0;
@@ -422,7 +431,7 @@ readnakedvecofintlist (FILE *file)
     if (tok == TOK_LBRACE || tok == TOK_LBRACKET)
     {
       ungettoken (tok);
-      loiv->next = readvecofintlist (file);
+      loiv->next = readvecofintlist (file, type);
       if (loiv->next == 0)
       {
         freeloiv (loiv);
@@ -1161,6 +1170,7 @@ read_gausscode_from_string (char *gc)
   if (*chpt != '{') return (0);
   chpt++;
   loiv = (struct vecofintlist *) malloc (SIZEOFLOIV(MAXDTCODELEN));
+  loiv->type = LOIV_ISGAUSSCODE;
   loiv->dim = MAXDTCODELEN;
   loiv->next = 0;
   loiv->handedness = 0;

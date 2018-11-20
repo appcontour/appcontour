@@ -1,8 +1,14 @@
 #define MAXDTCODELEN 200
 
+#define LOIV_ISUNDEFINED 0
+#define LOIV_ISDTCODE 1
+#define LOIV_ISRDTCODE 2
+#define LOIV_ISGAUSSCODE 4
+
 struct vecofintlist {
   int len;
   int dim;
+  int type;
   struct vecofintlist *next;
   int *handedness;
   int vec[];
@@ -12,9 +18,9 @@ struct vecofintlist {
 
 /* prototypes */
 
-struct vecofintlist *readdtcode2loiv (FILE *file, int *isgausscodept);
-struct vecofintlist *readnakedvecofintlist (FILE *file);
-struct vecofintlist *readvecofintlist (FILE *file);
+struct vecofintlist *readdtcode2loiv (FILE *file);
+struct vecofintlist *readnakedvecofintlist (FILE *file, int type);
+struct vecofintlist *readvecofintlist (FILE *file, int type);
 void freeloiv (struct vecofintlist *loiv);
 struct sketch *readgausscodeloiv (struct vecofintlist *loiv);
 struct sketch *readlinkfromtable (char *linkname);
