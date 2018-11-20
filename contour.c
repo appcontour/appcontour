@@ -1501,7 +1501,7 @@ struct sketch *
 readgausscode (FILE *file)
 {
   struct vecofintlist *loiv;
-  loiv = readvecofintlist (file);
+  loiv = readvecofintlist (file, LOIV_ISGAUSSCODE);
   return (readgausscodeloiv (loiv));
 }
 
