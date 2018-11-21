@@ -511,8 +511,6 @@ gausscode2dtcode (struct vecofintlist *loiv, int *vecofint)
 /*
  * just "realize" an existing dtcode with partial orientation
  * loiv contains a dtcode
- *
- * TODO: cleanup dtsign, curodd, cureven...
  */
 
 void
@@ -532,23 +530,40 @@ realize_loiv (struct vecofintlist *loiv)
   realize_loiv_split (loiv->len, loiv->vec, gregionsign);
 }
 
+/*
+ * main function that reconstructs the correct crossings handedness
+ *
+ * TODO: cleanup dtsign, curodd, cureven...
+ */
+
+static int numnodes;
+static int numlabels;
+static int numregions;
+static int *dt_involution;
+static int *dt_realization;
+static int *tagged;
+static int *marknodes;
+
 void
-realize_loiv_split (int numnodes, int *vecofint, int *gregionsign)
+realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
 {
-  int numlabels;
   int i, numconsistent, curoddnode, curevennode, rcode;
   int dt_incomplete;
   int agree, agreeneg;
   char ch;
-  int *dt_involution, *dtsign, *dt_realization;
+  int *dtsign;
 
+  numnodes = lnumnodes;
   numlabels = 2*numnodes;
+  numregions = 2 + numlabels - numnodes;
 
   assert (numnodes >= 2);
 
   dt_involution = (int *) malloc (numlabels*(sizeof (int)));
   dtsign = (int *) malloc (numlabels*(sizeof (int)));
   dt_realization = (int *) malloc (numlabels*(sizeof (int)));
+  tagged = (int *) malloc (numlabels * sizeof(int) );
+  marknodes = (int *) malloc (numlabels * sizeof(int) );
 
   curoddnode = 1;
   for (i = 0; i < numnodes; i++)
@@ -605,6 +620,7 @@ realize_loiv_split (int numnodes, int *vecofint, int *gregionsign)
    * this (partial?) reconstruction must be consistent with possible informations given
    * by the user
    */
+
   agree = 1;
   agreeneg = 1;
   for (i = 0; i < numnodes; i++)
@@ -630,9 +646,7 @@ realize_loiv_split (int numnodes, int *vecofint, int *gregionsign)
     for (i = 0; i < numlabels; i++) dt_realization[i] = -dt_realization[i];
   }
   for (i = 0; i < numnodes; i++)
-  {
     if (dt_realization[2*i]) gregionsign[i] = dt_realization[2*i];
-  }
   if (verbose)
   {
     for (i = 0; i < numnodes; i++)
@@ -654,42 +668,198 @@ realize_loiv_split (int numnodes, int *vecofint, int *gregionsign)
       printf ("No consistent completions found. Perhaps this is a composite knot\n");
       exit (3);
     }
-    if (numconsistent > 2)
+    if (numconsistent > 1)
     {
-      printf ("More than one (%d) consistent completion found!\n", numconsistent/2);
+      printf ("More than one (%d) consistent completion found!\n", numconsistent);
       printf ("maybe this is a compound knot\n");
       exit (2);
     }
     reconstruct_sign (1, gregionsign);
   }
+  for (i = 0; i < numnodes; i++)
+    if (dt_realization[2*i]) gregionsign[i] = dt_realization[2*i];
 
   free (dt_realization);
   free (dtsign);
   free (dt_involution);
+  free (tagged);
+  free (marknodes);
 }
 
+
+/* XXXXXXXXXXXXXXXXXXXXXXXXXX */
+
+
+static int *choices;
+static int choicept;
+
+int maximal_expansion (void);
+void make_choice (void);
+
+int
+reconstruct_sign (int which, int *gregionsign)
+{
+  int i, numtagged, countreconstructions;
+
+  choices = (int *) malloc ( numnodes*sizeof(int) );
+  choices[0] = 0;
+  choicept = 0;
+  countreconstructions = 0;
+
+  while (1) /* cycle on all possible reconstructions */
+  {
+    /* make all regionsigns unknown */
+    numtagged = 0;
+    for (i = 0; i < numlabels; i++) dt_realization[i] = 0;
+    if (gregionsign)
+    {
+      for (i = 0; i < numnodes; i++)
+      {
+        if (gregionsign[i] && (dt_realization[2*i] == 0))
+        {
+          dt_realization[2*i] = gregionsign[i];
+          dt_realization[dt_involution[2*i]] = -gregionsign[i];
+          numtagged++;
+          numtagged += maximal_expansion ();
+        }
+      }
+    }
+    while (numtagged < numnodes) /* subsequent waves of reconstruction */
+    {
+      make_choice ();
+      numtagged++;
+      numtagged += maximal_expansion ();
+      if (debug) printf ("reconstruction: %d, covered %d of %d\n", countreconstructions, numtagged, numnodes);
+    }
+    if (isconsistent ())
+    {
+      countreconstructions++;
+      if (countreconstructions == which)
+      {
+        /* found desired reconstruction */
+        free (choices);
+        return (countreconstructions);
+      }
+    }
+    /* next possible choice... */
+    assert (choices[choicept] == 0);
+    if (choicept == 0)
+    { /* exhausted all possible choices */
+      free (choices);
+      return (countreconstructions);
+    }
+    assert (choicept > 0);
+    choicept--;
+    while (choices[choicept] == -1)
+    {
+      choices[choicept] = 0;
+      if (choicept == 0)
+      { /* exhausted all possible choices */
+        free (choices);
+        return (countreconstructions);
+      }
+      choicept--;
+    }
+    assert (choices[choicept] == 1);
+    choices[choicept] = -1;
+    choices[choicept+1] = 0;
+    choicept = 0;
+  }
+  free (choices);
+  assert (0);
+  return (countreconstructions);
+}
+
+void
+make_choice (void)
+{
+  int i;
+
+  for (i = 0; i < numlabels; i++)
+  {
+    if (dt_realization[i] == 0)
+    {
+      /* found an unoriented node */
+      if (choices[choicept] == 0)
+      {
+        choices[choicept] = 1;
+        choices[choicept + 1] = 0;
+      }
+      assert (abs(choices[choicept]) == 1);
+      dt_realization[i] = choices[choicept];
+      dt_realization[dt_involution[i]] = -choices[choicept];
+      choicept++;
+      return;
+    }
+  }
+  assert (0);
+  return;
+}
+
+int
+maximal_expansion ()
+{
+  int insist = 1;
+  int totexpansions = 0;
+  int i, j, node, expansions;
+
+  while (insist)
+  {
+    insist = 0;
+    for (i = 0; i < numlabels; i++)
+    {
+      for (j = 0; j < numlabels; j++) tagged[j] = 0;
+      /* follow cicle */
+      node = i;
+      while (1)
+      {
+        if (tagged[node])
+        {
+          // printf ("found cycle starting at node: %d\n", dt_involution[node] + 1);
+          expansions = inherit (dt_involution[node]);
+          if (expansions) insist = 1;
+          totexpansions += expansions;
+          // printf ("Expanded by %d nodes\n", expansions);
+          break;
+        }
+        assert (tagged[dt_involution[node]] == 0);
+        tagged[dt_involution[node]] = 1;
+        node = nextlabel (node);
+      }
+    }
+  }
+  return (totexpansions);
+}
+
+
+
+
+
+
 /*
+ * TODO: should be cleaned up removing the "realization" part
+ *
  * main function that reconstructs the correct crossings handedness
  */
 
-static int numnodes;
-static int numlabels;
-static int numregions;
-static int *dt_involution;
 static int *dtsign;
-static int *dt_realization;
-static int *tagged;
-static int *marknodes;
 static int *componentoflabel;
 
 struct sketch *
 realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
 {
   struct sketch *sketch;
-  int i, numconsistent, curoddnode, curevennode, rcode;
-  int dt_incomplete;
-  int agree, agreeneg;
-  char ch;
+  int i, curoddnode, curevennode, rcode;
+  int freegregionsign = 0;
+
+  if (gregionsign == 0)
+  {
+    freegregionsign = 1;
+    gregionsign = (int *) malloc (lnumnodes*sizeof(int));
+    for (i = 0; i < lnumnodes; i++) gregionsign[i] = 0;
+  }
+
+  realize_loiv_split (lnumnodes, vecofint, gregionsign);
 
   numnodes = lnumnodes;
   numlabels = 2*numnodes;
@@ -723,113 +893,22 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
     dtsign[curevennode] = -dtsign[dt_involution[curevennode]];
     curevennode += 2;
   }
-  for (i = 0; i < numlabels; i++)
-  {
-    if (dt_involution[i] < 0 || dt_involution[i] >= numlabels)
-    {
-      printf ("Must use all even number from 2 to %d\n", numlabels);
-      exit (5);
-    }
-    if (((dt_involution[i] + i) % 2) != 1)
-    {
-      printf ("Involution is not an even-odd coupling\n");
-      exit (6);
-    }
-    if (i != dt_involution[dt_involution[i]])
-    {
-      printf ("This is not an involution\n");
-      exit (7);
-    }
-    if (abs(i - dt_involution[i]) <= 1)
-    {
-      printf ("No tight loop allowed: %d %d\n", i + 1, dt_involution[i] + 1);
-      exit (8);
-    }
-  }
 
   numregions = 2 + numlabels - numnodes;
 
-  /* this function wants a zero-based vector */
-  dt_realize (dt_involution, dt_realization, numnodes);
-  dt_incomplete = 0;
-  for (i = 0; i < numlabels; i++) if (dt_realization[i] == 0) dt_incomplete = 1;
-  if (gregionsign)
+  for (i = 0; i < numnodes; i++)
   {
-    /*
-     * this (partial?) reconstruction must be consistent with possible informations given
-     * by the user
-     */
-    agree = 1;
-    agreeneg = 1;
-    for (i = 0; i < numnodes; i++)
-    {
-      if (gregionsign[i]*dt_realization[2*i] > 0) agreeneg = 0;
-      if (gregionsign[i]*dt_realization[2*i] < 0) agree = 0;
-    }
-    if ((agree == 0) && (agreeneg == 0))
-    {
-      printf ("Fatal: the reconstruction is inconsistent with user-supplied values.\n");
-      if (verbose)
-      {
-        for (i = 0; i < numnodes; i++)
-        {
-          printf ("%d%c ", dtsign[2*i]*(dt_involution[2*i]+1), (dt_realization[2*i] > 0)?'>':'<');
-        }
-        printf ("\n");
-      }
-      exit (4);
-    }
-    if (agree == 0)
-    {
-      for (i = 0; i < numlabels; i++) dt_realization[i] = -dt_realization[i];
-    }
-    if (verbose)
-    {
-      for (i = 0; i < numnodes; i++)
-      {
-        ch = '?';
-        if (dt_realization[2*i] > 0) ch = '>';
-        if (dt_realization[2*i] < 0) ch = '<';
-        printf ("%d%c ", dtsign[2*i]*(dt_involution[2*i]+1), ch);
-      }
-      printf ("\n");
-    }
-
-  }
-  if (dt_incomplete)
-  {
-    /* fallback to my old code */
-    numconsistent = reconstruct_sign (0, gregionsign);
-    if (numconsistent <= 0)
-    {
-      printf ("No consistent completions found. Perhaps this is a composite knot\n");
-      exit (3);
-    }
-    if (numconsistent > 2)
-    {
-      printf ("More than one (%d) consistent completion found!\n", numconsistent/2);
-      printf ("maybe this is a compound knot\n");
-      exit (2);
-    }
-    reconstruct_sign (1, gregionsign);
+    dt_realization[2*i] = gregionsign[i];
+    dt_realization[dt_involution[2*i]] = -gregionsign[i];
   }
 
   sketch = newsketch ();
-  // printf ("numregions: %d\n", numregions);
-  //printf ("#\n# tubular knot with Dowker-Thistletwait notation\n");
-  //printf ("# [");
-  //for (i = 0; i < numlabels; i += 2)
-  //{
-  //  if (i > 0) printf (", ");
-  //  printf ("%d", dtsign[i]*(dt_involution[i]+1));
-  //}
-  //printf ("]\n#\nsketch {\n");
   display_arcs_from_arcs (sketch);
   display_arcs_from_nodes (sketch);
   display_regions (sketch);
   display_regions_from_arcs (sketch);
   display_regions_from_nodes (sketch);
-  // printf ("}\n");
+  if (freegregionsign) free (gregionsign);
   free (tagged);
   free (dt_realization);
   free (dtsign);
@@ -2028,20 +2107,20 @@ display_regions_from_nodes (struct sketch *s)
  * to incorporate the routine "realize" by Jim Hoste in decode_new_DT.c (knotscape)
  */
 
-static int *choices;
-static int choicept;
+static int *choices_old;
+static int choicept_old;
 
-int maximal_expansion (void);
-void make_choice (void);
+int maximal_expansion_old (void);
+void make_choice_old (void);
 
 int
-reconstruct_sign (int which, int *gregionsign)
+reconstruct_sign_old (int which, int *gregionsign)
 {
   int i, numtagged, countreconstructions;
 
-  choices = (int *) malloc ( numnodes*sizeof(int) );
-  choices[0] = 0;
-  choicept = 0;
+  choices_old = (int *) malloc ( numnodes*sizeof(int) );
+  choices_old[0] = 0;
+  choicept_old = 0;
   countreconstructions = 0;
 
   while (1) /* cycle on all possible reconstructions */
@@ -2058,15 +2137,15 @@ reconstruct_sign (int which, int *gregionsign)
           dt_realization[2*i] = gregionsign[i];
           dt_realization[dt_involution[2*i]] = -gregionsign[i];
           numtagged++;
-          numtagged += maximal_expansion ();
+          numtagged += maximal_expansion_old ();
         }
       }
     }
     while (numtagged < numnodes) /* subsequent waves of reconstruction */
     {
-      make_choice ();
+      make_choice_old ();
       numtagged++;
-      numtagged += maximal_expansion ();
+      numtagged += maximal_expansion_old ();
       if (debug) printf ("reconstruction: %d, covered %d of %d\n", countreconstructions, numtagged, numnodes);
     }
     if (isconsistent ())
@@ -2075,41 +2154,41 @@ reconstruct_sign (int which, int *gregionsign)
       if (countreconstructions == which)
       {
         /* found desired reconstruction */
-        free (choices);
+        free (choices_old);
         return (countreconstructions);
       }
     }
     /* next possible choice... */
-    assert (choices[choicept] == 0);
-    if (choicept == 0)
+    assert (choices_old[choicept_old] == 0);
+    if (choicept_old == 0)
     { /* exhausted all possible choices */
-      free (choices);
+      free (choices_old);
       return (countreconstructions);
     }
-    assert (choicept > 0);
-    choicept--;
-    while (choices[choicept] == -1)
+    assert (choicept_old > 0);
+    choicept_old--;
+    while (choices_old[choicept_old] == -1)
     {
-      choices[choicept] = 0;
-      if (choicept == 0)
+      choices_old[choicept_old] = 0;
+      if (choicept_old == 0)
       { /* exhausted all possible choices */
-        free (choices);
+        free (choices_old);
         return (countreconstructions);
       }
-      choicept--;
+      choicept_old--;
     }
-    assert (choices[choicept] == 1);
-    choices[choicept] = -1;
-    choices[choicept+1] = 0;
-    choicept = 0;
+    assert (choices_old[choicept_old] == 1);
+    choices_old[choicept_old] = -1;
+    choices_old[choicept_old+1] = 0;
+    choicept_old = 0;
   }
-  free (choices);
+  free (choices_old);
   assert (0);
   return (countreconstructions);
 }
 
 void
-make_choice (void)
+make_choice_old (void)
 {
   int i;
 
@@ -2118,15 +2197,15 @@ make_choice (void)
     if (dt_realization[i] == 0)
     {
       /* found an unoriented node */
-      if (choices[choicept] == 0)
+      if (choices_old[choicept_old] == 0)
       {
-        choices[choicept] = 1;
-        choices[choicept + 1] = 0;
+        choices_old[choicept_old] = 1;
+        choices_old[choicept_old + 1] = 0;
       }
-      assert (abs(choices[choicept]) == 1);
-      dt_realization[i] = choices[choicept];
-      dt_realization[dt_involution[i]] = -choices[choicept];
-      choicept++;
+      assert (abs(choices_old[choicept_old]) == 1);
+      dt_realization[i] = choices_old[choicept_old];
+      dt_realization[dt_involution[i]] = -choices_old[choicept_old];
+      choicept_old++;
       return;
     }
   }
@@ -2135,7 +2214,7 @@ make_choice (void)
 }
 
 int
-maximal_expansion ()
+maximal_expansion_old ()
 {
   int insist = 1;
   int totexpansions = 0;
