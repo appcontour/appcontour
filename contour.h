@@ -368,7 +368,6 @@ struct sketch *readsketch (FILE *file);
 struct sketch *readmorse (FILE *file);
 struct sketch *readdtcode (FILE *file);
 struct sketch *readgausscode (FILE *file);
-struct sketch *readknotscape (FILE *file);
 struct vecofintlist *dtcodefromfile (FILE *file);
 void insert_arc_in_list (struct arc *a, struct arc *list);
 void insert_region_in_list (struct region *region, struct region *list);

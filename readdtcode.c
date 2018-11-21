@@ -1110,12 +1110,11 @@ canonify_knotname (void)
   return;
 }
 
-struct sketch *
-readknotscape (FILE *file)
+struct vecofintlist *
+readknotscape (FILE *file, struct sketch **sketchpt)
 {
   extern struct global_data globals;
   extern int quiet, verbose;
-  struct sketch *sketch;
   char basename[20];
   int nodeid, i, tok, crossings, codelen, alternate, knotnum;
   int sign, ch, tailstart, high, low;
@@ -1126,7 +1125,9 @@ readknotscape (FILE *file)
   int *dtcode, *dtpositive;
   FILE *pakfile, *infile;
   int *dt_involution, *dt_realization;
+  struct vecofintlist *loiv;
 
+  *sketchpt = 0;
   tok = gettoken (file);
   assert (tok == TOK_LBRACE);
 
@@ -1159,8 +1160,9 @@ readknotscape (FILE *file)
     strncat (examplesfilename, ".knot", MAXFILELENGTH);
     infile = fopen (examplesfilename, "r");
     if (infile && quiet == 0) fprintf (stderr, "Reading from file %s\n", examplesfilename);
-    if ((sketch = readcontour (infile)) == 0) exit (15);
-    return (sketch);
+    *sketchpt = readcontour (infile);
+    if (*sketchpt == 0) exit (15);
+    return (0);
   }
 
   canonify_knotname ();
@@ -1213,7 +1215,12 @@ readknotscape (FILE *file)
 
   sprintf (basename, "%d%c", crossings, (alternate)?'a':'n');
 
-  dtcode = (int *) malloc (crossings *sizeof (int));
+  loiv = (struct vecofintlist *) malloc (SIZEOFLOIV(crossings));
+  loiv->len = crossings;
+  loiv->type = LOIV_ISDTCODE;
+  dtcode = loiv->vec;
+
+  //dtcode = (int *) malloc (crossings *sizeof (int));
   dtpositive = (int *) malloc (crossings *sizeof (int));
 
   pakfile = open_pak_file (basename);
@@ -1305,20 +1312,17 @@ readknotscape (FILE *file)
       printf ("%d", dtcode[i]);
     }
     printf ("]}\n");
-    if (globals.userwantscode) exit (0);
+    if (globals.userwantscode) {free (loiv); exit (0);}
   }
-  sketch = realize_dtcode (codelen, dtcode, 0);
-  free (dtcode);
-
-  //printf ("found path: %s\n", pathname);
-  return (sketch);
+  //sketch = realize_dtcode (codelen, dtcode, 0);
+  return (loiv);
 }
 
 /*
  * search for the data file for link definition
  */
 
-struct sketch *
+struct vecofintlist *
 readlinkfromtable (char *linkname)
 {
   extern struct global_data globals;
@@ -1361,7 +1365,7 @@ readlinkfromtable (char *linkname)
             printf ("}\n");
             exit (0);
           }
-          return (readgausscodeloiv (loiv));
+          return (loiv);
         }
         break;
       }

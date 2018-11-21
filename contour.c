@@ -1453,10 +1453,11 @@ struct sketch *
 readcontour (FILE *file)
 {
   int tok;
+  struct sketch *s;
+  struct vecofintlist *loiv;
 #ifdef HAVE_UNISTD_H
   int retcode, status, cpid;
   int pipedes[2];
-  struct sketch *s;
   FILE *tomorsefile;
 #endif
 
@@ -1466,7 +1467,24 @@ readcontour (FILE *file)
   if (tok == TOK_SKETCH) return (readsketch (file));
   if (tok == TOK_DTCODE) return (readdtcode (file));
   if (tok == TOK_GAUSSCODE) return (readgausscode (file));
-  if (tok == TOK_KNOTSCAPE) return (readknotscape (file));
+  if (tok == TOK_KNOTSCAPE)
+  {
+    loiv = readknotscape (file, &s);
+    if (s) return (s);
+    switch (loiv->type)
+    {
+      case LOIV_ISDTCODE:
+        realize_loiv (loiv);
+      case LOIV_ISRDTCODE:
+        return (realize_dtcode (loiv->len, loiv->vec, loiv->handedness));
+        break;
+      case LOIV_ISGAUSSCODE:
+        return (readgausscodeloiv (loiv));
+        break;
+    }
+    printf ("FATAL: invalid loiv type: %d\n", loiv->type);
+    exit (1);
+  }
 #ifdef HAVE_UNISTD_H
   if (tok == TOK_KNOT)
   {
@@ -1514,6 +1532,7 @@ dtcodefromfile (FILE *file)
 {
   int tok;
   struct vecofintlist *loiv;
+  struct sketch *s;
 
   tok = gettoken (file);
 
@@ -1525,8 +1544,13 @@ dtcodefromfile (FILE *file)
 
   if (tok == TOK_KNOTSCAPE)
   {
-    fprintf (stderr, "NOT YET IMPLEMENTED\n");
-    exit (2);
+    loiv = readknotscape (file, &s);
+    if (s)
+    {
+      fprintf (stderr, "Cannot recover a dtcode for this object\n");
+      exit (2);
+    }
+    return (loiv);
   }
   fprintf (stderr, "Only 'dtcode'/'knotscape' formats implemented\n");
   exit (2);
@@ -1544,6 +1568,7 @@ void
 knotname2code (FILE *file, int action)
 {
   int tok;
+  struct sketch *sketch;
 
   tok = gettoken (file);
   if (tok != TOK_KNOTSCAPE)
@@ -1553,7 +1578,7 @@ knotname2code (FILE *file, int action)
   }
 
   globals.userwantscode = action;
-  readknotscape (file);
+  readknotscape (file, &sketch);
 }
 
 void
