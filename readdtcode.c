@@ -532,8 +532,6 @@ realize_loiv (struct vecofintlist *loiv)
 
 /*
  * main function that reconstructs the correct crossings handedness
- *
- * TODO: cleanup dtsign, curodd, cureven...
  */
 
 static int numnodes;
@@ -547,11 +545,11 @@ static int *marknodes;
 void
 realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
 {
-  int i, numconsistent, curoddnode, curevennode, rcode;
+  int i, numconsistent;
   int dt_incomplete;
   int agree, agreeneg;
   char ch;
-  int *dtsign;
+  int sign, label;
 
   numnodes = lnumnodes;
   numlabels = 2*numnodes;
@@ -560,33 +558,24 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
   assert (numnodes >= 2);
 
   dt_involution = (int *) malloc (numlabels*(sizeof (int)));
-  dtsign = (int *) malloc (numlabels*(sizeof (int)));
   dt_realization = (int *) malloc (numlabels*(sizeof (int)));
   tagged = (int *) malloc (numlabels * sizeof(int) );
   marknodes = (int *) malloc (numlabels * sizeof(int) );
 
-  curoddnode = 1;
   for (i = 0; i < numnodes; i++)
   {
-    rcode = vecofint[i];
-    if ((rcode/2)*2 != rcode)
+    label = abs(vecofint[i]) - 1;
+    sign = 1;
+    if (vecofint[i] < 0) sign = -1;
+    if ((label % 2) != 1)
     {
       printf ("Only even values allowed!\n");
       exit (4);
     }
-    dt_involution[curoddnode - 1] = abs(rcode) - 1;
-    dtsign[curoddnode - 1] = 1;
-    if (rcode < 0) dtsign[curoddnode - 1] = -1;
-    dt_involution[abs(rcode) - 1] = curoddnode - 1;
-    curoddnode += 2;
+    dt_involution[2*i] = label;
+    dt_involution[label] = 2*i;
   }
 
-  curevennode = 1;
-  for (i = 0; i < numnodes; i++)
-  {
-    dtsign[curevennode] = -dtsign[dt_involution[curevennode]];
-    curevennode += 2;
-  }
   for (i = 0; i < numlabels; i++)
   {
     if (dt_involution[i] < 0 || dt_involution[i] >= numlabels)
@@ -635,7 +624,9 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
     {
       for (i = 0; i < numnodes; i++)
       {
-        printf ("%d%c ", dtsign[2*i]*(dt_involution[2*i]+1), (dt_realization[2*i] > 0)?'>':'<');
+        sign = 1;
+        if (vecofint[i] < 0) sign = -1;
+        printf ("%d%c ", sign*(dt_involution[2*i]+1), (dt_realization[2*i] > 0)?'>':'<');
       }
       printf ("\n");
     }
@@ -654,7 +645,9 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
       ch = '?';
       if (dt_realization[2*i] > 0) ch = '>';
       if (dt_realization[2*i] < 0) ch = '<';
-      printf ("%d%c ", dtsign[2*i]*(dt_involution[2*i]+1), ch);
+      sign = 1;
+      if (vecofint[i] < 0) sign = -1;
+      printf ("%d%c ", sign*(dt_involution[2*i]+1), ch);
     }
     printf ("\n");
   }
@@ -680,15 +673,10 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
     if (dt_realization[2*i]) gregionsign[i] = dt_realization[2*i];
 
   free (dt_realization);
-  free (dtsign);
   free (dt_involution);
   free (tagged);
   free (marknodes);
 }
-
-
-/* XXXXXXXXXXXXXXXXXXXXXXXXXX */
-
 
 static int *choices;
 static int choicept;
@@ -831,15 +819,8 @@ maximal_expansion ()
   return (totexpansions);
 }
 
-
-
-
-
-
 /*
- * TODO: should be cleaned up removing the "realization" part
- *
- * main function that reconstructs the correct crossings handedness
+ * build the apparent contour using the realized dtcode
  */
 
 static int *dtsign;
@@ -849,7 +830,8 @@ struct sketch *
 realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
 {
   struct sketch *sketch;
-  int i, curoddnode, curevennode, rcode;
+  int i;
+  int sign, label;
   int freegregionsign = 0;
 
   if (gregionsign == 0)
@@ -871,27 +853,20 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   tagged = (int *) malloc (numlabels * sizeof(int) );
   marknodes = (int *) malloc (numlabels * sizeof(int) );
 
-  curoddnode = 1;
   for (i = 0; i < numnodes; i++)
   {
-    rcode = vecofint[i];
-    if ((rcode/2)*2 != rcode)
+    label = abs(vecofint[i]) - 1;
+    if ((label % 2) != 1)
     {
       printf ("Only even values allowed!\n");
       exit (4);
     }
-    dt_involution[curoddnode - 1] = abs(rcode) - 1;
-    dtsign[curoddnode - 1] = 1;
-    if (rcode < 0) dtsign[curoddnode - 1] = -1;
-    dt_involution[abs(rcode) - 1] = curoddnode - 1;
-    curoddnode += 2;
-  }
-
-  curevennode = 1;
-  for (i = 0; i < numnodes; i++)
-  {
-    dtsign[curevennode] = -dtsign[dt_involution[curevennode]];
-    curevennode += 2;
+    dt_involution[2*i] = label;
+    dt_involution[label] = 2*i;
+    sign = 1;
+    if (vecofint[i] < 0) sign = -1;
+    dtsign[2*i] = sign;
+    dtsign[label] = -sign;
   }
 
   numregions = 2 + numlabels - numnodes;
@@ -2106,147 +2081,6 @@ display_regions_from_nodes (struct sketch *s)
  * This doesn't work well (see Haken satellite example), perhaps we should try
  * to incorporate the routine "realize" by Jim Hoste in decode_new_DT.c (knotscape)
  */
-
-static int *choices_old;
-static int choicept_old;
-
-int maximal_expansion_old (void);
-void make_choice_old (void);
-
-int
-reconstruct_sign_old (int which, int *gregionsign)
-{
-  int i, numtagged, countreconstructions;
-
-  choices_old = (int *) malloc ( numnodes*sizeof(int) );
-  choices_old[0] = 0;
-  choicept_old = 0;
-  countreconstructions = 0;
-
-  while (1) /* cycle on all possible reconstructions */
-  {
-    /* make all regionsigns unknown */
-    numtagged = 0;
-    for (i = 0; i < numlabels; i++) dt_realization[i] = 0;
-    if (gregionsign)
-    {
-      for (i = 0; i < numnodes; i++)
-      {
-        if (gregionsign[i])
-        {
-          dt_realization[2*i] = gregionsign[i];
-          dt_realization[dt_involution[2*i]] = -gregionsign[i];
-          numtagged++;
-          numtagged += maximal_expansion_old ();
-        }
-      }
-    }
-    while (numtagged < numnodes) /* subsequent waves of reconstruction */
-    {
-      make_choice_old ();
-      numtagged++;
-      numtagged += maximal_expansion_old ();
-      if (debug) printf ("reconstruction: %d, covered %d of %d\n", countreconstructions, numtagged, numnodes);
-    }
-    if (isconsistent ())
-    {
-      countreconstructions++;
-      if (countreconstructions == which)
-      {
-        /* found desired reconstruction */
-        free (choices_old);
-        return (countreconstructions);
-      }
-    }
-    /* next possible choice... */
-    assert (choices_old[choicept_old] == 0);
-    if (choicept_old == 0)
-    { /* exhausted all possible choices */
-      free (choices_old);
-      return (countreconstructions);
-    }
-    assert (choicept_old > 0);
-    choicept_old--;
-    while (choices_old[choicept_old] == -1)
-    {
-      choices_old[choicept_old] = 0;
-      if (choicept_old == 0)
-      { /* exhausted all possible choices */
-        free (choices_old);
-        return (countreconstructions);
-      }
-      choicept_old--;
-    }
-    assert (choices_old[choicept_old] == 1);
-    choices_old[choicept_old] = -1;
-    choices_old[choicept_old+1] = 0;
-    choicept_old = 0;
-  }
-  free (choices_old);
-  assert (0);
-  return (countreconstructions);
-}
-
-void
-make_choice_old (void)
-{
-  int i;
-
-  for (i = 0; i < numlabels; i++)
-  {
-    if (dt_realization[i] == 0)
-    {
-      /* found an unoriented node */
-      if (choices_old[choicept_old] == 0)
-      {
-        choices_old[choicept_old] = 1;
-        choices_old[choicept_old + 1] = 0;
-      }
-      assert (abs(choices_old[choicept_old]) == 1);
-      dt_realization[i] = choices_old[choicept_old];
-      dt_realization[dt_involution[i]] = -choices_old[choicept_old];
-      choicept_old++;
-      return;
-    }
-  }
-  assert (0);
-  return;
-}
-
-int
-maximal_expansion_old ()
-{
-  int insist = 1;
-  int totexpansions = 0;
-  int i, j, node, expansions;
-
-  while (insist)
-  {
-    insist = 0;
-    for (i = 0; i < numlabels; i++)
-    {
-      for (j = 0; j < numlabels; j++) tagged[j] = 0;
-      /* follow cicle */
-      node = i;
-      while (1)
-      {
-        if (tagged[node])
-        {
-          // printf ("found cycle starting at node: %d\n", dt_involution[node] + 1);
-          expansions = inherit (dt_involution[node]);
-          if (expansions) insist = 1;
-          totexpansions += expansions;
-          // printf ("Expanded by %d nodes\n", expansions);
-          break;
-        }
-        assert (tagged[dt_involution[node]] == 0);
-        tagged[dt_involution[node]] = 1;
-        node = nextlabel (node);
-      }
-    }
-  }
-  return (totexpansions);
-}
 
 int
 inherit (int startlabel)

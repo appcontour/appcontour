@@ -34,7 +34,6 @@ struct sketch *realize_dtcode (int numnodes, int *vecofint, int *gregionsign);
 void realize_loiv (struct vecofintlist *loiv);
 void realize_loiv_split (int len, int *vec, int *gregionsign);
 int reconstruct_sign (int which, int *gregionsign);
-int reconstruct_sign_old (int which, int *gregionsign);
 int nextlabel (int label);
 int prevlabel (int label);
 int inherit (int label);
