@@ -66,9 +66,10 @@
 #define ACTION_CCCOUNTSL2ZP 58
 #define ACTION_CCCOUNTSN 59
 #define ACTION_CCCOUNTPSL2Q 60
-#define ACTION_DTCODE 61
-#define ACTION_RDTCODE 62
-#define ACTION_GAUSSCODE 63
+#define ACTION_CODE 61
+#define ACTION_DTCODE 62
+#define ACTION_RDTCODE 63
+#define ACTION_GAUSSCODE 64
 
 #define ACTION_NEWFEATURE 999
 
@@ -368,7 +369,7 @@ struct sketch *readsketch (FILE *file);
 struct sketch *readmorse (FILE *file);
 struct sketch *readdtcode (FILE *file);
 struct sketch *readgausscode (FILE *file);
-struct vecofintlist *dtcodefromfile (FILE *file);
+struct vecofintlist *dtorgausscodefromfile (FILE *file);
 void insert_arc_in_list (struct arc *a, struct arc *list);
 void insert_region_in_list (struct region *region, struct region *list);
 int readrow (FILE *file, struct sketch *sketch, 

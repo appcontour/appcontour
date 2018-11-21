@@ -2451,43 +2451,41 @@ printloiv (struct vecofintlist *loiv)
 {
   int i;
   int *handedness;
+  struct vecofintlist *lv;
+
   switch (loiv->type)
   {
     case LOIV_ISDTCODE:
     case LOIV_ISRDTCODE:
       printf ("dtcode {[");
-      break;
-
-    case LOIV_ISGAUSSCODE:
-      printf ("gausscode {");
-      break;
-
-    default:
-      printf ("unknown {");
-      break;
-  }
-
-  handedness = loiv->handedness;
-  for (i = 0; i < loiv->len; i++)
-  {
-    if (i > 0) printf (" ");
-    printf ("%d", loiv->vec[i]);
-    if (handedness && handedness[i]) printf ("%c", (handedness[i]>0)?'>':'<');
-  }
-
-  switch (loiv->type)
-  {
-    case LOIV_ISDTCODE:
-    case LOIV_ISRDTCODE:
+      handedness = loiv->handedness;
+      for (i = 0; i < loiv->len; i++)
+      {
+        if (i > 0) printf (" ");
+        printf ("%d", loiv->vec[i]);
+        if (handedness && handedness[i]) printf ("%c", (handedness[i]>0)?'>':'<');
+      }
       printf ("]}\n");
       break;
 
     case LOIV_ISGAUSSCODE:
+      printf ("gausscode {");
+      for (lv = loiv; lv; lv = lv->next)
+      {
+        printf ("{");
+        for (i = 0; i < lv->len; i++)
+        {
+          if (i > 0) printf (" ");
+          printf ("%d", lv->vec[i]);
+          if (lv->handedness && lv->handedness[i]) printf ("%c", (lv->handedness[i] > 0)?'>':'<');
+        }
+        printf ("}");
+      }
       printf ("}\n");
       break;
-  
+
     default:
-      printf ("}\n");
+      printf ("unknown type for loiv: %d\n", loiv->type);
       break;
   }
 }

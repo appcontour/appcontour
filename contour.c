@@ -556,6 +556,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"canonify") == 0) action = ACTION_CANONIFY;
     if (strcmp(argv[i],"giovecanonify") == 0) action = ACTION_GIOVECANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
+    if (strcmp(argv[i],"code") == 0) action = ACTION_CODE;
     if (strcmp(argv[i],"dtcode") == 0) action = ACTION_DTCODE;
     if (strcmp(argv[i],"rdtcode") == 0) action = ACTION_RDTCODE;
     if (strcmp(argv[i],"gausscode") == 0) action = ACTION_GAUSSCODE;
@@ -1123,11 +1124,13 @@ main (int argc, char *argv[])
     any2morse (infile);
     break;
 
+    case ACTION_CODE:
     case ACTION_DTCODE:
     case ACTION_RDTCODE:
     case ACTION_GAUSSCODE:
-    loiv = dtcodefromfile (infile);
-    if (action == ACTION_RDTCODE) realize_loiv (loiv);
+    loiv = dtorgausscodefromfile (infile);
+
+    if (action == ACTION_RDTCODE && loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
     printloiv (loiv);
     break;
 
@@ -1528,7 +1531,7 @@ readcontour (FILE *file)
 }
 
 struct vecofintlist *
-dtcodefromfile (FILE *file)
+dtorgausscodefromfile (FILE *file)
 {
   int tok;
   struct vecofintlist *loiv;
@@ -1539,6 +1542,12 @@ dtcodefromfile (FILE *file)
   if (tok == TOK_DTCODE)
   {
     loiv = readvecofintlist (file, LOIV_ISDTCODE);
+    return (loiv);
+  }
+
+  if (tok == TOK_GAUSSCODE)
+  {
+    loiv = readvecofintlist (file, LOIV_ISGAUSSCODE);
     return (loiv);
   }
 
