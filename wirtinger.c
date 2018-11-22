@@ -8,13 +8,15 @@ struct presentation *
 wirtingerfromloiv (struct vecofintlist *loiv)
 {
   int i, selflink, numnodes, numlabels;
-  int over, label, signature;
+  int over, label, startlabel, signature;
+  int node;
   extern int verbose;
-  int *dtcode, *dt_involution, *dt_realization, *gregionsign;
+  int *dtcode, *dt_involution, *dt_realization, *dt_over, *gregionsign;
   int *overgen, *ingen;
   int underpasslabel, overpasslabel, nextnode, nextlabel, nextunder;
   struct presentation *p;
   struct presentationrule *rule;
+  int longlength;
 
   fprintf (stderr, "Work in progress...\n");
   if (verbose) printloiv (loiv);
@@ -27,6 +29,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
 
   dt_involution = (int *) malloc (numlabels * sizeof (int));
   dt_realization = (int *) malloc (numlabels * sizeof (int));
+  dt_over = (int *) malloc (numlabels * sizeof (int));
   overgen = (int *) malloc (numnodes * sizeof (int));
   ingen = (int *) malloc (numnodes * sizeof (int));
 
@@ -43,8 +46,10 @@ wirtingerfromloiv (struct vecofintlist *loiv)
     label = abs(dtcode[i]) - 1;
     dt_involution[2*i] = label;
     dt_involution[label] = 2*i;
+    dt_over[2*i] = (dtcode[i]>0)?1:0;
+    dt_over[label] = 1 - dt_over[2*i];
     dt_realization[2*i] = gregionsign[i];
-    dt_realization[dt_involution[2*i]] = -gregionsign[i];
+    dt_realization[label] = -gregionsign[i];
   }
 
   for (i = 0; i < numnodes; i++)
@@ -122,9 +127,42 @@ wirtingerfromloiv (struct vecofintlist *loiv)
     if (verbose) printf (" selflinking: %c\n", (signature > 0)?'+':'-');
   }
   if (verbose) printf ("Selflinking number: %d\n", selflink);
+  /* the meridian is simply the first generator */
+  rule = (struct presentationrule *) malloc (sizeof(int) + sizeof (struct presentationrule));
+  rule->length = 1;
+  rule->var[0] = 1;
+  rule->next = 0;
+  p->elements = rule;
+  /* computing the longitude starting from the underpass of node 1 */
+  longlength = numnodes + abs(selflink);
+  rule = (struct presentationrule *) malloc (longlength*sizeof(int) + sizeof(struct presentationrule));
+
+  startlabel = 0;
+  if (dtcode[0] > 0) startlabel = dt_involution[startlabel];
+  if (verbose) printf ("longitude starting at label %d\n", startlabel + 1);
+  label = startlabel;
+  do {
+    label++;
+    if (label >= numlabels) label -= numlabels;
+    if ( (label % 2) == 0)
+    {
+      node = label/2;
+    } else {
+      node = dt_involution[label]/2;
+    }
+    if (dt_over[label])
+    {
+      if (verbose) printf ("Passing over in node %d\n", node+1);
+      continue;
+    }
+    
+    if (verbose) printf ("Passing under generator %d in node %d\n", overgen[node]+1,node+1);
+  } while (label != startlabel);
+
 
   free (dt_involution);
   free (dt_realization);
+  free (dt_over);
   free (overgen);
   free (ingen);
   return (p);
