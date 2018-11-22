@@ -19,6 +19,7 @@
 #include "representations.h"
 #include "giovecanonify.h"
 #include "readdtcode.h"
+#include "wirtinger.h"
 
 #ifndef EXAMPLES_DIR
   #define EXAMPLES_DIR ""
@@ -560,6 +561,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"dtcode") == 0) action = ACTION_DTCODE;
     if (strcmp(argv[i],"rdtcode") == 0) action = ACTION_RDTCODE;
     if (strcmp(argv[i],"gausscode") == 0) action = ACTION_GAUSSCODE;
+    if (strcmp(argv[i],"wirtinger") == 0) action = ACTION_WIRTINGER;
     if (strcmp(argv[i],"knotname2dtcode") == 0) action = ACTION_KNOTNAME2DTCODE;
     if (strcmp(argv[i],"knotname2rdtcode") == 0) action = ACTION_KNOTNAME2RDTCODE;
     if (strcmp(argv[i],"knotname2realizeddtcode") == 0) action = ACTION_KNOTNAME2RDTCODE;
@@ -1132,6 +1134,14 @@ main (int argc, char *argv[])
 
     if (action == ACTION_RDTCODE && loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
     printloiv (loiv);
+    break;
+
+    case ACTION_WIRTINGER:
+    loiv = dtorgausscodefromfile (infile);
+    if (loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
+    assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
+    p = wirtingerfromloiv (loiv);
+    if (p) print_presentation (p);
     break;
 
     case ACTION_KNOTNAME2DTCODE:
