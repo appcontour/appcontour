@@ -13,8 +13,10 @@ wirtingerfromloiv (struct vecofintlist *loiv)
   int *dtcode, *dt_involution, *dt_realization, *gregionsign;
   int *overgen, *ingen;
   int underpasslabel, overpasslabel, nextnode, nextlabel, nextunder;
+  struct presentation *p;
+  struct presentationrule *rule;
 
-  printf ("Work in progress...\n");
+  fprintf (stderr, "Work in progress...\n");
   if (verbose) printloiv (loiv);
   assert (loiv->next == 0);
   assert (loiv->handedness);
@@ -27,6 +29,13 @@ wirtingerfromloiv (struct vecofintlist *loiv)
   dt_realization = (int *) malloc (numlabels * sizeof (int));
   overgen = (int *) malloc (numnodes * sizeof (int));
   ingen = (int *) malloc (numnodes * sizeof (int));
+
+  p = (struct presentation *) malloc (sizeof (struct presentation));
+  p->gennum = numnodes;
+  p->elements = 0;
+  p->rules = 0;
+  p->characteristic = 0;
+  p->espected_deficiency = 1;
 
   selflink = 0;
   for (i = 0; i < numnodes; i++)
@@ -78,19 +87,34 @@ wirtingerfromloiv (struct vecofintlist *loiv)
     if (verbose) printf (" overpass generator: %d\n", overgen[i] + 1);
     if (verbose) printf (" incoming generator: %d\n", ingen[i] + 1);
     if (verbose) printf (" outgoing generator: %d\n", i+1);
+
+    rule = (struct presentationrule *) malloc (4*sizeof (int) + sizeof (struct presentationrule));
+    rule->length = 4;
+    rule->next = p->rules;
+    p->rules = rule;
+    rule->var[0] = -(i+1);
+    rule->var[2] = ingen[i] + 1;
     if (dt_realization[underpasslabel] > 0)
     {
-      printf (" relator: %c = ", i + 'a');
-      printf ("%c", overgen[i] + 'A');
-      printf ("%c", ingen[i] + 'a');
-      printf ("%c", overgen[i] + 'a');
-      printf ("\n");
+      if (verbose) {
+        printf (" relator: %c = ", i + 'a');
+        printf ("%c", overgen[i] + 'A');
+        printf ("%c", ingen[i] + 'a');
+        printf ("%c", overgen[i] + 'a');
+        printf ("\n");
+      }
+      rule->var[1] = -(overgen[i] + 1);
+      rule->var[3] = overgen[i] + 1;
     } else {
-      printf (" relator: %c = ", i + 'a');
-      printf ("%c", overgen[i] + 'a');
-      printf ("%c", ingen[i] + 'a');
-      printf ("%c", overgen[i] + 'A');
-      printf ("\n");
+      if (verbose) {
+        printf (" relator: %c = ", i + 'a');
+        printf ("%c", overgen[i] + 'a');
+        printf ("%c", ingen[i] + 'a');
+        printf ("%c", overgen[i] + 'A');
+        printf ("\n");
+      }
+      rule->var[1] = overgen[i] + 1;
+      rule->var[3] = -(overgen[i] + 1);
     }
     signature = over*gregionsign[i];
     assert (signature);
@@ -103,5 +127,5 @@ wirtingerfromloiv (struct vecofintlist *loiv)
   free (dt_realization);
   free (overgen);
   free (ingen);
-  return (0);
+  return (p);
 }
