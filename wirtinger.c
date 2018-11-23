@@ -10,7 +10,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
   int i, selflink, numnodes, numlabels;
   int over, label, startlabel, signature;
   int node;
-  extern int verbose;
+  extern int debug;
   int *dtcode, *dt_involution, *dt_realization, *dt_over, *gregionsign;
   int *overgen, *ingen;
   int underpasslabel, overpasslabel, nextnode, nextlabel, nextunder;
@@ -18,8 +18,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
   struct presentationrule *rule;
   int longlength;
 
-  fprintf (stderr, "Work in progress...\n");
-  if (verbose) printloiv (loiv);
+  if (debug) printloiv (loiv);
   assert (loiv->next == 0);
   assert (loiv->handedness);
   dtcode = loiv->vec;
@@ -85,13 +84,15 @@ wirtingerfromloiv (struct vecofintlist *loiv)
     underpasslabel = dt_involution[2*i];
     if (dtcode[i] < 0) underpasslabel = 2*i;
     overpasslabel = dt_involution[underpasslabel];
-    if (verbose) printf ("Node: %d involving labels %d %d\n", i + 1, 2*i + 1, dt_involution[2*i] + 1);
+    if (debug) printf ("Node: %d involving labels %d %d\n", i + 1, 2*i + 1, dt_involution[2*i] + 1);
     over = 1;
     if (dtcode[i] < 0) over = -1;
-    if (verbose) printf (" overpass label: %d\n", overpasslabel + 1);
-    if (verbose) printf (" overpass generator: %d\n", overgen[i] + 1);
-    if (verbose) printf (" incoming generator: %d\n", ingen[i] + 1);
-    if (verbose) printf (" outgoing generator: %d\n", i+1);
+    if (debug) {
+      printf (" overpass label: %d\n", overpasslabel + 1);
+      printf (" overpass generator: %d\n", overgen[i] + 1);
+      printf (" incoming generator: %d\n", ingen[i] + 1);
+      printf (" outgoing generator: %d\n", i+1);
+    }
 
     rule = (struct presentationrule *) malloc (4*sizeof (int) + sizeof (struct presentationrule));
     rule->length = 4;
@@ -101,7 +102,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
     rule->var[2] = ingen[i] + 1;
     if (dt_realization[underpasslabel] > 0)
     {
-      if (verbose) {
+      if (debug) {
         printf (" relator: %c = ", i + 'a');
         printf ("%c", overgen[i] + 'A');
         printf ("%c", ingen[i] + 'a');
@@ -111,7 +112,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
       rule->var[1] = -(overgen[i] + 1);
       rule->var[3] = overgen[i] + 1;
     } else {
-      if (verbose) {
+      if (debug) {
         printf (" relator: %c = ", i + 'a');
         printf ("%c", overgen[i] + 'a');
         printf ("%c", ingen[i] + 'a');
@@ -124,9 +125,9 @@ wirtingerfromloiv (struct vecofintlist *loiv)
     signature = over*gregionsign[i];
     assert (signature);
     selflink += signature;
-    if (verbose) printf (" selflinking: %c\n", (signature > 0)?'+':'-');
+    if (debug) printf (" selflinking: %c\n", (signature > 0)?'+':'-');
   }
-  if (verbose) printf ("Selflinking number: %d\n", selflink);
+  if (debug) printf ("Selflinking number: %d\n", selflink);
   /* the meridian is simply the first generator */
   rule = (struct presentationrule *) malloc (sizeof(int) + sizeof (struct presentationrule));
   rule->length = 1;
@@ -136,11 +137,12 @@ wirtingerfromloiv (struct vecofintlist *loiv)
   /* computing the longitude starting from the underpass of node 1 */
   longlength = numnodes + abs(selflink);
   rule = (struct presentationrule *) malloc (longlength*sizeof(int) + sizeof(struct presentationrule));
-
+  rule->length = longlength;
   startlabel = 0;
   if (dtcode[0] > 0) startlabel = dt_involution[startlabel];
-  if (verbose) printf ("longitude starting at label %d\n", startlabel + 1);
+  if (debug) printf ("longitude starting at label %d\n", startlabel + 1);
   label = startlabel;
+  i = 0;
   do {
     label++;
     if (label >= numlabels) label -= numlabels;
@@ -152,13 +154,23 @@ wirtingerfromloiv (struct vecofintlist *loiv)
     }
     if (dt_over[label])
     {
-      if (verbose) printf ("Passing over in node %d\n", node+1);
+      if (debug) printf ("Passing over in node %d\n", node+1);
       continue;
     }
-    
-    if (verbose) printf ("Passing under generator %d in node %d\n", overgen[node]+1,node+1);
+    rule->var[i] = overgen[node] + 1;
+    if (dt_realization[label] < 0) rule->var[i] = - overgen[node] - 1;
+    i++;
+    if (debug) printf ("Passing under generator %d in node %d\n", overgen[node]+1,node+1);
   } while (label != startlabel);
 
+  while (i < longlength)
+  {
+    rule->var[i] = 1;
+    if (selflink < 0) rule->var[i] = -1;
+    i++;
+  }
+
+  p->elements->next = rule;
 
   free (dt_involution);
   free (dt_realization);

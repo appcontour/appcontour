@@ -244,6 +244,7 @@ simplify_presentation (struct presentation *p)
   int goon = 1;
   int count = 0;
 
+  assert (p->elements == 0);  /* TODO: take elements into account */
   while (goon)
   {
     goon = 0;
@@ -834,24 +835,29 @@ print_presentation (struct presentation *p)
   {
     if (r != p->rules) printf (", ");
     print_single_rule (r, p->gennum);
-    /*
-    for (i = 0; i < r->length; i++)
-    {
-      generator = r->var[i];
-      var = 'a';
-      if (generator < 0)
-      {
-        var = 'A';
-        generator *= -1;
-      }
-      generator--;
-      var += generator;
-      if (generator >= p->gennum) var = '?';
-      printf ("%c", var);
-    }
-     */
   }
-  printf (">\n");
+  if (p->elements)
+  {
+    /* there are selected elements present */
+    if (outformat == OUTFORMAT_APPCONTOUR)
+    {
+      printf ("; ");
+      for (r = p->elements; r; r = r->next)
+      {
+        if (r != p->elements) printf (", ");
+        print_single_rule (r, p->gennum);
+      }
+      printf (">\n");
+    } else {
+      printf (">\n");
+      for (r = p->elements; r; r = r->next)
+      {
+        printf ("  Selected element: ");
+        print_single_rule (r, p->gennum);
+        printf ("\n");
+      }
+    }
+  } else printf (">\n");
   if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
 }
 
@@ -980,6 +986,7 @@ fg_interactive (struct presentation *p)
   int autorot = 1;
   int count, kmax, direction;
 
+  assert (p->elements == 0);  /* TODO: take into account the presence of selected elements */
   while (1)
   {
     if (print)
@@ -1503,6 +1510,7 @@ void
 topreabelian (struct presentation *p)
 {
   if (verbose) printf ("Computing preabelian presentation...\n");
+  assert (p->elements == 0);   /* TODO: take into account selected elements */
   while (preabelian_step (p, 1, p->rules));
 }
 
