@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+#testname:compute the wirtinger presentation from knot name
+#
+
+knots="K3_1 K9_42 K10_71"
+
+for knot in $knots
+do
+  ./contour wirtinger --nosimplify $knot -Q
+done
