@@ -233,7 +233,9 @@ int sp_rotate_to_canonical_single (struct presentationrule *r, int tryrevert);
 int sp_findduplicatewords (struct presentation *p);
 int sp_tryeliminatevariable (struct presentation *p);
 struct presentationrule *sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int optsublen);
-void nielsen_mulright (struct presentation *p,
+struct presentationrule *sp_do_substitute_old (struct presentationrule *r, int subvar, int *replaceword, int optsublen);
+struct presentationrule *sp_remove_marked_elements (struct presentationrule *r);
+void tietze_mulright (struct presentation *p,
                        struct presentationrule *r1,
                        struct presentationrule *r2, int expon);
 int preabelian_step (struct presentation *p, int row, struct presentationrule *rcol);
@@ -288,11 +290,6 @@ sp_tryeliminatevariable (struct presentation *p)
   int optsubpos, optsubvar, subvar;
   int *replaceword;
 
-  if (p->elements)
-  {
-    fprintf (stderr, "tryeliminatevariable. Work in progress, cannot simplify a presentation with selected elements\n");
-    return (0);
-  }
   while (goon)
   {
     if (debug) printf ("in sp_tryeliminatevariable: %d generators\n", p->gennum);
@@ -332,7 +329,12 @@ sp_tryeliminatevariable (struct presentation *p)
         assert (abs (replaceword[i]) != optsubvar);
       }
       for (r = p->rules; r; r = r->next)
+        r = sp_do_substitute_old (r, subvar, replaceword, optsublen);
+      for (r = p->elements; r; r = r->next)
+      {
         r = sp_do_substitute (r, subvar, replaceword, optsublen);
+      }
+      p->elements = sp_remove_marked_elements (p->elements);
       sp_do_eliminatevar (p, subvar);
       free (replaceword);
       count += simplify_presentation2 (p);
@@ -342,8 +344,62 @@ sp_tryeliminatevariable (struct presentation *p)
   return (count);
 }
 
+/*
+ * This actually *adds* the modified rule as a new rule pointed by the old one.
+ * Rhe old rule gets marked by setting the length to an (invalid) negative value.
+ */
+
 struct presentationrule *
 sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int wordlen)
+{
+  struct presentationrule *newr;
+  int i, j, k, newlength, lcount;
+
+  assert (subvar != 0);
+  assert (wordlen >= 1);
+  if (wordlen == 1) // in-place substitution
+  {
+    for (i = 0; i < r->length; i++)
+    {
+      if (r->var[i] == subvar) r->var[i] = replaceword[0];
+      if (r->var[i] == - subvar) r->var[i] = - replaceword[0];
+    }
+    return (r);
+  } else {
+    // count number of occurrences of subvar
+    for (lcount = 0, i = 0; i < r->length; i++)
+      if (r->var[i] == subvar || r->var[i] == - subvar) lcount++;
+    newlength = r->length - lcount + lcount*wordlen;
+    newr = (struct presentationrule *) malloc (newlength*sizeof (int) + sizeof (struct presentationrule));
+    newr->length = newlength;
+    newr->next = r->next;
+    r->next = newr;
+    for (i = 0, j = 0; i < r->length; i++)
+    {
+      if (r->var[i] != subvar && r->var[i] != - subvar) newr->var[j++] = r->var[i];
+      if (r->var[i] == subvar)
+      {
+        for (k = 0; k < wordlen; k++) newr->var[j++] = replaceword[k];
+      }
+      if (r->var[i] == - subvar)
+      {
+        for (k = wordlen - 1; k >= 0; k--) newr->var[j++] = -replaceword[k];
+      }
+    }
+    assert (j == newlength);
+    // last operation: mark old rule
+    r->length = -1;
+    return (newr);
+  }
+}
+
+/*
+ * This actually *adds* a new rule, but leaves an empty rule in place of the
+ * old one!
+ */
+
+struct presentationrule *
+sp_do_substitute_old (struct presentationrule *r, int subvar, int *replaceword, int wordlen)
 {
   struct presentationrule *newr;
   int i, j, k, newlength, lcount;
@@ -384,6 +440,22 @@ sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int 
     r->length = 0;
     return (newr);
   }
+}
+
+struct presentationrule *
+sp_remove_marked_elements (struct presentationrule *r)
+{
+  struct presentationrule *rnext;
+
+  if (r == 0) return (0);
+  if (r->length < 0)
+  {
+    rnext = r->next;
+    free (r);
+    return (sp_remove_marked_elements (rnext));
+  }
+  r->next = sp_remove_marked_elements (r->next);
+  return (r);
 }
 
 int
@@ -574,11 +646,9 @@ sp_findcommonsubstring (struct presentation *p, int bidirectional)
   int count = 0;
   struct presentationrule *r1, *r2, *lr, *sr;
 
-  if (p->elements)
-  {
-    fprintf (stderr, "Findcommonsubstring:  work in progress, cannot simplify a presentation with selected elements\n");
-    return (0);
-  }
+  /* TODO: perhaps we should try a similar action between rules and selected elements
+   */
+
   goon = 1;
   while (goon)
   {
@@ -597,9 +667,9 @@ sp_findcommonsubstring (struct presentation *p, int bidirectional)
           count++;
           if (goon > 0)
           {
-            nielsen_mulright (p, lr, sr, -1);
+            tietze_mulright (p, lr, sr, -1);
           } else {
-            nielsen_mulright (p, lr, sr, 1);
+            tietze_mulright (p, lr, sr, 1);
           }
         }
         if (goon) break;
@@ -881,22 +951,24 @@ print_presentation (struct presentation *p)
     printf ("%c", 'a' + g);
   }
   printf ("; ");
-  for (r = p->rules; r; r = r->next)
-  {
-    if (r != p->rules) printf (", ");
-    print_single_rule (r, p->gennum);
-  }
+  print_rule_list (p->rules, p->gennum);
+  //for (r = p->rules; r; r = r->next)
+  //{
+  //  if (r != p->rules) printf (", ");
+  //  print_single_rule (r, p->gennum);
+  //}
   if (p->elements)
   {
     /* there are selected elements present */
     if (outformat == OUTFORMAT_APPCONTOUR)
     {
       printf ("; ");
-      for (r = p->elements; r; r = r->next)
-      {
-        if (r != p->elements) printf (", ");
-        print_single_rule (r, p->gennum);
-      }
+      print_rule_list (p->elements, p->gennum);
+      //for (r = p->elements; r; r = r->next)
+      //{
+      //  if (r != p->elements) printf (", ");
+      //  print_single_rule (r, p->gennum);
+      //}
       printf (">\n");
     } else {
       printf (">\n");
@@ -909,6 +981,16 @@ print_presentation (struct presentation *p)
     }
   } else printf (">\n");
   if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
+}
+
+void
+print_rule_list (struct presentationrule *r, int gennum)
+{
+  if (r == 0) return;
+
+  print_single_rule (r, gennum);
+  if (r->next) printf (", ");
+  print_rule_list (r->next, gennum);
 }
 
 void
@@ -1013,15 +1095,16 @@ print_exponent_matrix (struct presentation *p)
 /* local prototipes */
 
 struct presentationrule *find_nth_relator (struct presentation *p, int n);
-void nielsen_invrel (struct presentationrule *r);
+void tietze_invrel (struct presentationrule *r);
 void rotate_relator (struct presentationrule *r, int rots);
-struct presentationrule *nielsen_exchange_relators (struct presentationrule *list,
+struct presentationrule *tietze_exchange_relators (struct presentationrule *list,
                          struct presentationrule *r1,
                          struct presentationrule *r2);
-void nielsen_invgen (struct presentation *p, int n);
-void nielsen_exchange_generators (struct presentation *p, int m, int n);
-void nielsen_xisabtok (struct presentation *p, int m, int n, int k);
-struct presentationrule *nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk);
+void tietze_invgen (struct presentation *p, int n);
+void tietze_exchange_generators (struct presentation *p, int m, int n);
+void tietze_exchgen_in_rule (struct presentationrule *r, int m, int n);
+void tietze_xisabtok (struct presentation *p, int m, int n, int k);
+struct presentationrule *tietze_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk);
 void addcommutator (struct presentation *p, int m, int n);
 
 /* user interaction */
@@ -1093,7 +1176,7 @@ fg_interactive (struct presentation *p)
       n = atoi (chpt);
       r = find_nth_relator(p, n);
       if (r == 0) {printf ("Invalid column number %d\n", n); continue;}
-      nielsen_invrel (r);
+      tietze_invrel (r);
       print = 1;
       continue;
     }
@@ -1117,13 +1200,13 @@ fg_interactive (struct presentation *p)
       if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
       if (autorot)
       {
-        nielsen_invrel (r2);
+        tietze_invrel (r2);
         kmax = sp_fcs_r1r2 (r1, r2, 0, 1);
-        nielsen_invrel (r2);
+        tietze_invrel (r2);
         printf ("Found common substring of length %d\n", kmax);
         //print_presentation (p);
       }
-      nielsen_mulright (p, r1, r2, 1);
+      tietze_mulright (p, r1, r2, 1);
       print = 1;
       continue;
     }
@@ -1140,7 +1223,7 @@ fg_interactive (struct presentation *p)
         kmax = sp_fcs_r1r2 (r1, r2, 0, 1);
         printf ("Found common substring of length %d\n", kmax);
       }
-      nielsen_mulright (p, r1, r2, -1);
+      tietze_mulright (p, r1, r2, -1);
       print = 1;
       continue;
     }
@@ -1153,7 +1236,7 @@ fg_interactive (struct presentation *p)
       r2 = find_nth_relator(p, n);
       if (r1 == 0 || r2 == 0) {printf ("Invalid column number %d or %d\n", m, n); continue;}
       if (r1 == r2) {printf ("Same column %d = %d\n", m, n); continue;}
-      p->rules = nielsen_exchange_relators (p->rules, r1, r2);
+      p->rules = tietze_exchange_relators (p->rules, r1, r2);
       print = 1;
       continue;
     }
@@ -1161,7 +1244,7 @@ fg_interactive (struct presentation *p)
     {
       n = atoi (chpt);
       if (n <= 0 || n > p->gennum) {printf ("Invalid row number %d\n", n); continue;}
-      nielsen_invgen (p, n);
+      tietze_invgen (p, n);
       print = 1;
       continue;
     }
@@ -1172,7 +1255,7 @@ fg_interactive (struct presentation *p)
       if (m <= 0 || m > p->gennum) {printf ("Invalid row number %d\n", m); continue;}
       if (n <= 0 || n > p->gennum) {printf ("Invalid row number %d\n", n); continue;}
       if (m == n) {printf ("Same row %d = %d\n", m, n); continue;}
-      nielsen_exchange_generators (p, m, n);
+      tietze_exchange_generators (p, m, n);
       print = 1;
       continue;
     }
@@ -1183,7 +1266,7 @@ fg_interactive (struct presentation *p)
       if (m <= 0 || m > p->gennum) {printf ("Invalid row number %d\n", m); continue;}
       if (n <= 0 || n > p->gennum) {printf ("Invalid row number %d\n", n); continue;}
       if (m == n) {printf ("Same row %d = %d\n", m, n); continue;}
-      nielsen_xisabtok (p, n, m, -1);
+      tietze_xisabtok (p, n, m, -1);
       print = 1;
       continue;
     }
@@ -1194,7 +1277,7 @@ fg_interactive (struct presentation *p)
       if (m <= 0 || m > p->gennum) {printf ("Invalid row number %d\n", m); continue;}
       if (n <= 0 || n > p->gennum) {printf ("Invalid row number %d\n", n); continue;}
       if (m == n) {printf ("Same row %d = %d\n", m, n); continue;}
-      nielsen_xisabtok (p, n, m, 1);
+      tietze_xisabtok (p, n, m, 1);
       print = 1;
       continue;
     }
@@ -1293,7 +1376,7 @@ find_nth_relator (struct presentation *p, int n)
 }
 
 void
-nielsen_invrel (struct presentationrule *r)
+tietze_invrel (struct presentationrule *r)
 {
   int i, j, saved;
 
@@ -1328,7 +1411,7 @@ rotate_relator (struct presentationrule *r, int rots)
 }
 
 struct presentationrule *
-nielsen_exchange_relators (struct presentationrule *list,
+tietze_exchange_relators (struct presentationrule *list,
                            struct presentationrule *r1,
                            struct presentationrule *r2)
 {
@@ -1338,7 +1421,7 @@ nielsen_exchange_relators (struct presentationrule *list,
 
   if (list != r1)
   {
-    list->next = nielsen_exchange_relators (list->next, r1, r2);
+    list->next = tietze_exchange_relators (list->next, r1, r2);
     return (list);
   }
 
@@ -1367,7 +1450,7 @@ nielsen_exchange_relators (struct presentationrule *list,
 }
 
 void
-nielsen_mulright (struct presentation *p,
+tietze_mulright (struct presentation *p,
                   struct presentationrule *r1,
                   struct presentationrule *r2,
                   int expon)
@@ -1425,7 +1508,7 @@ nielsen_mulright (struct presentation *p,
 }
 
 void
-nielsen_invgen (struct presentation *p, int g)
+tietze_invgen (struct presentation *p, int g)
 {
   struct presentationrule *r;
   int i;
@@ -1439,40 +1522,52 @@ nielsen_invgen (struct presentation *p, int g)
       if (abs(r->var[i]) == g) r->var[i] = - r->var[i];
     }
   }
+  for (r = p->elements; r; r = r->next)
+  {
+    for (i = 0; i < r->length; i++)
+    {
+      if (abs(r->var[i]) == g) r->var[i] = - r->var[i];
+    }
+  }
 }
 
 void
-nielsen_exchange_generators (struct presentation *p, int m, int n)
+tietze_exchange_generators (struct presentation *p, int m, int n)
 {
   struct presentationrule *r;
-  int i;
 
   assert (m > 0 && m <= p->gennum);
   assert (n > 0 && n <= p->gennum);
 
   if (m == n) return;
 
-  for (r = p->rules; r; r = r->next)
+  for (r = p->rules; r; r = r->next) tietze_exchgen_in_rule (r, m, n);
+  for (r = p->elements; r; r = r->next) tietze_exchgen_in_rule (r, m, n);
+}
+
+void
+tietze_exchgen_in_rule (struct presentationrule *r, int m, int n)
+{
+  int i;
+
+  for (i = 0; i < r->length; i++)
   {
-    for (i = 0; i < r->length; i++)
+    if (abs(r->var[i]) == m)
     {
-      if (abs(r->var[i]) == m)
-      {
-        if (r->var[i] > 0) r->var[i] = n;
-          else r->var[i] = -n;
-        continue;
-      }
-      if (abs(r->var[i]) == n)
-      {
-        if (r->var[i] > 0) r->var[i] = m;
-          else r->var[i] = -m;
-      }
+      if (r->var[i] > 0) r->var[i] = n;
+        else r->var[i] = -n;
+      continue;
+    }
+    if (abs(r->var[i]) == n)
+    {
+      if (r->var[i] > 0) r->var[i] = m;
+        else r->var[i] = -m;
     }
   }
 }
 
 void
-nielsen_xisabtok (struct presentation *p, int m, int n, int k)
+tietze_xisabtok (struct presentation *p, int m, int n, int k)
 {
   int posk, signk;
 
@@ -1486,7 +1581,8 @@ nielsen_xisabtok (struct presentation *p, int m, int n, int k)
   posk = k;
   if (k < 0) {signk = -1; posk = -k;}
 
-  p->rules = nielsen_xisabtokl (p->rules, m, n, posk, signk);
+  p->rules = tietze_xisabtokl (p->rules, m, n, posk, signk);
+  p->elements = tietze_xisabtokl (p->elements, m, n, posk, signk);
 
   sp_simplifyword (p);
 
@@ -1494,7 +1590,7 @@ nielsen_xisabtok (struct presentation *p, int m, int n, int k)
 }
 
 struct presentationrule *
-nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk)
+tietze_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk)
 {
   int i, j, kk, numvarm;
   struct presentationrule *newr;
@@ -1515,7 +1611,7 @@ nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk
   }
   if (numvarm == 0)
   {
-    r->next = nielsen_xisabtokl (r->next, m, n, posk, signk);
+    r->next = tietze_xisabtokl (r->next, m, n, posk, signk);
     return (r);
   }
   newr = (struct presentationrule *) malloc (sizeof (struct presentationrule)
@@ -1549,7 +1645,7 @@ nielsen_xisabtokl (struct presentationrule *r, int m, int n, int posk, int signk
   newr->next = r->next;
   r->next = 0;
   free (r);
-  newr->next = nielsen_xisabtokl (newr->next, m, n, posk, signk);
+  newr->next = tietze_xisabtokl (newr->next, m, n, posk, signk);
   return (newr);
 }
 
@@ -1619,8 +1715,8 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
       if (optrcol != rcol) printf ("  Exchange col %d with col %d\n", row, optcol);
     }
     /* exchange rows and columns */
-    if (optrow != row) nielsen_exchange_generators (p, row, optrow);
-    if (optrcol != rcol) p->rules = nielsen_exchange_relators (p->rules, rcol, optrcol);
+    if (optrow != row) tietze_exchange_generators (p, row, optrow);
+    if (optrcol != rcol) p->rules = tietze_exchange_relators (p->rules, rcol, optrcol);
     return (1);
   }
   /* at this point we have the minimum value at the pivot position */
@@ -1636,7 +1732,7 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
       assert (divisor);
       /* if same sign, then subtract, else add */
       if ((sum > 0 && pivot > 0) || (sum < 0 && pivot < 0)) divisor = -divisor;
-      nielsen_xisabtok (p, row, i, -divisor);
+      tietze_xisabtok (p, row, i, -divisor);
       if (interactive || verbose) printf ("  Row %d times %d added to row %d\n", row, divisor, i);
       return (1);
     }
@@ -1654,10 +1750,10 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
       assert (divisor);
       /* if same sign, then subtract, else add */
       if ((sum > 0 && pivot > 0) || (sum < 0 && pivot < 0)) divisor = -divisor;
-      if (divisor > 0) nielsen_invrel (rcol);
+      if (divisor > 0) tietze_invrel (rcol);
       sp_fcs_r1r2 (r, rcol, 0, 1);
-      if (divisor > 0) nielsen_invrel (rcol);
-      nielsen_mulright (p, r, rcol, divisor);
+      if (divisor > 0) tietze_invrel (rcol);
+      tietze_mulright (p, r, rcol, divisor);
       if (interactive || verbose) printf ("  Column %d times %d added to column %d\n", row, divisor, icol);
       return (1);
     }
@@ -1667,17 +1763,17 @@ preabelian_step (struct presentation *p, int row, struct presentationrule *rcol)
   {
     assert (nmulrcol);
     /* add column nmulrcol to first column */
-    nielsen_invrel (nmulrcol);
+    tietze_invrel (nmulrcol);
     sp_fcs_r1r2 (rcol, nmulrcol, 0, 1);
-    nielsen_invrel (nmulrcol);
-    nielsen_mulright (p, rcol, nmulrcol, 1);
+    tietze_invrel (nmulrcol);
+    tietze_mulright (p, rcol, nmulrcol, 1);
     if (interactive || verbose) printf ("Found nonmultiple value at row %d, column %p\n", nmulrow, nmulrcol);
     return (1);
   }
   /* if we are here, the first column and first row are zero and all other elements are multiple */
   if (pivot < 0)
   {
-    nielsen_invgen (p, row);
+    tietze_invgen (p, row);
     if (interactive || verbose) printf ("  Inverted generator %d\n", row);
     return (1);
   }

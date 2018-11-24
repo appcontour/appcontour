@@ -130,6 +130,7 @@ void abelianized_fundamental_group (struct presentation *p);
 int complex_characteristic (struct ccomplex *cc);
 struct presentation *compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc);
 void print_presentation (struct presentation *p);
+void print_rule_list (struct presentationrule *r, int gennum);
 void print_single_rule (struct presentationrule *r, int gennum);
 void print_invariant_factors (struct presentation *p);
 void print_exponent_matrix (struct presentation *p);
