@@ -3,9 +3,20 @@
 #testname:compute the wirtinger presentation from knot name
 #
 
-knots="K3_1 K9_42 K10_71"
+knots="K3_1:S5 K9_42:A5 K10_71:A6"
 
-for knot in $knots
+for knotpair in $knots
 do
+  knot=`echo $knotpair | cut -f1 -d:`
+  group=`echo $knotpair | cut -f2 -d:`
+
+  echo "Wirtinger presentation for knot $knot with no simplification"
   ./contour wirtinger --nosimplify $knot -Q
+  echo "Number of representations of knot $knot in $group:"
+  ./contour wirtinger $knot -Q | ./contour ks_$group -q
 done
+
+echo "trefoil knot with some orientation"
+echo "dtcode {[4> 6 2]}" | ./contour wirtinger -Q
+echo "trefoil knot with opposite orientation"
+echo "dtcode {[4< 6 2]}" | ./contour wirtinger -Q
