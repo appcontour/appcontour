@@ -361,6 +361,11 @@ readvecofintlist (FILE *file, int type)
   return (loiv);
 }
 
+/*
+ * vector "handedness" is set to +1 for labels of the dtcode postfixed by '>' and
+ * to -1 for label postfixed by '<'
+ */
+
 struct vecofintlist *
 readnakedvecofintlist (FILE *file, int type)
 {
