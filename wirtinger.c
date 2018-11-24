@@ -4,6 +4,8 @@
 #include "fundamental.h"
 #include "wirtinger.h"
 
+extern struct global_data globals;
+
 struct presentation *
 wirtingerfromloiv (struct vecofintlist *loiv)
 {
@@ -177,5 +179,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
   free (dt_over);
   free (overgen);
   free (ingen);
+
+  if (globals.simplifypresentation) simplify_presentation (p);
   return (p);
 }

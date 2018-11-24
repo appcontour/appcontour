@@ -244,7 +244,6 @@ simplify_presentation (struct presentation *p)
   int goon = 1;
   int count = 0;
 
-  assert (p->elements == 0);  /* TODO: take elements into account */
   while (goon)
   {
     goon = 0;
@@ -289,6 +288,11 @@ sp_tryeliminatevariable (struct presentation *p)
   int optsubpos, optsubvar, subvar;
   int *replaceword;
 
+  if (p->elements)
+  {
+    fprintf (stderr, "tryeliminatevariable. Work in progress, cannot simplify a presentation with selected elements\n");
+    return (0);
+  }
   while (goon)
   {
     if (debug) printf ("in sp_tryeliminatevariable: %d generators\n", p->gennum);
@@ -390,6 +394,11 @@ sp_simplifyword (struct presentation *p)
   int count = 0;
   int i, j, inext, ifound1, ifound2;
 
+  if (p->elements)
+  {
+    fprintf (stderr, "Simplifyword:  work in progress, cannot simplify a presentation with selected elements\n");
+    return (0);
+  }
   while (goon)
   {
     goon = 0;
@@ -553,6 +562,11 @@ sp_findcommonsubstring (struct presentation *p, int bidirectional)
   int count = 0;
   struct presentationrule *r1, *r2, *lr, *sr;
 
+  if (p->elements)
+  {
+    fprintf (stderr, "Findcommonsubstring:  work in progress, cannot simplify a presentation with selected elements\n");
+    return (0);
+  }
   goon = 1;
   while (goon)
   {
@@ -788,6 +802,19 @@ sp_do_eliminatevar (struct presentation *p, int generator)
     }
     r->length = j;
   }
+  for (r = p->elements; r; r = r->next)
+  {
+    for (i = 0, j = 0; i < r->length; i++)
+    {
+      letter = r->var[i];
+      if (letter < 0) letter *= -1;
+      if (letter == generator) continue;
+      if (letter > generator) letter--;
+      if (r->var[i] < 0) letter *= -1;
+      r->var[j++] = letter;
+    }
+    r->length = j;
+  }
 }
 
 /*
@@ -804,8 +831,19 @@ print_presentation (struct presentation *p)
   if (outformat == OUTFORMAT_APPCONTOUR) printf ("fpgroup {\n");
   if (p->gennum == 0)
   {
-    if (quiet) printf ("<>\n");
-     else printf ("Trivial group\n<>\n");
+    if (quiet) printf ("<");
+     else printf ("Trivial group\n<");
+    if (p->elements)
+    {
+      printf (";;");
+      for (r = p->elements; r; r = r->next)
+      {
+        printf ("1");
+        if (r->next) printf (", ");
+      }
+    }
+    if (quiet) printf (">\n");
+     else printf (">\n");
     if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
     return;
   }
@@ -868,6 +906,7 @@ print_single_rule (struct presentationrule *r, int gennum)
   int generator;
   char var;
 
+  if (r->length == 0) printf ("1");
   for (i = 0; i < r->length; i++)
   {
     generator = r->var[i];
