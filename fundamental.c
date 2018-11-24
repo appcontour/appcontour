@@ -394,11 +394,6 @@ sp_simplifyword (struct presentation *p)
   int count = 0;
   int i, j, inext, ifound1, ifound2;
 
-  if (p->elements)
-  {
-    fprintf (stderr, "Simplifyword:  work in progress, cannot simplify a presentation with selected elements\n");
-    return (0);
-  }
   while (goon)
   {
     goon = 0;
@@ -428,6 +423,23 @@ sp_simplifyword (struct presentation *p)
         }
         r->length -= 2;
         assert (j == r->length);
+      }
+    }
+    for (r = p->elements; r; r = r->next)
+    {
+      if (r->length < 2) continue;
+      ifound1 = -1;
+      for (i = 0; i < r->length - 1; i++)
+      {
+        if (r->var[i] + r->var[i+1] == 0)
+        {
+          /* trovato due caratteri che si semplificano */
+          for (j = i; j + 2 < r->length; j++) r->var[j] = r->var[j+2];
+          goon++;
+          count++;
+          r->length -= 2;
+          break;
+        }
       }
     }
   }
