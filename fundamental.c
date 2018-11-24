@@ -233,7 +233,6 @@ int sp_rotate_to_canonical_single (struct presentationrule *r, int tryrevert);
 int sp_findduplicatewords (struct presentation *p);
 int sp_tryeliminatevariable (struct presentation *p);
 struct presentationrule *sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int optsublen);
-struct presentationrule *sp_do_substitute_old (struct presentationrule *r, int subvar, int *replaceword, int optsublen);
 struct presentationrule *sp_remove_marked_elements (struct presentationrule *r);
 void tietze_mulright (struct presentation *p,
                        struct presentationrule *r1,
@@ -328,12 +327,9 @@ sp_tryeliminatevariable (struct presentation *p)
         replaceword[i] = optsubrule->var[j];
         assert (abs (replaceword[i]) != optsubvar);
       }
-      for (r = p->rules; r; r = r->next)
-        r = sp_do_substitute_old (r, subvar, replaceword, optsublen);
-      for (r = p->elements; r; r = r->next)
-      {
-        r = sp_do_substitute (r, subvar, replaceword, optsublen);
-      }
+      for (r = p->rules; r; r = r->next) r = sp_do_substitute (r, subvar, replaceword, optsublen);
+      p->rules = sp_remove_marked_elements (p->rules);
+      for (r = p->elements; r; r = r->next) r = sp_do_substitute (r, subvar, replaceword, optsublen);
       p->elements = sp_remove_marked_elements (p->elements);
       sp_do_eliminatevar (p, subvar);
       free (replaceword);
@@ -389,55 +385,6 @@ sp_do_substitute (struct presentationrule *r, int subvar, int *replaceword, int 
     assert (j == newlength);
     // last operation: mark old rule
     r->length = -1;
-    return (newr);
-  }
-}
-
-/*
- * This actually *adds* a new rule, but leaves an empty rule in place of the
- * old one!
- */
-
-struct presentationrule *
-sp_do_substitute_old (struct presentationrule *r, int subvar, int *replaceword, int wordlen)
-{
-  struct presentationrule *newr;
-  int i, j, k, newlength, lcount;
-
-  assert (subvar != 0);
-  assert (wordlen >= 1);
-  if (wordlen == 1) // in-place substitution
-  {
-    for (i = 0; i < r->length; i++)
-    {
-      if (r->var[i] == subvar) r->var[i] = replaceword[0];
-      if (r->var[i] == - subvar) r->var[i] = - replaceword[0];
-    }
-    return (r);
-  } else {
-    // count number of occurrences of subvar
-    for (lcount = 0, i = 0; i < r->length; i++)
-      if (r->var[i] == subvar || r->var[i] == - subvar) lcount++;
-    newlength = r->length - lcount + lcount*wordlen;
-    newr = (struct presentationrule *) malloc (newlength*sizeof (int) + sizeof (struct presentationrule));
-    newr->length = newlength;
-    newr->next = r->next;
-    r->next = newr;
-    for (i = 0, j = 0; i < r->length; i++)
-    {
-      if (r->var[i] != subvar && r->var[i] != - subvar) newr->var[j++] = r->var[i];
-      if (r->var[i] == subvar)
-      {
-        for (k = 0; k < wordlen; k++) newr->var[j++] = replaceword[k];
-      }
-      if (r->var[i] == - subvar)
-      {
-        for (k = wordlen - 1; k >= 0; k--) newr->var[j++] = -replaceword[k];
-      }
-    }
-    assert (j == newlength);
-    // last operation: empty old rule
-    r->length = 0;
     return (newr);
   }
 }
@@ -907,14 +854,23 @@ void
 print_presentation (struct presentation *p)
 {
   struct presentationrule *r;
-  int rulenum, g;
+  int rulenum, elementsnum, g;
   extern int outformat;
 
   if (outformat == OUTFORMAT_APPCONTOUR) printf ("fpgroup {\n");
   if (p->gennum == 0)
   {
-    if (quiet) printf ("<");
-     else printf ("Trivial group\n<");
+    if (!quiet)
+    {
+      printf ("Trivial group");
+      if (p->elements)
+      {
+        printf (" with selected element");
+        if (p->elements->next) printf ("s");
+      }
+      printf ("\n");
+    }
+    printf ("<");
     if (p->elements)
     {
       printf (";;");
@@ -930,13 +886,20 @@ print_presentation (struct presentation *p)
     return;
   }
   for (rulenum = 0, r = p->rules; r; r = r->next) rulenum++;
+  for (elementsnum = 0, r = p->elements; r; r = r->next) elementsnum++;
   if (!quiet)
   {
     if (rulenum == 0)
-      printf ("Free group of rank %d\n", p->gennum);
-     else
-      printf ("Finitely presented group with %d generator%s\n", p->gennum,
+    {
+      printf ("Free group of rank %d", p->gennum);
+      if (elementsnum > 0) printf (" and %d selected element%s", elementsnum, (elementsnum>1)?"s":"");
+      printf ("\n");
+    } else {
+      printf ("Finitely presented group with %d generator%s", p->gennum,
                 (p->gennum == 1)?"":"s");
+      if (elementsnum > 0) printf (" and %d selected element%s", elementsnum, (elementsnum>1)?"s":"");
+      printf ("\n");
+    }
   }
 
   if (p->gennum > MAXGENERATORS)
@@ -952,33 +915,12 @@ print_presentation (struct presentation *p)
   }
   printf ("; ");
   print_rule_list (p->rules, p->gennum);
-  //for (r = p->rules; r; r = r->next)
-  //{
-  //  if (r != p->rules) printf (", ");
-  //  print_single_rule (r, p->gennum);
-  //}
   if (p->elements)
   {
     /* there are selected elements present */
-    if (outformat == OUTFORMAT_APPCONTOUR)
-    {
-      printf ("; ");
-      print_rule_list (p->elements, p->gennum);
-      //for (r = p->elements; r; r = r->next)
-      //{
-      //  if (r != p->elements) printf (", ");
-      //  print_single_rule (r, p->gennum);
-      //}
-      printf (">\n");
-    } else {
-      printf (">\n");
-      for (r = p->elements; r; r = r->next)
-      {
-        printf ("  Selected element: ");
-        print_single_rule (r, p->gennum);
-        printf ("\n");
-      }
-    }
+    printf ("; ");
+    print_rule_list (p->elements, p->gennum);
+    printf (">\n");
   } else printf (">\n");
   if (outformat == OUTFORMAT_APPCONTOUR) printf ("}\n");
 }
@@ -1946,7 +1888,7 @@ read_group_presentation (FILE *file, struct presentation *p)
   tok = gettoken (file);
   if (tok == TOK_SEMICOLON)
   {
-    fprintf (stderr, "Reading selected elements in group\n");
+    if (verbose) printf ("Reading selected elements in group\n");
     p->elements = read_relators_list (file, generator_names, p->gennum);
     tok = gettoken (file);
   }
