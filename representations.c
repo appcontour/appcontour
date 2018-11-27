@@ -120,8 +120,8 @@ count_sl2zp_cclasses (struct presentationlist *pstlist, int p, int *results)
         results[k]++;
         if (verbose)
         {
-          if (k == 0) printf ("Homomorphism #%d defined by the matrices:\n", results[k]);
-           else printf ("Homomorphism #%d for group #%d defined by the matrices:\n", results[k], k);
+          if (k == 0) printf ("====== Homomorphism #%d defined by the matrices:\n", results[k]);
+           else printf ("====== Homomorphism #%d for group #%d defined by the matrices:\n", results[k], k);
           for (i = 0; i < gennum; i++)
           {
             sl2_print (sl2vec[i].a);
@@ -590,8 +590,8 @@ count_psl2q_cclasses (struct presentationlist *pstlist, int q, int *results)
         results[k]++;
         if (verbose)
         {
-          if (k == 0) printf ("Homomorphism #%d defined by the matrices:\n", results[k]);
-           else printf ("Homomorphism #%d for group #%d defined by the matrices:\n", results[k], k);
+          if (k == 0) printf ("====== Homomorphism #%d defined by the matrices:\n", results[k]);
+           else printf ("====== Homomorphism #%d for group #%d defined by the matrices:\n", results[k], k);
           for (i = 0; i < gennum; i++)
           {
             sl2_print (sl2vec[i].a);
@@ -895,8 +895,8 @@ count_sn_cclasses (struct presentationlist *pstlist, int n, int *results)
         results[k]++;
         if (verbose)
         {
-          if (k == 0) printf ("Homomorphism #%d defined by the permutations:\n", results[k]);
-           else printf ("Homomorphism #%d for group #%d defined by the permutations:\n", results[k], k);
+          if (k == 0) printf ("====== Homomorphism #%d defined by the permutations:\n", results[k]);
+           else printf ("====== Homomorphism #%d for group #%d defined by the permutations:\n", results[k], k);
           for (i = 0; i < gennum; i++)
           {
             sn_print (snvec[i].perm, n);

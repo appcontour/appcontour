@@ -1888,7 +1888,7 @@ read_group_presentation (FILE *file, struct presentation *p)
   tok = gettoken (file);
   if (tok == TOK_SEMICOLON)
   {
-    if (verbose) printf ("Reading selected elements in group\n");
+    if (verbose > 1) printf ("Reading selected elements in group\n");
     p->elements = read_relators_list (file, generator_names, p->gennum);
     tok = gettoken (file);
   }
