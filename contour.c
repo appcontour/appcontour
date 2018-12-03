@@ -72,6 +72,7 @@ main (int argc, char *argv[])
 
   ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
+  globals.dtcode_realize = 0;
   globals.dorecomputef = globals.doretagregions = globals.simplifypresentation = 1;
   globals.simplifycomplex = globals.simplifyideal = 1;
   globals.finfinity = globals.preabelian = globals.nobasecanonify = globals.viacc = 0;
@@ -176,6 +177,16 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"-i") == 0 || strcmp(argv[i],"--interactive") == 0)
     {
       interactive++;
+      continue;
+    }
+    if (strcmp(argv[i],"--right") == 0)
+    {
+      globals.dtcode_realize = 1;
+      continue;
+    }
+    if (strcmp(argv[i],"--left") == 0)
+    {
+      globals.dtcode_realize = -1;
       continue;
     }
     if (strcmp(argv[i],"--autosurgery") == 0)

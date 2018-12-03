@@ -27,6 +27,7 @@
 
 extern int debug;
 extern int verbose;
+extern int quiet;
 
 /*
  * the code vector is twice as the number of nodes, we allow
@@ -550,6 +551,7 @@ static int *marknodes;
 void
 realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
 {
+  extern struct global_data globals;
   int i, numconsistent;
   int dt_incomplete;
   int agree, agreeneg;
@@ -617,6 +619,7 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
 
   agree = 1;
   agreeneg = 1;
+  if (gregionsign[0] == 0 && globals.dtcode_realize) gregionsign[0] = globals.dtcode_realize;
   for (i = 0; i < numnodes; i++)
   {
     if (gregionsign[i]*dt_realization[2*i] > 0) agreeneg = 0;
@@ -636,6 +639,18 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
       printf ("\n");
     }
     exit (4);
+  }
+  if (agree && agreeneg && (!quiet)
+       //&& 0    // TODO: disable it for now, just to pass all tests!
+       )
+  { /* orientation is not forced by the user, taking the one given by dt_realize */
+    start_comment ();
+    printf ("Warning: knot orientation is undefined by its dtcode!\n");
+    start_comment (); printf ("using the realization given by dt_realize: ");
+    printf ("at first crossing (labelled 1)\n");
+    start_comment (); printf ("the intersecting path is oriented right-to-left\n");
+    start_comment (); printf ("you can force this, and avoid this warning, with the option --right\n");
+    start_comment (); printf ("or reverse the orientation with the option --left\n");
   }
   if (agree == 0)
   {

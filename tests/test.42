@@ -148,6 +148,6 @@ echo "knots 12a_0396 and 12a_0435 have unusual second elementary ideal"
 for dtcode in "$dtcode1" "$dtcode2"
 do
   echo "Computing second Alexander ideal for knot with dtcode: $dtcode"
-  echo "dtcode {$dtcode}" | ./contour --out alexander --foxd 2
+  echo "dtcode {$dtcode}" | ./contour --out alexander --foxd 2 --right
 done
 echo "=================="
