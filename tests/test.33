@@ -36,4 +36,4 @@ echo "In example $locfile we need to specify which reconstruction we want (-22> 
 #
 locfile="examples/links/maple.dtcode"
 echo "Example $locfile describes a link by its Gauss-code"
-./contour print $locfile | md5sum
+./contour print $locfile -q | md5sum
