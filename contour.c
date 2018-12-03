@@ -1771,3 +1771,24 @@ check_basic_knotname (char *arg)
   }
   return (0);
 }
+
+
+/* one-line comment */
+
+void
+start_comment (void)
+{
+  extern int outformat;
+
+  switch (outformat)
+  {
+    case OUTFORMAT_MACAULAY2:
+    printf ("-- ");
+    break;
+
+    case OUTFORMAT_APPCONTOUR:
+    default:
+    printf ("# ");
+    break;
+  }
+}

@@ -451,3 +451,6 @@ int morse_ohmoto (struct sketch *sketch);
 /* contour */
 void ccid_isvalidp (int ncc, int *ccids, int count);
 
+/* various */
+void start_comment (void);
+
