@@ -6,10 +6,10 @@
 knot=K9_42
 group=A5
 
-dtcoded=`contour rdtcode $knot -q --right`
-dtcodem=`contour rdtcode $knot -q --left`
+dtcoded=`./contour rdtcode $knot -q --right`
+dtcodem=`./contour rdtcode $knot -q --left`
 
-wirtinger=`echo "$dtcoded" | contour wirtinger -q | tr -d ' <>'`
+wirtinger=`echo "$dtcoded" | ./contour wirtinger -q | tr -d ' <>'`
 generators=`echo "$wirtinger" | cut -f1 -d';'`
 relators=`echo "$wirtinger" | cut -f2 -d';'`
 elements=`echo "$wirtinger" | cut -f3- -d';'`
@@ -20,7 +20,7 @@ longitude=`echo "$elements" | cut -f2 -d,`
 echo "Number of representations in $group with added relator ml:"
 echo "fpgroup <$generators;$relators,$meridian$longitude;$meridian,$longitude>" | ./contour ks_$group -q
 
-wirtinger=`echo "$dtcodem" | contour wirtinger -q | tr -d ' <>'`
+wirtinger=`echo "$dtcodem" | ./contour wirtinger -q | tr -d ' <>'`
 generators=`echo "$wirtinger" | cut -f1 -d';'`
 relators=`echo "$wirtinger" | cut -f2 -d';'`
 elements=`echo "$wirtinger" | cut -f3- -d';'`
