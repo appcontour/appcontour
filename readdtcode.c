@@ -463,6 +463,49 @@ freeloiv (struct vecofintlist *loiv)
 }
 
 /*
+ * convert from dtcode to gausscode
+ * (for now only for knots)
+ */
+
+struct vecofintlist *
+dtcode2gausscode (struct vecofintlist *loiv)
+{
+  int i, aloiv;
+  struct vecofintlist *newloiv;
+
+  assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
+
+  if (loiv->next || loiv->handedness)
+  {
+    fprintf (stderr, "Conversion from DTcode to gausscode is not implemented in this situation\n");
+    return (0);
+  }
+
+  newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV (2*loiv->len));
+  newloiv->next = 0;
+
+  for (i = 0; i < loiv->len;  i++)
+  {
+    aloiv = abs(loiv->vec[i]);
+    assert ((aloiv % 2) == 0);
+    if (loiv->vec[i] > 0)
+    {
+      newloiv->vec[2*i] = i+1;
+      newloiv->vec[aloiv-1] = -i-1;
+    } else {
+      newloiv->vec[2*i] = -i-1;
+      newloiv->vec[aloiv-1] = i+1;
+    }
+  }
+
+  newloiv->type = LOIV_ISGAUSSCODE;
+  newloiv->len = newloiv->dim = 2*loiv->len;
+  newloiv->handedness = 0;
+
+  return (newloiv);
+}
+
+/*
  * read gauss code and convert it into a dtcode
  */
 

@@ -1144,7 +1144,14 @@ main (int argc, char *argv[])
       case LOIV_ISDTCODE:
       case LOIV_ISRDTCODE:
       if (action == ACTION_GAUSSCODE || action == ACTION_RGAUSSCODE)
-        fprintf (stderr, "Conversion from DTcode to gausscode is not implemented\n");
+      {
+        newloiv = dtcode2gausscode (loiv);
+        if (newloiv)
+        {
+          freeloiv (loiv);
+          loiv = newloiv;
+        }
+      }
       break;
 
       case LOIV_ISGAUSSCODE:
