@@ -60,9 +60,9 @@
 #define ACTION_SUGGEST_P_SURGERY 52
 #define ACTION_FOXJACOBIAN 53
 #define ACTION_KNOTSUM 54
-#define ACTION_KNOTNAME2DTCODE 55
-#define ACTION_KNOTNAME2RDTCODE 56
-#define ACTION_KNOTNAME2GAUSSCODE 57
+//#define ACTION_KNOTNAME2DTCODE 55
+//#define ACTION_KNOTNAME2RDTCODE 56
+//#define ACTION_KNOTNAME2GAUSSCODE 57
 #define ACTION_CCCOUNTSL2ZP 58
 #define ACTION_CCCOUNTSN 59
 #define ACTION_CCCOUNTPSL2Q 60
@@ -371,7 +371,7 @@ struct sketch *readsketch (FILE *file);
 struct sketch *readmorse (FILE *file);
 struct sketch *readdtcode (FILE *file);
 struct sketch *readgausscode (FILE *file);
-struct vecofintlist *dtorgausscodefromfile (FILE *file, int action);
+struct vecofintlist *dtorgausscodefromfile (FILE *file);
 void insert_arc_in_list (struct arc *a, struct arc *list);
 void insert_region_in_list (struct region *region, struct region *list);
 int readrow (FILE *file, struct sketch *sketch, 

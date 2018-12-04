@@ -68,7 +68,7 @@ main (int argc, char *argv[])
   int infiles = 1;
   struct presentation *p;
   struct alexanderideal *ai;
-  struct vecofintlist *loiv;
+  struct vecofintlist *loiv, *newloiv;
 
   ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
@@ -573,10 +573,6 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"rdtcode") == 0) action = ACTION_RDTCODE;
     if (strcmp(argv[i],"gausscode") == 0) action = ACTION_GAUSSCODE;
     if (strcmp(argv[i],"wirtinger") == 0) action = ACTION_WIRTINGER;
-    if (strcmp(argv[i],"knotname2dtcode") == 0) action = ACTION_KNOTNAME2DTCODE;
-    if (strcmp(argv[i],"knotname2rdtcode") == 0) action = ACTION_KNOTNAME2RDTCODE;
-    if (strcmp(argv[i],"knotname2realizeddtcode") == 0) action = ACTION_KNOTNAME2RDTCODE;
-    if (strcmp(argv[i],"knotname2gausscode") == 0) action = ACTION_KNOTNAME2GAUSSCODE;
     if (strcmp(argv[i],"any2morse") == 0) action = ACTION_ANY2MORSE;
     if (strcmp(argv[i],"printmorse") == 0) action = ACTION_PRINTMORSE;
     if (strcmp(argv[i],"characteristic") == 0) action = ACTION_CHARACTERISTIC;
@@ -1141,24 +1137,40 @@ main (int argc, char *argv[])
     case ACTION_DTCODE:
     case ACTION_RDTCODE:
     case ACTION_GAUSSCODE:
-    loiv = dtorgausscodefromfile (infile, action);
+    loiv = dtorgausscodefromfile (infile);
 
+    switch (loiv->type)
+    {
+      case LOIV_ISDTCODE:
+      case LOIV_ISRDTCODE:
+      if (action == ACTION_GAUSSCODE || action == ACTION_RGAUSSCODE)
+        fprintf (stderr, "Conversion from DTcode to gausscode is not implemented\n");
+      break;
+
+      case LOIV_ISGAUSSCODE:
+      case LOIV_ISRGAUSSCODE:
+      if (action == ACTION_DTCODE || action == ACTION_RDTCODE)
+      {
+        newloiv = gausscode2dtcode (loiv);
+        if (newloiv)
+        {
+          freeloiv (loiv);
+          loiv = newloiv;
+        }
+      }
+      break;
+    }
+ 
     if (action == ACTION_RDTCODE && loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
     printloiv (loiv);
     break;
 
     case ACTION_WIRTINGER:
-    loiv = dtorgausscodefromfile (infile, ACTION_DTCODE);
+    loiv = dtorgausscodefromfile (infile);
     if (loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
     assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
     p = wirtingerfromloiv (loiv);
     if (p) print_presentation (p);
-    break;
-
-    case ACTION_KNOTNAME2DTCODE:
-    case ACTION_KNOTNAME2RDTCODE:
-    case ACTION_KNOTNAME2GAUSSCODE:
-    printf ("THIS ACTION HAS BEEN REMOVED\n");
     break;
 
     case ACTION_PRINTMORSE:
@@ -1552,28 +1564,22 @@ readcontour (FILE *file)
 }
 
 struct vecofintlist *
-dtorgausscodefromfile (FILE *file, int action)
+dtorgausscodefromfile (FILE *file)
 {
   int tok;
   struct vecofintlist *loiv;
   struct sketch *s;
 
-  if (action == ACTION_RDTCODE) action = ACTION_DTCODE;
-  if (action == ACTION_RGAUSSCODE) action = ACTION_GAUSSCODE;
   tok = gettoken (file);
 
   if (tok == TOK_DTCODE)
   {
-    if (action == ACTION_GAUSSCODE)
-      fprintf (stderr, "Conversion from DTcode to gausscode is not implemented\n");
     loiv = readvecofintlist (file, LOIV_ISDTCODE);
     return (loiv);
   }
 
   if (tok == TOK_GAUSSCODE)
   {
-    if (action == ACTION_DTCODE)
-      fprintf (stderr, "Conversion from gausscode to DTcode is not implemented\n");
     loiv = readvecofintlist (file, LOIV_ISGAUSSCODE);
     return (loiv);
   }
@@ -1585,20 +1591,6 @@ dtorgausscodefromfile (FILE *file, int action)
     {
       fprintf (stderr, "Cannot recover a dtcode for this object\n");
       exit (2);
-    }
-    switch (loiv->type)
-    {
-      case LOIV_ISDTCODE:
-      case LOIV_ISRDTCODE:
-      if (action == ACTION_GAUSSCODE)
-        fprintf (stderr, "Conversion from DTcode to gausscode is not implemented\n");
-      break;
-
-      case LOIV_ISGAUSSCODE:
-      //case LOIV_ISRGAUSSCODE:
-      if (action == ACTION_DTCODE)
-        fprintf (stderr, "Conversion from gausscode to DTcode is not implemented\n");
-      break;
     }
     return (loiv);
   }

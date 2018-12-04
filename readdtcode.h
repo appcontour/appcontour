@@ -3,7 +3,8 @@
 #define LOIV_ISUNDEFINED 0
 #define LOIV_ISDTCODE 1
 #define LOIV_ISRDTCODE 2
-#define LOIV_ISGAUSSCODE 4
+#define LOIV_ISGAUSSCODE 5
+#define LOIV_ISRGAUSSCODE 6
 
 struct vecofintlist {
   int len;
@@ -28,7 +29,8 @@ struct vecofintlist *readlinkfromtable (char *linkname);
 void chg_underpass (struct vecofintlist *loiv, int nodenum);
 struct vecofintlist *read_gausscode_from_string (char *gc);
 struct vecofintlist *gausscode_link_to_knot (struct vecofintlist *loiv);
-void gausscode2dtcode (struct vecofintlist *loiv, int *vecofint);
+struct vecofintlist *gausscode2dtcode (struct vecofintlist *loiv);
+void gauss2dt_knot (struct vecofintlist *loiv, int *vecofint);
 struct sketch *orientedgauss2sketch (struct vecofintlist *loiv);
 void inherit_gauss2gauss (struct vecofintlist *loiv_knot, struct vecofintlist *loiv_link, int *dt_realization);
 struct sketch *realize_dtcode (int numnodes, int *vecofint, int *gregionsign);

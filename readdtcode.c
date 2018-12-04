@@ -173,7 +173,7 @@ readgausscodeloiv (struct vecofintlist *loiv)
     if (newloiv == 0) return (0);
 
     dtcode = (int *) malloc (newloiv->len/2 * sizeof (int));
-    gausscode2dtcode (newloiv, dtcode);
+    gauss2dt_knot (newloiv, dtcode);
     dt_involution = (int *) malloc (newloiv->len * sizeof (int));
     dt_realization = (int *) malloc (newloiv->len * sizeof (int));
     for (i = 0; i < newloiv->len/2; i++)
@@ -219,7 +219,7 @@ readgausscodeloiv (struct vecofintlist *loiv)
   assert (loiv->next == 0);  /* we do not do links for the moment */
   assert (loiv->handedness == 0);  /* not allowed right now */
 
-  gausscode2dtcode (loiv, loiv->vec);
+  gauss2dt_knot (loiv, loiv->vec);
 
   sketch = realize_dtcode (loiv->len/2, loiv->vec, 0);
   freeloiv (loiv);
@@ -466,8 +466,30 @@ freeloiv (struct vecofintlist *loiv)
  * read gauss code and convert it into a dtcode
  */
 
+struct vecofintlist *
+gausscode2dtcode (struct vecofintlist *loiv)
+{
+  struct vecofintlist *newloiv;
+
+  assert (loiv->type == LOIV_ISGAUSSCODE || loiv->type == LOIV_ISRGAUSSCODE);
+  if (loiv->next || loiv->handedness)
+  {
+    fprintf (stderr, "Conversion from gausscode to DTcode is not implemented in this situation\n");
+    return (0);
+  }
+
+  newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV (loiv->len/2));
+  gauss2dt_knot (loiv, newloiv->vec);
+  newloiv->type = LOIV_ISDTCODE;
+  newloiv->len = newloiv->dim = loiv->len/2;
+  newloiv->next = 0;
+  newloiv->handedness = 0;
+
+  return (newloiv);
+}
+
 void
-gausscode2dtcode (struct vecofintlist *loiv, int *vecofint)
+gauss2dt_knot (struct vecofintlist *loiv, int *vecofint)
 {
   int *nodeinfo, *nodeinfo2;
   int i, j, isodd, dtcode, nodename;
