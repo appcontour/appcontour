@@ -1599,7 +1599,11 @@ void
 topreabelian (struct presentation *p)
 {
   if (verbose) printf ("Computing preabelian presentation...\n");
-  assert (p->elements == 0);   /* TODO: take into account selected elements */
+  //if (p->elements)
+  //{
+  //  fprintf (stderr, "Selected elements are present: correctedness of their representation");
+  //  fprintf (stderr, " is not guaranteed\n");
+  //}
   while (preabelian_step (p, 1, p->rules));
 }
 

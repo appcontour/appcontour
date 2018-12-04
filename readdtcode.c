@@ -188,6 +188,11 @@ readgausscodeloiv (struct vecofintlist *loiv)
      * of newloin->vec[i]
      */
 
+    if (!quiet)
+    {
+      start_comment ();
+      printf ("Warning: knot/link orientation is undefined by its gausss code!\n");
+    }
     inherit_gauss2gauss (newloiv, loiv, dt_realization);
     freeloiv (newloiv);
     free (dt_involution);
