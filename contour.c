@@ -421,9 +421,9 @@ main (int argc, char *argv[])
       printf ("    L<x>a_<n>, L<x>n_<n> (Thistlethwaite link table)\n");
       printf ("    HK<x>_<n> (Handlebody genus 2 knots up to 6 crossings of Ishii-Kishimoto-Moriuchi)\n");
       printf ("  Possible specific actions include:\n");
-      printf ("    knotname2dtcode\n");
-      printf ("    knotname2rdtcode\n");
-      printf ("    knotname2gausscode\n");
+      printf ("    dtcode\n");
+      printf ("    rdtcode\n");
+      printf ("    gausscode\n");
       printf ("\n Possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");
@@ -1607,6 +1607,7 @@ knotname2code (FILE *file, int action)
     exit (2);
   }
 
+  printf ("THIS ACTION IS DEPRECATED AND WILL BE SOON REMOVED\n");
   globals.userwantscode = action;
   readknotscape (file, &sketch);
 }
