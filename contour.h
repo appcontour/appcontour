@@ -70,7 +70,7 @@
 #define ACTION_DTCODE 62
 #define ACTION_RDTCODE 63
 #define ACTION_GAUSSCODE 64
-//#define ACTION_RGAUSSCODE 65
+#define ACTION_RGAUSSCODE 65  // not implemented!
 #define ACTION_WIRTINGER 66
 
 #define ACTION_NEWFEATURE 999
@@ -98,7 +98,6 @@ struct global_data {
   int internalcheck;
   int abelianize;
   int experimental;
-  int userwantscode;
   int knotname_fallback;
   int p;  // typically a prime
   int q;  // typically a power of a prime
@@ -372,7 +371,7 @@ struct sketch *readsketch (FILE *file);
 struct sketch *readmorse (FILE *file);
 struct sketch *readdtcode (FILE *file);
 struct sketch *readgausscode (FILE *file);
-struct vecofintlist *dtorgausscodefromfile (FILE *file);
+struct vecofintlist *dtorgausscodefromfile (FILE *file, int action);
 void insert_arc_in_list (struct arc *a, struct arc *list);
 void insert_region_in_list (struct region *region, struct region *list);
 int readrow (FILE *file, struct sketch *sketch, 
@@ -438,8 +437,6 @@ int readsketch_region (int regionid, struct sketch *sketch, FILE *file);
 struct borderlist *readsketch_bl (struct region *r, struct sketch *sketch, FILE *file);
 
 char check_basic_knotname (char *param);
-
-void knotname2code (FILE *file, int action);
 
 /* knot2morse */
 int knot2morse (FILE *file);

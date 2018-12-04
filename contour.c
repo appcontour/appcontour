@@ -82,7 +82,7 @@ main (int argc, char *argv[])
   globals.shuffle = globals.autosurgery = 0;
   globals.onlyeven = globals.dontidentify = globals.insist = globals.inner = 0;
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
-  globals.abelianize = globals.experimental = globals.userwantscode = 0;
+  globals.abelianize = globals.experimental = 0;
   globals.knotname_fallback = 1;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     globals.autosurgery++;
@@ -1141,14 +1141,14 @@ main (int argc, char *argv[])
     case ACTION_DTCODE:
     case ACTION_RDTCODE:
     case ACTION_GAUSSCODE:
-    loiv = dtorgausscodefromfile (infile);
+    loiv = dtorgausscodefromfile (infile, action);
 
     if (action == ACTION_RDTCODE && loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
     printloiv (loiv);
     break;
 
     case ACTION_WIRTINGER:
-    loiv = dtorgausscodefromfile (infile);
+    loiv = dtorgausscodefromfile (infile, ACTION_DTCODE);
     if (loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
     assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
     p = wirtingerfromloiv (loiv);
@@ -1158,7 +1158,7 @@ main (int argc, char *argv[])
     case ACTION_KNOTNAME2DTCODE:
     case ACTION_KNOTNAME2RDTCODE:
     case ACTION_KNOTNAME2GAUSSCODE:
-    knotname2code (infile, action);
+    printf ("THIS ACTION HAS BEEN REMOVED\n");
     break;
 
     case ACTION_PRINTMORSE:
@@ -1552,22 +1552,28 @@ readcontour (FILE *file)
 }
 
 struct vecofintlist *
-dtorgausscodefromfile (FILE *file)
+dtorgausscodefromfile (FILE *file, int action)
 {
   int tok;
   struct vecofintlist *loiv;
   struct sketch *s;
 
+  if (action == ACTION_RDTCODE) action = ACTION_DTCODE;
+  if (action == ACTION_RGAUSSCODE) action = ACTION_GAUSSCODE;
   tok = gettoken (file);
 
   if (tok == TOK_DTCODE)
   {
+    if (action == ACTION_GAUSSCODE)
+      fprintf (stderr, "Conversion from DTcode to gausscode is not implemented\n");
     loiv = readvecofintlist (file, LOIV_ISDTCODE);
     return (loiv);
   }
 
   if (tok == TOK_GAUSSCODE)
   {
+    if (action == ACTION_DTCODE)
+      fprintf (stderr, "Conversion from gausscode to DTcode is not implemented\n");
     loiv = readvecofintlist (file, LOIV_ISGAUSSCODE);
     return (loiv);
   }
@@ -1579,6 +1585,20 @@ dtorgausscodefromfile (FILE *file)
     {
       fprintf (stderr, "Cannot recover a dtcode for this object\n");
       exit (2);
+    }
+    switch (loiv->type)
+    {
+      case LOIV_ISDTCODE:
+      case LOIV_ISRDTCODE:
+      if (action == ACTION_GAUSSCODE)
+        fprintf (stderr, "Conversion from DTcode to gausscode is not implemented\n");
+      break;
+
+      case LOIV_ISGAUSSCODE:
+      //case LOIV_ISRGAUSSCODE:
+      if (action == ACTION_DTCODE)
+        fprintf (stderr, "Conversion from gausscode to DTcode is not implemented\n");
+      break;
     }
     return (loiv);
   }
@@ -1592,24 +1612,6 @@ readgausscode (FILE *file)
   struct vecofintlist *loiv;
   loiv = readvecofintlist (file, LOIV_ISGAUSSCODE);
   return (readgausscodeloiv (loiv));
-}
-
-void
-knotname2code (FILE *file, int action)
-{
-  int tok;
-  struct sketch *sketch;
-
-  tok = gettoken (file);
-  if (tok != TOK_KNOTSCAPE)
-  {
-    printf ("knotname/knotscape input syntax required.\n");
-    exit (2);
-  }
-
-  printf ("THIS ACTION IS DEPRECATED AND WILL BE SOON REMOVED\n");
-  globals.userwantscode = action;
-  readknotscape (file, &sketch);
 }
 
 void

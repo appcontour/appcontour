@@ -1149,7 +1149,6 @@ readknotscape (FILE *file, struct sketch **sketchpt)
   char *namept;
   int *dtcode, *dtpositive;
   FILE *pakfile, *infile;
-  int *dt_involution, *dt_realization;
   struct vecofintlist *loiv;
 
   *sketchpt = 0;
@@ -1304,41 +1303,7 @@ readknotscape (FILE *file, struct sketch **sketchpt)
   dtcode[i] = sign*(2*(sum1 - sum2) + 2);
   codelen++;
   free (dtpositive);
-  if (verbose || globals.userwantscode)
-  {
-    if (globals.userwantscode == ACTION_KNOTNAME2GAUSSCODE)
-      printf ("# Conversion to Gauss code not implemented, printing dtcode:\n");
-    if (globals.userwantscode == ACTION_KNOTNAME2RDTCODE)
-    {
-      printf ("# Conversion to realized dtcode not implemented, printing dtcode:\n");
-      dt_involution = (int *) malloc (2*codelen * sizeof (int));
-      dt_realization = (int *) malloc (2*codelen * sizeof (int));
-      for (i = 0; i < codelen; i++)
-      {
-        dt_involution[2*i] = abs(dtcode[i]) - 1;
-        dt_involution[abs(dtcode[i]) - 1] = 2*i;
-      }
-      dt_realize (dt_involution, dt_realization, codelen);
-      printf ("dtcode {[");
-      for (i = 0; i < codelen; i++)
-      {
-        if (i > 0) printf (" ");
-        printf ("%d%c", dtcode[i], (dt_realization[2*i]>0)?'<':'>');
-      }
-      printf ("]}\n");
-      free (dt_involution);
-      free (dt_realization);
-      exit (0);
-    }
-    printf ("dtcode {[");
-    for (i = 0; i < codelen; i++)
-    {
-      if (i > 0) printf (" ");
-      printf ("%d", dtcode[i]);
-    }
-    printf ("]}\n");
-    if (globals.userwantscode) {free (loiv); exit (0);}
-  }
+  if (verbose) printloiv (loiv);
   //sketch = realize_dtcode (codelen, dtcode, 0);
   return (loiv);
 }
@@ -1351,8 +1316,7 @@ struct vecofintlist *
 readlinkfromtable (char *linkname)
 {
   extern struct global_data globals;
-  struct vecofintlist *loiv, *lv;
-  int i;
+  struct vecofintlist *loiv;
   FILE *linkfile;
   char *ch, *gc, line[2000];
 
@@ -1376,20 +1340,6 @@ readlinkfromtable (char *linkname)
         if (strcmp (line, linkname) == 0)
         {
           loiv = read_gausscode_from_string (gc);
-          if (globals.userwantscode)
-          {
-            if (globals.userwantscode == ACTION_KNOTNAME2DTCODE)
-              printf ("# Conversion to dt-code not implemented, printing Gauss code:\n");
-            printf ("gausscode {");
-            for (lv = loiv; lv; lv = lv->next)
-            {
-              printf ("{");
-              for (i = 0; i < lv->len; i++) printf ("%d ", lv->vec[i]);
-              printf ("}");
-            }
-            printf ("}\n");
-            exit (0);
-          }
           return (loiv);
         }
         break;
