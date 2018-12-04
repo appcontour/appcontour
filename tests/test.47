@@ -6,3 +6,9 @@
 gausscode="1, -3, 2, -1, 3, -2"
 echo "Converting gausscode of trefoil knot"
 echo "gausscode {$gausscode}" | ./contour dtcode
+
+echo "Converting back"
+
+echo "gausscode {$gausscode}" | ./contour dtcode -q | ./contour gausscode -q
+
+./contour dtcode K9_42 -q | ./contour gausscode -q | ./contour dtcode -q
