@@ -3,12 +3,21 @@
 #testname:representation in SL(2,Z/pZ), count up to conjugacy
 #
 
-list="K3_1:5 K10_7:3 HK6_10:5"
+knotname=K3_1
+knot="dtcode {[4 6 2]}"
+p=5
+echo "Count representations in SL(2,Z/${p}Z) (Kitano-Suzuki) for $knotname"
+echo "$knot" | ./contour --out ks_SL2,$p -q
 
-for pair in $list
-do
-  knot=`echo $pair | cut -f1 -d:`
-  p=`echo $pair | cut -f2 -d:`
-  echo "Count representations in SL(2,Z/${p}Z) (Kitano-Suzuki) for $knot"
-  ./contour --out ks_SL2,$p $knot -q
-done
+knotname=K10_7
+knot="dtcode {[4 12 14 18 16 20 2 10 8 6]}"
+p=3
+echo "Count representations in SL(2,Z/${p}Z) (Kitano-Suzuki) for $knotname"
+echo "$knot" | ./contour --out ks_SL2,$p -q
+
+knotname=HK6_10
+knot=examples/handlebody_knots/hk6_10.knot
+p=5
+echo "Count representations in SL(2,Z/${p}Z) (Kitano-Suzuki) for $knotname"
+./contour --out ks_SL2,$p $knot -q
+

@@ -6,7 +6,11 @@ echo "examples/trinacria.knot is a genus-3 surface (originated by a graph)"
 
 echo "this is a surgical modification of a 3-components link leading to a"
 echo "genus-2 surface linked with a torus"
-echo "knotname{L8a16}" | ./contour gluearcs -a 4 -a 5 | ./contour --out alexander -q
+#
+# gausscode of L8a16
+#
+gausscode="gausscode {{1 -4 3 -8}{2 -1 5 -3 6 -7}{7 -2 4 -5 8 -6}}"
+echo "$gausscode" | ./contour gluearcs -a 4 -a 5 | ./contour --out alexander -q
 
 #
 # this is one of 5 links with 3 components with Nakanishi index 4
