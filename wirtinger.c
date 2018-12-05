@@ -18,7 +18,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
   int underpasslabel, overpasslabel, nextnode, nextlabel, nextunder;
   struct presentation *p;
   struct presentationrule *rule;
-  int longlength;
+  int longlength, sign;
 
   if (debug) printloiv (loiv);
   assert (loiv->next == 0);
@@ -53,6 +53,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
     dt_realization[label] = -gregionsign[i];
   }
 
+  sign = 1; // NOTE: change sign to -1 here to get the old (wrong) orientation
   for (i = 0; i < numnodes; i++)
   {
     underpasslabel = dt_involution[2*i];
@@ -102,7 +103,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
     p->rules = rule;
     rule->var[0] = -(i+1);
     rule->var[2] = ingen[i] + 1;
-    if (dt_realization[underpasslabel] > 0)
+    if (sign*dt_realization[underpasslabel] < 0)
     {
       if (debug) {
         printf (" relator: %c = ", i + 'a');
@@ -112,7 +113,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
         printf ("\n");
       }
       rule->var[1] = -(overgen[i] + 1);
-      rule->var[3] = overgen[i] + 1;
+      rule->var[3] = (overgen[i] + 1);
     } else {
       if (debug) {
         printf (" relator: %c = ", i + 'a');
@@ -160,7 +161,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
       continue;
     }
     rule->var[i] = overgen[node] + 1;
-    if (dt_realization[label] < 0) rule->var[i] = - overgen[node] - 1;
+    if (sign*dt_realization[label] > 0) rule->var[i] = - overgen[node] - 1;
     i++;
     if (debug) printf ("Passing under generator %d in node %d\n", overgen[node]+1,node+1);
   } while (label != startlabel);
@@ -168,7 +169,7 @@ wirtingerfromloiv (struct vecofintlist *loiv)
   while (i < longlength)
   {
     rule->var[i] = 1;
-    if (selflink < 0) rule->var[i] = -1;
+    if (sign*selflink > 0) rule->var[i] = -1;
     i++;
   }
 

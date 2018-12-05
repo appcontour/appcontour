@@ -1,26 +1,26 @@
 Wirtinger presentation for knot K3_1 with no simplification
 fpgroup {
-<a,b,c; CabA, BcaC, AbcB; a, CABaaa>
+<a,b,c; CAba, BCac, ABcb; a, cabAAA>
 }
 Number of representations of knot K3_1 in S5:
 12
 Wirtinger presentation for knot K9_42 with no simplification
 fpgroup {
-<a,b,c,d,e,f,g,h,i; IFhf, HagA, GIfi, FHch, EBib, DgaG, CabA, BEde, AieI; a, GeAhiAfbIA>
+<a,b,c,d,e,f,g,h,i; IfhF, HAga, GifI, FhcH, EbiB, DGag, CAba, BedE, AIei; a, gEaHIaFBia>
 }
 Number of representations of knot K9_42 in A5:
 7
 Wirtinger presentation for knot K10_71 with no simplification
 fpgroup {
-<a,b,c,d,e,f,g,h,i,j; JefE, IJbj, HfeF, GCac, FIci, EBjb, DghG, CAia, BdgD, AhdH; a, cDjaiEbFGH>
+<a,b,c,d,e,f,g,h,i,j; JEfe, IjbJ, HFef, GcaC, FicI, EbjB, DGhg, CaiA, BDgd, AHdh; a, CdJAIeBfgh>
 }
 Number of representations of knot K10_71 in A6:
 14
 trefoil knot with some orientation
 fpgroup {
-<a,b; abaBAB; Bab, BBAbABaaab>
+<a,b; abaBAB; baB, bbaBabAAAB>
 }
 trefoil knot with opposite orientation
 fpgroup {
-<a,b; abaBAB; baB, bbaBabAAAB>
+<a,b; abaBAB; Bab, BBAbABaaab>
 }
