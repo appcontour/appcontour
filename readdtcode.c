@@ -484,38 +484,70 @@ freeloiv (struct vecofintlist *loiv)
 struct vecofintlist *
 dtcode2gausscode (struct vecofintlist *loiv)
 {
-  int i, aloiv;
-  struct vecofintlist *newloiv;
+  int i;
+  int numnodes;
+  int node, evenlabel, oddlabel;
+  struct vecofintlist *newloiv, *lv, *nlv, *prevnlv;
+  int *dt_involution, *dt_negative;
 
   assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
 
-  if (loiv->next || loiv->handedness)
+  if (loiv->handedness)
   {
-    fprintf (stderr, "Conversion from DTcode to gausscode is not implemented in this situation\n");
-    return (0);
+    fprintf (stderr, "Warning: information about handedness is lost during conversion from DTcode to gausscode\n");
   }
 
-  newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV (2*loiv->len));
-  newloiv->next = 0;
-
-  for (i = 0; i < loiv->len;  i++)
+  numnodes = 0;
+  prevnlv = 0;
+  for (lv = loiv; lv; lv = lv->next)
   {
-    aloiv = abs(loiv->vec[i]);
-    assert ((aloiv % 2) == 0);
-    if (loiv->vec[i] > 0)
+    numnodes += lv->len;
+    nlv = (struct vecofintlist *) malloc (SIZEOFLOIV (2*lv->len));
+    nlv->next = 0;
+    nlv->len = nlv->dim = 2*lv->len;
+    nlv->handedness = 0;
+    for (i = 0; i < nlv->len; i++) nlv->vec[i] = 0;
+    if (prevnlv)
     {
-      newloiv->vec[2*i] = i+1;
-      newloiv->vec[aloiv-1] = -i-1;
+      prevnlv->next = nlv;
     } else {
-      newloiv->vec[2*i] = -i-1;
-      newloiv->vec[aloiv-1] = i+1;
+      newloiv = nlv;
+      newloiv->type = LOIV_ISGAUSSCODE;
+    }
+    prevnlv = nlv;
+  }
+  dt_involution = (int *) malloc (2*numnodes*sizeof(int));
+  dt_negative = (int *) malloc (2*numnodes*sizeof(int));
+  oddlabel = 0;  // beware: in the printed dtcode this is odd, here we have a difference of one
+  for (lv = loiv, nlv = newloiv; lv; lv = lv->next, nlv = nlv->next)
+  {
+    for (i = 0; i < lv->len; i++)
+    {
+      evenlabel = abs(lv->vec[i]) - 1;
+      dt_involution[oddlabel] = evenlabel;
+      dt_involution[evenlabel] = oddlabel;
+      dt_negative[oddlabel] = 0;
+      if (lv->vec[i] < 0) dt_negative[oddlabel] = 1;
+      dt_negative[evenlabel] = 1-dt_negative[oddlabel];
+      oddlabel += 2;
+    }
+  }
+  evenlabel = 1;
+  node = 1;
+  for (lv = loiv, nlv = newloiv; lv; lv = lv->next, nlv = nlv->next)
+  {
+    for (i = 0; i < lv->len; i++)
+    {
+      nlv->vec[2*i] = node++;
+      if (dt_negative[evenlabel-1]) nlv->vec[2*i] = -nlv->vec[2*i];
+      nlv->vec[2*i+1] = dt_involution[evenlabel]/2 + 1;
+      if (dt_negative[evenlabel]) nlv->vec[2*i+1] = -nlv->vec[2*i+1];
+      evenlabel += 2;
     }
   }
 
-  newloiv->type = LOIV_ISGAUSSCODE;
-  newloiv->len = newloiv->dim = 2*loiv->len;
-  newloiv->handedness = 0;
-
+  free (dt_involution);
+  free (dt_negative);
   return (newloiv);
 }
 

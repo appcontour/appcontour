@@ -11,4 +11,13 @@ echo "Converting back"
 
 echo "gausscode {$gausscode}" | ./contour dtcode -q | ./contour gausscode -q
 
-./contour dtcode K9_42 -q | ./contour gausscode -q | ./contour dtcode -q
+#
+# this is the dtcode of K9_42:
+#
+dtcode="dtcode {[4 8 10 -14 2 -16 -18 -6 -12]}"
+echo "$dtcode" | ./contour gausscode -q | ./contour dtcode -q
+
+#
+# this is the dtcode of L7_n2
+#
+echo "dtcode {[6 -8][-10 12 -14 2 -4]}" | ./contour gausscode -q
