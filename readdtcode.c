@@ -70,6 +70,7 @@ readdtcode (FILE *file)
     return (sketch);
   }
 
+  assert (loiv->next == 0);  // for now only knots are allowed
   assert (loiv->type == LOIV_ISDTCODE);
   sketch = realize_dtcode (loiv->len, loiv->vec, loiv->handedness);
   freeloiv (loiv);
@@ -339,30 +340,48 @@ inherit_gauss2gauss (struct vecofintlist *loiv_knot, struct vecofintlist *loiv_l
 }
 
 /*
- *
+ * possibilities:
+ * [a b c]
+ * {a b c}
+ * {[a b c]...}
+ * {{a b c}...}
  */
 
 struct vecofintlist *
 readvecofintlist (FILE *file, int type)
 {
-  int tok;
+  int tok, tok2;
   struct vecofintlist *loiv;
+  int dressed = 1;
 
   tok = gettoken (file);
-  if (tok != TOK_LBRACE)
+  if (tok != TOK_LBRACE && tok != TOK_LBRACKET)
+  {
+    fprintf (stderr, "Error: left brace or bracket expected\n");
+    return (0);
+  }
+  tok2 = gettoken (file);
+  if (tok2 != TOK_LBRACE && tok2 != TOK_LBRACKET) dressed = 0;
+  ungettoken (tok2);
+
+  if (dressed && tok != TOK_LBRACE)
   {
     fprintf (stderr, "Error: left brace expected\n");
     return (0);
   }
+  if (dressed == 0) ungettoken (tok);
 
   loiv = readnakedvecofintlist (file, type);
 
-  tok = gettoken (file);
-  if (tok != TOK_RBRACE)
+  if (dressed)
   {
-    printf ("Expected terminating }\n");
-    freeloiv (loiv);
-    return (0);
+    tok = gettoken (file);
+    if (tok != TOK_RBRACE)
+    {
+      printf ("Expected terminating }\n");
+      freeloiv (loiv);
+      return (0);
+    }
   }
   return (loiv);
 }
@@ -370,6 +389,10 @@ readvecofintlist (FILE *file, int type)
 /*
  * vector "handedness" is set to +1 for labels of the dtcode postfixed by '>' and
  * to -1 for label postfixed by '<'
+ *
+ * possibilities: [a b c] or {a b c}
+ *                [a b c][d e f]...
+ *                {a b c}{d e f}...
  */
 
 struct vecofintlist *
@@ -377,7 +400,7 @@ readnakedvecofintlist (FILE *file, int type)
 {
   struct vecofintlist *loiv;
   int i, j, tok;
-  int startwithlbracket = 1;
+  int startwithlbracket = 0;
 
   tok = gettoken (file);
   loiv = (struct vecofintlist *) malloc (SIZEOFLOIV(MAXDTCODELEN));
@@ -386,11 +409,8 @@ readnakedvecofintlist (FILE *file, int type)
    * DT-code: [4 6 2]
    */
   loiv->type = type;
-  if (tok != TOK_LBRACKET && tok != TOK_LBRACE)
-  {
-    startwithlbracket = 0;
-    ungettoken (tok);
-  }
+  assert (tok == TOK_LBRACKET || tok == TOK_LBRACE);
+  if (tok == TOK_LBRACKET) startwithlbracket = 1;
   loiv->dim = MAXDTCODELEN;
   loiv->next = 0;
   loiv->handedness = 0;
@@ -429,27 +449,21 @@ readnakedvecofintlist (FILE *file, int type)
     }
   }
   loiv->len = i;
-  if (startwithlbracket && tok != TOK_RBRACKET && tok != TOK_RBRACE)
+  assert (tok == TOK_RBRACKET || tok == TOK_RBRACE);
+  if (startwithlbracket) assert (tok == TOK_RBRACKET);
+  tok = gettoken (file);
+  if (tok != TOK_COMMA) ungettoken (tok);
+  tok = gettoken (file);
+  if (tok == TOK_LBRACE || tok == TOK_LBRACKET)
   {
-    printf ("Error: missing terminating ] or }\n");
-    freeloiv (loiv);
-    return (0);
-  }
-  if (startwithlbracket)
-  {
-    tok = gettoken (file);
-    if (tok == TOK_COMMA) tok = gettoken (file);  /* skip comma if present */
-    if (tok == TOK_LBRACE || tok == TOK_LBRACKET)
+    ungettoken (tok);
+    loiv->next = readnakedvecofintlist (file, type);
+    if (loiv->next == 0)
     {
-      ungettoken (tok);
-      loiv->next = readvecofintlist (file, type);
-      if (loiv->next == 0)
-      {
-        freeloiv (loiv);
-        printf ("Syntax error in second component of code\n");
-        return (0);
-      }
-    } else ungettoken (tok);
+      freeloiv (loiv);
+      printf ("Syntax error in second component of code\n");
+      return (0);
+    }
   } else ungettoken (tok);
   return (loiv);
 }
@@ -2490,22 +2504,25 @@ void
 printloiv (struct vecofintlist *loiv)
 {
   int i;
-  int *handedness;
   struct vecofintlist *lv;
 
   switch (loiv->type)
   {
     case LOIV_ISDTCODE:
     case LOIV_ISRDTCODE:
-      printf ("dtcode {[");
-      handedness = loiv->handedness;
-      for (i = 0; i < loiv->len; i++)
+      printf ("dtcode {");
+      for (lv = loiv; lv; lv = lv->next)
       {
-        if (i > 0) printf (" ");
-        printf ("%d", loiv->vec[i]);
-        if (handedness && handedness[i]) printf ("%c", (handedness[i]>0)?'>':'<');
+        printf ("[");
+        for (i = 0; i < lv->len; i++)
+        {
+          if (i > 0) printf (" ");
+          printf ("%d", lv->vec[i]);
+          if (lv->handedness && lv->handedness[i]) printf ("%c", (lv->handedness[i] > 0)?'>':'<');
+        }
+        printf ("]");
       }
-      printf ("]}\n");
+      printf ("}\n");
       break;
 
     case LOIV_ISGAUSSCODE:
