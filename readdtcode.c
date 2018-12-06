@@ -174,7 +174,7 @@ readgausscodeloiv (struct vecofintlist *loiv)
     if (newloiv == 0) return (0);
 
     dtcode = (int *) malloc (newloiv->len/2 * sizeof (int));
-    gauss2dt_knot (newloiv, dtcode);
+    gauss2dt_knot (newloiv, dtcode, 0);
     dt_involution = (int *) malloc (newloiv->len * sizeof (int));
     dt_realization = (int *) malloc (newloiv->len * sizeof (int));
     for (i = 0; i < newloiv->len/2; i++)
@@ -218,11 +218,10 @@ readgausscodeloiv (struct vecofintlist *loiv)
     return (sketch);
   }
   assert (loiv->next == 0);  /* we do not do links for the moment */
-  assert (loiv->handedness == 0);  /* not allowed right now */
 
-  gauss2dt_knot (loiv, loiv->vec);
+  gauss2dt_knot (loiv, loiv->vec, loiv->handedness);
 
-  sketch = realize_dtcode (loiv->len/2, loiv->vec, 0);
+  sketch = realize_dtcode (loiv->len/2, loiv->vec, loiv->handedness);
   freeloiv (loiv);
   return (sketch);
 }
@@ -484,18 +483,13 @@ freeloiv (struct vecofintlist *loiv)
 struct vecofintlist *
 dtcode2gausscode (struct vecofintlist *loiv)
 {
-  int i;
+  int i, j;
   int numnodes;
   int node, evenlabel, oddlabel;
   struct vecofintlist *newloiv, *lv, *nlv, *prevnlv;
-  int *dt_involution, *dt_negative;
+  int *dt_involution, *dt_negative, *dt_realization;
 
   assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
-
-  if (loiv->handedness)
-  {
-    fprintf (stderr, "Warning: information about handedness is lost during conversion from DTcode to gausscode\n");
-  }
 
   numnodes = 0;
   prevnlv = 0;
@@ -518,6 +512,8 @@ dtcode2gausscode (struct vecofintlist *loiv)
   }
   dt_involution = (int *) malloc (2*numnodes*sizeof(int));
   dt_negative = (int *) malloc (2*numnodes*sizeof(int));
+  dt_realization = (int *) malloc (2*numnodes*sizeof(int));
+  for (i = 0; i < 2*numnodes; i++) dt_realization[i] = 0;
   oddlabel = 0;  // beware: in the printed dtcode this is odd, here we have a difference of one
   for (lv = loiv, nlv = newloiv; lv; lv = lv->next, nlv = nlv->next)
   {
@@ -529,6 +525,11 @@ dtcode2gausscode (struct vecofintlist *loiv)
       dt_negative[oddlabel] = 0;
       if (lv->vec[i] < 0) dt_negative[oddlabel] = 1;
       dt_negative[evenlabel] = 1-dt_negative[oddlabel];
+      if (lv->handedness)
+      {
+        dt_realization[oddlabel] = -lv->handedness[i];   //TODO controllare il segno
+        dt_realization[evenlabel] = -dt_realization[oddlabel];
+      }
       oddlabel += 2;
     }
   }
@@ -542,12 +543,23 @@ dtcode2gausscode (struct vecofintlist *loiv)
       if (dt_negative[evenlabel-1]) nlv->vec[2*i] = -nlv->vec[2*i];
       nlv->vec[2*i+1] = dt_involution[evenlabel]/2 + 1;
       if (dt_negative[evenlabel]) nlv->vec[2*i+1] = -nlv->vec[2*i+1];
+      if (dt_realization[evenlabel-1] || dt_realization[evenlabel])
+      {
+        if (nlv->handedness == 0)
+        {
+          nlv->handedness = (int *) malloc (nlv->len*sizeof(int));
+          for (j = 0; j < nlv->len; j++) nlv->handedness[j] = 0;
+        }
+        nlv->handedness[2*i] = dt_realization[evenlabel-1];
+        nlv->handedness[2*i+1] = dt_realization[evenlabel];
+      }
       evenlabel += 2;
     }
   }
 
   free (dt_involution);
   free (dt_negative);
+  free (dt_realization);
   return (newloiv);
 }
 
@@ -568,7 +580,7 @@ gausscode2dtcode (struct vecofintlist *loiv)
   }
 
   newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV (loiv->len/2));
-  gauss2dt_knot (loiv, newloiv->vec);
+  gauss2dt_knot (loiv, newloiv->vec, 0);
   newloiv->type = LOIV_ISDTCODE;
   newloiv->len = newloiv->dim = loiv->len/2;
   newloiv->next = 0;
@@ -578,7 +590,7 @@ gausscode2dtcode (struct vecofintlist *loiv)
 }
 
 void
-gauss2dt_knot (struct vecofintlist *loiv, int *vecofint)
+gauss2dt_knot (struct vecofintlist *loiv, int *vecofint, int *handedness)
 {
   int *nodeinfo, *nodeinfo2;
   int i, j, isodd, dtcode, nodename;
@@ -587,7 +599,7 @@ gauss2dt_knot (struct vecofintlist *loiv, int *vecofint)
 
   assert (nlabels == 2*nnodes);
   assert (loiv->next == 0);
-  assert (loiv->handedness == 0);
+  if (loiv->handedness) assert (handedness);
 
   nodeinfo = (int *) malloc (nnodes*sizeof(int));
   nodeinfo2 = (int *) malloc (nnodes*sizeof(int));
@@ -621,6 +633,7 @@ gauss2dt_knot (struct vecofintlist *loiv, int *vecofint)
     nodename = abs(loiv->vec[i]);
     dtcode = -nodeinfo[nodename - 1];
     if (abs(nodeinfo[nodename - 1]) == i + 1) dtcode = -nodeinfo2[nodename - 1];
+    if (loiv->handedness) handedness[j] = -loiv->handedness[i];
     vecofint[j++] = dtcode;
   }
 
