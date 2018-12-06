@@ -1,4 +1,11 @@
-2018.07.14
+2018.12.06
+$ echo "dtcode {[6> -8][-10 12 -14 2 -4]}" | ./contour gausscode -q | ./contour print
+# Warning: knot/link orientation is undefined by its gausss code!
+contour: readdtcode.c:325: inherit_gauss2gauss: Assertion `lv->handedness == 0' failed.
+Aborted (core dumped)
+
+
+2018.07.14 (SOLVED)
 test 44 does not work if contour is not installed
 
 
