@@ -1431,14 +1431,32 @@ readlinkfromtable (char *linkname)
   FILE *linkfile;
   char *ch, *gc, line[2000];
 
-  strncpy (pathname, PKGDATA_DIR, MAXFILELENGTH);
-  strncat (pathname, "/data/links_gausscodes.txt", MAXFILELENGTH);
-  if (access (pathname, R_OK))
+  char *data_homes[]={".", PKGDATA_DIR, ".", 0};
+  char *data_paths[]={"data", 0};
+  int ip1, ip2;
+
+  linkfile = 0;
+  for (ip1 = 0; data_homes[ip1]; ip1++)
+  {
+    for (ip2 = 0; data_paths[ip2]; ip2++)
+    {
+      strncpy (pathname, data_homes[ip1], MAXFILELENGTH);
+      strncat (pathname, "/", MAXFILELENGTH);
+      strncat (pathname, data_paths[ip2], MAXFILELENGTH);
+      strncat (pathname, "/", MAXFILELENGTH);
+      strncat (pathname, "links_gausscodes.txt", MAXFILELENGTH);
+      if (access (pathname, R_OK)) continue;
+      linkfile = fopen (pathname, "r");
+      break;
+    }
+    if (linkfile) break;
+  }
+
+  if (linkfile == 0)
   {
     printf ("Fatal: Cannot open file %s, check installation\n", pathname);
     exit (1);
   }
-  linkfile = fopen (pathname, "r");
 
   while (fgets (line, 2000, linkfile))
   {

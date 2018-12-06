@@ -1,4 +1,4 @@
-8. The syntax <[generators]; [relators]> for a finitely presented group now allows
+8. [DONE] The syntax <[generators]; [relators]> for a finitely presented group now allows
 for the addition of selected elements: <[generators]; [relators]; [elements]> .
 This is presently only used in printout of the representations and only for
 the representations ks_S<n> ks_A<n> .
@@ -18,7 +18,7 @@ anche considerare la possibilita' dell'inversione t -> 1/t (simultanea per tutti
 i polinomi.  La questione puo' forse essere evitata semplicemente facendo un controllo
 preliminare se tutti i polinomi sono invarianti rispetto a t->1/t
 
-2. Add the possibility to personalize default values (e.g. --autosurgery)
+2. [DONE] Add the possibility to personalize default values (e.g. --autosurgery)
 using environment variables or via rc file.
 Use of environment variable is already there for APPCONTOUR_OLDNAMES, e.g.
 (see main() in "contour.c".
