@@ -1,4 +1,4 @@
-2018.12.06
+2018.12.06 (SOLVED)
 $ echo "dtcode {[6> -8][-10 12 -14 2 -4]}" | ./contour --out fg
 contour: readdtcode.c:99: readdtcode2loiv: Assertion `lv->handedness == 0' failed.
 Aborted (core dumped)
