@@ -508,7 +508,6 @@ freeloiv (struct vecofintlist *loiv)
 
 /*
  * convert from dtcode to gausscode
- * (for now only for knots)
  */
 
 struct vecofintlist *
