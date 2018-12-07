@@ -189,11 +189,6 @@ readgausscodeloiv (struct vecofintlist *loiv)
      * of newloin->vec[i]
      */
 
-    if (!quiet)
-    {
-      start_comment ();
-      printf ("Warning: knot/link orientation is undefined by its gausss code!\n");
-    }
     inherit_gauss2gauss (newloiv, loiv, dt_realization);
     freeloiv (newloiv);
     free (dt_involution);
@@ -318,21 +313,57 @@ void
 inherit_gauss2gauss (struct vecofintlist *loiv_knot, struct vecofintlist *loiv_link, int *dt_realization)
 {
   struct vecofintlist *lv;
-  int i, j;
+  int i, j, newori;
+  int ori = 0;
 
   for (lv = loiv_link; lv; lv = lv->next)
   {
-    assert (lv->handedness == 0);
-    lv->handedness = (int *) malloc (lv->len * sizeof(int));
+    if (lv->handedness == 0)
+    {
+      lv->handedness = (int *) malloc (lv->len * sizeof(int));
+      for (i = 0; i < lv->len; i++) lv->handedness[i] = 0;
+    }
     for (i = 0; i < lv->len; i++)
     {
       for (j = 0; j < loiv_knot->len; j++)
       if (loiv_knot->vec[j] == lv->vec[i])
       {
+        newori = lv->handedness[i]*dt_realization[j];
+        if (newori)
+        {
+          if (ori) assert (ori == newori);
+          ori = newori;
+        }
         lv->handedness[i] = dt_realization[j];
         break;
       }
     }
+  }
+  switch (ori)
+  {
+    case 0:
+      if (!quiet)
+      {
+        start_comment ();
+        printf ("Warning: knot/link orientation is undefined by its gausss code!\n");
+      }
+      break;
+
+    case 1:
+      break;
+
+    case -1:
+      /* need to revert orientation */
+      for (lv = loiv_link; lv; lv = lv->next)
+      {
+        for (i = 0; i < lv->len; i++) lv->handedness[i] = -lv->handedness[i];
+      }
+      break;
+
+    default:
+      printf ("FATAL: ori: %d must be one of 0, -1, 1\n", ori);
+      exit (111);
+      break;
   }
 
   return;
