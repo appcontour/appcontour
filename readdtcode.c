@@ -59,19 +59,22 @@ void uFatalError (char *function, char *file)
 struct sketch *
 readdtcode (FILE *file)
 {
-  struct vecofintlist *loiv;
+  struct vecofintlist *loiv, *gaussloiv;
   struct sketch *sketch;
 
-  loiv = readdtcode2loiv (file);
-  if (loiv->type == LOIV_ISGAUSSCODE)
+  loiv = readvecofintlist (file, LOIV_ISDTCODE);
+  assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
+
+  if (loiv->next)
   {
-    sketch = readgausscodeloiv (loiv);
+    /* in this case we need the gauss code! */
+    gaussloiv = dtcode2gausscode (loiv);
+    assert (gaussloiv);
     freeloiv (loiv);
+    sketch = readgausscodeloiv (gaussloiv);  /* this function frees the gaussloiv structure! */
     return (sketch);
   }
 
-  assert (loiv->next == 0);  // for now only knots are allowed
-  assert (loiv->type == LOIV_ISDTCODE);
   sketch = realize_dtcode (loiv->len, loiv->vec, loiv->handedness);
   freeloiv (loiv);
   return (sketch);
