@@ -80,59 +80,6 @@ readdtcode (FILE *file)
   return (sketch);
 }
 
-struct vecofintlist *
-readdtcode2loiv (FILE *file)
-{
-  struct vecofintlist *loiv, *lvg, *firstlvg, *prevlvg, *lv;
-  int i, j, alv, labeltag;
-
-  /*
-   * read dt code
-   */
-
-  loiv = readvecofintlist (file, LOIV_ISDTCODE);
-  if (loiv->next)
-  {
-    /* convert to gauss code */
-    prevlvg = firstlvg = (struct vecofintlist *) malloc (SIZEOFLOIV (0));
-    prevlvg->type = LOIV_ISGAUSSCODE;
-    labeltag = 0;
-    for (lv = loiv; lv; lv = lv->next)
-    {
-      assert (lv->handedness == 0);
-      lvg = (struct vecofintlist *) malloc (SIZEOFLOIV (2*lv->len));
-      lvg->type = LOIV_ISGAUSSCODE;
-      prevlvg->next = lvg;
-      lvg->next = 0;
-      lvg->dim = lvg->len = 2*lv->len;
-      for (i = 0, j = 0; i < lv->len;  i++)
-      {
-        alv = abs(lv->vec[i]);
-        assert ((alv % 2) == 0);
-        lvg->vec[j++] = alv/2; /* a node is tagged by alv/2 */
-        labeltag += 2;
-        lvg->vec[j++] = -labeltag/2;
-      }
-      prevlvg = lvg;
-    }
-    for (lv = loiv; lv; lv = lv->next)
-    {
-      for (i = 0; i < lv->len; i++)
-      {
-        alv = abs(lv->vec[i]);
-        if (lv->vec[i] < 0) chg_underpass (firstlvg->next, alv/2);
-      }
-    }
-    lvg = firstlvg->next;
-    firstlvg->next = 0;
-    freeloiv (firstlvg);
-    freeloiv (loiv);
-    return (lvg);
-  }
-
-  return (loiv);
-}
-
 /*
  * revert overpass/underpass in a gauss-code for a given nodeid
  */
@@ -603,22 +550,124 @@ dtcode2gausscode (struct vecofintlist *loiv)
 struct vecofintlist *
 gausscode2dtcode (struct vecofintlist *loiv)
 {
-  struct vecofintlist *newloiv;
+  int numnodes, i, j, k, found;
+  struct vecofintlist *newloiv, *lv, *nlv, *prevnlv;
+  int *node_label, *dt_involution, *dt_sign, *dt_realization;
 
   assert (loiv->type == LOIV_ISGAUSSCODE || loiv->type == LOIV_ISRGAUSSCODE);
-  if (loiv->next || loiv->handedness)
+  if (loiv->next == 0)
   {
-    fprintf (stderr, "Conversion from gausscode to DTcode is not implemented in this situation\n");
+    /* special case of knot */
+    newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV (loiv->len/2));
+    newloiv->type = LOIV_ISDTCODE;
+    newloiv->len = newloiv->dim = loiv->len/2;
+    newloiv->next = 0;
+    newloiv->handedness = 0;
+    if (loiv->handedness) newloiv->handedness = (int *) malloc (loiv->len/2 * sizeof(int));
+    gauss2dt_knot (loiv, newloiv->vec, newloiv->handedness);
+
+    return (newloiv);
+  }
+
+  if (check_gauss_compat(loiv) == 0)
+  {
+    fprintf (stderr, "Gauss code has starting points incompatible with corresponing DTcode\n");
     return (0);
   }
 
-  newloiv = (struct vecofintlist *) malloc (SIZEOFLOIV (loiv->len/2));
-  gauss2dt_knot (loiv, newloiv->vec, 0);
-  newloiv->type = LOIV_ISDTCODE;
-  newloiv->len = newloiv->dim = loiv->len/2;
-  newloiv->next = 0;
-  newloiv->handedness = 0;
+  numnodes = 0;
+  prevnlv = 0;
+  for (lv = loiv; lv; lv = lv->next)
+  {
+    assert ((lv->len % 2) == 0);
+    numnodes += lv->len/2;
+    nlv = (struct vecofintlist *) malloc (SIZEOFLOIV (lv->len/2));
+    nlv->next = 0;
+    nlv->len = nlv->dim = lv->len/2;
+    nlv->handedness = 0;
+    for (i = 0; i < nlv->len; i++) nlv->vec[i] = 0;
+    if (prevnlv)
+    {
+      prevnlv->next = nlv;
+    } else {
+      newloiv = nlv;
+      newloiv->type = LOIV_ISDTCODE;
+    }
+    prevnlv = nlv;
+  }
 
+  node_label = (int *) malloc (numnodes*sizeof(int));
+  dt_involution = (int *) malloc (2*numnodes*sizeof(int));
+  dt_sign = (int *) malloc (2*numnodes*sizeof(int));
+  dt_realization = (int *) malloc (2*numnodes*sizeof(int));
+  for (i = 0; i < 2*numnodes; i++) dt_realization[i] = 0;
+
+  /* table of node names by looking at odd positions */
+  for (lv = loiv, j = 0; lv; lv = lv->next)
+  {
+    for (i = 0; i < lv->len; i += 2)
+    {
+      dt_sign[2*j] = 1;
+      if (lv->vec[i] < 0) dt_sign[2*j] = -1;
+      if (lv->handedness)
+      {
+        dt_realization[2*j] = -lv->handedness[i];
+        dt_realization[2*j+1] = -lv->handedness[i+1];
+      }
+      node_label[j++] = abs(lv->vec[i]);
+    }
+  }
+
+  for (lv = loiv, j = 0; lv; lv = lv->next)
+  {
+    for (i = 1; i < lv->len; i += 2)
+    {
+      /* search corresponding node */
+      found = 0;
+      for (k = 0; k < numnodes; k++)
+      {
+        if (abs(lv->vec[i]) == node_label[k])
+        {
+          found = 1;
+          dt_involution[2*j + 1] = 2*k;
+          dt_involution[2*k] = 2*j + 1;
+          break;
+        }
+      }
+      j++;
+      assert (found == 1);
+    }
+  }
+
+  for (i = 0; i < numnodes; i++)
+  {
+    dt_sign[dt_involution[2*i]] = - dt_sign[2*i];
+    if (dt_realization[dt_involution[2*i]]) dt_realization[2*i] = - dt_realization[dt_involution[2*i]];
+    //if (dt_realization[2*i]) dt_realization[dt_involution[2*i]] = - dt_realization[2*i];
+  }
+
+  for (nlv = newloiv, j = 0; nlv; nlv = nlv->next)
+  {
+    for (i = 0; i < nlv->len; i++)
+    {
+      nlv->vec[i] = dt_sign[j]*(dt_involution[j] + 1);
+      if (dt_realization[j])
+      {
+        if (nlv->handedness == 0)
+        {
+          nlv->handedness = (int *) malloc (nlv->len*sizeof(int));
+          for (k = 0; k < nlv->len; k++) nlv->handedness[k] = 0;
+        }
+        nlv->handedness[i] = dt_realization[j];
+      }
+      j += 2;
+    }
+  }
+
+  free (node_label);
+  free (dt_involution);
+  free (dt_sign);
+  free (dt_realization);
   return (newloiv);
 }
 
@@ -674,6 +723,38 @@ gauss2dt_knot (struct vecofintlist *loiv, int *vecofint, int *handedness)
   free (nodeinfo2);
 
   return;
+}
+
+/*
+ * check if gauss code (of link) has starting points compatible with the
+ * coversion into dtcode (i.e., lead to an odd-even pairint)
+ */
+
+int
+check_gauss_compat (struct vecofintlist *loiv)
+{
+  int i, j;
+  struct vecofintlist *lv1, *lv2;
+
+  for (lv1 = loiv; lv1; lv1 = lv1->next)
+  {
+    for (lv2 = lv1; lv2; lv2 = lv2->next)
+    {
+      if (lv1 == lv2) continue;
+      for (i = 0; i < lv1->len; i++)
+      {
+        for (j = 0; j < lv2->len; j++)
+        {
+          if (abs(lv1->vec[i]) == abs(lv2->vec[j]))
+          {
+            if (((i + j) % 2) != 1) return (0);
+            if (lv1->vec[i] != -lv2->vec[j]) return (0);
+          }
+        }
+      }
+    }
+  }
+  return (1);
 }
 
 /*

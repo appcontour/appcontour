@@ -1,3 +1,12 @@
+2018.12.07
+$ rdt="dtcode {[4> 8 10 -14 2 -16 -18 -6 -12]}"
+$ echo "$rdt" | ./contour gausscode
+gausscode {{1< -5 2 -1> 3 8 -4 -2 5 -3 -6 9 -7 4 -8 6 -9 7}}
+$ echo "$rdt" | ./contour gausscode | ./contour dtcode
+Conversion from gausscode to DTcode is not implemented in this situation
+gausscode {{1< -5 2 -1> 3 8 -4 -2 5 -3 -6 9 -7 4 -8 6 -9 7}}
+
+
 2018.12.06 (SOLVED)
 $ echo "dtcode {[6> -8][-10 12 -14 2 -4]}" | ./contour --out fg
 contour: readdtcode.c:99: readdtcode2loiv: Assertion `lv->handedness == 0' failed.

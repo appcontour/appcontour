@@ -16,3 +16,5 @@ Ideal [
 Linking number: 5
 L7n2 link by its (realized) dtcode
 0
+convert Gauss code of L6a4 (borromean rings) to dtcode
+dtcode {[6> 8][10 12][2 4]}

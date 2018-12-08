@@ -20,7 +20,6 @@ struct vecofintlist {
 /* prototypes */
 
 struct vecofintlist *readknotscape (FILE *file, struct sketch **sketchpt);
-struct vecofintlist *readdtcode2loiv (FILE *file);
 struct vecofintlist *readnakedvecofintlist (FILE *file, int type);
 struct vecofintlist *readvecofintlist (FILE *file, int type);
 void freeloiv (struct vecofintlist *loiv);
@@ -32,6 +31,7 @@ struct vecofintlist *gausscode_link_to_knot (struct vecofintlist *loiv);
 struct vecofintlist *gausscode2dtcode (struct vecofintlist *loiv);
 struct vecofintlist *dtcode2gausscode (struct vecofintlist *loiv);
 void gauss2dt_knot (struct vecofintlist *loiv, int *vecofint, int *handedness);
+int check_gauss_compat (struct vecofintlist *loiv);
 struct sketch *orientedgauss2sketch (struct vecofintlist *loiv);
 void inherit_gauss2gauss (struct vecofintlist *loiv_knot, struct vecofintlist *loiv_link, int *dt_realization);
 struct sketch *realize_dtcode (int numnodes, int *vecofint, int *gregionsign);
