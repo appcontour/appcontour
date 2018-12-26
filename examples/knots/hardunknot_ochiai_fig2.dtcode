@@ -1,0 +1,28 @@
+#
+# Ochiai, Non-trivial projections of the trivial knot
+# page 5, figure 2 (45 crossings)
+#
+# http://repository.kulib.kyoto-u.ac.jp/dspace/handle/2433/99940
+#
+# use option "--left" to get the same orientation as in the paper
+#
+# e.g. contour --out fg --left <this-file>
+#
+#
+# This *might* be the unknot cited in https://en.wikipedia.org/wiki/Unknotting_problem
+# [...]One of Ochiai's unknots featuring 139 vertices[5], for example, was originally
+# unknotted by computer in 108 hours[6], but this time has been reduced in more recent
+# research to 10 minutes.[7]
+#
+# the picture in [Ladd-Kavraki] is not sufficient to establish this
+# One should have a look at:
+#
+# [Grzeszczuk,Huang,Kauffman: Physically-based stochastic simplification of mathematical knots.
+#  IEEE Transactions on Visualization and Computer Graphics 1997]
+#
+
+dtcode {
+[34 -36 14 18 42 56 -80 64 -40 8 66 2 -62 -58 44 70 68 -24
+ 22 -20 6 -82 52 76 74 -72 28 12 54 88 -90 -4 16 -38 32 -84
+ -86 48 60 -26 -10 30 -50 46 78]
+}
