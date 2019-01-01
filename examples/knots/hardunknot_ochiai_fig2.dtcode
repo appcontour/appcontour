@@ -20,6 +20,8 @@
 # [Grzeszczuk,Huang,Kauffman: Physically-based stochastic simplification of mathematical knots.
 #  IEEE Transactions on Visualization and Computer Graphics 1997]
 #
+# BTW, trying the command above with "--right" (the mirror image) does not give the
+# expected trivial presentation of Z
 
 dtcode {
 [34 -36 14 18 42 56 -80 64 -40 8 66 2 -62 -58 44 70 68 -24
