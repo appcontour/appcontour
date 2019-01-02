@@ -22,6 +22,24 @@
 #
 # BTW, trying the command above with "--right" (the mirror image) does not give the
 # expected trivial presentation of Z
+#
+# about this, this is an excerpt of an email from Yi-Sheng Wang:
+#
+#> $ contour --out fg --right hardunknot_ochiai_fig2.dtcode
+#> Finitely presented group with 2 generators
+#> <a,b; aBaBB>
+#
+#> And I hope this is actually isomorphic to Z.
+#
+#Yes. I think it is. We may let c be aB and get <a,b,c; ccB,CaB>, and removing
+#a by the second relator, we get <b,c;ccB>. Hence, b is cc, and the group is
+#isomorphic to <c>.
+#
+#So, it seems, to some extent, the presentation of a knot group computed by
+#appcontour changes significantly when computing the mirror of the knot.
+#
+
+yisheng
 
 dtcode {
 [34 -36 14 18 42 56 -80 64 -40 8 66 2 -62 -58 44 70 68 -24
