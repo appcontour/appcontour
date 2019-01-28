@@ -137,6 +137,7 @@ count_sl2zp_cclasses (struct presentationlist *pstlist, int p, int *results)
               sl2_map_print_element (sl2vec, sl2vecinv, pstl->p->gennum, element, p, 0);
             }
           }
+          printf ("====== End ============================\n");
         }
       }
     }
@@ -607,6 +608,7 @@ count_psl2q_cclasses (struct presentationlist *pstlist, int q, int *results)
               sl2_map_print_element (sl2vec, sl2vecinv, pstl->p->gennum, element, q, 1 /* up to sign */);
             }
           }
+          printf ("====== End ============================\n");
         }
       }
     }
@@ -911,6 +913,7 @@ count_sn_cclasses (struct presentationlist *pstlist, int n, int *results)
               sn_map_print_element (snvec, snvecinv, pstl->p->gennum, element, n);
             }
           }
+          printf ("====== End ============================\n");
         }
       }
     }
