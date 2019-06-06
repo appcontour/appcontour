@@ -200,10 +200,16 @@ function zorkdescribepairs ()
         child=$comp1
       fi
       if [ -z "$fgoption" ]; then continue; fi
-      fg=`$ccontour -q extractcc $comp1,$comp2 $file 2>/dev/null | $ccontour -q fg $fgoption 2>/dev/null`
-      relators=`echo $fg | cut -f2 -d';' | cut -f1 -d'>'`
-      relators=`echo $relators`
-      if [ -z "$relators" ]
+      # fg=`$ccontour -q extractcc $comp1,$comp2 $file 2>/dev/null | $ccontour -q fg $fgoption 2>/dev/null`
+      # relators=`echo $fg | cut -f2 -d';' | cut -f1 -d'>'`
+      # relators=`echo $relators`
+      # if [ -z "$relators" ]
+      # then
+      #   echo "The ${description[$comp1]} and the ${description[$comp2]} are not linked."
+      #   continue
+      # fi
+      deficiency=`getdeficiency $comp1 $comp2 $file $fgoption`
+      if [ "$deficiency" -ge "2" ]
       then
         echo "The ${description[$comp1]} and the ${description[$comp2]} are not linked."
         continue
@@ -212,8 +218,10 @@ function zorkdescribepairs ()
       if [ "$linking" = "0" ]
       then
         alexander=`getalexanderlink2 $comp1 $comp2 $file $fgoption`
-        apparently="linked"
-        if [ -z "$alexander" ]; then apparently="apparently linked"; fi
+        apparently="apparently linked"
+        #
+        # I can't remember why this should be so!  Commented out!  [MP]
+        #if [ -n "$alexander" ]; then apparently="linked"; fi
         if [ -n "$parent" ]
         then
           echo "The ${description[$child]} is $apparently inside the ${description[$parent]}."
@@ -289,6 +297,17 @@ function getalexanderlink2 ()
   if [ "$alexander" = "[-0]" ]; then alexander=""; fi
   if [ "$alexander" = "-[+0]" ]; then alexander=""; fi
   echo $alexander
+}
+
+function getdeficiency ()
+{
+  comp1=$1
+  comp2=$2
+  file=$3
+  sideopt=$4
+
+  deficiency=`$ccontour extractcc $comp1,$comp2 $file 2>/dev/null | $ccontour deficiency $sideopt -q 2>/dev/null`
+  echo $deficiency
 }
 
 declare -a holes
