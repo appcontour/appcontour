@@ -399,6 +399,7 @@ main (int argc, char *argv[])
       printf ("   abbreviations: fg, ifg, ofg\n");
       printf ("  alexander: compute Alexander polynomial of fundamental group\n");
       printf ("  linkingnumber: compute linking number from fundamental group\n");
+      printf ("  deficiency: print deficiency of computed fundamental group\n");
       printf ("  abelianizedfundamental, insideabelianizedfundamental, outsideabelianizedfundamental\n");
       printf ("   abbreviations: afg, iafg, oafg\n");
       printf ("  scharacteristic, icharacteristic, ocharacteristic\n");
@@ -590,6 +591,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"insidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_INTERNAL;}
     if (strcmp(argv[i],"ofg") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"outsidefundamental") == 0) {action = ACTION_FUNDAMENTAL; fg_type=FG_EXTERNAL;}
+    if (strcmp(argv[i],"deficiency") == 0) action = ACTION_DEFICIENCY;
     if (strcmp(argv[i],"afg") == 0) action = ACTION_AFUNDAMENTAL;
     if (strcmp(argv[i],"abelianizedfundamental") == 0) action = ACTION_AFUNDAMENTAL;
     if (strcmp(argv[i],"iafg") == 0) {action = ACTION_AFUNDAMENTAL; fg_type=FG_INTERNAL;}
@@ -1336,6 +1338,7 @@ main (int argc, char *argv[])
     case ACTION_FOXJACOBIAN:
     case ACTION_ALEXANDER:
     case ACTION_LINKINGNUMBER:
+    case ACTION_DEFICIENCY:
     globals.focus_on_fundamental++;
     tok = gettoken (infile);
     ungettoken (tok);
@@ -1367,6 +1370,10 @@ main (int argc, char *argv[])
             case ACTION_LINKINGNUMBER:
               if (globals.simplifypresentation) simplify_presentation (p);
               linkingnumber (p);
+              break;
+            case ACTION_DEFICIENCY:
+              if (globals.simplifypresentation) simplify_presentation (p);
+              print_deficiency (p);
               break;
           }
           break;

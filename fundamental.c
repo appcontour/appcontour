@@ -63,6 +63,10 @@ compute_fundamental (struct ccomplex *cc, int action)
         if (globals.simplifypresentation) simplify_presentation (cccc->p);
         linkingnumber (cccc->p);
         break;
+      case ACTION_DEFICIENCY:
+        if (globals.simplifypresentation) simplify_presentation (cccc->p);
+        print_deficiency (cccc->p);
+        break;
       case ACTION_CCCOUNTSL2ZP:
         if (globals.simplifypresentation) simplify_presentation (cccc->p);
         cccountsl2zp (cccc->p);
@@ -105,6 +109,21 @@ abelianized_fundamental_group (struct presentation *p)
   if (interactive) fg_interactive (p);
   print_invariant_factors (p);
   if (verbose) print_exponent_matrix (p);
+}
+
+void
+print_deficiency (struct presentation *p)
+{
+  struct presentationrule *r;
+  int deficiency;
+
+  if (verbose >= 2) print_presentation (p);
+  if (interactive >= 2) fg_interactive (p);
+  deficiency = p->gennum;
+  for (r = p->rules; r; r = r->next) deficiency--;
+  if (quiet) printf ("%d\n", deficiency);
+    else printf ("Deficiency at least: %d\n", deficiency);
+  return;
 }
 
 /*

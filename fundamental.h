@@ -126,6 +126,7 @@ struct presentationrule {
 
 void compute_fundamental (struct ccomplex *cc, int action);
 void fundamental_group (struct presentation *p);
+void print_deficiency (struct presentation *p);
 void abelianized_fundamental_group (struct presentation *p);
 int complex_characteristic (struct ccomplex *cc);
 struct presentation *compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc);

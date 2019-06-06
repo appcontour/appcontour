@@ -72,6 +72,7 @@
 #define ACTION_GAUSSCODE 64
 #define ACTION_RGAUSSCODE 65  // not implemented!
 #define ACTION_WIRTINGER 66
+#define ACTION_DEFICIENCY 67
 
 #define ACTION_NEWFEATURE 999
 
