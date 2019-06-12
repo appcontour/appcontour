@@ -7,6 +7,7 @@ function usage ()
   echo "usage: $0 [-o][-z] <contour-description-file>"
   echo "  option -z gives zork-like description with orientation information"
   echo "  option -o gives a description with orientation information"
+  echo "  use '-' as <contour-description-file> if description on standard-input"
 }
 
 function mynumber ()
@@ -310,6 +311,12 @@ function getdeficiency ()
   echo $deficiency
 }
 
+function myexit ()
+{
+  if [ -n "$tmpfile" ]; then rm $tmpfile; fi
+  exit $1
+}
+
 declare -a holes
 declare -a description
 declare -a longdescription
@@ -379,6 +386,15 @@ then
   exit 1
 fi
 
+tmpfile=""
+
+if [ "$file" = "-" ]
+then
+  tmpfile="/tmp/contour_describe_$$.sketch"
+  cat >>$tmpfile
+  file=$tmpfile
+fi
+
 #
 # number command is contained in the "bsd-games" package
 # and converts a number to english words, like one, two, three,...
@@ -394,7 +410,7 @@ status=$?
 if [ "$status" = "10" ]
 then
   echo "Cannot find file $file"
-  exit $status
+  myexit $status
 fi
 
 if [ "$status" != "0" ]
@@ -405,7 +421,7 @@ then
   else
     echo "This is not a contour with Huffman labelling"
   fi
-  exit 2
+  myexit 2
 fi
 
 cc=`$ccontour countcc $file -q 2>/dev/null`
@@ -612,3 +628,5 @@ else
 
   echo "."
 fi
+
+myexit 0
