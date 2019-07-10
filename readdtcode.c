@@ -1480,6 +1480,8 @@ readknotscape (FILE *file, struct sketch **sketchpt)
   loiv = (struct vecofintlist *) malloc (SIZEOFLOIV(crossings));
   loiv->len = crossings;
   loiv->type = LOIV_ISDTCODE;
+  loiv->next = 0;
+  loiv->handedness = 0;
   dtcode = loiv->vec;
 
   //dtcode = (int *) malloc (crossings *sizeof (int));
