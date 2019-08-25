@@ -1716,6 +1716,16 @@ open_description_file (char *arg, int argnum)
           if (infile) return (infile);
           perror ("Cannot open corresponding handlebody-knot file");
           exit (11);
+        case 'h':
+          strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
+          strncat (examplesfilename, "/handlebody_knots/hl", MAXFILELENGTH);
+          strncat (examplesfilename, &arg[2], MAXFILELENGTH);
+          strncat (examplesfilename, ".knot", MAXFILELENGTH);
+          infile = fopen (examplesfilename, "r");
+          if (infile && quiet == 0) fprintf (stderr, "Reading from file %s\n", examplesfilename);
+          if (infile) return (infile);
+          perror ("Cannot open corresponding handlebody-link file");
+          exit (11);
       }
     }
   }
@@ -1785,8 +1795,19 @@ check_basic_knotname (char *arg)
       return (0);
 
     case 'H':
-      if (arg[1] != 'K') return (0);
-      if (isdigit (arg[2])) return ('H');
+      switch (arg[1])
+      {
+        case 'K':
+          if (isdigit (arg[2])) return ('H');
+          return (0);
+
+        case 'L':
+          if (isdigit (arg[2])) return ('h');
+          return (0);
+
+        default:
+          return (0);
+      }
       return (0);
   }
   return (0);
