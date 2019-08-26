@@ -1,0 +1,13 @@
+#
+# handlebody-link 6_2 in our table
+#
+knot {
+ ^   ^   ;
+| X  ^ | ;
+| X | X  ;
+ y | x | ;
+ |  y || ;
+ |   x | ;
+ |   x | ;
+   U  U  ;
+}
