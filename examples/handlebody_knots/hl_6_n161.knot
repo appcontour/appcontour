@@ -1,5 +1,6 @@
 #
 # handlebody-link 6_2 in our table
+# (same ks_A4, ks_A5 and ks_A6)
 #
 knot {
   ^   ^   ;
