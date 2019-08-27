@@ -5,6 +5,7 @@
 
 list1="4_1 5_1 6_1 6_2 6_3"
 list2="4_1 6_1 6_3"
+list3="6_5 6_6"
 
 prefix="examples/handlebody_knots"
 
@@ -28,6 +29,18 @@ res=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour
 echo "SPLIT link:$group:$res"
 
 for num in $list2
+do
+  file="$prefix/hl${num}.knot"
+  res=`./contour -q ks_$group --out $file`
+  echo "$num:$group:$res"
+done
+
+group="A4"
+
+res=`./contour union examples/knots/knot_0_1.knot $prefix/hk4_1.knot | ./contour --out -q ks_$group`
+echo "SPLIT link with HK4_1:$group:$res"
+
+for num in $list3
 do
   file="$prefix/hl${num}.knot"
   res=`./contour -q ks_$group --out $file`
