@@ -7,15 +7,19 @@ SPLIT link:A4:93
 6_3:A4:49
 6_7:A4:69
 6_8:A4:53
+6_11:A4:61
 SPLIT link:A5:1862
 4_1:A5:320
 5_1:A5:347
 6_1:A5:320
 6_3:A5:250
 6_8:A5:314
+6_11:A5:725
 SPLIT link with HK4_1:A4:141
 6_5:A4:57
 6_6:A4:109
-handlebody + two other components
+handlebody + two loops
 6_4:A4:163
 6_9:A4:171
+6_10:A4:251
+6_10_fake:A4:355

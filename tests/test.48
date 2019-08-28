@@ -3,10 +3,10 @@
 #testname:handlebody links
 #
 
-list1="4_1 5_1 6_1 6_2 6_3 6_7 6_8"
-list2="4_1 5_1 6_1 6_3 6_8"
+list1="4_1 5_1 6_1 6_2 6_3 6_7 6_8 6_11"
+list2="4_1 5_1 6_1 6_3 6_8 6_11"
 list3="6_5 6_6"
-list4="6_4 6_9"
+list4="6_4 6_9 6_10 6_10_fake"
 
 prefix="examples/handlebody_knots"
 
@@ -48,7 +48,7 @@ do
   echo "$num:$group:$res"
 done
 
-echo "handlebody + two other components"
+echo "handlebody + two loops"
 
 for num in $list4
 do
