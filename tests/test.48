@@ -6,7 +6,7 @@
 list1="4_1 5_1 6_1 6_2 6_3 6_7 6_8 6_11"
 list2="4_1 5_1 6_1 6_3 6_8 6_11"
 list3="6_5 6_6"
-list4="6_4 6_9 6_10 6_10_fake 6_12 6_13 6_14"
+list4="6_4 6_9 6_10 6_10_fake 6_12 6_13 6_14 6_15"
 
 prefix="examples/handlebody_knots"
 
@@ -14,37 +14,37 @@ echo "links from the table"
 
 group="A4"
 
-res=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out -q ks_$group`
+res=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out --inner -q ks_$group`
 echo "SPLIT link:$group:$res"
 
 for num in $list1
 do
   file="$prefix/hl${num}.knot"
-  res=`./contour -q ks_$group --out $file`
+  res=`./contour -q ks_$group --out --inner $file`
   echo "$num:$group:$res"
 done
 
 group="A5"
 
-res=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out -q ks_$group`
+res=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out --inner -q ks_$group`
 echo "SPLIT link:$group:$res"
 
 for num in $list2
 do
   file="$prefix/hl${num}.knot"
-  res=`./contour -q ks_$group --out $file`
+  res=`./contour -q ks_$group --out --inner $file`
   echo "$num:$group:$res"
 done
 
 group="A4"
 
-res=`./contour union examples/knots/knot_0_1.knot $prefix/hk4_1.knot | ./contour --out -q ks_$group`
+res=`./contour union examples/knots/knot_0_1.knot $prefix/hk4_1.knot | ./contour --out --inner -q ks_$group`
 echo "SPLIT link with HK4_1:$group:$res"
 
 for num in $list3
 do
   file="$prefix/hl${num}.knot"
-  res=`./contour -q ks_$group --out $file`
+  res=`./contour -q ks_$group --out --inner $file`
   echo "$num:$group:$res"
 done
 
@@ -53,6 +53,6 @@ echo "handlebody + two loops"
 for num in $list4
 do
   file="$prefix/hl${num}.knot"
-  res=`./contour -q ks_$group --out $file`
+  res=`./contour -q ks_$group --out --inner $file`
   echo "$num:$group:$res"
 done
