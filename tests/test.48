@@ -3,10 +3,10 @@
 #testname:handlebody links
 #
 
-list1="4_1 5_1 6_1 6_2 6_3 6_7_old 6_8_old 6_11_old"
-list2="4_1 5_1 6_1 6_3 6_8_old 6_11_old"
-list3="6_5_old 6_6_old"
-list4="6_4_old 6_9_old 6_10_old 6_10_old_fake 6_12 6_13 6_14 6_15"
+list1="4_1 5_1 6_1 6_2 6_3 6_6_new 6_7_new 6_8_new"
+list2="4_1 5_1 6_1 6_3 6_7_new 6_8_new"
+list3="6_4_new 6_5_new"
+list4="6_9_new 6_10_new 6_11_new 6_11_new_fake 6_12 6_13 6_14 6_15"
 
 prefix="examples/handlebody_knots"
 
