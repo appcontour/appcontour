@@ -1,0 +1,15 @@
+#
+# fake handlebody-link 6_10 in our table
+# one of the two lower crossings is reverted, so that
+# the lower ring is splitted
+#
+knot {
+ ^ ^ ^  ;
+| X x | ;
+| X x | ;
+ y U y  ;
+ | ^ |  ;
+  X x   ;
+ | U |  ;
+   U    ;
+}
