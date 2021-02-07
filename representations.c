@@ -836,7 +836,7 @@ cccountsn_list (struct presentationlist *pstlist)
 
 /*
  * computing the number of conjugate classes of homomorphisms from the
- * fundamental group into Sn or An (based on globals.onlyeven
+ * fundamental group into Sn or An (based on globals.onlyeven)
  */
 
 void
