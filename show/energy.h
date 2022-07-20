@@ -1,9 +1,9 @@
-double k1_coeff;
-double k2_coeff;
-double k3_coeff;
-double k4_coeff;
-double k5_coeff;
-int allowrepulsion;
+extern double k1_coeff;
+extern double k2_coeff;
+extern double k3_coeff;
+extern double k4_coeff;
+extern double k5_coeff;
+extern int allowrepulsion;
 
 void energyinit (void);
 void tryrepulsiveenergy (struct polyline *contour);

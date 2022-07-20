@@ -28,6 +28,13 @@
   #define CONTOUR_PATH "/usr/local/bin/contour"
 #endif
 
+double k1_coeff;
+double k2_coeff;
+double k3_coeff;
+double k4_coeff;
+double k5_coeff;
+int allowrepulsion;
+
 #include "showcontour.h"
 #include "morseevent.h"
 #include "doptimize.h"
