@@ -10,6 +10,15 @@ then
   exit 999
 fi
 
+p=$[ $p ]
+q=$[ $q ]
+
+if [ "$p" -lt "2" -o "$q" -lt "2" ]
+then
+  echo "Both p and q must be larger than 1"
+  exit 3
+fi
+
 function rawbraid ()
 {
   p=$1
@@ -17,40 +26,22 @@ function rawbraid ()
 
   for i in `seq $p`
   do
-    case $q in
-#      2)
-#        echo "X"
-#      ;;
-#
-#      3)
-#        echo "|X"
-#        echo "X|"
-#      ;;
-
-      2|3|4|5)
-        moves=$[ $q - 1 ]
-        for k in `seq $moves`
-        do
-          vertsbefore=$[ $moves - $k ]
-          vertsafter=$[ $k - 1 ]
-          for s in `seq $vertsbefore`
-          do
-            echo -n "|"
-          done
-          echo -n "X"
-          for s in `seq $vertsafter`
-          do
-            echo -n "|"
-          done
-          echo ""
-        done
-      ;;
-
-      *)
-        echo "Invalid value for q: $q" >&2
-        exit 10
-      ;;
-    esac
+    moves=$[ $q - 1 ]
+    for k in `seq $moves`
+    do
+      vertsbefore=$[ $moves - $k ]
+      vertsafter=$[ $k - 1 ]
+      for s in `seq $vertsbefore`
+      do
+        echo -n "|"
+      done
+      echo -n "X"
+      for s in `seq $vertsafter`
+      do
+        echo -n "|"
+      done
+      echo ""
+    done
   done
 }
 
@@ -74,13 +65,13 @@ function braidtoknot ()
       echo -n " "
     done
     echo -n "^ "
-    for m in `seq $verts`
-    do
-      echo -n "|"
-    done
     for m in `seq $spaces`
     do
       echo -n " "
+    done
+    for m in `seq $verts`
+    do
+      echo -n "|"
     done
     echo ";"
   done
@@ -108,13 +99,13 @@ function braidtoknot ()
       echo -n " "
     done
     echo -n "U "
-    for m in `seq $verts`
-    do
-      echo -n "|"
-    done
     for m in `seq $spaces`
     do
       echo -n " "
+    done
+    for m in `seq $verts`
+    do
+      echo -n "|"
     done
     echo ";"
   done
