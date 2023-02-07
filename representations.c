@@ -807,7 +807,10 @@ cccountsn (struct presentation *pst)
   count_sn_cclasses (&pstlist, n, results);
 
   if (quiet) printf ("%d\n", *results);
-   else printf ("Result: %d\n", *results);
+   else {
+    printf ("Result: %d\n", *results);
+    if (globals.onlyeven && ! globals.inner) printf ("(use --inner to count up to conjugation in An)\n");
+  }
 
   return (1);
 }

@@ -1,3 +1,6 @@
+#
+# lower case 'x': overpass is '\' (backslash)
+#
 knot {
    ^ ^ ;
   ( x );
