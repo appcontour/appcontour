@@ -1,12 +1,16 @@
 #
-# handlebody-link 6_7 in our table
+# handlebody-link 6_6 in our table
+#
+# this is reidemeister equivalent to 6_6 of table 1.
+# (no IH moves required)
+# [checked 2023-02-10]
 #
 knot {
  ^ ^  ;
-| x | ;
-| x | ;
-| x | ;
-| x | ;
+| X | ;
+| X | ;
+| X | ;
+| X | ;
  y y  ;
 | ^ | ;
 || x  ;
