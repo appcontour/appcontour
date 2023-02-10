@@ -1,13 +1,15 @@
 #
 # handlebody-link 6_2 in our table
 #
+# reverted front-back 2023-02-10
+#
 knot {
  ^ ^  ^  ;
-| X  X | ;
-| X | x  ;
+| x  x | ;
+| x | X  ;
 || | y | ;
 ||  U h  ;
-|  X  |  ;
-|  X  |  ;
+|  x  |  ;
+|  x  |  ;
  U   U   ;
 }

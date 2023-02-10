@@ -1,11 +1,15 @@
 #
-# handlebody-link 4_1 in our table
+# handlebody-link 5_1 in our table
+#
+# note: the diagram is equivalent to that in our
+# table 1.  The loop and the upper trivalent node
+# are slided under the strand at their right
 #
 knot {
- ^ ^  ;
-| X h ^;
- x x  x|;
-| U | |X;
-  y   U|;
-    U   ;
+ ^ ^     ;
+| X h  ^ ;
+ x x  x |;
+| U || X ;
+  y   U |;
+    U    ;
 }
