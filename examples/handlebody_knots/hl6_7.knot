@@ -1,0 +1,13 @@
+#
+# handlebody-link 6_7 in our table
+# (chiral)
+# checked 2023-02-11
+knot {
+   ^    ;
+  h | ^ ;
+ |^| X |;
+ x x X |;
+| X y U ;
+| X |   ;
+ U U    ;
+}

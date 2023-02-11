@@ -1,6 +1,7 @@
 #
-# handlebody-link 6_4 in our table
-#
+# handlebody-link 6_9 in our table 
+# (amphichiral; some moves required; no IH-move used)
+# checked 2023-02-11
 knot {
    ^    ;
 |  ^  | ;
