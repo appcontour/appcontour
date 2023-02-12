@@ -1,9 +1,37 @@
 #!/bin/bash
 #
-#testname:handlebody links
+#testname:handlebody links (takes almost one minute)
 #
 
 echo "Handlebody links up to 6 crossings"
+
+function computeA4A5 ()
+{
+  while read num
+  do
+    file="$prefix/hl${num}.knot"
+    res4=`./contour -q ks_A4 --out --inner $file`
+    res5=`./contour -q ks_A5 --out --inner $file`
+    echo "$num:$res4:$res5"
+  done
+}
+
+function distinguish ()
+{
+  while read num
+  do
+    file="$prefix/hl${num}.knot"
+    ccnum=`./contour -q countcc $file`
+    ccnums=`seq $ccnum`
+    result=$(for comp in $ccnums
+    do
+      ./contour -q removecc $comp $file | ./contour -q ks_A4 --out --inner
+    done | sort -n)
+    result=`echo $result`
+    echo "$num:$result"
+  done
+}
+
 echo "<name>:<ks_A4>:<ks_A5>"
 
 nums=`seq 15`
@@ -44,6 +72,9 @@ do
 done
 list4c=`echo $list4c`
 
+############################################################
+############################################################
+
 echo -n "Handlebody links with two components:"
 for n in $list2c
 do
@@ -55,17 +86,29 @@ res4=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contou
 res5=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out --inner -q ks_A5`
 echo "SPLIT link:$res4:$res5"
 
-for num in $list2c
-do
-  file="$prefix/hl${num}.knot"
-  res4=`./contour -q ks_A4 --out --inner $file`
-  res5=`./contour -q ks_A5 --out --inner $file`
-  echo "$num:$res4:$res5"
-done
+tablein=`echo "$list2c" | tr " " "\n"`
+table=`echo "$tablein" | computeA4A5`
+echo "$table"
+twins=`echo "$table" | cut -f2,3 -d: | sort | uniq -d`
+
+if [ -n "$twins" ]
+then
+  echo ""
+  echo "There are indistinguishable entries, ks_A4 after removal of each component:"
+  for group in $twins
+  do
+    knots=`echo "$table" | grep "$group" | cut -f1 -d:`
+    echo "$knots" | distinguish
+  done
+  echo
+fi
 
 res4=`./contour union examples/knots/knot_0_1.knot $prefix/hk4_1.knot | ./contour --out --inner -q ks_A4`
 echo "SPLIT link with HK4_1:$res4:---"
 
+############################################################
+
+echo ""
 echo -n "Handlebody links with three components:"
 for n in $list3c
 do
@@ -73,13 +116,28 @@ do
 done
 echo ""
 
-for num in 6_11_fake $list3c
-do
-  file="$prefix/hl${num}.knot"
-  res4=`./contour -q ks_A4 --out --inner $file`
-  res5=`./contour -q ks_A5 --out --inner $file`
-  echo "$num:$res4:$res5"
-done
+res4=`./contour -q ks_A4 --out --inner $prefix/hl6_11_fake.knot`
+res5=`./contour -q ks_A5 --out --inner $prefix/hl6_11_fake.knot`
+echo "6_11_fake:$res4:$res5"
+
+tablein=`echo "$list3c" | tr " " "\n"`
+table=`echo "$tablein" | computeA4A5`
+echo "$table"
+twins=`echo "$table" | cut -f2,3 -d: | sort | uniq -d`
+
+if [ -n "$twins" ]
+then
+  echo ""
+  echo "There are indistinguishable entries, ks_A4 after removal of each component:"
+  for group in $twins
+  do
+    knots=`echo "$table" | grep "$group" | cut -f1 -d:`
+    echo "$knots" | distinguish
+  done
+  echo
+fi
+
+############################################################
 
 echo -n "Handlebody links with four components:"
 for n in $list4c

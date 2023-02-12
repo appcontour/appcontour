@@ -12,6 +12,11 @@ SPLIT link:178:3675
 6_6:130:1380
 6_7:98:597
 6_8:114:1401
+
+There are indistinguishable entries, ks_A4 after removal of each component:
+6_2:4 22
+6_4:4 30
+
 SPLIT link with HK4_1:274:---
 Handlebody links with three components: HL6_9 HL6_10 HL6_11 HL6_12 HL6_13 HL6_14
 6_11_fake:694:18341
@@ -21,5 +26,10 @@ Handlebody links with three components: HL6_9 HL6_10 HL6_11 HL6_12 HL6_13 HL6_14
 6_12:502:5883
 6_13:822:19308
 6_14:486:5876
+
+There are indistinguishable entries, ks_A4 after removal of each component:
+6_11:22 82 178
+6_14:22 82 114
+
 Handlebody links with four components: HL6_15
 6_15:1242:---
