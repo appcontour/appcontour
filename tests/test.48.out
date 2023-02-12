@@ -1,4 +1,5 @@
-links from the table
+Handlebody links up to 6 crossings
+Handlebody links with two components: HL4_1 HL5_1 HL6_1 HL6_2 HL6_3 HL6_4 HL6_5 HL6_6 HL6_7 HL6_8
 SPLIT link:A4:178
 4_1:A4:114
 5_1:A4:98
@@ -18,7 +19,7 @@ SPLIT link:A5:3675
 SPLIT link with HK4_1:A4:274
 6_4:A4:106
 6_5:A4:210
-handlebody + two loops
+Handlebody links with three components: HL6_9 HL6_10 HL6_11 HL6_12 HL6_13 HL6_14
 6_9:A4:310
 6_10:A4:326
 6_11:A4:486
@@ -27,3 +28,4 @@ handlebody + two loops
 6_13:A4:822
 6_14:A4:486
 6_15:A4:1242
+Handlebody links with four components: HL6_15

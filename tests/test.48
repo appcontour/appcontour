@@ -3,14 +3,61 @@
 #testname:handlebody links
 #
 
+echo "Handlebody links up to 6 crossings"
+
+nums=`seq 15`
+list6x=`for n in $nums; do echo -n " 6_${n}"; done`
+listall="4_1 5_1${list6x}"
+prefix="examples/handlebody_knots"
+
+#
+# search for two-component links
+#
+list2c=""
+for n in $listall
+do
+  count=`./contour -q countcc $prefix/hl${n}.knot 2>/dev/null`
+  if [ "$count" = "2" ]; then list2c="$list2c $n"; fi
+done
+list2c=`echo $list2c`
+
+#
+# search for three-component links
+#
+list3c=""
+for n in $listall
+do
+  count=`./contour -q countcc $prefix/hl${n}.knot 2>/dev/null`
+  if [ "$count" = "3" ]; then list3c="$list3c $n"; fi
+done
+list3c=`echo $list3c`
+
+#
+# search for four-component links
+#
+list4c=""
+for n in $listall
+do
+  count=`./contour -q countcc $prefix/hl${n}.knot 2>/dev/null`
+  if [ "$count" = "4" ]; then list4c="$list4c $n"; fi
+done
+list4c=`echo $list4c`
+
+echo -n "Handlebody links with two components:"
+for n in $list2c
+do
+  echo -n " HL${n}"
+done
+echo ""
+
+
+
 list1="4_1 5_1 6_1 6_2 6_3 6_6 6_7 6_8"
 list2="4_1 5_1 6_1 6_3 6_7 6_8"
 list3="6_4 6_5"
 list4="6_9 6_10 6_11 6_11_fake 6_12 6_13 6_14 6_15"
 
-prefix="examples/handlebody_knots"
 
-echo "links from the table"
 
 group="A4"
 
@@ -48,7 +95,12 @@ do
   echo "$num:$group:$res"
 done
 
-echo "handlebody + two loops"
+echo -n "Handlebody links with three components:"
+for n in $list3c
+do
+  echo -n " HL${n}"
+done
+echo ""
 
 for num in $list4
 do
@@ -56,3 +108,11 @@ do
   res=`./contour -q ks_$group --out --inner $file`
   echo "$num:$group:$res"
 done
+
+echo -n "Handlebody links with four components:"
+for n in $list4c
+do
+  echo -n " HL${n}"
+done
+echo ""
+
