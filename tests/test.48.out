@@ -1,31 +1,26 @@
 Handlebody links up to 6 crossings
+<name>:<ks_A4>:<ks_A5>
 Handlebody links with two components: HL4_1 HL5_1 HL6_1 HL6_2 HL6_3 HL6_4 HL6_5 HL6_6 HL6_7 HL6_8
-SPLIT link:A4:178
-4_1:A4:114
-5_1:A4:98
-6_1:A4:90
-6_2:A4:106
-6_3:A4:90
-6_6:A4:130
-6_7:A4:98
-6_8:A4:114
-SPLIT link:A5:3675
-4_1:A5:600
-5_1:A5:660
-6_1:A5:600
-6_3:A5:469
-6_7:A5:597
-6_8:A5:1401
-SPLIT link with HK4_1:A4:274
-6_4:A4:106
-6_5:A4:210
+SPLIT link:178:3675
+4_1:114:600
+5_1:98:660
+6_1:90:600
+6_2:106:689
+6_3:90:469
+6_4:106:689
+6_5:210:4020
+6_6:130:1380
+6_7:98:597
+6_8:114:1401
+SPLIT link with HK4_1:274:---
+WORK IN PROGRESS...
 Handlebody links with three components: HL6_9 HL6_10 HL6_11 HL6_12 HL6_13 HL6_14
+6_11_fake:A4:694
 6_9:A4:310
 6_10:A4:326
 6_11:A4:486
-6_11_fake:A4:694
 6_12:A4:502
 6_13:A4:822
 6_14:A4:486
-6_15:A4:1242
 Handlebody links with four components: HL6_15
+6_15:A4:1242

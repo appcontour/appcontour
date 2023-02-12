@@ -4,6 +4,7 @@
 #
 
 echo "Handlebody links up to 6 crossings"
+echo "<name>:<ks_A4>:<ks_A5>"
 
 nums=`seq 15`
 list6x=`for n in $nums; do echo -n " 6_${n}"; done`
@@ -50,51 +51,22 @@ do
 done
 echo ""
 
+res4=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out --inner -q ks_A4`
+res5=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out --inner -q ks_A5`
+echo "SPLIT link:$res4:$res5"
 
-
-list1="4_1 5_1 6_1 6_2 6_3 6_6 6_7 6_8"
-list2="4_1 5_1 6_1 6_3 6_7 6_8"
-list3="6_4 6_5"
-list4="6_9 6_10 6_11 6_11_fake 6_12 6_13 6_14 6_15"
-
-
-
-group="A4"
-
-res=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out --inner -q ks_$group`
-echo "SPLIT link:$group:$res"
-
-for num in $list1
+for num in $list2c
 do
   file="$prefix/hl${num}.knot"
-  res=`./contour -q ks_$group --out --inner $file`
-  echo "$num:$group:$res"
+  res4=`./contour -q ks_A4 --out --inner $file`
+  res5=`./contour -q ks_A5 --out --inner $file`
+  echo "$num:$res4:$res5"
 done
 
-group="A5"
+res4=`./contour union examples/knots/knot_0_1.knot $prefix/hk4_1.knot | ./contour --out --inner -q ks_A4`
+echo "SPLIT link with HK4_1:$res4:---"
 
-res=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out --inner -q ks_$group`
-echo "SPLIT link:$group:$res"
-
-for num in $list2
-do
-  file="$prefix/hl${num}.knot"
-  res=`./contour -q ks_$group --out --inner $file`
-  echo "$num:$group:$res"
-done
-
-group="A4"
-
-res=`./contour union examples/knots/knot_0_1.knot $prefix/hk4_1.knot | ./contour --out --inner -q ks_$group`
-echo "SPLIT link with HK4_1:$group:$res"
-
-for num in $list3
-do
-  file="$prefix/hl${num}.knot"
-  res=`./contour -q ks_$group --out --inner $file`
-  echo "$num:$group:$res"
-done
-
+echo "WORK IN PROGRESS..."
 echo -n "Handlebody links with three components:"
 for n in $list3c
 do
@@ -102,7 +74,9 @@ do
 done
 echo ""
 
-for num in $list4
+group="A4"
+
+for num in 6_11_fake $list3c
 do
   file="$prefix/hl${num}.knot"
   res=`./contour -q ks_$group --out --inner $file`
@@ -115,4 +89,11 @@ do
   echo -n " HL${n}"
 done
 echo ""
+
+for num in $list4c
+do
+  file="$prefix/hl${num}.knot"
+  res=`./contour -q ks_$group --out --inner $file`
+  echo "$num:$group:$res"
+done
 
