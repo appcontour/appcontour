@@ -66,7 +66,6 @@ done
 res4=`./contour union examples/knots/knot_0_1.knot $prefix/hk4_1.knot | ./contour --out --inner -q ks_A4`
 echo "SPLIT link with HK4_1:$res4:---"
 
-echo "WORK IN PROGRESS..."
 echo -n "Handlebody links with three components:"
 for n in $list3c
 do
@@ -74,13 +73,12 @@ do
 done
 echo ""
 
-group="A4"
-
 for num in 6_11_fake $list3c
 do
   file="$prefix/hl${num}.knot"
-  res=`./contour -q ks_$group --out --inner $file`
-  echo "$num:$group:$res"
+  res4=`./contour -q ks_A4 --out --inner $file`
+  res5=`./contour -q ks_A5 --out --inner $file`
+  echo "$num:$res4:$res5"
 done
 
 echo -n "Handlebody links with four components:"
@@ -93,7 +91,7 @@ echo ""
 for num in $list4c
 do
   file="$prefix/hl${num}.knot"
-  res=`./contour -q ks_$group --out --inner $file`
-  echo "$num:$group:$res"
+  res4=`./contour -q ks_A4 --out --inner $file`
+  echo "$num:$res4:---"
 done
 

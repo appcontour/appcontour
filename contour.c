@@ -69,6 +69,8 @@ main (int argc, char *argv[])
   struct presentation *p;
   struct alexanderideal *ai;
   struct vecofintlist *loiv, *newloiv;
+  int ccnum;
+  struct ccomplexcc *cccc;
 
   ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
@@ -1416,8 +1418,10 @@ main (int argc, char *argv[])
         exit (13);
       }
       ccomplex = compute_cellcomplex (sketch, fg_type);
-      count = complex_collapse (ccomplex);
-      if (debug) printf ("%d pairs of cells collapsed\n", count);
+      if (globals.simplifycomplex) {
+        count = complex_collapse (ccomplex);
+        if (debug) printf ("%d pairs of cells collapsed\n", count);
+      }
       compute_fundamental (ccomplex, action);
     }
     break;
@@ -1478,16 +1482,36 @@ main (int argc, char *argv[])
         exit (13);
       }
       ccomplex = compute_cellcomplex (sketch, fg_type);
-      count = complex_collapse (ccomplex);
-      if (debug) printf ("%d pairs of cells collapsed\n", count);
+      if (globals.simplifycomplex) {
+        count = complex_collapse (ccomplex);
+        if (debug) printf ("%d pairs of cells collapsed\n", count);
+      }
       compute_fundamental (ccomplex, action);
       break;
     }
     break;
 
     case ACTION_NEWFEATURE:
-    printf ("Sorry, there is no new feature to experiment with...\n");
-    exit (14);
+    //printf ("Sorry, there is no new feature to experiment with...\n");
+    //exit (14);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    if (docanonify) canonify (sketch);
+    if (sketch->isempty)
+    {
+      fprintf (stderr, "Cannot compute fundamental group of EMPTY contour\n");
+      exit (13);
+    }
+    assert (fg_type == FG_SURFACE);
+    verbose++;
+    debug++;
+    ccomplex = compute_cellcomplex (sketch, fg_type);
+    //compute_fundamental (ccomplex, action);
+    ccnum = find_spanning_tree (ccomplex);
+    assert (ccnum == 1);
+    cccc = ccomplex->cc;
+    cccc->p = compute_fundamental_single (ccomplex, cccc);
+    fundamental_group (cccc->p);
+
     break;
 
     default:

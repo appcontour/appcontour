@@ -28,7 +28,7 @@ compute_fundamental (struct ccomplex *cc, int action)
   int res, ccnum, errors = 0;
   struct ccomplexcc *cccc;
 
-  complex_melt (cc);
+  if (globals.simplifycomplex) complex_melt (cc);
   if (debug) cellcomplex_checkconsistency (cc);
 
   if (debug) printf ("Constructing spanning tree\n");
@@ -2713,6 +2713,15 @@ find_spanning_tree (struct ccomplex *cc)
     }
   }
   if (computebetti) free (surfcomptag);
+  if (debug)
+  {
+    printf ("Spanning tree:");
+    for (i = 0; i < cc->arcnum; i++)
+    {
+      if (cc->arcs[i].isinspanningtree) printf (" %d", i);
+    }
+    printf ("\n");
+  }
   return (cc->ccnum);
 }
 

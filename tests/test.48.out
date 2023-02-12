@@ -13,14 +13,13 @@ SPLIT link:178:3675
 6_7:98:597
 6_8:114:1401
 SPLIT link with HK4_1:274:---
-WORK IN PROGRESS...
 Handlebody links with three components: HL6_9 HL6_10 HL6_11 HL6_12 HL6_13 HL6_14
-6_11_fake:A4:694
-6_9:A4:310
-6_10:A4:326
-6_11:A4:486
-6_12:A4:502
-6_13:A4:822
-6_14:A4:486
+6_11_fake:694:18341
+6_9:310:1841
+6_10:326:2636
+6_11:486:5876
+6_12:502:5883
+6_13:822:19308
+6_14:486:5876
 Handlebody links with four components: HL6_15
-6_15:A4:1242
+6_15:1242:---
