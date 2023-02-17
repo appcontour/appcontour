@@ -1,0 +1,7 @@
+#
+# taken from http://katlas.math.toronto.edu/wiki/The_Rolfs
+#
+knot {
+  ^ ;
+  U ;
+}
