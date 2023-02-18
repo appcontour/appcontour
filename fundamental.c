@@ -2578,6 +2578,11 @@ compute_cellcomplex (struct sketch *s, int fg_type)
     assert (status);
     printf ("Connected components: %d\n", cc->ccnum);
   }
+  if (! quiet && cc->ccnum > 1 && fg_type == FG_SURFACE)
+  {
+    fprintf (stderr, "Warning: the ordering of the components of the complex is independent of the ordering of\n");
+    fprintf (stderr, "the components as an apparent contour\n");
+  }
   return (cc);
 }
 
