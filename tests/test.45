@@ -13,7 +13,7 @@ do
   echo "Wirtinger presentation for knot $knot with no simplification"
   ./contour wirtinger --nosimplify $knot -Q
   echo "Number of representations of knot $knot in $group:"
-  ./contour wirtinger $knot -Q | ./contour ks_$group -q
+  ./contour wirtinger $knot -Q | ./contour ks_$group --outer -q
 done
 
 echo "trefoil knot with some orientation"

@@ -18,7 +18,7 @@ meridian=`echo "$elements" | cut -f1 -d,`
 longitude=`echo "$elements" | cut -f2 -d,`
 
 echo "Number of representations in $group with added relator ml:"
-echo "fpgroup <$generators;$relators,$meridian$longitude;$meridian,$longitude>" | ./contour ks_$group -q
+echo "fpgroup <$generators;$relators,$meridian$longitude;$meridian,$longitude>" | ./contour ks_$group --outer -q
 
 wirtinger=`echo "$dtcodem" | ./contour wirtinger -q | tr -d ' <>'`
 generators=`echo "$wirtinger" | cut -f1 -d';'`
@@ -29,5 +29,5 @@ meridian=`echo "$elements" | cut -f1 -d,`
 longitude=`echo "$elements" | cut -f2 -d,`
 
 echo "Number of representations in $group with added relator mL:"
-echo "fpgroup <$generators;$relators,$meridian$longitude;$meridian,$longitude>" | ./contour ks_$group -q
+echo "fpgroup <$generators;$relators,$meridian$longitude;$meridian,$longitude>" | ./contour ks_$group --outer -q
 

@@ -809,7 +809,7 @@ cccountsn (struct presentation *pst)
   if (quiet) printf ("%d\n", *results);
    else {
     printf ("Result: %d\n", *results);
-    if (globals.onlyeven && ! globals.inner) printf ("(use --inner to count up to conjugation in An)\n");
+    if (globals.onlyeven && ! globals.outer) printf ("(use --outer to also count up to conjugation in Sn)\n");
   }
 
   return (1);
@@ -1092,7 +1092,7 @@ int
 sn_next_conj (int *perm, int n)
 {
   if (globals.onlyeven == 0) return (sn_next (perm, n));
-  if (globals.inner) return (sn_next_cond (perm, n));
+  if (globals.outer == 0) return (sn_next_cond (perm, n));
   return (sn_next (perm, n));
 }
 

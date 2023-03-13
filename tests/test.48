@@ -10,8 +10,8 @@ function computeA4A5 ()
   while read num
   do
     file="$prefix/hl${num}.knot"
-    res4=`./contour -q ks_A4 --out --inner $file`
-    res5=`./contour -q ks_A5 --out --inner $file`
+    res4=`./contour -q ks_A4 --out $file`
+    res5=`./contour -q ks_A5 --out $file`
     echo "$num:$res4:$res5"
   done
 }
@@ -25,7 +25,7 @@ function distinguish ()
     ccnums=`seq $ccnum`
     result=$(for comp in $ccnums
     do
-      ./contour -q removecc $comp $file | ./contour -q ks_A4 --out --inner
+      ./contour -q removecc $comp $file | ./contour -q ks_A4 --out
     done | sort -n)
     result=`echo $result`
     echo "$num:$result"
@@ -82,8 +82,8 @@ do
 done
 echo ""
 
-res4=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out --inner -q ks_A4`
-res5=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out --inner -q ks_A5`
+res4=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out -q ks_A4`
+res5=`./contour union examples/knots/knot_0_1.knot $prefix/hk0_1.knot | ./contour --out -q ks_A5`
 echo "SPLIT link:$res4:$res5"
 
 tablein=`echo "$list2c" | tr " " "\n"`
@@ -103,7 +103,7 @@ then
   echo
 fi
 
-res4=`./contour union examples/knots/knot_0_1.knot $prefix/hk4_1.knot | ./contour --out --inner -q ks_A4`
+res4=`./contour union examples/knots/knot_0_1.knot $prefix/hk4_1.knot | ./contour --out -q ks_A4`
 echo "SPLIT link with HK4_1:$res4:---"
 
 ############################################################
@@ -116,8 +116,8 @@ do
 done
 echo ""
 
-res4=`./contour -q ks_A4 --out --inner $prefix/hl6_11_fake.knot`
-res5=`./contour -q ks_A5 --out --inner $prefix/hl6_11_fake.knot`
+res4=`./contour -q ks_A4 --out $prefix/hl6_11_fake.knot`
+res5=`./contour -q ks_A5 --out $prefix/hl6_11_fake.knot`
 echo "6_11_fake:$res4:$res5"
 
 tablein=`echo "$list3c" | tr " " "\n"`
@@ -149,7 +149,7 @@ echo ""
 for num in $list4c
 do
   file="$prefix/hl${num}.knot"
-  res4=`./contour -q ks_A4 --out --inner $file`
+  res4=`./contour -q ks_A4 --out $file`
   echo "$num:$res4:---"
 done
 

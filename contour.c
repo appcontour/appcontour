@@ -82,7 +82,7 @@ main (int argc, char *argv[])
   globals.foxd = FOXD_UNDEF;
   globals.rulenames = RULENAMES_NEW;
   globals.shuffle = globals.autosurgery = 0;
-  globals.onlyeven = globals.dontidentify = globals.insist = globals.inner = 0;
+  globals.onlyeven = globals.dontidentify = globals.insist = globals.outer = 0;
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = 0;
   globals.knotname_fallback = 1;
@@ -236,9 +236,9 @@ main (int argc, char *argv[])
       globals.dontidentify++;
       continue;
     }
-    if (strcmp(argv[i],"--inner") == 0)
+    if (strcmp(argv[i],"--outer") == 0)
     {
-      globals.inner++;
+      globals.outer++;
       continue;
     }
     if (strcmp(argv[i],"--insist") == 0)
