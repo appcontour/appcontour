@@ -241,6 +241,12 @@ main (int argc, char *argv[])
       globals.outer++;
       continue;
     }
+    if (strcmp(argv[i],"--inner") == 0)
+    {
+      fprintf (stderr, "Warning: option --inner is now implied by default.  Use --outer to obtain the previous default behaviour\n");
+      globals.outer = 0;
+      continue;
+    }
     if (strcmp(argv[i],"--insist") == 0)
     {
       globals.insist++;

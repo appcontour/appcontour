@@ -809,7 +809,7 @@ cccountsn (struct presentation *pst)
   if (quiet) printf ("%d\n", *results);
    else {
     printf ("Result: %d\n", *results);
-    if (globals.onlyeven && ! globals.outer) printf ("(use --outer to also count up to conjugation in Sn)\n");
+    if (globals.onlyeven && ! globals.outer) fprintf (stderr, "(use --outer to also count up to conjugation in Sn)\n");
   }
 
   return (1);
