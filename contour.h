@@ -104,6 +104,8 @@ struct global_data {
   int q;  // typically a power of a prime
   int n;
   int onlyeven;
+  int summand1cc; // used in connected sum
+  int summand2cc; // used in connected sum
   int outer;  // user wants all "outer" (inner in S_n) conjugacy for A_n
   int dontidentify;  // used in representation.c
   int insist;  // used in representation.c

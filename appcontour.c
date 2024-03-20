@@ -9,6 +9,7 @@ int checkdnodecons (struct border *b, int dd[4]);
 int getdatnode (struct border *b);
 struct border *reverse_border (struct border *);
 void print_ord_tree (int which, int count, int *parents);
+void find_appropriate_glue_point (struct sketch *s1, int cc);
 /* fine prototipi */
 
 /*
@@ -91,6 +92,7 @@ sketch_union (struct sketch *s1, struct sketch *s2)
 int
 sketch_sum (struct sketch *s1, struct sketch *s2)
 {
+  extern struct global_data globals;
   struct borderlist *bl, *bl1, *bl2;
   int ccount;
   int count, count1, count2, i;
@@ -100,17 +102,44 @@ sketch_sum (struct sketch *s1, struct sketch *s2)
   {
     if (find_connected_component_parent (i, s1) < 0) count1++;
   }
+  assert (count1 >= 1);
+  if (count1 > 1 && globals.summand1cc < 0)
+  {
+    fprintf (stderr, "First summand has multiple external components:");
+    for (i = 0; i < ccount; i++)
+    {
+      if (find_connected_component_parent (i, s1) < 0) fprintf (stderr, " %d", i+1);
+    }
+    fprintf (stderr, "\nConsider using option --summand1cc <cc>\n");
+  }
   ccount = count_connected_components (s2);
   for (i = 0, count2 = 0; i < ccount; i++)
   {
     if (find_connected_component_parent (i, s2) < 0) count2++;
   }
-  assert (count1 >= 1 && count2 >= 1);
+  assert (count2 >= 1);
+  if (count2 > 1 && globals.summand2cc < 0)
+  {
+    fprintf (stderr, "Second summand has multiple external components:");
+    for (i = 0; i < ccount; i++)
+    {
+      if (find_connected_component_parent (i, s2) < 0) fprintf (stderr, " %d", i+1);
+    }
+    fprintf (stderr, "\nConsider using option --summand2cc <cc>\n");
+  }
   if (count1 + count2 > 2)
   {
-    fprintf (stderr, "Connected sum is not well defined for surfaces with more than one external component.\n");
-    return (0);
+    if ((count1 > 1 && globals.summand1cc < 0) ||
+        (count2 > 1 && globals.summand2cc < 0) )
+    {
+      fprintf (stderr, "Connected sum is not well defined for surfaces with more than one external component.\n");
+      return (0);
+    }
   }
+  if (count1 == 1) globals.summand1cc = -1;
+  if (count2 == 1) globals.summand2cc = -1;
+  if (globals.summand1cc >= 0) find_appropriate_glue_point (s1, globals.summand1cc);
+  if (globals.summand2cc >= 0) find_appropriate_glue_point (s2, globals.summand2cc);
   if (sketch_union (s1, s2) == 0) return (0);
 
   assert (s1->extregion->border->sponda == 0);
@@ -124,6 +153,59 @@ sketch_sum (struct sketch *s1, struct sketch *s2)
   assert (bl1 && bl2);
   gluearcs_or_pinchneck (s1, bl1->sponda->info, bl2->sponda->info, 0, 0, -1);
   return (1);
+}
+
+/*
+ * list occurences of horizontal surgery
+ */
+
+void
+find_appropriate_glue_point (struct sketch *s, int cc)
+{
+  struct borderlist *bl, *blprev;
+  struct border *bp, *bpstart, *btrans;
+  struct region *r, *rtrans;
+
+  for (r = s->regions; r; r = r->next)
+  {
+    if (r->f != 0) continue;
+    for (bl = r->border, blprev = 0; bl; bl = bl->next)
+    {
+      bpstart = bl->sponda;
+      if (bpstart == 0) continue;
+      bp = bpstart;
+      do {
+        btrans = gettransborder (bp);
+        rtrans = btrans->border->region;
+        assert (rtrans->f == 2);
+        assert (rtrans->strati[0] == rtrans->strati[1]);
+        if (rtrans->strati[0] == cc)
+        {
+          bl->sponda = bp;    // start at the right border position
+          if (blprev)
+          {
+            blprev->next = bl->next;
+            if (r->border->sponda == 0) //this is the empty border at infty
+            {
+              bl->next = r->border->next;
+              r->border->next = bl;
+            } else {
+              bl->next = r->border;
+              r->border = bl;
+            }
+          }
+          changeextregion (s, r->tag);
+          postprocesssketch (s);
+          return;
+          break;
+        }
+      } while (bp = bp->next, bp != bpstart);
+      blprev = bl;
+    }
+  }
+
+  fprintf (stderr, "FATAL: cannot find correct attaching position\n");
+  exit (1);
 }
 
 /*

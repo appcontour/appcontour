@@ -86,6 +86,7 @@ main (int argc, char *argv[])
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = 0;
   globals.knotname_fallback = 1;
+  globals.summand1cc = globals.summand2cc = -1;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     globals.autosurgery++;
   if ((envvar = getenv ("APPCONTOUR_OLDNAMES")) && *envvar) 
@@ -102,6 +103,16 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--oldnames") == 0)
     {
       globals.rulenames = RULENAMES_OLD;
+      continue;
+    }
+    if (strcmp(argv[i],"--summand1cc") == 0)
+    {
+      globals.summand1cc = strtol (argv[++i], &endch, 10) - 1;
+      continue;
+    }
+    if (strcmp(argv[i],"--summand2cc") == 0)
+    {
+      globals.summand2cc = strtol (argv[++i], &endch, 10) - 1;
       continue;
     }
     if (strcmp(argv[i],"-r") == 0 || strcmp(argv[i],"--region") == 0)

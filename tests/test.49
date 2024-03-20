@@ -1,0 +1,12 @@
+#testname:sum of apparent contours with multiple external components
+#
+# sum of apparent contour is not well defined if a summand has multiple components
+# options --summand1cc <cc> and --summand2cc <cc> must be used to indicate which
+# connected component to use for the surgery
+#
+
+./contour -q sum examples/handlebody_knots/hl4_1.knot examples/knots/unknot.knot --summand1cc 1 2>/dev/null | ./contour -q extractcc 1 2>/dev/null | ./contour -q --out afg 2>/dev/null
+./contour -q sum examples/handlebody_knots/hl4_1.knot examples/knots/unknot.knot --summand1cc 1 2>/dev/null | ./contour -q extractcc 2 2>/dev/null | ./contour -q --out afg 2>/dev/null
+./contour -q sum examples/handlebody_knots/hl4_1.knot examples/knots/unknot.knot --summand1cc 2 2>/dev/null | ./contour -q extractcc 1 2>/dev/null | ./contour -q --out afg 2>/dev/null
+./contour -q sum examples/handlebody_knots/hl4_1.knot examples/knots/unknot.knot --summand1cc 2 2>/dev/null | ./contour -q extractcc 2 2>/dev/null | ./contour -q --out afg 2>/dev/null
+
