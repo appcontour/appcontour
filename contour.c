@@ -1194,6 +1194,13 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_WIRTINGER:
+    tok = gettoken (infile);
+    ungettoken (tok);
+    if (tok == TOK_EMBEDDING)
+    {
+      printf ("NOT YET IMPLEMENTED\n");
+      exit (1);
+    }
     loiv = dtorgausscodefromfile (infile);
     if (loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
     assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
@@ -1558,6 +1565,7 @@ readcontour (FILE *file)
   if (tok == TOK_SKETCH) return (readsketch (file));
   if (tok == TOK_DTCODE) return (readdtcode (file));
   if (tok == TOK_GAUSSCODE) return (readgausscode (file));
+  if (tok == TOK_EMBEDDING) return (readembedding (file));
   if (tok == TOK_KNOTSCAPE)
   {
     loiv = readknotscape (file, &s);

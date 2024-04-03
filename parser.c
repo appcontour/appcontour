@@ -139,6 +139,7 @@ gettoken (FILE *file)
   if (strcmp(tokenword,"morse") == 0) return (TOK_MORSE);
   if (strcmp(tokenword,"sketch") == 0) return (TOK_SKETCH);
   if (strcmp(tokenword,"dtcode") == 0) return (TOK_DTCODE);
+  if (strcmp(tokenword,"embedding") == 0) return (TOK_EMBEDDING);
   if (strcmp(tokenword,"gausscode") == 0) return (TOK_GAUSSCODE);
   if (strcmp(tokenword,"knotscape") == 0) return (TOK_KNOTSCAPE);
   if (strcmp(tokenword,"knotname") == 0) return (TOK_KNOTSCAPE);
@@ -159,7 +160,9 @@ exit (1);
 int
 gettokennumber ()
 {
-  return (atoi(tokenword));
+  //return (atoi(tokenword));
+  /* with strtol we can also read hexadecimal syntax like 0xff */
+  return (strtol(tokenword, 0, 0));
 }
 
 /*
