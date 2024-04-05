@@ -19,6 +19,7 @@
 #include "representations.h"
 #include "giovecanonify.h"
 #include "readdtcode.h"
+#include "readembedding.h"
 #include "wirtinger.h"
 
 #ifndef EXAMPLES_DIR
@@ -69,6 +70,7 @@ main (int argc, char *argv[])
   struct presentation *p;
   struct alexanderideal *ai;
   struct vecofintlist *loiv, *newloiv;
+  struct embedding *emb;
   int ccnum;
   struct ccomplexcc *cccc;
 
@@ -1195,16 +1197,17 @@ main (int argc, char *argv[])
 
     case ACTION_WIRTINGER:
     tok = gettoken (infile);
-    ungettoken (tok);
     if (tok == TOK_EMBEDDING)
     {
-      printf ("NOT YET IMPLEMENTED\n");
-      exit (1);
+      emb = readembedding_low (infile);
+      p = wirtingerfromembedding (emb);
+    } else {
+      ungettoken (tok);
+      loiv = dtorgausscodefromfile (infile);
+      if (loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
+      assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
+      p = wirtingerfromloiv (loiv);
     }
-    loiv = dtorgausscodefromfile (infile);
-    if (loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
-    assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
-    p = wirtingerfromloiv (loiv);
     if (p) print_presentation (p);
     break;
 
