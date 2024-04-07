@@ -242,9 +242,9 @@ compute_fundamental_single (struct ccomplex *cc, struct ccomplexcc *cccc)
  */
 
 int simplify_presentation2 (struct presentation *p);
-int sp_eliminatevar (struct presentation *p);
+//int sp_eliminatevar (struct presentation *p);  // moved in fundamental.h
 void sp_do_eliminatevar (struct presentation *p, int);
-int sp_removeemptyrules (struct presentation *p);
+//int sp_removeemptyrules (struct presentation *p);
 int sp_simplifyword (struct presentation *p);
 int sp_findcommonsubstring (struct presentation *p, int bidirectional);
 int sp_rotate_to_canonical (struct presentation *p);

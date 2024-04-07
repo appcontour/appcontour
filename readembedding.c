@@ -44,6 +44,7 @@ readembedding (FILE *file)
 
 extern int debug;
 extern int verbose;
+extern int quiet;
 
 struct presentation *
 wirtingerfromembedding (struct embedding *emb)
@@ -52,15 +53,19 @@ wirtingerfromembedding (struct embedding *emb)
   struct emb_node *node, *thisnode, *nextnode;
   int inode, nextinode;
   int i, j, thisi, nexti;
-  int count, shortcount;
+  int thisj, nextj, nextjplus, k;
+  int count, shortcount, numrings, numhcomponents;
   struct presentation *p;
   struct presentationrule *rule;
   int sign, generator, a, b, c, d;
+  int connection, *connections;
 
   assert ((emb->k % 2) == 0);
   open_arcs = emb->k/2*3;
   short_arcs = open_arcs + emb->n*2;
+  numhcomponents = 0;
 
+  assert (emb->k <= 4); /* for now we restrict to max 4 trivalent nodes */
   shortcount = 0;
   for (inode = 0; inode < emb->k + emb->n; inode++)
   {
@@ -71,6 +76,7 @@ wirtingerfromembedding (struct embedding *emb)
   if (debug) printf ("ce ne sono %d\n", open_arcs);
   if (emb->k > 0)
   {
+    connections = (int *) malloc (3*emb->k*sizeof(int));
     count = 0;
     for (inode = 0; inode < emb->k; inode++)
     {
@@ -116,11 +122,27 @@ wirtingerfromembedding (struct embedding *emb)
           assert (nextnode->direction[thisi] == 0);
           nextnode->direction[thisi] = NODE_IS_START;
         }
+        connections[3*inode + i] = 3*nextinode + nexti;
+        connections[3*nextinode + nexti] = 3*inode + i;
         count++;
       }
     }
     assert (count == open_arcs);
+    if (debug)
+    {
+      printf ("Connections between trivalent nodes:\n");
+      for (inode = 0; inode < emb->k; inode++)
+      {
+        for (i = 0; i < 3; i++)
+        {
+          connection = connections[3*inode + i];
+          printf ("%d.%d -> %d.%d\n", inode, i, connection/3, connection % 3);
+        }
+      }
+    }
+    numhcomponents = emb_color (emb, connections);
   }
+  numrings = 0;
   if (short_arcs > shortcount)
   {
     if (debug) printf ("FASE 2: orientazione archi chiusi short arcs: %d, processed: %d\n", short_arcs, shortcount);
@@ -137,9 +159,10 @@ wirtingerfromembedding (struct embedding *emb)
       {
         //if (debug) printf ("Starting from node %d direction %d\n", inode, i);
         if (node->direction[i] != 0) continue;
+        count++;
         node->direction[i] = NODE_IS_START;
         /*
-         * now follow the arc untill we reach a trivalent node
+         * now follow the arc untill we are back at the starting node
          */
         thisnode = node;
         thisi = i;
@@ -165,6 +188,8 @@ wirtingerfromembedding (struct embedding *emb)
       }
     }
     assert (short_arcs == shortcount);
+    numrings = count;
+    if (verbose && numrings) printf ("There %s %d toric component(s)\n", (numrings > 1)?"are":"is", numrings);
   }
 
   p = (struct presentation *) malloc (sizeof (struct presentation));
@@ -187,8 +212,6 @@ wirtingerfromembedding (struct embedding *emb)
       printf ("\n");
     }
   }
-
-  if (verbose) printf ("RELATORS AT CROSSINGS:\n");
 
   for (i = emb->k; i < emb->k + emb->n; i++)
   {
@@ -282,8 +305,57 @@ wirtingerfromembedding (struct embedding *emb)
     if (verbose) printf ("\n");
   }
 
+  if (emb->k > 0) free (connections);
+  assert (numhcomponents + numrings >= 1);
+  if (numhcomponents + numrings == 1)
+  {
+    if (numrings)
+    {
+      i = emb->k;
+      node = &emb->nodes[i];
+      j = (node->overpassisodd)?1:0;
+      if (node->direction[j] == NODE_IS_ARRIVAL) j = (j + 2) % 4;
+      rule = (struct presentationrule *) malloc (sizeof(int) + sizeof (struct presentationrule));
+      rule->length = 1;
+      rule->var[0] = node->generator[j] + 1;
+      rule->next = 0;
+      p->elements = rule;
+
+      rule = (struct presentationrule *) malloc (emb->n*sizeof(int) + sizeof(struct presentationrule));
+      thisi = i;
+      thisj = j;
+      rule->length = emb->n;
+      k = 0;
+      while (1)
+      {
+        thisnode = &emb->nodes[thisi];
+        nexti = thisnode->ping[thisj];
+        nextj = thisnode->pong[thisj];
+        nextj = (nextj + 2) % 4;
+        nextnode = &emb->nodes[nexti];
+        if ( ((nextj + nextnode->overpassisodd) % 2) == 1)
+        {
+          nextjplus = (nextj + 1) % 4;
+          sign = 1;
+          if (nextnode->direction[nextjplus] == NODE_IS_START) sign = -1;
+          rule->var[k] = sign*(nextnode->generator[nextjplus] + 1);
+          if (debug) printf ("generator: %d (1 = a; -1 = A)\n", rule->var[k]);
+          k++;
+        }
+        if (nexti == i && nextj == j) break;
+        thisi = nexti;
+        thisj = nextj;
+      }
+
+      rule->next = 0;
+
+      p->elements->next = rule;
+    }
+  } else if (!quiet) printf ("Cannot compute meridians and longitudes for links\n");
   //printf ("PARTIALLY IMPLEMENTED.  k = %d, n = %d, choice = %x\n", emb->k, emb->n, emb->choice);
 
+  if (debug) print_presentation (p);
+  emb_remove_dup_rules (p);
   if (globals.simplifypresentation) simplify_presentation (p);
   return (p);
 }
@@ -434,4 +506,105 @@ readembedding_low (FILE *file)
   emb->nodes = nodesvec;
   //assert (gettoken (file) == TOK_SEMICOLON);
   return (emb);
+}
+
+/*
+ * color the trivalent nodes according to connected components
+ * return with the number of colors
+ */
+
+int
+emb_color (struct embedding *emb, int *connections)
+{
+  int i, ii, iito, jj, color, colored;
+  int goon;
+  struct emb_node *node, *nodefrom, *nodeto;
+
+  if (emb->k < 2) return (0);
+
+  /* first reset all colors */
+  for (i = 0; i < emb->k; i++)
+  {
+    node = &emb->nodes[i];
+    node->color = 0;
+  }
+
+  color = 0;
+  colored = 0;
+
+  for (i = 0; i < emb->k; i++)
+  {
+    node = &emb->nodes[i];
+    if (node->color) continue;
+    color++;
+    colored++;
+    node->color = color;
+    goon = 1;
+    while (goon) /* expand colors */
+    {
+      goon = 0;
+      for (ii = 0; ii < emb->k; ii++)
+      {
+        nodefrom = &emb->nodes[ii];
+        if (nodefrom->color == 0) continue;
+        for (jj = 0; jj < 3; jj++)
+        {
+          iito = connections[3*ii + jj]/3;
+          nodeto = &emb->nodes[iito];
+          if (nodeto->color != 0) {assert (nodeto->color == nodefrom->color); continue;}
+          if (debug) printf ("extending color %d from node %d.%d to node %d\n", nodefrom->color, ii, jj, iito);
+          nodeto->color = nodefrom->color;
+          goon++;
+          colored++;
+        }
+      }
+    }
+  }
+  assert (colored == emb->k);
+  return (color);
+}
+
+int
+emb_remove_dup_rules (struct presentation *p)
+{
+  int count = 0;
+  struct presentationrule *r, *s;
+  int k, g1, g2;
+
+  for (r = p->rules; r; r = r->next)
+  {
+    if (r->length != 2) continue;
+    g1 = r->var[0];
+    g2 = -r->var[1];
+    assert (g1 > 0 && g2 > 0);
+    r->length = 0;
+    if (g1 == g2) continue;
+    /* now substitute g2 -> g1 in all rules and selected elements */
+    count++;
+    for (s = p->rules; s; s = s->next)
+    {
+      for (k = 0; k < s->length; k++)
+      {
+        if (s->var[k] == g2) s->var[k] = g1;
+        if (s->var[k] == -g2) s->var[k] = -g1;
+      }
+    }
+    r->length = 1;
+    r->var[0] = g2;
+    for (s = p->elements; s; s = s->next)
+    {
+      for (k = 0; k < s->length; k++)
+      {
+        if (s->var[k] == g2) s->var[k] = g1;
+        if (s->var[k] == -g2) s->var[k] = -g1;
+      }
+    }
+  }
+  if (debug) print_presentation (p);
+
+  while (sp_eliminatevar (p));
+  sp_removeemptyrules (p);
+  if (debug) print_presentation (p);
+
+  return (count);
 }

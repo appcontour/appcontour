@@ -137,6 +137,8 @@ void print_invariant_factors (struct presentation *p);
 void print_exponent_matrix (struct presentation *p);
 void fg_interactive (struct presentation *p);
 int simplify_presentation (struct presentation *p);
+int sp_eliminatevar (struct presentation *p);
+int sp_removeemptyrules (struct presentation *p);
 void topreabelian (struct presentation *p);
 int compute_fg_rank (struct presentation *p);
 void remove_all_relators (struct presentation *p);

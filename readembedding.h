@@ -7,6 +7,7 @@ struct emb_node {
   int generator[4];
   int pong[4]; /* this is the index where it hits at the arrival node */
   int overpassisodd;
+  int color;
 };
 
 struct embedding {
@@ -20,3 +21,6 @@ struct embedding {
 
 struct embedding *readembedding_low (FILE *file);
 struct presentation *wirtingerfromembedding (struct embedding *emb);
+int emb_color (struct embedding *emb, int *connections);
+int emb_remove_dup_rules (struct presentation *p);
+
