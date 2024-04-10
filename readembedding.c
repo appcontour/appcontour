@@ -571,13 +571,14 @@ emb_color (struct embedding *emb, int *connections)
 int
 emb_meridians_longitudes (struct embedding *emb, int *connections, struct presentation *p)
 {
-  int i, ii, iii, kk, kkk, iinext, iiinext, kknext, kkknext, kkknextplus;
+  int i, ii, iii, kk, iinext, kknext;
+  int ikparent;
   int k, goon;
   int *node_flood, *arcs, *underpasses;
   struct emb_node *node, *node2;
   struct presentationrule *rule;
   int llength, llengthpre, llengthpost;
-  int u, sign;
+  int u, count;
 
   /*
    * step 1. construct a spanning tree for the spatial graph
@@ -665,9 +666,12 @@ emb_meridians_longitudes (struct embedding *emb, int *connections, struct presen
         kk = kknext;
       }
       underpasses[connections[3*i + k]] = underpasses[3*i + k];
+
+
       //printf ("Arc starting at %d.%d has %d underpasses\n", i, k, underpasses[3*i + k]);
     }
   }
+
   /*
    * now build meridian and longitude for all non-spanning arcs
    */
@@ -681,8 +685,8 @@ emb_meridians_longitudes (struct embedding *emb, int *connections, struct presen
       if (node->direction[k] == NODE_IS_ARRIVAL) continue;
 
       ii = connections[3*i + k]/3;
-      llengthpre = underpasses_on_spanning_tree (i, node_flood, underpasses);
-      llengthpost = underpasses_on_spanning_tree (ii, node_flood, underpasses);
+      llengthpre = numunderpasses_on_spanning_tree (i, node_flood, underpasses);
+      llengthpost = numunderpasses_on_spanning_tree (ii, node_flood, underpasses);
       llength = underpasses[3*i + k] + llengthpre + llengthpost;
 printf ("should build longitude for arc starting at %d.%d (of length %d)\n", i, k, llength);
       /* adding 1 so that we do not have problems in case llength is zero */
@@ -691,27 +695,30 @@ printf ("should build longitude for arc starting at %d.%d (of length %d)\n", i, 
 
 /* TODO: for now fake the longitude as aaa... */
 for (u = 0; u < llength; u++) rule->var[u] = 1;
-      u = llengthpre;
-      //iii = i;
-      kkk = k;
-      node2 = node;
-      while (1)
-      {
-        iiinext = node2->ping[kkk];
-        kkknext = node2->pong[kkk];
-        kkknext = (kkknext + 2) % 4;
+printf ("===== ARC =======\n");
+      count = underpasses_on_arc (3*i+k, &(rule->var[llengthpre]), emb);
 
-        node2 = &emb->nodes[iiinext];
-        if (node2->valency == 3) break;
-        kkknextplus = (kkknext + 1) % 4;
-        if ((node2->overpassisodd + kkknext) % 2 == 0) continue;
-        sign = 1;
-        if (node2->direction[kkknextplus] == NODE_IS_START) sign = -1;
-        rule->var[u++] = sign*(node2->generator[kkknextplus] + 1);
-        //iii = iiinext;
-        kkk = kkknext;
+printf ("===== POST =======\n");
+      u = llengthpre + count;
+      iii = ii;
+      while (iii != 0)
+      {
+        ikparent = node_flood[iii];
+        count = underpasses_on_arc (connections[ikparent], &(rule->var[u]), emb);
+        u += count;
+        iii = ikparent/3;
       }
-      //underpasses_from_to (int i, int j, int *var);
+
+printf ("===== PRE =======\n");
+      iii = i;
+      while (iii != 0)
+      {
+        ikparent = node_flood[iii];
+        u = numunderpasses_on_spanning_tree (ikparent/3, node_flood, underpasses);
+printf ("Moving towards root %d -> %d.%d --- u = %d\n", iii, ikparent/3, ikparent % 3, u);
+        underpasses_on_arc (ikparent, &(rule->var[u]), emb);
+        iii = ikparent/3;
+      }
       rule->next = p->elements;
       p->elements = rule;
 
@@ -731,11 +738,47 @@ printf ("building meridian for arc starting at %d.%d\n", i, k);
 }
 
 /*
+ *
+ */
+
+int
+underpasses_on_arc (int i_and_k, int *var, struct embedding *emb)
+{
+  int i, k, inext, knext, knextplus;
+  int sign;
+  int u = 0;
+  struct emb_node *node;
+
+  i = i_and_k/3;
+  k = i_and_k % 3;
+  node = &emb->nodes[i];
+printf ("  entering underpasses_on_arc, starting node %d.%d\n", i, k);
+  while (1)
+  {
+    inext = node->ping[k];
+    knext = node->pong[k];
+    knext = (knext + 2) % 4;
+
+    node = &emb->nodes[inext];
+printf ("  in underpasses_on_arc, arc after crossing %d.%d, u=%d\n", inext, knext, u);
+    if (node->valency == 3) break;
+    knextplus = (knext + 1) % 4;
+    k = knext;
+    if ((node->overpassisodd + knext) % 2 == 0) continue;
+    sign = 1;
+    if (node->direction[knextplus] == NODE_IS_START) sign = -1;
+    var[u++] = sign*(node->generator[knextplus] + 1);
+  }
+printf ("  exiting underpasses_on_arc, wrote %d chars\n", u);
+  return (u);
+}
+
+/*
  * compute the number of underpasses on the spanning tree from node 0 to node i
  */
 
 int
-underpasses_on_spanning_tree (int i, int *node_flood, int *underpasses)
+numunderpasses_on_spanning_tree (int i, int *node_flood, int *underpasses)
 {
   int parent, k;
 
@@ -745,7 +788,7 @@ underpasses_on_spanning_tree (int i, int *node_flood, int *underpasses)
   k = node_flood[i] % 3;
 
 printf ("UNDERPASSES_ON_SPANNING_TREE for node %d; parent: %d.%d --- underpasses to parent: %d\n", i, parent, k, underpasses[3*parent + k]);
-  return (underpasses[3*parent + k] + underpasses_on_spanning_tree (parent, node_flood, underpasses));
+  return (underpasses[3*parent + k] + numunderpasses_on_spanning_tree (parent, node_flood, underpasses));
 }
 
 
