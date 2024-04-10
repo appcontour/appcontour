@@ -23,4 +23,6 @@ struct embedding *readembedding_low (FILE *file);
 struct presentation *wirtingerfromembedding (struct embedding *emb);
 int emb_color (struct embedding *emb, int *connections);
 int emb_remove_dup_rules (struct presentation *p);
-
+int emb_meridians_longitudes (struct embedding *emb, int *connections, struct presentation *p);
+int underpasses_on_spanning_tree (int i, int *node_flood, int *underpasses);
+int underpasses_from_to (int i, int j, int *var);

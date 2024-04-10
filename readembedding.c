@@ -305,11 +305,11 @@ wirtingerfromembedding (struct embedding *emb)
     if (verbose) printf ("\n");
   }
 
-  if (emb->k > 0) free (connections);
   assert (numhcomponents + numrings >= 1);
   if (numhcomponents + numrings == 1)
   {
-    if (numrings)
+    printf ("numhcomponents: %d - numrings: %d\n", numhcomponents, numrings);
+    if (numrings == 1)
     {
       i = emb->k;
       node = &emb->nodes[i];
@@ -350,9 +350,13 @@ wirtingerfromembedding (struct embedding *emb)
       rule->next = 0;
 
       p->elements->next = rule;
+    } else {
+      emb_meridians_longitudes (emb, connections, p);
+      if (!quiet) printf ("Cannot compute meridians and longitudes for links\n");
     }
-  } else if (!quiet) printf ("Cannot compute meridians and longitudes for links\n");
-  //printf ("PARTIALLY IMPLEMENTED.  k = %d, n = %d, choice = %x\n", emb->k, emb->n, emb->choice);
+  }
+
+  if (emb->k > 0) free (connections);
 
   if (debug) print_presentation (p);
   emb_remove_dup_rules (p);
@@ -563,6 +567,187 @@ emb_color (struct embedding *emb, int *connections)
   assert (colored == emb->k);
   return (color);
 }
+
+int
+emb_meridians_longitudes (struct embedding *emb, int *connections, struct presentation *p)
+{
+  int i, ii, iii, kk, kkk, iinext, iiinext, kknext, kkknext, kkknextplus;
+  int k, goon;
+  int *node_flood, *arcs, *underpasses;
+  struct emb_node *node, *node2;
+  struct presentationrule *rule;
+  int llength, llengthpre, llengthpost;
+  int u, sign;
+
+  /*
+   * step 1. construct a spanning tree for the spatial graph
+   * rooted at node 0
+   */
+
+  assert (emb->k > 0);
+
+  node_flood = (int *) malloc (emb->k * sizeof(int));
+  arcs = (int *) malloc (3*emb->k * sizeof(int));
+  underpasses = (int *) malloc (3*emb->k * sizeof(int));
+
+  for (i = 0; i < emb->k; i++)
+  {
+    node_flood[i] = -1;
+    for (k = 0; k < 3; k++) arcs[3*i+k] = 0;  // mark as NOT spanning
+  }
+
+  node_flood[0] = 0;
+  goon = 1;
+  while (goon)
+  {
+    goon = 0;
+    for (i = 1; i < emb->k; i++)
+    {
+      if (node_flood[i] >= 0) continue;
+      for (k = 0; k < 3; k++)
+      {
+        ii = connections[3*i + k]/3;
+        kk = connections[3*i + k] - 3*ii;
+        if (node_flood[ii] >= 0)
+        {
+          // printf ("using: %d.%d -> %d.%d\n", i, k, ii, kk);
+          //node_flood[i] = ii;
+          node_flood[i] = connections[3*i + k];
+          arcs[3*i + k] = arcs[3*ii + kk] = 1;  // mark as SPANNING
+          goon = 1;
+          break;
+        }
+      }
+    }
+  }
+
+  if (debug)
+  {
+    for (i = 0; i < emb->k; i++)
+    {
+      printf ("flood[%d] = %d.%d - arcs:", i, node_flood[i]/3, node_flood[i]%3);
+      for (k = 0; k < 3; k++) printf ("%d ", arcs[3*i + k]);
+      printf ("\n");
+    }
+  }
+
+  /*
+   * we need to know the number of underpasses for each arc
+   */
+
+  for (i = 0; i < emb->k; i++)
+  {
+    for (k = 0; k < 3; k++) underpasses[3*i + k] = 0;
+  }
+
+  for (i = 0; i < emb->k; i++)
+  {
+    node = &emb->nodes[i];
+    for (k = 0; k < 3; k++)
+    {
+      if (node->direction[k] == NODE_IS_ARRIVAL) continue;
+      /*
+       * follow arc all the way to the next trivalent node
+       */
+      ii = i;
+      kk = k;
+      node2 = &emb->nodes[ii];
+      while (1)
+      {
+        assert (node2->direction[kk] == NODE_IS_START);
+        iinext = node2->ping[kk];
+        kknext = node2->pong[kk];
+        kknext = (kknext + 2) % 4;
+        node2 = &emb->nodes[iinext];
+        if (node2->valency == 3) break;
+        if ( ((node2->overpassisodd + kknext) % 2) == 1 ) underpasses[3*i + k]++;
+        ii = iinext;
+        kk = kknext;
+      }
+      underpasses[connections[3*i + k]] = underpasses[3*i + k];
+      //printf ("Arc starting at %d.%d has %d underpasses\n", i, k, underpasses[3*i + k]);
+    }
+  }
+  /*
+   * now build meridian and longitude for all non-spanning arcs
+   */
+
+  for (i = 0; i < emb->k; i++)
+  {
+    for (k = 0; k < 3; k++)
+    {
+      if (arcs[3*i + k] != 0) continue;
+      node = &emb->nodes[i];
+      if (node->direction[k] == NODE_IS_ARRIVAL) continue;
+
+      ii = connections[3*i + k]/3;
+      llengthpre = underpasses_on_spanning_tree (i, node_flood, underpasses);
+      llengthpost = underpasses_on_spanning_tree (ii, node_flood, underpasses);
+      llength = underpasses[3*i + k] + llengthpre + llengthpost;
+printf ("should build longitude for arc starting at %d.%d (of length %d)\n", i, k, llength);
+      /* adding 1 so that we do not have problems in case llength is zero */
+      rule = (struct presentationrule *) malloc ((llength+1)*sizeof (int) + sizeof (struct presentationrule));
+      rule->length = llength;
+
+/* TODO: for now fake the longitude as aaa... */
+for (u = 0; u < llength; u++) rule->var[u] = 1;
+      u = llengthpre;
+      //iii = i;
+      kkk = k;
+      node2 = node;
+      while (1)
+      {
+        iiinext = node2->ping[kkk];
+        kkknext = node2->pong[kkk];
+        kkknext = (kkknext + 2) % 4;
+
+        node2 = &emb->nodes[iiinext];
+        if (node2->valency == 3) break;
+        kkknextplus = (kkknext + 1) % 4;
+        if ((node2->overpassisodd + kkknext) % 2 == 0) continue;
+        sign = 1;
+        if (node2->direction[kkknextplus] == NODE_IS_START) sign = -1;
+        rule->var[u++] = sign*(node2->generator[kkknextplus] + 1);
+        //iii = iiinext;
+        kkk = kkknext;
+      }
+      //underpasses_from_to (int i, int j, int *var);
+      rule->next = p->elements;
+      p->elements = rule;
+
+printf ("building meridian for arc starting at %d.%d\n", i, k);
+      rule = (struct presentationrule *) malloc (sizeof (int) + sizeof (struct presentationrule));
+      rule->length = 1;
+      rule->var[0] = node->generator[k] + 1;
+      rule->next = p->elements;
+      p->elements = rule;
+    }
+  }
+
+  free (node_flood);
+  free (arcs);
+  free (underpasses);
+  return (emb->k/2 + 1);
+}
+
+/*
+ * compute the number of underpasses on the spanning tree from node 0 to node i
+ */
+
+int
+underpasses_on_spanning_tree (int i, int *node_flood, int *underpasses)
+{
+  int parent, k;
+
+  if (i == 0) return (0);
+
+  parent = node_flood[i]/3;
+  k = node_flood[i] % 3;
+
+printf ("UNDERPASSES_ON_SPANNING_TREE for node %d; parent: %d.%d --- underpasses to parent: %d\n", i, parent, k, underpasses[3*parent + k]);
+  return (underpasses[3*parent + k] + underpasses_on_spanning_tree (parent, node_flood, underpasses));
+}
+
 
 int
 emb_remove_dup_rules (struct presentation *p)
