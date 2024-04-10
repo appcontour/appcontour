@@ -88,7 +88,7 @@ main (int argc, char *argv[])
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = 0;
   globals.knotname_fallback = 1;
-  globals.summand1cc = globals.summand2cc = -1;
+  globals.summand1cc = globals.summand2cc = globals.choice = -1;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     globals.autosurgery++;
   if ((envvar = getenv ("APPCONTOUR_OLDNAMES")) && *envvar) 
@@ -105,6 +105,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--oldnames") == 0)
     {
       globals.rulenames = RULENAMES_OLD;
+      continue;
+    }
+    if (strcmp(argv[i],"--choice") == 0)
+    {
+      globals.choice = strtol (argv[++i], &endch, 0);
       continue;
     }
     if (strcmp(argv[i],"--summand1cc") == 0)
@@ -477,6 +482,9 @@ main (int argc, char *argv[])
       printf ("  --nosimplify: all three simplifications above\n");
       printf ("  --nobasecanonify: do not base-canonify Alexander polynomial in two indeterminates\n");
       printf ("  --shuffle: random change of base for Alexander ideal in two indeterminates\n");
+      printf ("  --summand1cc <int>  and  --summand2cc <int>: indicate which connected component to use in the \"sum\" of two\n");
+      printf ("      apparent contours\n");
+      printf ("  --choice <int>: give information about overpasses at crossings when input is a planar embedding\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
       exit (0);
     }
