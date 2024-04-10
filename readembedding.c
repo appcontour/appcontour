@@ -383,6 +383,8 @@ wirtingerfromembedding (struct embedding *emb)
  * where the least significant digit refers to the first crossing with a value of
  * 0 means that the overcrossing connects even entries (first and second in '(e, o, e, o)', index starting at 0)
  * 1 means that the overcrossing connects odd entries (second and fourth)
+ * choice can alternatively be specified using the 'contour' option --choice
+ * an hexadecimal value (syntax 0xnn) can be given
  *
  * As an example the following input:
  *
@@ -407,7 +409,8 @@ readembedding_low (FILE *file)
   //int node_id, node_id2, tnode_id, tnode_pt;
 
   emb = (struct embedding *) malloc (sizeof (struct embedding));
-  emb->choice = emb->k = emb->n = 0;
+  emb->k = emb->n = 0;
+  emb->choice = -1;
   emb->nodes = 0;
 
   tok = gettoken (file);
@@ -417,6 +420,18 @@ readembedding_low (FILE *file)
     assert (tok == ISNUMBER);
     emb->choice = gettokennumber ();
   } else ungettoken (tok);
+
+  if (emb->choice >= 0 && globals.choice >= 0 && !quiet)
+  {
+    printf ("Value of 'choice' given via '--choice 0x%x' option takes precedence on the value 0x%x indicated in", globals.choice, emb->choice);
+    printf (" the embedding:0x%x description\n", emb->choice);
+  }
+  if (globals.choice >= 0) emb->choice = globals.choice;
+  if (emb->choice < 0)
+  {
+    if (!quiet) printf ("'choice' value not given, assuming zero\n");
+    emb->choice = 0;
+  }
 
   tok = gettoken (file);
   assert (tok == TOK_LBRACE);
