@@ -1,8 +1,10 @@
-#testname:sum of apparent contours with multiple external components
+#testname:sum of nonconnected apparent contours
 #
-# sum of apparent contour is not well defined if a summand has multiple components
+# the sum of apparent contours is not well defined if a summand has multiple components
 # options --summand1cc <cc> and --summand2cc <cc> must be used to indicate which
 # connected component to use for the surgery
+#
+# use actions "extractcc" and "removecc" to gain information about the components numbering
 #
 
 ./contour -q sum examples/handlebody_knots/hl4_1.knot examples/knots/unknot.knot --summand1cc 1 2>/dev/null | ./contour -q extractcc 1 2>/dev/null | ./contour -q --out afg 2>/dev/null
