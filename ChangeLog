@@ -1,3 +1,7 @@
+2024-03-20: new options --summand1cc and --summand2cc.  They can be used to
+	indicate which component is involved in the "sum" surgery in case of
+	nonconnected scenes
+
 2019-08-25: added access to new Handlebody table HLn_n (-> version 2.5.4)
 
 2018-11-16: action knotname2rdtcode computes the realization of the dtcode of the given knot.
@@ -76,7 +80,8 @@
 
 2016-06-13: input a knot by its gauss code.  It is simply converted to the corresponding dtcode.
 	(see tests/test.37 for an example).
-	Allow for gauss code of a link (using a trick that allows to use the Dowker-Thistlethwaite code.
+	Allow for gauss code of a link (using a trick that allows to use the
+	Dowker-Thistlethwaite code).
 	Allow to enter a link by its "Dowker-Thistlethwaite" name
 
 2016-06-08: new command "foxjacobian" to compute the fox derivatives of a presentation

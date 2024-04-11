@@ -1668,7 +1668,7 @@ dtorgausscodefromfile (FILE *file)
     }
     return (loiv);
   }
-  fprintf (stderr, "Only 'dtcode'/'knotscape' formats implemented\n");
+  fprintf (stderr, "Only 'dtcode'/'knotscape'/'embedding' formats implemented\n");
   exit (2);
 }
 

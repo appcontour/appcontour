@@ -1347,7 +1347,7 @@ open_pak_file (char *pakname)
     }
   }
   printf ("Cannot find knotscape installation.  You should install the knotscape package by\n");
-  printf ("Morwen Thistlethwaite and Jim Hoste in /home/knotscape or /usr/local/knotscake\n");
+  printf ("Morwen Thistlethwaite and Jim Hoste in /home/knotscape or /usr/local/knotscape\n");
   printf ("The pak files should reside in a folder with a name like /home/knotscape/knotscape_1.01/knotTable/\n");
   printf ("   or /usr/local/share/appcontour/data/\n");
   exit (2);
