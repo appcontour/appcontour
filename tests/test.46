@@ -31,3 +31,35 @@ longitude=`echo "$elements" | cut -f2 -d,`
 echo "Number of representations in $group with added relator mL:"
 echo "fpgroup <$generators;$relators,$meridian$longitude;$meridian,$longitude>" | ./contour ks_$group --outer -q
 
+# ========== granny vs square ============
+#
+# distinguishing between granny and square knot
+# (added 4/12/24)
+#
+# granny knot can be described by its dtcode augmented with information about the
+# orientation of the two trefoil components
+dt1="dtcode { 4< 6 2 10< 12 8 }"
+
+# similarly for the square knot:
+dt2="dtcode { 4< 6 2 10> 12 8 }"
+
+# suggested by Fox (thanks to Yi-Shang Wang)
+
+w1=`echo "$dt1" | contour wirtinger -q`
+w1a=`echo "$w1" | cut -f1,2 -d';'`
+long1=`echo "$w1" | cut -f3 -d';' | cut -f2 -d',' | cut -f1 -d'>'`
+aug1="fpgroup {$w1a, $long1>}"
+ks1=`echo "$aug1" | contour ks_A5 -q`
+echo "granny: $ks1"
+
+w2=`echo "$dt2" | contour wirtinger -q`
+w2a=`echo "$w2" | cut -f1,2 -d';'`
+long2=`echo "$w2" | cut -f3 -d';' | cut -f2 -d',' | cut -f1 -d'>'`
+aug2="fpgroup {$w2a, $long2>}"
+ks2=`echo "$aug2" | contour ks_A5 -q`
+echo "square: $ks2"
+
+if [ "$ks1" != "$ks2" ]
+then
+  echo "Granny and square knots are not equivalent"
+fi
