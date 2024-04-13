@@ -1207,7 +1207,7 @@ main (int argc, char *argv[])
     tok = gettoken (infile);
     if (tok == TOK_EMBEDDING)
     {
-      emb = readembedding_low (infile);
+      emb = readembedding (infile);
       p = wirtingerfromembedding (emb);
     } else {
       ungettoken (tok);
@@ -1576,7 +1576,7 @@ readcontour (FILE *file)
   if (tok == TOK_SKETCH) return (readsketch (file));
   if (tok == TOK_DTCODE) return (readdtcode (file));
   if (tok == TOK_GAUSSCODE) return (readgausscode (file));
-  if (tok == TOK_EMBEDDING) return (readembedding (file));
+  if (tok == TOK_EMBEDDING) return (embeddingtosketch (file));
   if (tok == TOK_KNOTSCAPE)
   {
     loiv = readknotscape (file, &s);
@@ -1643,6 +1643,7 @@ dtorgausscodefromfile (FILE *file)
   int tok;
   struct vecofintlist *loiv;
   struct sketch *s;
+  struct embedding *emb;
 
   tok = gettoken (file);
 
@@ -1668,6 +1669,15 @@ dtorgausscodefromfile (FILE *file)
     }
     return (loiv);
   }
+
+  if (tok == TOK_EMBEDDING)
+  {
+    emb = readembedding (file);
+    if (emb == 0) return (0);
+    loiv = embeddingtoloiv (emb);
+    return (loiv);
+  }
+
   fprintf (stderr, "Only 'dtcode'/'knotscape'/'embedding' formats implemented\n");
   exit (2);
 }

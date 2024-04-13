@@ -374,7 +374,6 @@ struct sketch *readcontour (FILE *file);
 struct sketch *readsketch (FILE *file);
 struct sketch *readmorse (FILE *file);
 struct sketch *readdtcode (FILE *file);
-struct sketch *readembedding (FILE *file);
 struct sketch *readgausscode (FILE *file);
 struct vecofintlist *dtorgausscodefromfile (FILE *file);
 void insert_arc_in_list (struct arc *a, struct arc *list);

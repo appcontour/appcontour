@@ -1,3 +1,6 @@
+10. Add orientation info in embedding input syntax; add overpass info (even or odd)
+in input syntax per each node (e.g. a minus sign like "-1: (<a>, <b>, <c>, <d>),"
+
 9. Ben Burton extended the knot tables up to 19 crossings, it would be nice to have support for
 its data: https://regina-normal.github.io/data.html
 

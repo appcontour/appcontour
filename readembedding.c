@@ -10,11 +10,11 @@
 extern struct global_data globals;
 
 struct sketch *
-readembedding (FILE *file)
+embeddingtosketch (FILE *file)
 {
   struct embedding *emb;
 
-  emb = readembedding_low (file);
+  emb = readembedding (file);
 
   printf ("NOT YET IMPLEMENTED: k = %d, n = %d, choice = %d\n", emb->k, emb->n, emb->choice);
 
@@ -46,151 +46,30 @@ extern int debug;
 extern int verbose;
 extern int quiet;
 
+/*
+ * TODO: probably the case k=0 should be treated in a completely different way
+ * - first compute the gausscode (should be straightforward)
+ * - rely on already coded conversions
+ */
+
 struct presentation *
 wirtingerfromembedding (struct embedding *emb)
 {
   int open_arcs, short_arcs;
   struct emb_node *node, *thisnode, *nextnode;
-  int inode, nextinode;
   int i, j, thisi, nexti;
   int thisj, nextj, nextjplus, k;
-  int count, shortcount, numrings, numhcomponents;
   struct presentation *p;
   struct presentationrule *rule;
-  int sign, generator, a, b, c, d;
-  int connection, *connections;
+  int sign, a, b, c, d;
 
   assert ((emb->k % 2) == 0);
   open_arcs = emb->k/2*3;
   short_arcs = open_arcs + emb->n*2;
-  numhcomponents = 0;
 
-  assert (emb->k <= 4); /* for now we restrict to max 4 trivalent nodes */
-  shortcount = 0;
-  for (inode = 0; inode < emb->k + emb->n; inode++)
-  {
-    node = &emb->nodes[inode];
-    for (i = 0; i < node->valency; i++) node->direction[i] = 0;
-  }
-  if (debug) printf ("FASE 1: orientazione archi aperti (inizio e fine su due (o uno) nodo trivalente\n");
-  if (debug) printf ("ce ne sono %d\n", open_arcs);
-  if (emb->k > 0)
-  {
-    connections = (int *) malloc (3*emb->k*sizeof(int));
-    count = 0;
-    for (inode = 0; inode < emb->k; inode++)
-    {
-      node = &emb->nodes[inode];
-      for (i = 0; i < 3; i++)
-      {
-        //printf ("Starting from node %d direction %d\n", inode, i);
-        assert (node->direction[i] != NODE_IS_START);
-        if (node->direction[i] != 0) continue;
-        assert (count < open_arcs);
-        node->direction[i] = NODE_IS_START;
-        node->generator[i] = count;
-        nextinode = node->ping[i];
-        nextnode = &emb->nodes[nextinode];
-        nextnode->generator[node->pong[i]] = count;
-        /*
-         * now follow the arc untill we reach a trivalent node
-         */
-        thisnode = node;
-        thisi = i;
-        while (1)
-        {
-          nextinode = thisnode->ping[thisi];
-          nexti = thisnode->pong[thisi];
-          shortcount++;
-          nextnode = &emb->nodes[nextinode];
-          if (thisnode->valency == 4)
-          {
-            generator = 2*(thisnode->id - emb->k) + open_arcs;
-            if ((thisi % 2) != 0) generator++;
-            thisnode->generator[thisi] = generator;
-            nextnode->generator[thisnode->pong[thisi]] = generator;
-          }
-          if (nextnode->valency == 3)
-          {
-            assert (nextnode->direction[nexti] == 0);
-            nextnode->direction[nexti] = NODE_IS_ARRIVAL;
-            break;
-          }
-          nextnode->direction[nexti] = NODE_IS_ARRIVAL;
-          thisnode = nextnode;
-          thisi = (nexti + 2) % 4;
-          assert (nextnode->direction[thisi] == 0);
-          nextnode->direction[thisi] = NODE_IS_START;
-        }
-        connections[3*inode + i] = 3*nextinode + nexti;
-        connections[3*nextinode + nexti] = 3*inode + i;
-        count++;
-      }
-    }
-    assert (count == open_arcs);
-    if (debug)
-    {
-      printf ("Connections between trivalent nodes:\n");
-      for (inode = 0; inode < emb->k; inode++)
-      {
-        for (i = 0; i < 3; i++)
-        {
-          connection = connections[3*inode + i];
-          printf ("%d.%d -> %d.%d\n", inode, i, connection/3, connection % 3);
-        }
-      }
-    }
-    numhcomponents = emb_color (emb, connections);
-  }
-  numrings = 0;
-  if (short_arcs > shortcount)
-  {
-    if (debug) printf ("FASE 2: orientazione archi chiusi short arcs: %d, processed: %d\n", short_arcs, shortcount);
-    /*
-     * this look very similar to the 'open arcs' case
-     * perhaps we should merge the two cases?
-     */
-    count = 0;
-    for (inode = emb->k; inode < emb->k + emb->n; inode++)
-    {
-      node = &emb->nodes[inode];
-      assert (node->valency == 4);
-      for (i = 0; i < 4; i++)
-      {
-        //if (debug) printf ("Starting from node %d direction %d\n", inode, i);
-        if (node->direction[i] != 0) continue;
-        count++;
-        node->direction[i] = NODE_IS_START;
-        /*
-         * now follow the arc untill we are back at the starting node
-         */
-        thisnode = node;
-        thisi = i;
-        while (1)
-        {
-          assert (thisnode->valency == 4);
-          nextinode = thisnode->ping[thisi];
-          nexti = thisnode->pong[thisi];
-          shortcount++;
-          nextnode = &emb->nodes[nextinode];
-          assert (nextnode->valency == 4);
-          generator = 2*(thisnode->id - emb->k) + open_arcs;
-          if ((thisi % 2) != 0) generator++;
-          thisnode->generator[thisi] = generator;
-          nextnode->generator[thisnode->pong[thisi]] = generator;
-          nextnode->direction[nexti] = NODE_IS_ARRIVAL;
-          thisnode = nextnode;
-          thisi = (nexti + 2) % 4;
-          assert (nextnode->direction[thisi] != NODE_IS_ARRIVAL);
-          if (nextnode->direction[thisi] == NODE_IS_START) break;
-          nextnode->direction[thisi] = NODE_IS_START;
-        }
-      }
-    }
-    assert (short_arcs == shortcount);
-    numrings = count;
-    if (verbose && numrings) printf ("There %s %d toric component(s)\n", (numrings > 1)?"are":"is", numrings);
-  }
+
+  if (emb->k == 0) if (!quiet) printf ("TODO: for a standard knot/link build the gausscode, then call appropriate function\n");
+// XXXXXXXXXXXXXXX
 
   p = (struct presentation *) malloc (sizeof (struct presentation));
   p->gennum = short_arcs;
@@ -305,14 +184,15 @@ wirtingerfromembedding (struct embedding *emb)
     if (verbose) printf ("\n");
   }
 
-  assert (numhcomponents + numrings >= 1);
-  if (numhcomponents + numrings == 1)
+  assert (emb->numhcomponents + emb->numrings >= 1);
+  if (emb->numhcomponents + emb->numrings == 1)
   {
-    //printf ("numhcomponents: %d - numrings: %d\n", numhcomponents, numrings);
-    if (numrings == 1)
+    if (emb->numrings == 1)  // case of standard knot (genus=1)
     {
+      assert (emb->k == 0);
       i = emb->k;
       node = &emb->nodes[i];
+      assert (node->overpassisodd == 0 || node->overpassisodd == 1);
       j = (node->overpassisodd)?1:0;
       if (node->direction[j] == NODE_IS_ARRIVAL) j = (j + 2) % 4;
       rule = (struct presentationrule *) malloc (sizeof(int) + sizeof (struct presentationrule));
@@ -350,12 +230,17 @@ wirtingerfromembedding (struct embedding *emb)
       rule->next = 0;
 
       p->elements->next = rule;
-    } else {
-      emb_meridians_longitudes (emb, connections, p);
+      if (!quiet)
+      {
+        printf ("Warning: the longitude is NOT a preferred longitude in general\n");
+        printf ("         consider using as input the dtcode of the knot\n");
+      }
+    } else {                      // case of handlebody of genus > 1
+      emb_meridians_longitudes (emb, p);
     }
   } else if (!quiet) printf ("Cannot compute meridians and longitudes for links\n");
 
-  if (emb->k > 0) free (connections);
+  //if (emb->k > 0) free (connections);
 
   if (debug) print_presentation (p);
   emb_remove_dup_rules (p);
@@ -399,7 +284,7 @@ wirtingerfromembedding (struct embedding *emb)
  */
 
 struct embedding *
-readembedding_low (FILE *file)
+readembedding (FILE *file)
 {
   struct embedding *emb;
   struct emb_node *node, *nodeend, *prevnode, *nodesvec;
@@ -411,6 +296,8 @@ readembedding_low (FILE *file)
   emb = (struct embedding *) malloc (sizeof (struct embedding));
   emb->k = emb->n = 0;
   emb->choice = -1;
+  emb->orientation = 1;
+  emb->connections = 0;
   emb->nodes = 0;
 
   tok = gettoken (file);
@@ -445,6 +332,7 @@ readembedding_low (FILE *file)
     node = (struct emb_node *) malloc (sizeof (struct emb_node));
     node->id = gettokennumber ();
     node->valency = 0;
+    node->overpassisodd = -1;  // undefined
     node->next = 0;
     tok = gettoken (file);
     assert (tok == TOK_COLON);
@@ -522,7 +410,9 @@ readembedding_low (FILE *file)
     }
   }
   emb->nodes = nodesvec;
-  //assert (gettoken (file) == TOK_SEMICOLON);
+
+  emb_orient (emb);
+
   return (emb);
 }
 
@@ -532,7 +422,7 @@ readembedding_low (FILE *file)
  */
 
 int
-emb_color (struct embedding *emb, int *connections)
+emb_color (struct embedding *emb)
 {
   int i, ii, iito, jj, color, colored;
   int goon;
@@ -567,7 +457,7 @@ emb_color (struct embedding *emb, int *connections)
         if (nodefrom->color == 0) continue;
         for (jj = 0; jj < 3; jj++)
         {
-          iito = connections[3*ii + jj]/3;
+          iito = emb->connections[3*ii + jj]/3;
           nodeto = &emb->nodes[iito];
           if (nodeto->color != 0) {assert (nodeto->color == nodefrom->color); continue;}
           if (debug) printf ("extending color %d from node %d.%d to node %d\n", nodefrom->color, ii, jj, iito);
@@ -583,7 +473,7 @@ emb_color (struct embedding *emb, int *connections)
 }
 
 int
-emb_meridians_longitudes (struct embedding *emb, int *connections, struct presentation *p)
+emb_meridians_longitudes (struct embedding *emb, struct presentation *p)
 {
   int i, ii, iii, kk, iinext, kknext;
   int ikparent;
@@ -621,13 +511,13 @@ emb_meridians_longitudes (struct embedding *emb, int *connections, struct presen
       if (node_flood[i] >= 0) continue;
       for (k = 0; k < 3; k++)
       {
-        ii = connections[3*i + k]/3;
-        kk = connections[3*i + k] - 3*ii;
+        ii = emb->connections[3*i + k]/3;
+        kk = emb->connections[3*i + k] - 3*ii;
         if (node_flood[ii] >= 0)
         {
           // printf ("using: %d.%d -> %d.%d\n", i, k, ii, kk);
           //node_flood[i] = ii;
-          node_flood[i] = connections[3*i + k];
+          node_flood[i] = emb->connections[3*i + k];
           arcs[3*i + k] = arcs[3*ii + kk] = 1;  // mark as SPANNING
           goon = 1;
           break;
@@ -679,7 +569,7 @@ emb_meridians_longitudes (struct embedding *emb, int *connections, struct presen
         ii = iinext;
         kk = kknext;
       }
-      underpasses[connections[3*i + k]] = underpasses[3*i + k];
+      underpasses[emb->connections[3*i + k]] = underpasses[3*i + k];
 
 
       //printf ("Arc starting at %d.%d has %d underpasses\n", i, k, underpasses[3*i + k]);
@@ -698,7 +588,7 @@ emb_meridians_longitudes (struct embedding *emb, int *connections, struct presen
       node = &emb->nodes[i];
       if (node->direction[k] == NODE_IS_ARRIVAL) continue;
 
-      ii = connections[3*i + k]/3;
+      ii = emb->connections[3*i + k]/3;
       llengthpre = numunderpasses_on_spanning_tree (i, node_flood, underpasses);
       llengthpost = numunderpasses_on_spanning_tree (ii, node_flood, underpasses);
       llength = underpasses[3*i + k] + llengthpre + llengthpost;
@@ -716,7 +606,7 @@ emb_meridians_longitudes (struct embedding *emb, int *connections, struct presen
       while (iii != 0)
       {
         ikparent = node_flood[iii];
-        count = underpasses_on_arc (connections[ikparent], &(rule->var[u]), emb);
+        count = underpasses_on_arc (emb->connections[ikparent], &(rule->var[u]), emb);
         u += count;
         iii = ikparent/3;
       }
@@ -847,4 +737,268 @@ emb_remove_dup_rules (struct presentation *p)
   if (debug) print_presentation (p);
 
   return (count);
+}
+
+/*
+ * ==============================================
+ * place construction of the orientation in a
+ * function by itself
+ * ==============================================
+ */
+
+int
+emb_orient (struct embedding *emb)
+{
+  int in, nextin, id, thisid, nextid, count;
+  struct emb_node *node, *nextnode, *thisnode;
+  int open_arcs, short_arcs, shortcount;
+  int generator, connection;
+
+  open_arcs = emb->k/2*3;
+  short_arcs = open_arcs + emb->n*2;
+
+  shortcount = 0;
+
+  if (debug) printf ("FASE 1: orientazione archi aperti (inizio e fine su due (o uno) nodo trivalente\n");
+  if (debug) printf ("ce ne sono %d\n", open_arcs);
+
+  /* unknown direction */
+  for (in = 0; in < emb->k + emb->n; in++)
+  {
+    node = &emb->nodes[in];
+    for (id = 0; id < node->valency; id++) node->direction[id] = 0;
+  }
+
+  if (emb->k > 0)
+  {
+    emb->connections = (int *) malloc (3*emb->k*sizeof(int));
+    count = 0;
+    for (in = 0; in < emb->k; in++)
+    {
+      node = &emb->nodes[in];
+      for (id = 0; id < 3; id++)
+      {
+        //printf ("Starting from node %d direction %d\n", in, id);
+        assert (node->direction[id] != NODE_IS_START);
+        if (node->direction[id] != 0) continue;
+        assert (count < open_arcs);
+        node->direction[id] = NODE_IS_START;
+        node->generator[id] = count;
+        nextin = node->ping[id];
+        nextnode = &emb->nodes[nextin];
+        nextnode->generator[node->pong[id]] = count;
+        /*
+         * now follow the arc untill we reach a trivalent node
+         */
+        thisnode = node;
+        thisid = id;
+        while (1)
+        {
+          nextin = thisnode->ping[thisid];
+          nextid = thisnode->pong[thisid];
+          shortcount++;
+          nextnode = &emb->nodes[nextin];
+          if (thisnode->valency == 4)
+          {
+            generator = 2*(thisnode->id - emb->k) + open_arcs;
+            if ((thisid % 2) != 0) generator++;
+            thisnode->generator[thisid] = generator;
+            nextnode->generator[thisnode->pong[thisid]] = generator;
+          }
+          if (nextnode->valency == 3)
+          {
+            assert (nextnode->direction[nextid] == 0);
+            nextnode->direction[nextid] = NODE_IS_ARRIVAL;
+            break;
+          }
+          nextnode->direction[nextid] = NODE_IS_ARRIVAL;
+          thisnode = nextnode;
+          thisid = (nextid + 2) % 4;
+          assert (nextnode->direction[thisid] == 0);
+          nextnode->direction[thisid] = NODE_IS_START;
+        }
+        emb->connections[3*in + id] = 3*nextin + nextid;
+        emb->connections[3*nextin + nextid] = 3*in + id;
+        count++;
+      }
+    }
+    assert (count == open_arcs);
+    if (debug)
+    {
+      printf ("Connections between trivalent nodes:\n");
+      for (in = 0; in < emb->k; in++)
+      {
+        for (id = 0; id < 3; id++)
+        {
+          connection = emb->connections[3*in + id];
+          printf ("%d.%d -> %d.%d\n", in, id, connection/3, connection % 3);
+        }
+      }
+    }
+    emb->numhcomponents = emb_color (emb);
+  }
+
+  emb->numrings = 0;
+
+  if (short_arcs > shortcount)
+  {
+    if (debug) printf ("FASE 2: orientazione archi chiusi short arcs: %d, processed: %d\n", short_arcs, shortcount);
+    //
+    // this look very similar to the 'open arcs' case
+    // perhaps we should merge the two cases?
+    //
+    count = 0;
+    for (in = emb->k; in < emb->k + emb->n; in++)
+    {
+      node = &emb->nodes[in];
+      assert (node->valency == 4);
+      for (id = 0; id < 4; id++)
+      {
+        //if (debug) printf ("Starting from node %d direction %d\n", in, id);
+        if (node->direction[id] != 0) continue;
+        count++;
+        node->direction[id] = NODE_IS_START;
+        //
+        // now follow the arc untill we are back at the starting node
+        //
+        thisnode = node;
+        thisid = id;
+        while (1)
+        {
+          assert (thisnode->valency == 4); 
+          nextin = thisnode->ping[thisid];
+          nextid = thisnode->pong[thisid];
+          shortcount++;
+          nextnode = &emb->nodes[nextin];
+          assert (nextnode->valency == 4);
+          generator = 2*(thisnode->id - emb->k) + open_arcs;
+          if ((thisid % 2) != 0) generator++; 
+          thisnode->generator[thisid] = generator;
+          nextnode->generator[thisnode->pong[thisid]] = generator;
+          nextnode->direction[nextid] = NODE_IS_ARRIVAL;
+          thisnode = nextnode;
+          thisid = (nextid + 2) % 4;
+          assert (nextnode->direction[thisid] != NODE_IS_ARRIVAL);
+          if (nextnode->direction[thisid] == NODE_IS_START) break;
+          nextnode->direction[thisid] = NODE_IS_START;
+        }
+      }
+    }
+    assert (short_arcs == shortcount);
+    emb->numrings = count;
+    if (verbose && emb->numrings) printf ("There %s %d toric component(s)\n", (emb->numrings > 1)?"are":"is", emb->numrings);
+  }
+
+  return (1);
+}
+
+/*
+ * ==============================================
+ */
+
+struct vecofintlist *
+embeddingtoloiv (struct embedding *emb)
+{
+  struct emb_node *node;
+  int in;
+  int sign, count;
+
+
+  if (emb->k > 0)
+  {
+    printf ("Fatal: cannot compute dtcode/gausscode of handlebodies knots/links of higher genus\n");
+    exit (1);
+  }
+
+  for (in = 0; in < emb->n; in++)
+  {
+    node = &emb->nodes[in];
+
+
+assert (0);
+    //rule = (struct presentationrule *) malloc (2*sizeof (int) + sizeof (struct presentationrule));
+    //rule->length = 2;
+    //rule->next = p->rules;
+    //p->rules = rule;
+
+
+    sign = 1;  // positive crossing
+    if (node->overpassisodd)
+    {
+
+assert (0);
+      //rule->var[0] = node->generator[1] + 1;
+      //rule->var[1] = - (node->generator[3] + 1);
+      //if (node->direction[1] == NODE_IS_ARRIVAL)
+      //{
+      //  a = node->generator[1];
+      //  b = node->generator[3];
+      //} else {
+      //  sign *= -1;
+      //  a = node->generator[3];
+      //  b = node->generator[1];
+      //}
+      //if (node->direction[0] == NODE_IS_ARRIVAL)
+      //{
+      //  sign *= -1;
+      //  c = node->generator[0];
+      //  d = node->generator[2];
+      //} else {
+      //  c = node->generator[2];
+      //  d = node->generator[0];
+      //}
+    } else {
+
+assert (0);
+      //rule->var[0] = node->generator[0] + 1;
+      //rule->var[1] = - (node->generator[2] + 1);
+      //if (node->direction[0] == NODE_IS_ARRIVAL)
+      //{
+      //  a = node->generator[0];
+      //  b = node->generator[2];
+      //} else {
+      //  sign *= -1;
+      //  a = node->generator[2];
+      //  b = node->generator[0];
+      //}
+      //if (node->direction[1] == NODE_IS_ARRIVAL)
+      //{
+      //  c = node->generator[1];
+      //  d = node->generator[3];
+      //} else {
+      //  sign *= -1;
+      //  c = node->generator[3];
+      //  d = node->generator[1];
+      //}
+
+
+
+    }
+
+
+assert (0);
+    //rule = (struct presentationrule *) malloc (4*sizeof (int) + sizeof (struct presentationrule));
+    //rule->length = 4;
+    //rule->next = p->rules;
+    //p->rules = rule;
+    //if (sign > 0)
+    //{
+    //  rule->var[0] = b + 1;
+    //  rule->var[1] = d + 1;
+    //  rule->var[2] = -(a + 1);
+    //  rule->var[3] = -(c + 1);
+    //} else {
+    //  rule->var[0] = d + 1;
+    //  rule->var[1] = b + 1;
+    //  rule->var[2] = -(c + 1);
+    //  rule->var[3] = -(a + 1);
+    //}
+  }
+
+
+
+
+
+  printf ("NOT YET IMPLEMENTED\n");
+  assert (0);
 }
