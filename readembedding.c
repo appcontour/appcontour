@@ -902,7 +902,7 @@ embeddingtoloiv (struct embedding *emb)
 {
   struct emb_node *node, *thisnode, *nextnode;
   int il, in, thisin, nextin, id, thisid, nextid;
-  int sign, signature;
+  int sign, signature, handedness;
   struct vecofintlist *loiv, *lv;
   int ic, iv, *visited;
 
@@ -957,6 +957,9 @@ embeddingtoloiv (struct embedding *emb)
         signature = 1 - 2*signature;
         signature = sign*signature;   // overall orientation
         lv->vec[il] = signature*(thisin+1);
+        handedness = 1;
+        if (thisnode->direction[(thisid + 1) % 4] == NODE_IS_START) handedness = -1;
+        lv->handedness[il] = handedness;
         visited[2*thisin + (thisid % 2)]++;
 
         thisin = nextin;
