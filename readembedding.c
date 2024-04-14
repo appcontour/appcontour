@@ -6,6 +6,7 @@
 #include "readembedding.h"
 #include "fundamental.h"
 #include "parser.h"
+#include "readdtcode.h"
 
 extern struct global_data globals;
 
@@ -899,106 +900,80 @@ emb_orient (struct embedding *emb)
 struct vecofintlist *
 embeddingtoloiv (struct embedding *emb)
 {
-  struct emb_node *node;
-  int in;
-  int sign, count;
-
+  struct emb_node *node, *thisnode, *nextnode;
+  int il, in, thisin, nextin, id, thisid, nextid;
+  int sign, signature;
+  struct vecofintlist *loiv, *lv;
+  int ic, iv, *visited;
 
   if (emb->k > 0)
   {
     printf ("Fatal: cannot compute dtcode/gausscode of handlebodies knots/links of higher genus\n");
-    exit (1);
+    exit (1001);
   }
 
-  for (in = 0; in < emb->n; in++)
+  loiv = 0;
+  for (ic = 0; ic < emb->numrings; ic++)
+  {
+    lv = (struct vecofintlist *) malloc ( SIZEOFLOIV (emb->n) );
+    lv->type = LOIV_ISGAUSSCODE;
+    lv->dim = emb->n;
+    lv->handedness = (int *) malloc (lv->dim*sizeof(int));
+    lv->next = loiv;
+    loiv = lv;
+  }
+  loiv = lv;
+
+  visited = (int *) malloc (2*emb->n);
+  for (iv = 0; iv < 2*emb->n; iv++) visited[iv] = 0;
+
+  il = 0;
+  in = 0;
+  sign = emb->orientation;
+
+  lv = loiv;
+  for (in = emb->k; in < emb->k + emb->n; in++)
   {
     node = &emb->nodes[in];
-
-
-assert (0);
-    //rule = (struct presentationrule *) malloc (2*sizeof (int) + sizeof (struct presentationrule));
-    //rule->length = 2;
-    //rule->next = p->rules;
-    //p->rules = rule;
-
-
-    sign = 1;  // positive crossing
-    if (node->overpassisodd)
+    for (id = 0; id < 4; id++)
     {
+      //if (debug) printf ("Starting from node %d direction %d\n", in, id);
+      if (node->direction[id] != NODE_IS_START) continue;
+      if (visited[2*in + (id % 2)]) break;
+      assert (lv);
+      //
+      // now follow the arc untill we are back at the starting node
+      //
+      thisnode = node;
+      thisid = id;
+      thisin = in;
+      while (1)
+      {
+        nextin = thisnode->ping[thisid];
+        nextid = thisnode->pong[thisid];
+        nextnode = &emb->nodes[nextin];
 
-assert (0);
-      //rule->var[0] = node->generator[1] + 1;
-      //rule->var[1] = - (node->generator[3] + 1);
-      //if (node->direction[1] == NODE_IS_ARRIVAL)
-      //{
-      //  a = node->generator[1];
-      //  b = node->generator[3];
-      //} else {
-      //  sign *= -1;
-      //  a = node->generator[3];
-      //  b = node->generator[1];
-      //}
-      //if (node->direction[0] == NODE_IS_ARRIVAL)
-      //{
-      //  sign *= -1;
-      //  c = node->generator[0];
-      //  d = node->generator[2];
-      //} else {
-      //  c = node->generator[2];
-      //  d = node->generator[0];
-      //}
-    } else {
+        signature = (thisnode->overpassisodd + thisid) % 2;
+        signature = 1 - 2*signature;
+        signature = sign*signature;   // overall orientation
+        lv->vec[il] = signature*(thisin+1);
+        visited[2*thisin + (thisid % 2)]++;
 
-assert (0);
-      //rule->var[0] = node->generator[0] + 1;
-      //rule->var[1] = - (node->generator[2] + 1);
-      //if (node->direction[0] == NODE_IS_ARRIVAL)
-      //{
-      //  a = node->generator[0];
-      //  b = node->generator[2];
-      //} else {
-      //  sign *= -1;
-      //  a = node->generator[2];
-      //  b = node->generator[0];
-      //}
-      //if (node->direction[1] == NODE_IS_ARRIVAL)
-      //{
-      //  c = node->generator[1];
-      //  d = node->generator[3];
-      //} else {
-      //  sign *= -1;
-      //  c = node->generator[3];
-      //  d = node->generator[1];
-      //}
-
-
-
+        thisin = nextin;
+        thisnode = nextnode;
+        thisid = (nextid + 2) % 4;
+        il++;
+        assert (nextnode->direction[thisid] != NODE_IS_ARRIVAL);
+        if (nextin == in && (nextid + 2)%4 == id) break;
+      }
+      lv->len = il;
+      lv = lv->next;
+      il = 0;
     }
-
-
-assert (0);
-    //rule = (struct presentationrule *) malloc (4*sizeof (int) + sizeof (struct presentationrule));
-    //rule->length = 4;
-    //rule->next = p->rules;
-    //p->rules = rule;
-    //if (sign > 0)
-    //{
-    //  rule->var[0] = b + 1;
-    //  rule->var[1] = d + 1;
-    //  rule->var[2] = -(a + 1);
-    //  rule->var[3] = -(c + 1);
-    //} else {
-    //  rule->var[0] = d + 1;
-    //  rule->var[1] = b + 1;
-    //  rule->var[2] = -(c + 1);
-    //  rule->var[3] = -(a + 1);
-    //}
+    if (visited[2*in + (id % 2)]) break;
   }
 
+  free (visited);
 
-
-
-
-  printf ("NOT YET IMPLEMENTED\n");
-  assert (0);
+  return (loiv);
 }
