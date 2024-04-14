@@ -71,9 +71,11 @@ struct presentation *
 wirtingerfromembedding (struct embedding *emb)
 {
   int open_arcs, short_arcs;
-  struct emb_node *node, *thisnode, *nextnode;
-  int i, j, thisi, nexti;
-  int thisj, nextj, nextjplus, k;
+  struct emb_node *node;
+  //struct emb_node *thisnode, *nextnode;
+  int i, j;
+  //int thisi, nexti;
+  //int thisj, nextj, nextjplus, k;
   struct presentation *p;
   struct presentationrule *rule;
   int sign, a, b, c, d;
@@ -213,9 +215,11 @@ wirtingerfromembedding (struct embedding *emb)
     if (verbose) printf ("\n");
   }
 
-  assert (emb->numhcomponents + emb->numrings >= 1);
+  assert (emb->numhcomponents >= 1);
   if (emb->numhcomponents + emb->numrings == 1)
   {
+    assert (emb->numrings == 0);
+#if DEAD_CODE
     if (emb->numrings == 1)  // case of standard knot (genus=1)
     {
       assert (emb->k == 0);
@@ -265,8 +269,9 @@ wirtingerfromembedding (struct embedding *emb)
         printf ("         consider using as input the dtcode of the knot\n");
       }
     } else {                      // case of handlebody of genus > 1
-      emb_meridians_longitudes (emb, p);
-    }
+#endif //DEAD_CODE
+    emb_meridians_longitudes (emb, p);
+    //}
   } else if (!quiet) printf ("Cannot compute meridians and longitudes for links\n");
 
   if (debug) print_presentation (p);
@@ -652,9 +657,32 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p)
       p->elements = rule;
 
       //printf ("building meridian for arc starting at %d.%d\n", i, k);
-      rule = (struct presentationrule *) malloc (sizeof (int) + sizeof (struct presentationrule));
-      rule->length = 1;
-      rule->var[0] = node->generator[k] + 1;
+      rule = (struct presentationrule *) malloc ((2*llengthpre + 1)*sizeof (int) + sizeof (struct presentationrule));
+      rule->length = 2*llengthpre + 1;
+
+      //printf ("===== PRE =======\n");
+      iii = i;
+      while (iii != 0)
+      {
+        ikparent = node_flood[iii];
+        u = numunderpasses_on_spanning_tree (ikparent/3, node_flood, underpasses);
+        underpasses_on_arc (ikparent, &(rule->var[u]), emb);
+        iii = ikparent/3;
+      }
+
+      rule->var[llengthpre] = node->generator[k] + 1;
+
+      //printf ("===== POST =======\n");
+      u = llengthpre + 1;
+      iii = i;
+      while (iii != 0)
+      {
+        ikparent = node_flood[iii];
+        count = underpasses_on_arc (emb->connections[ikparent], &(rule->var[u]), emb);
+        u += count;
+        iii = ikparent/3;
+      }
+
       rule->next = p->elements;
       p->elements = rule;
     }
