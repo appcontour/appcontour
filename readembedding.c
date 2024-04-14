@@ -7,6 +7,7 @@
 #include "fundamental.h"
 #include "parser.h"
 #include "readdtcode.h"
+#include "wirtinger.h"
 
 extern struct global_data globals;
 
@@ -63,14 +64,25 @@ wirtingerfromembedding (struct embedding *emb)
   struct presentation *p;
   struct presentationrule *rule;
   int sign, a, b, c, d;
+  struct vecofintlist *gaussloiv;
+  struct vecofintlist *dtloiv;
 
   assert ((emb->k % 2) == 0);
   open_arcs = emb->k/2*3;
   short_arcs = open_arcs + emb->n*2;
 
 
-  if (emb->k == 0) if (!quiet) printf ("TODO: for a standard knot/link build the gausscode, then call appropriate function\n");
-// XXXXXXXXXXXXXXX
+  if (emb->k == 0)
+  {
+    if (debug) printf ("This is a standard knot/link, converting to gausscode\n");
+    gaussloiv = embeddingtoloiv (emb);
+    freeembedding (emb);
+    dtloiv = gausscode2dtcode (gaussloiv);
+    freeloiv (gaussloiv);
+    p = wirtingerfromloiv (dtloiv);
+    freeloiv (dtloiv);
+    return (p);
+  }
 
   p = (struct presentation *) malloc (sizeof (struct presentation));
   p->gennum = short_arcs;
@@ -240,8 +252,6 @@ wirtingerfromembedding (struct embedding *emb)
       emb_meridians_longitudes (emb, p);
     }
   } else if (!quiet) printf ("Cannot compute meridians and longitudes for links\n");
-
-  //if (emb->k > 0) free (connections);
 
   if (debug) print_presentation (p);
   emb_remove_dup_rules (p);
@@ -980,3 +990,20 @@ embeddingtoloiv (struct embedding *emb)
 
   return (loiv);
 }
+
+/*
+ * free memory allocated for an embedding
+ */
+
+void
+freeembedding (struct embedding *emb)
+{
+  free (emb->nodes);
+  if (emb->connections) free (emb->connections);
+
+  free (emb);
+
+  return;
+}
+
+

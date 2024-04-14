@@ -1,3 +1,5 @@
+11. Allow wirtinger computation for knots described via gausscode
+
 10. Add orientation info in embedding input syntax; add overpass info (even or odd)
 in input syntax per each node (e.g. a minus sign like "-1: (<a>, <b>, <c>, <d>),"
 
