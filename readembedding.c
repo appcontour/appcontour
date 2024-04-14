@@ -11,12 +11,29 @@
 
 extern struct global_data globals;
 
+extern int debug;
+extern int verbose;
+extern int quiet;
+
 struct sketch *
 embeddingtosketch (FILE *file)
 {
   struct embedding *emb;
+  struct sketch *s;
+  struct vecofintlist *loiv;
 
   emb = readembedding (file);
+
+  if (emb->k == 0)
+  {
+    if (debug) printf ("This is a standard knot/link, converting to gausscode\n");
+    loiv = embeddingtoloiv (emb);
+    if (debug) printloiv (loiv);
+    freeembedding (emb);
+    s = readgausscodeloiv (loiv);
+    // freeloiv (loiv); // loiv is freed by readgausscodeloiv!
+    return (s);
+  }
 
   printf ("NOT YET IMPLEMENTED: k = %d, n = %d, choice = %d\n", emb->k, emb->n, emb->choice);
 
@@ -43,10 +60,6 @@ embeddingtosketch (FILE *file)
 
 #define NODE_IS_START 1
 #define NODE_IS_ARRIVAL 2
-
-extern int debug;
-extern int verbose;
-extern int quiet;
 
 /*
  * TODO: probably the case k=0 should be treated in a completely different way
@@ -928,16 +941,16 @@ embeddingtoloiv (struct embedding *emb)
   loiv = 0;
   for (ic = 0; ic < emb->numrings; ic++)
   {
-    lv = (struct vecofintlist *) malloc ( SIZEOFLOIV (emb->n) );
+    lv = (struct vecofintlist *) malloc ( SIZEOFLOIV (2*emb->n) );
     lv->type = LOIV_ISGAUSSCODE;
-    lv->dim = emb->n;
+    lv->dim = 2*emb->n;
     lv->handedness = (int *) malloc (lv->dim*sizeof(int));
     lv->next = loiv;
     loiv = lv;
   }
   loiv = lv;
 
-  visited = (int *) malloc (2*emb->n);
+  visited = (int *) malloc (2*emb->n * sizeof(int));
   for (iv = 0; iv < 2*emb->n; iv++) visited[iv] = 0;
 
   il = 0;
