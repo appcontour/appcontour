@@ -89,6 +89,7 @@ main (int argc, char *argv[])
   globals.abelianize = globals.experimental = 0;
   globals.knotname_fallback = 1;
   globals.summand1cc = globals.summand2cc = globals.choice = -1;
+  globals.rotation = 0;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     globals.autosurgery++;
   if ((envvar = getenv ("APPCONTOUR_OLDNAMES")) && *envvar) 
@@ -165,6 +166,18 @@ main (int argc, char *argv[])
         fprintf (stderr, "Too many tagged strata (%d)\n", user_data.stnum);
         exit (1);
       }
+      continue;
+    }
+    if (strcmp(argv[i],"--clockwise") == 0)
+    {
+      globals.rotation = -1;
+      if (verbose) printf ("Rotation is clockwise (negative)\n");
+      continue;
+    }
+    if (strcmp(argv[i],"--cclockwise") == 0)
+    {
+      globals.rotation = 1;
+      if (verbose) printf ("Rotation is counterclockwise (positive) [default]\n");
       continue;
     }
     if (strcmp(argv[i],"--version") == 0)
@@ -485,6 +498,7 @@ main (int argc, char *argv[])
       printf ("  --summand1cc <int>  and  --summand2cc <int>: indicate which connected component to use in the \"sum\" of two\n");
       printf ("      apparent contours\n");
       printf ("  --choice <int>: give information about overpasses at crossings when input is a planar embedding\n");
+      printf ("  --clockwise|--cclockwise: give information about orientation of an embedding\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
       exit (0);
     }

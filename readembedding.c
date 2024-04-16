@@ -35,6 +35,256 @@ embeddingtosketch (FILE *file)
     return (s);
   }
 
+#if IMPORTEDFROMEMBEDDINGANALYZE
+  int i, count;
+  int ir, j, inode;
+  int found, fourvalentnum;
+  int bit;
+
+  for (i = 0; i < k; i++) assert (adjacencynum[i] == 3);
+  //assert (adjacencynum[0] == 3);
+  //assert (adjacencynum[1] == 3);
+  for (i = 0; i < n; i++) assert (adjacencynum[i+k] == 4);
+
+  /*
+   * WARNING: this code DOES NOT WORK when the final region description contains
+   * closed arcs (homeomorphic to an S^1), this can happen when there is a region
+   * in the region description that is bounded solely by tri-valent vertices.
+   *
+   */
+
+  found = 0;
+  for (ir = 0; ir < regionsnum; ir++)
+  {
+    fourvalentnum = 0;
+    for (j = 0; j < r_adjacencynum[ir]; j++)
+    {
+      /* check if the corresponding node is 4-valent
+       */
+      inode = r_adjacencyi[ir][j];
+      if (adjacencynum[inode] == 4) fourvalentnum++;
+    }
+    if (fourvalentnum == 0) found++;
+  }
+
+  if (found > 0)
+  {
+    printf ("\n# WARNING: presence of Regions with no 4-valent bound vertex!\n");
+    printf ("# the code at present cannot cope with this situation.\n");
+    printf ("#\n# However in this case the embedding is IH equivalent to a one-sum\n");
+    printf ("# so we are not really interested in such a case.\n");
+    printf ("#\n# we simply output an empty contour\n\n");
+    printf ("sketch {\n");
+    printf ("Region 0 (f = 0): ();\n");
+    printf ("}\n");
+    return;
+  }
+  //assert (k == 2);  //for now
+
+  printf ("sketch {\n");
+
+  /*
+   * arcs that bound embedding regions.
+   * Endpoints are four-valent nodes
+   *
+   * -- Numbering --
+   * each crossing i of the diagram originates 4 crossings in the apparent contour
+   * numbered (i.j) j = 0,1,2,3, in counterclockwise order and is the endpoint
+   * of some other arc.
+   *
+   * We fix ideas deciding that if the departing arc goes up, then the arriving arc
+   * arrives from the right.
+   *
+   * the numbering of these (long) args is then computed as (k being the number of 3-valent
+   * nodes):
+   *
+   *   4*(i - k) + j + 1
+   *
+   * the last of these arcs will be numbered 4n
+   *
+   * This choice of the orientation leads to arcs oppositely oriented with respect to the
+   * regions (f=0).
+   */
+  for (i = 1; i <= 4*n; i++) printf ("Arc %d: [0];\n", i);
+
+  /*
+   * arcs bounding the small quadrilateral crossing regions
+   * (four per node), listed counter-clockwise.
+   * the label value defines the under/over choice and can
+   * be driven using the bits in the "choice" argument
+   */
+  count = 4*n+1;
+  for (i = 1; i <= n; i++)
+  {
+    bit = choice % 2;
+    choice /= 2;
+
+    printf ("Arc %d: [%d];\n", count++, 2*bit);
+    printf ("Arc %d: [%d];\n", count++, 2*(1 - bit));
+    printf ("Arc %d: [%d];\n", count++, 2*bit);
+    printf ("Arc %d: [%d];\n", count++, 2*(1 - bit));
+  }
+
+  count = print_sketch_rr (0);
+  count = print_sketch_ra (count);
+  count = print_sketch_rv (count);
+
+  printf ("}\n");
+
+int
+print_sketch_rr (int count)
+{
+  int arcid, notfirst;
+  int ir, jr, iv, jv;
+
+  /*
+   * start with real regions (f = 0)
+   */
+  for (ir = 0; ir < regionsnum; ir++)
+  {
+    printf ("Region %d (f = 0): (", count);
+    if (count++ == 1) printf (") (");
+    notfirst = 0;
+    for (jr = 0; jr < r_adjacencynum[ir]; jr++)
+    {
+      iv = r_adjacencyi[ir][jr];
+      if (adjacencynum[iv] <= 3) continue;
+      if (notfirst++) printf (" ");
+      jv = r_adjacencyj[ir][jr];
+      jv++; if (jv >= 4) jv -= 4;
+      arcid = 4*(iv - k) + jv + 1;
+      printf ("-a%d", arcid);
+    }
+    printf (");\n");
+  }
+  return (count);
+}
+
+/*
+ * then sketch regions corresponding to arcs
+ */
+
+int
+print_sketch_ra (int count)
+{
+  int i;
+
+  nodemark = (int *) malloc (nodenum*sizeof(int));
+  for (i = 0; i < k+n; i++) nodemark[i] = 0;
+
+  /*
+   * now the elongated regions containint the triple-points
+   * (one or two)
+   */
+  while (print_sketch_ra3 (1, count, nodemark))
+  {
+    count++;
+  }
+
+
+  while (print_sketch_ra3 (0, count, nodemark))
+  {
+//for (i = 0; i < nodenum; i++) printf ("nodemark[%d] = %d\n", i, nodemark[i]);
+    count++;
+  }
+
+  free (nodemark);
+
+  return (count);
+}
+
+int
+print_sketch_ra3 (int only3, int regionnum, int *nodemark)
+{
+  int vi, vj, vinext, vjnext, vinextnext;
+  int found, notfirst;
+
+  /*
+   * now the elongated regions containint the triple-points
+   * (one or two)
+   */
+  found = 0;
+  for (vi = k; vi < k+n; vi++)
+  {
+    for (vj = 0; vj < 4; vj++)
+    {
+      if ((nodemark[vi] & (1<<vj)) != 0) continue;
+      if (only3 && adjacency[vi][vj] >= k) continue;
+      found++;
+      break;
+    }
+    if (found) break;
+  }
+
+  if (! found) return (0);
+
+  printf ("Region %d (f = 2): (", regionnum);
+  notfirst = 0;
+  while ((nodemark[vi] & (1<<vj)) == 0)
+  {
+    nodemark[vi] |= 1 << vj;
+//printf ("\n=== nodemark[%d] |= 1<<%d\n", vi, vj);
+
+    vinext = adjacency[vi][vj];
+    vjnext = get_back_index (vi, vj);
+    //nodemark[vinext] |= 1 << vjnext;
+    vjnext++; if (vjnext >= adjacencynum[vinext]) vjnext -= adjacencynum[vinext];
+    //printf ("LOOP: vi.vj = %d.%d -> %d.%d\n", vi, vj, vinext, vjnext);
+//    nodemark[vinext] |= 1 << vjnext;
+//printf ("\n=== nodemark[%d] |= 1<<%d\n", vinext, vjnext);
+    while (adjacencynum[vinext] <= 3)
+    {
+      nodemark[vinext] |= 1 << vjnext;
+//printf ("\n=== nodemark[%d] |= 1<<%d\n", vinext, vjnext);
+      vinextnext = adjacency[vinext][vjnext];
+      vjnext = get_back_index (vinext, vjnext);
+      //nodemark[vinextnext] |= 1 << vjnext;
+      vjnext++; if (vjnext >= adjacencynum[vinextnext]) vjnext -= adjacencynum[vinextnext];
+//      nodemark[vinextnext] |= 1 << vjnext;
+//printf ("=== nodemark[%d] |= 1<<%d\n", vinextnext, vjnext);
+      vinext = vinextnext;
+      //printf ("  -> %d.%d\n", vinext, vjnext);
+    }
+    assert (adjacencynum[vinext] == 4);
+    if (notfirst++) printf (" ");
+    printf ("+a%d ", 4*(vi - k) + vj + 1);
+    printf ("-a%d", 4*(vinext - k) + vjnext + 1 + 4*n);
+
+    vjnext--;
+    if (vjnext < 0) vjnext += 4;
+    vi = vinext;
+    vj = vjnext;
+  }
+
+  printf (");\n");
+  return (1);
+}
+
+int
+print_sketch_rv (int count)
+{
+  int i, j;
+
+  /*
+   * finally regions corresponding to four-valent nodes
+   */
+
+  for (i = 0; i < n; i++)
+  {
+
+    printf ("Region %d (f = 4): (", count++);
+    for (j = 0; j < 4; j++)
+    {
+      if (j > 0) printf (" ");
+      printf ("+a%d", 4*n + 4*i + j + 1);
+    }
+    printf (");\n");
+  }
+
+  return (count);
+}
+#endif //IMPORTEDFROMEMBEDDINGANALYZE
+
   printf ("NOT YET IMPLEMENTED: k = %d, n = %d, choice = %d\n", emb->k, emb->n, emb->choice);
 
 
@@ -72,10 +322,7 @@ wirtingerfromembedding (struct embedding *emb)
 {
   int open_arcs, short_arcs;
   struct emb_node *node;
-  //struct emb_node *thisnode, *nextnode;
   int i, j;
-  //int thisi, nexti;
-  //int thisj, nextj, nextjplus, k;
   struct presentation *p;
   struct presentationrule *rule;
   int sign, a, b, c, d;
@@ -86,6 +333,7 @@ wirtingerfromembedding (struct embedding *emb)
   open_arcs = emb->k/2*3;
   short_arcs = open_arcs + emb->n*2;
 
+  assert (emb->orientation);
 
   if (emb->k == 0)
   {
@@ -219,59 +467,7 @@ wirtingerfromembedding (struct embedding *emb)
   if (emb->numhcomponents + emb->numrings == 1)
   {
     assert (emb->numrings == 0);
-#if DEAD_CODE
-    if (emb->numrings == 1)  // case of standard knot (genus=1)
-    {
-      assert (emb->k == 0);
-      i = emb->k;
-      node = &emb->nodes[i];
-      assert (node->overpassisodd == 0 || node->overpassisodd == 1);
-      j = (node->overpassisodd)?1:0;
-      if (node->direction[j] == NODE_IS_ARRIVAL) j = (j + 2) % 4;
-      rule = (struct presentationrule *) malloc (sizeof(int) + sizeof (struct presentationrule));
-      rule->length = 1;
-      rule->var[0] = node->generator[j] + 1;
-      rule->next = 0;
-      p->elements = rule;
-
-      rule = (struct presentationrule *) malloc (emb->n*sizeof(int) + sizeof(struct presentationrule));
-      thisi = i;
-      thisj = j;
-      rule->length = emb->n;
-      k = 0;
-      while (1)
-      {
-        thisnode = &emb->nodes[thisi];
-        nexti = thisnode->ping[thisj];
-        nextj = thisnode->pong[thisj];
-        nextj = (nextj + 2) % 4;
-        nextnode = &emb->nodes[nexti];
-        if ( ((nextj + nextnode->overpassisodd) % 2) == 1)
-        {
-          nextjplus = (nextj + 1) % 4;
-          sign = 1;
-          if (nextnode->direction[nextjplus] == NODE_IS_START) sign = -1;
-          rule->var[k] = sign*(nextnode->generator[nextjplus] + 1);
-          if (debug) printf ("generator: %d (1 = a; -1 = A)\n", rule->var[k]);
-          k++;
-        }
-        if (nexti == i && nextj == j) break;
-        thisi = nexti;
-        thisj = nextj;
-      }
-
-      rule->next = 0;
-
-      p->elements->next = rule;
-      if (!quiet)
-      {
-        printf ("Warning: the longitude is NOT a preferred longitude in general\n");
-        printf ("         consider using as input the dtcode of the knot\n");
-      }
-    } else {                      // case of handlebody of genus > 1
-#endif //DEAD_CODE
     emb_meridians_longitudes (emb, p);
-    //}
   } else if (!quiet) printf ("Cannot compute meridians and longitudes for links\n");
 
   if (debug) print_presentation (p);
@@ -328,7 +524,7 @@ readembedding (FILE *file)
   emb = (struct embedding *) malloc (sizeof (struct embedding));
   emb->k = emb->n = 0;
   emb->choice = -1;
-  emb->orientation = 1;
+  emb->orientation = 0; //this is controlled by a sign or by commandline argument
   emb->connections = 0;
   emb->nodes = 0;
 
@@ -353,6 +549,23 @@ readembedding (FILE *file)
   }
 
   tok = gettoken (file);
+  if (tok == TOK_MINUS || tok == TOK_PLUS)
+  {
+    if (tok == TOK_MINUS) emb->orientation = -1;
+    if (tok == TOK_PLUS) emb->orientation = 1;
+    tok = gettoken (file);
+  }
+  if (globals.rotation)
+  {
+    if (emb->orientation && !quiet) printf ("Command line option forces orientation of embedding to be %s\n",
+       (globals.rotation > 0)?"counterclockwise":"clockwise");
+    emb->orientation = (globals.rotation > 0)?1:(-1);
+  }
+  if (emb->orientation == 0)
+  {
+    if (verbose) printf ("Default orientation for embedding is counterclockwise\n");
+    emb->orientation = 1;
+  }
   assert (tok == TOK_LBRACE);
   node = 0;
   while (1)
