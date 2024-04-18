@@ -35,13 +35,15 @@ struct dualembedding {
   int v;
   int e;
   int numwedges;
+  int *wedgeij;
   struct dual_region *regions;
 };
 
 /* prototypes */
 
-struct sketch *embeddingtosketch (struct embedding *emb);
-struct dualembedding *embeddingtodual (struct embedding *emb);
+struct sketch *embedding2sketch (struct embedding *emb);
+struct dualembedding *embedding2dual (struct embedding *emb);
+void printdual (struct dualembedding *emb);
 void freedual (struct dualembedding *dual);
 void freedualregions (struct dual_region *region);
 struct embedding *readembedding (FILE *file);

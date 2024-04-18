@@ -71,6 +71,7 @@ main (int argc, char *argv[])
   struct alexanderideal *ai;
   struct vecofintlist *loiv, *newloiv;
   struct embedding *emb;
+  struct dualembedding *dual;
   int ccnum;
   struct ccomplexcc *cccc;
 
@@ -652,6 +653,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"och") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"suggest_p_surgery") == 0) action = ACTION_SUGGEST_P_SURGERY;
     if (strcmp(argv[i],"filepath") == 0) action = ACTION_FILEPATH;
+    if (strcmp(argv[i],"dualembedding") == 0) action = ACTION_DUALEMBEDDING;
     if (strcmp(argv[i],"newfeature") == 0) action = ACTION_NEWFEATURE;
     if (strcmp(argv[i],"evert") == 0)
     {
@@ -1217,6 +1219,25 @@ main (int argc, char *argv[])
     printloiv (loiv);
     break;
 
+    case ACTION_DUALEMBEDDING:
+    tok = gettoken (infile);
+    if (tok != TOK_EMBEDDING)
+    {
+      printf ("Input must be a planar embedding\n");
+      exit (14);
+    }
+    emb = readembedding (infile);
+    dual = embedding2dual (emb);
+    if (dual == 0)
+    {
+      printf ("Error in dual computation\n");
+      exit (13);
+    }
+    printdual (dual);
+    freedual (dual);
+    freeembedding (emb);
+    break;
+
     case ACTION_WIRTINGER:
     tok = gettoken (infile);
     if (tok == TOK_EMBEDDING)
@@ -1595,7 +1616,7 @@ readcontour (FILE *file)
   {
     emb = readembedding (file);
     if (emb == 0) return (0);
-    return (embeddingtosketch (emb));
+    return (embedding2sketch (emb));
   }
   if (tok == TOK_KNOTSCAPE)
   {

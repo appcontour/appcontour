@@ -16,7 +16,7 @@ extern int verbose;
 extern int quiet;
 
 struct sketch *
-embeddingtosketch (struct embedding *emb)
+embedding2sketch (struct embedding *emb)
 {
   int i, ir, found;
   struct emb_node *node;
@@ -42,7 +42,7 @@ embeddingtosketch (struct embedding *emb)
      else assert (node->valency == 4);
   }
 
-  dual = embeddingtodual (emb);
+  dual = embedding2dual (emb);
 
   /*
    * WARNING: this code DOES NOT WORK when the final region description contains
@@ -307,19 +307,31 @@ void
 freedual (struct dualembedding *dual)
 {
   assert (dual->regions);
-  free (dual->regions->wedgeij);
+  free (dual->wedgeij);
+printf ("B\n");
   freedualregions (dual->regions);
+printf ("C\n");
   free (dual);
+printf ("D\n");
   return;
 }
 
 void
 freedualregions (struct dual_region *region)
 {
+  int id;
+
+  if (region == 0) return;
+  id = region->id;
+printf ("going to free region %d (pointer %p)\n", id, region);
   if (region->next) freedualregions (region->next);
+  assert (region->ping);
+printf ("  before free of region->ping\n");
   free (region->ping);
+printf ("  after free of region->ping\n");
   // free (region->wedgeij);  // this is a portion of a large contiguous vector
   free (region);
+printf ("  done region %d\n", id);
   return;
 }
 
@@ -329,7 +341,7 @@ freedualregions (struct dual_region *region)
  */
 
 struct dualembedding *
-embeddingtodual (struct embedding *emb)
+embedding2dual (struct embedding *emb)
 {
   int i, j, val, nodenum, numwedges, count, totcount;
   int regionsize, region_id;
@@ -366,6 +378,7 @@ embeddingtodual (struct embedding *emb)
   totcount = 0;
   region_id = 0;
   r_wedgeij_all = (int *) malloc (numwedges * sizeof(int));
+  dual->wedgeij = r_wedgeij_all;
   for (i = 0; i < nodenum; i++)
   {
     node = &emb->nodes[i];
@@ -406,6 +419,7 @@ printf ("  next wedge: %d.%d\n", nextnodei, nextnodej);
       region->valency = count;
       region->id = region_id;
       region->wedgeij = r_wedgeij;
+      region->ping = 0;
       region->next = dual->regions;
       dual->regions = region;
       totcount += count;
@@ -415,11 +429,21 @@ printf ("  next wedge: %d.%d\n", nextnodei, nextnodej);
   }
   assert (totcount == numwedges);
 
-  printf ("WARNING: embeddingtodual only partially implemented\n");
-
-
   free (wedgemark);
   return (dual);
+}
+
+void
+printdual (struct dualembedding *dual)
+{
+  int i;
+
+  printf ("Dual of given embedding (%d regions):\n", dual->numregions);
+
+  for (i = 0; i < dual->numregions; i++)
+  {
+    printf ("Region %d\n", i);
+  }
 }
 
 /*
