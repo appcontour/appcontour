@@ -1578,6 +1578,7 @@ readcontour (FILE *file)
   int tok;
   struct sketch *s;
   struct vecofintlist *loiv;
+  struct embedding *emb;
 #ifdef HAVE_UNISTD_H
   int retcode, status, cpid;
   int pipedes[2];
@@ -1590,7 +1591,12 @@ readcontour (FILE *file)
   if (tok == TOK_SKETCH) return (readsketch (file));
   if (tok == TOK_DTCODE) return (readdtcode (file));
   if (tok == TOK_GAUSSCODE) return (readgausscode (file));
-  if (tok == TOK_EMBEDDING) return (embeddingtosketch (file));
+  if (tok == TOK_EMBEDDING)
+  {
+    emb = readembedding (file);
+    if (emb == 0) return (0);
+    return (embeddingtosketch (emb));
+  }
   if (tok == TOK_KNOTSCAPE)
   {
     loiv = readknotscape (file, &s);

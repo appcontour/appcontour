@@ -16,13 +16,13 @@ extern int verbose;
 extern int quiet;
 
 struct sketch *
-embeddingtosketch (FILE *file)
+embeddingtosketch (struct embedding *emb)
 {
-  struct embedding *emb;
+  int i, ir, found;
+  struct emb_node *node;
   struct sketch *s;
   struct vecofintlist *loiv;
-
-  emb = readembedding (file);
+  struct dualembedding *dual;
 
   if (emb->k == 0)
   {
@@ -35,16 +35,14 @@ embeddingtosketch (FILE *file)
     return (s);
   }
 
-#if IMPORTEDFROMEMBEDDINGANALYZE
-  int i, count;
-  int ir, j, inode;
-  int found, fourvalentnum;
-  int bit;
+  for (i = 0; i < emb->k + emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    if (i < emb->k) assert (node->valency == 3);
+     else assert (node->valency == 4);
+  }
 
-  for (i = 0; i < k; i++) assert (adjacencynum[i] == 3);
-  //assert (adjacencynum[0] == 3);
-  //assert (adjacencynum[1] == 3);
-  for (i = 0; i < n; i++) assert (adjacencynum[i+k] == 4);
+  dual = embeddingtodual (emb);
 
   /*
    * WARNING: this code DOES NOT WORK when the final region description contains
@@ -52,19 +50,23 @@ embeddingtosketch (FILE *file)
    * in the region description that is bounded solely by tri-valent vertices.
    *
    */
-
+    
   found = 0;
-  for (ir = 0; ir < regionsnum; ir++)
+  for (ir = 0; ir < dual->numregions; ir++)
   {
-    fourvalentnum = 0;
-    for (j = 0; j < r_adjacencynum[ir]; j++)
-    {
-      /* check if the corresponding node is 4-valent
-       */
-      inode = r_adjacencyi[ir][j];
-      if (adjacencynum[inode] == 4) fourvalentnum++;
-    }
-    if (fourvalentnum == 0) found++;
+
+printf ("region %d\n", ir);
+    
+//    fourvalentnum = 0;
+//    for (j = 0; j < r_adjacencynum[ir]; j++)
+//    {
+//      /*
+//       * check if the corresponding node is 4-valent
+//       */
+//      inode = r_adjacencyi[ir][j];
+//      if (adjacencynum[inode] == 4) fourvalentnum++;
+//    }
+//    if (fourvalentnum == 0) found++;
   }
 
   if (found > 0)
@@ -77,9 +79,10 @@ embeddingtosketch (FILE *file)
     printf ("sketch {\n");
     printf ("Region 0 (f = 0): ();\n");
     printf ("}\n");
-    return;
+    return (0);
   }
-  //assert (k == 2);  //for now
+
+#if IMPORTEDFROMEMBEDDINGANALYZE
 
   printf ("sketch {\n");
 
@@ -140,7 +143,7 @@ print_sketch_rr (int count)
   /*
    * start with real regions (f = 0)
    */
-  for (ir = 0; ir < regionsnum; ir++)
+  for (ir = 0; ir < numregions; ir++)
   {
     printf ("Region %d (f = 0): (", count);
     if (count++ == 1) printf (") (");
@@ -285,10 +288,138 @@ print_sketch_rv (int count)
 }
 #endif //IMPORTEDFROMEMBEDDINGANALYZE
 
+
+
+
+
+
   printf ("NOT YET IMPLEMENTED: k = %d, n = %d, choice = %d\n", emb->k, emb->n, emb->choice);
 
-
+  freedual (dual);
   return (0);
+}
+
+/*
+ *
+ */
+
+void
+freedual (struct dualembedding *dual)
+{
+  assert (dual->regions);
+  free (dual->regions->wedgeij);
+  freedualregions (dual->regions);
+  free (dual);
+  return;
+}
+
+void
+freedualregions (struct dual_region *region)
+{
+  if (region->next) freedualregions (region->next);
+  free (region->ping);
+  // free (region->wedgeij);  // this is a portion of a large contiguous vector
+  free (region);
+  return;
+}
+
+/*
+ *
+ *
+ */
+
+struct dualembedding *
+embeddingtodual (struct embedding *emb)
+{
+  int i, j, val, nodenum, numwedges, count, totcount;
+  int regionsize, region_id;
+  int *wedgemark, *r_wedgeij_all, *r_wedgeij;
+  struct emb_node *node, *thisnode, *nextnode;
+  int thisnodej, nextnodei, nextnodej;
+  struct dualembedding *dual;
+  struct dual_region *region;
+
+  dual = (struct dualembedding *) malloc (sizeof (struct dualembedding));
+
+  assert (emb->k % 2 == 0);
+  nodenum = dual->v = emb->n + emb->k;
+  dual->e = 2*emb->n + 3*emb->k/2;
+  numwedges = dual->numwedges = 4*emb->n + 3*emb->k;
+  dual->numregions = dual->e - dual->v + 2;
+  dual->regions = 0;
+  wedgemark = (int *) malloc (4*nodenum*sizeof(int));
+
+  for (i = 0; i < nodenum; i++)
+  {
+    node = &emb->nodes[i];
+    for (j = 0; j < node->valency; j++)
+    {
+      wedgemark[4*i+j] = 0;  /* will be >0 for wedges of build regions */
+    }
+  }
+
+  /*
+   * now loop through all "wedges" (pair of consecutive arcs for each node
+   * a wedge is indexed using the first of the two arcs (counterclockwise ordering)
+   */
+
+  totcount = 0;
+  region_id = 0;
+  r_wedgeij_all = (int *) malloc (numwedges * sizeof(int));
+  for (i = 0; i < nodenum; i++)
+  {
+    node = &emb->nodes[i];
+    for (j = 0; j < node->valency; j++)
+    {
+      if (wedgemark[4*i + j]) continue;
+      /* wedge of new region! */
+printf ("region %d: starting from wedge %d.%d\n", region_id, i, j);
+      //count = around_region (emb, i, j, &r_wedgeij_all[totcount]);
+      r_wedgeij = &r_wedgeij_all[totcount];
+      /*
+       * walk around the region
+       */
+      count = 0;
+      thisnode = node;
+      //thisnodei = i;
+      thisnodej = j;
+
+      while ((nextnodei = thisnode->ping[thisnodej]) != i)
+      {
+        count++;
+        nextnode = &emb->nodes[nextnodei];
+        val = nextnode->valency;
+        nextnodej = thisnode->pong[thisnodej];
+        nextnodej = (nextnodej + val - 1) % val;
+printf ("  next wedge: %d.%d\n", nextnodei, nextnodej);
+
+        wedgemark[4*nextnodei + nextnodej] = 1;
+        //assert (jwedge >= 0);
+        r_wedgeij[count] = 4*nextnodei + nextnodej;
+        thisnode = nextnode;
+        thisnodej = nextnodej;
+      }
+      count++;
+
+      regionsize = sizeof (struct dual_region) + count*sizeof (int);
+      region = (struct dual_region *) malloc (regionsize);
+      region->valency = count;
+      region->id = region_id;
+      region->wedgeij = r_wedgeij;
+      region->next = dual->regions;
+      dual->regions = region;
+      totcount += count;
+      region_id++;
+      assert (region_id <= dual->numregions);
+    }
+  }
+  assert (totcount == numwedges);
+
+  printf ("WARNING: embeddingtodual only partially implemented\n");
+
+
+  free (wedgemark);
+  return (dual);
 }
 
 /*
@@ -310,12 +441,6 @@ print_sketch_rv (int count)
 
 #define NODE_IS_START 1
 #define NODE_IS_ARRIVAL 2
-
-/*
- * TODO: probably the case k=0 should be treated in a completely different way
- * - first compute the gausscode (should be straightforward)
- * - rely on already coded conversions
- */
 
 struct presentation *
 wirtingerfromembedding (struct embedding *emb)
