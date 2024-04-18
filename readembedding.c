@@ -308,30 +308,21 @@ freedual (struct dualembedding *dual)
 {
   assert (dual->regions);
   free (dual->wedgeij);
-printf ("B\n");
   freedualregions (dual->regions);
-printf ("C\n");
   free (dual);
-printf ("D\n");
   return;
 }
 
 void
 freedualregions (struct dual_region *region)
 {
-  int id;
-
   if (region == 0) return;
-  id = region->id;
-printf ("going to free region %d (pointer %p)\n", id, region);
+  //id = region->id;
   if (region->next) freedualregions (region->next);
   assert (region->ping);
-printf ("  before free of region->ping\n");
   free (region->ping);
-printf ("  after free of region->ping\n");
   // free (region->wedgeij);  // this is a portion of a large contiguous vector
   free (region);
-printf ("  done region %d\n", id);
   return;
 }
 
@@ -343,13 +334,14 @@ printf ("  done region %d\n", id);
 struct dualembedding *
 embedding2dual (struct embedding *emb)
 {
-  int i, j, val, nodenum, numwedges, count, totcount;
+  int i, j, jj, val, nodenum, numwedges, count, totcount;
   int regionsize, region_id;
+  int inode, jwedgeminus, jwedgeplus, found;
   int *wedgemark, *r_wedgeij_all, *r_wedgeij;
   struct emb_node *node, *thisnode, *nextnode;
   int thisnodej, nextnodei, nextnodej;
   struct dualembedding *dual;
-  struct dual_region *region;
+  struct dual_region *region, *prevregion, *adjregion;
 
   dual = (struct dualembedding *) malloc (sizeof (struct dualembedding));
 
@@ -379,6 +371,7 @@ embedding2dual (struct embedding *emb)
   region_id = 0;
   r_wedgeij_all = (int *) malloc (numwedges * sizeof(int));
   dual->wedgeij = r_wedgeij_all;
+  prevregion = 0;
   for (i = 0; i < nodenum; i++)
   {
     node = &emb->nodes[i];
@@ -394,7 +387,6 @@ printf ("region %d: starting from wedge %d.%d\n", region_id, i, j);
        */
       count = 0;
       thisnode = node;
-      //thisnodei = i;
       thisnodej = j;
 
       while ((nextnodei = thisnode->ping[thisnodej]) != i)
@@ -419,15 +411,45 @@ printf ("  next wedge: %d.%d\n", nextnodei, nextnodej);
       region->valency = count;
       region->id = region_id;
       region->wedgeij = r_wedgeij;
-      region->ping = 0;
-      region->next = dual->regions;
-      dual->regions = region;
+      region->ping = (struct dual_region **) malloc (region->valency * sizeof (struct dual_region *));
+      region->next = 0;
+      if (prevregion)
+      {
+        prevregion->next = region;
+      } else {
+        dual->regions = region;
+      }
+      //dual->regions = region;
       totcount += count;
       region_id++;
+      prevregion = region;
       assert (region_id <= dual->numregions);
     }
   }
   assert (totcount == numwedges);
+
+  /*
+   * fill 'ping' vector (pointers to adjregion)
+   */
+
+  for (region = dual->regions; region; i++, region = region->next)
+  {
+    for (j = 0; j < region->valency; j++)
+    {
+      inode = region->wedgeij[j]/4;
+      jwedgeminus = region->wedgeij[j] % 4;
+      jwedgeplus = (jwedgeminus + 1) % 4;
+      /* search for the neighbouring region */
+      //found = 0;
+      for (adjregion = dual->regions; adjregion; adjregion = adjregion->next)
+      {
+        jj = jwedgeplus;
+        if (adjregion->wedgeij[jj]/4 == inode) continue;
+        break;
+      }
+      region->ping[j] = region;
+    }
+  }
 
   free (wedgemark);
   return (dual);
@@ -436,14 +458,23 @@ printf ("  next wedge: %d.%d\n", nextnodei, nextnodej);
 void
 printdual (struct dualembedding *dual)
 {
-  int i;
+  struct dual_region *region, *adjregion;
+  int jj;
 
-  printf ("Dual of given embedding (%d regions):\n", dual->numregions);
+  if (verbose) printf ("Dual of given embedding (%d regions):\n", dual->numregions);
 
-  for (i = 0; i < dual->numregions; i++)
+  printf ("dualembedding {");
+  for (region = dual->regions; region; region = region->next)
   {
-    printf ("Region %d\n", i);
+    printf ("%d:(", region->id);
+    for (jj = 0; jj < region->valency; jj++)
+    {
+      adjregion = region->ping[jj];
+      printf ("%d, ", adjregion->id);
+    }
+    printf ("), ");
   }
+  printf ("}\n");
 }
 
 /*

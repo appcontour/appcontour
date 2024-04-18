@@ -24,7 +24,7 @@ struct embedding {
 struct dual_region {
   int id;
   int valency;
-  int *ping; /* these are the adjacent regions, ordered counterclockwise */
+  struct dual_region **ping; /* these are the adjacent regions, ordered counterclockwise */
   int *wedgeij;  /* pointer to the vector of wedges */
   struct dual_region *next;
   int pingpong[];  /* valency is the size of this variable size portion */
