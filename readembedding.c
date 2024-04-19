@@ -18,11 +18,13 @@ extern int quiet;
 struct sketch *
 embedding2sketch (struct embedding *emb)
 {
-  int i, ir, found;
+  int i, j, found;
   struct emb_node *node;
   struct sketch *s;
   struct vecofintlist *loiv;
   struct dualembedding *dual;
+  struct dual_region *region;
+  int fourvalentnum, inode;
 
   if (emb->k == 0)
   {
@@ -52,21 +54,20 @@ embedding2sketch (struct embedding *emb)
    */
     
   found = 0;
-  for (ir = 0; ir < dual->numregions; ir++)
+  for (region = dual->regions; region; region = region->next)
   {
-
-printf ("region %d\n", ir);
-    
-//    fourvalentnum = 0;
-//    for (j = 0; j < r_adjacencynum[ir]; j++)
-//    {
-//      /*
-//       * check if the corresponding node is 4-valent
-//       */
-//      inode = r_adjacencyi[ir][j];
-//      if (adjacencynum[inode] == 4) fourvalentnum++;
-//    }
-//    if (fourvalentnum == 0) found++;
+    fourvalentnum = 0;
+    for (j = 0; j < region->valency; j++)
+    {
+      /*
+       * check if the corresponding node is 4-valent
+       */
+      inode = region->wedgeij[j]/4;
+      node = &(emb->nodes[inode]);
+      if (node->valency == 4) fourvalentnum++;
+    }
+    if (fourvalentnum == 0) found++;
+printf ("region %d with %d fourvalent bounding nodes (out of %d)\n", region->id, fourvalentnum, region->valency);
   }
 
   if (found > 0)
