@@ -334,9 +334,9 @@ freedualregions (struct dual_region *region)
 struct dualembedding *
 embedding2dual (struct embedding *emb)
 {
-  int i, j, jj, val, nodenum, numwedges, count, totcount;
+  int i, j, jj, val, nodenum, numwedges, count, totcount, found;
   int regionsize, region_id;
-  int inode, jwedgeminus, jwedgeplus, found;
+  int inode, iinode, jwedgeminus, jwedgeplus;
   int *wedgemark, *r_wedgeij_all, *r_wedgeij;
   struct emb_node *node, *thisnode, *nextnode;
   int thisnodej, nextnodei, nextnodej;
@@ -379,8 +379,6 @@ embedding2dual (struct embedding *emb)
     {
       if (wedgemark[4*i + j]) continue;
       /* wedge of new region! */
-printf ("region %d: starting from wedge %d.%d\n", region_id, i, j);
-      //count = around_region (emb, i, j, &r_wedgeij_all[totcount]);
       r_wedgeij = &r_wedgeij_all[totcount];
       /*
        * walk around the region
@@ -388,7 +386,7 @@ printf ("region %d: starting from wedge %d.%d\n", region_id, i, j);
       count = 0;
       thisnode = node;
       thisnodej = j;
-
+      r_wedgeij[count] = 4*i + j;
       while ((nextnodei = thisnode->ping[thisnodej]) != i)
       {
         count++;
@@ -396,10 +394,8 @@ printf ("region %d: starting from wedge %d.%d\n", region_id, i, j);
         val = nextnode->valency;
         nextnodej = thisnode->pong[thisnodej];
         nextnodej = (nextnodej + val - 1) % val;
-printf ("  next wedge: %d.%d\n", nextnodei, nextnodej);
 
         wedgemark[4*nextnodei + nextnodej] = 1;
-        //assert (jwedge >= 0);
         r_wedgeij[count] = 4*nextnodei + nextnodej;
         thisnode = nextnode;
         thisnodej = nextnodej;
@@ -437,17 +433,26 @@ printf ("  next wedge: %d.%d\n", nextnodei, nextnodej);
     for (j = 0; j < region->valency; j++)
     {
       inode = region->wedgeij[j]/4;
+      node = &emb->nodes[inode];
       jwedgeminus = region->wedgeij[j] % 4;
-      jwedgeplus = (jwedgeminus + 1) % 4;
+      jwedgeplus = (jwedgeminus + 1) % node->valency;
       /* search for the neighbouring region */
-      //found = 0;
+      found = 0;
       for (adjregion = dual->regions; adjregion; adjregion = adjregion->next)
       {
-        jj = jwedgeplus;
-        if (adjregion->wedgeij[jj]/4 == inode) continue;
-        break;
+        if (adjregion == region) continue;
+        for (jj = 0; jj < adjregion->valency; jj++)
+        {
+          iinode = adjregion->wedgeij[jj]/4;
+          if (iinode != inode) continue;
+          if (adjregion->wedgeij[jj]%4 != jwedgeplus) continue;
+          found = 1;
+          break;
+        }
+        if (found) break;
       }
-      region->ping[j] = region;
+      assert (adjregion);
+      region->ping[j] = adjregion;
     }
   }
 
@@ -466,13 +471,16 @@ printdual (struct dualembedding *dual)
   printf ("dualembedding {");
   for (region = dual->regions; region; region = region->next)
   {
+    if (region != dual->regions) printf (", ");
     printf ("%d:(", region->id);
     for (jj = 0; jj < region->valency; jj++)
     {
       adjregion = region->ping[jj];
-      printf ("%d, ", adjregion->id);
+      if (jj > 0) printf (", ");
+      printf ("%d", adjregion->id);
+      if (verbose) printf ("<%d.%d>", region->wedgeij[jj]/4, region->wedgeij[jj]%4);
     }
-    printf ("), ");
+    printf (")");
   }
   printf ("}\n");
 }
