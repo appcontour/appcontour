@@ -483,6 +483,48 @@ printdual (struct dualembedding *dual)
     printf (")");
   }
   printf ("}\n");
+
+  if (verbose) print_dual_type (dual);
+}
+
+void  
+print_dual_type (struct dualembedding *dual)
+{   
+  int i,j;
+  int numregions;
+  struct dual_region *region;
+  int *vec;
+  int largest, largestj;
+
+  printf ("dual_type: ");
+
+  numregions = dual->numregions;
+  vec = (int *) malloc (dual->numregions * sizeof(int));
+
+  for (region = dual->regions, i = 0; region; region = region->next, i++)
+  {
+    vec[i] = region->valency;
+  }
+
+  //dosortvec (sortvec, regionsnum);
+
+  for (i = 0; i < numregions; i++)
+  {
+    if (i > 0) printf (", ");
+    largest = -1;
+    for (j = 0; j < numregions; j++)
+    {
+      if (vec[j] > largest)
+      {
+        largest = vec[j];
+        largestj = j;
+      }
+    }
+    printf ("%d", largest);
+    vec[largestj] = -1;
+  }
+  printf ("\n");
+  free (vec);
 }
 
 /*
