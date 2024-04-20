@@ -15,16 +15,25 @@ extern int debug;
 extern int verbose;
 extern int quiet;
 
+int print_sketch_ra3 (int only3, int count, struct embedding *emb, struct sketch *s, int *nodemark);
+
 struct sketch *
 embedding2sketch (struct embedding *emb)
 {
   int i, j, found;
   struct emb_node *node;
-  struct sketch *s;
+  struct sketch *sketch;
+  struct arc *arc;
+  struct region *region;
+  struct borderlist *bl;
+  struct border *b, *blast;
   struct vecofintlist *loiv;
   struct dualembedding *dual;
-  struct dual_region *region;
+  struct dual_region *dregion;
   int fourvalentnum, inode;
+  int choice, bit, count;
+  int *nodemark;
+  int arcid, nodenum;
 
   if (emb->k == 0)
   {
@@ -32,9 +41,9 @@ embedding2sketch (struct embedding *emb)
     loiv = embeddingtoloiv (emb);
     if (debug) printloiv (loiv);
     freeembedding (emb);
-    s = readgausscodeloiv (loiv);
+    sketch = readgausscodeloiv (loiv);
     // freeloiv (loiv); // loiv is freed by readgausscodeloiv!
-    return (s);
+    return (sketch);
   }
 
   for (i = 0; i < emb->k + emb->n; i++)
@@ -54,20 +63,20 @@ embedding2sketch (struct embedding *emb)
    */
     
   found = 0;
-  for (region = dual->regions; region; region = region->next)
+  for (dregion = dual->regions; dregion; dregion = dregion->next)
   {
     fourvalentnum = 0;
-    for (j = 0; j < region->valency; j++)
+    for (j = 0; j < dregion->valency; j++)
     {
       /*
        * check if the corresponding node is 4-valent
        */
-      inode = region->wedgeij[j]/4;
+      inode = dregion->wedgeij[j]/4;
       node = &(emb->nodes[inode]);
       if (node->valency == 4) fourvalentnum++;
     }
     if (fourvalentnum == 0) found++;
-printf ("region %d with %d fourvalent bounding nodes (out of %d)\n", region->id, fourvalentnum, region->valency);
+    if (debug) printf ("region %d with %d fourvalent bounding nodes (out of %d)\n", dregion->id, fourvalentnum, dregion->valency);
   }
 
   if (found > 0)
@@ -76,16 +85,13 @@ printf ("region %d with %d fourvalent bounding nodes (out of %d)\n", region->id,
     printf ("# the code at present cannot cope with this situation.\n");
     printf ("#\n# However in this case the embedding is IH equivalent to a one-sum\n");
     printf ("# so we are not really interested in such a case.\n");
-    printf ("#\n# we simply output an empty contour\n\n");
-    printf ("sketch {\n");
-    printf ("Region 0 (f = 0): ();\n");
-    printf ("}\n");
     return (0);
   }
 
-#if IMPORTEDFROMEMBEDDINGANALYZE
-
-  printf ("sketch {\n");
+  sketch = newsketch ();
+  sketch->huffman_labelling = 1;
+  sketch->arcs = 0;
+  sketch->arccount = 0;
 
   /*
    * arcs that bound embedding regions.
@@ -109,7 +115,6 @@ printf ("region %d with %d fourvalent bounding nodes (out of %d)\n", region->id,
    * This choice of the orientation leads to arcs oppositely oriented with respect to the
    * regions (f=0).
    */
-  for (i = 1; i <= 4*n; i++) printf ("Arc %d: [0];\n", i);
 
   /*
    * arcs bounding the small quadrilateral crossing regions
@@ -117,103 +122,217 @@ printf ("region %d with %d fourvalent bounding nodes (out of %d)\n", region->id,
    * the label value defines the under/over choice and can
    * be driven using the bits in the "choice" argument
    */
-  count = 4*n+1;
-  for (i = 1; i <= n; i++)
+
+  count = 4*emb->n+1;
+  choice = emb->choice;
+  sketch->arccount += 4*emb->n;
+  for (i = 1; i <= emb->n; i++)
   {
     bit = choice % 2;
     choice /= 2;
 
-    printf ("Arc %d: [%d];\n", count++, 2*bit);
-    printf ("Arc %d: [%d];\n", count++, 2*(1 - bit));
-    printf ("Arc %d: [%d];\n", count++, 2*bit);
-    printf ("Arc %d: [%d];\n", count++, 2*(1 - bit));
+    arc = newarc (sketch);
+    arc->tag = count++;
+    if (arc->next)
+    {
+      sketch->arcs = arc->next; 
+      arc->next = 0;
+      insert_arc_in_list (arc, sketch->arcs);
+    }
+    arc->depths = (int *) malloc (sizeof (int));
+    arc->depthsdim = 1;
+    arc->cusps = 0;
+    arc->depths[0] = 2*bit;
+    arc->endpoints = 2;
+
+    arc = newarc (sketch);
+    arc->tag = count++;
+    sketch->arcs = arc->next; 
+    arc->next = 0;
+    insert_arc_in_list (arc, sketch->arcs);
+    arc->depths = (int *) malloc (sizeof (int));
+    arc->depthsdim = 1;
+    arc->cusps = 0;
+    arc->depths[0] = 2*(1 - bit);
+    arc->endpoints = 2;
+
+    arc = newarc (sketch);
+    arc->tag = count++;
+    sketch->arcs = arc->next; 
+    arc->next = 0;
+    insert_arc_in_list (arc, sketch->arcs);
+    arc->depths = (int *) malloc (sizeof (int));
+    arc->depthsdim = 1;
+    arc->cusps = 0;
+    arc->depths[0] = 2*bit;
+    arc->endpoints = 2;
+
+    arc = newarc (sketch);
+    arc->tag = count++;
+    sketch->arcs = arc->next; 
+    arc->next = 0;
+    insert_arc_in_list (arc, sketch->arcs);
+    arc->depths = (int *) malloc (sizeof (int));
+    arc->depthsdim = 1;
+    arc->cusps = 0;
+    arc->depths[0] = 2*(1 - bit);
+    arc->endpoints = 2;
   }
 
-  count = print_sketch_rr (0);
-  count = print_sketch_ra (count);
-  count = print_sketch_rv (count);
+  sketch->arccount += 4*emb->n;
+  for (i = 4*emb->n; i > 0; i--)
+  {
+    arc = newarc (sketch);
+    arc->tag = i;
+    arc->depths = (int *) malloc (sizeof (int));
+    arc->depthsdim = 1;
+    arc->cusps = 0;
+    arc->depths[0] = 0;
+    arc->endpoints = 2;
+  }
 
-  printf ("}\n");
-
-int
-print_sketch_rr (int count)
-{
-  int arcid, notfirst;
-  int ir, jr, iv, jv;
-
+  count = 0;
   /*
    * start with real regions (f = 0)
    */
-  for (ir = 0; ir < numregions; ir++)
+  for (dregion = dual->regions; dregion; dregion = dregion->next)
   {
-    printf ("Region %d (f = 0): (", count);
-    if (count++ == 1) printf (") (");
-    notfirst = 0;
-    for (jr = 0; jr < r_adjacencynum[ir]; jr++)
+    int jr;
+
+    region = newregion_tail (sketch);
+    assert (region->border == 0);
+    assert (region->tag == count);
+    region->f = 0;
+    if (count == 0)
     {
-      iv = r_adjacencyi[ir][jr];
-      if (adjacencynum[iv] <= 3) continue;
-      if (notfirst++) printf (" ");
-      jv = r_adjacencyj[ir][jr];
-      jv++; if (jv >= 4) jv -= 4;
-      arcid = 4*(iv - k) + jv + 1;
-      printf ("-a%d", arcid);
+      bl = newborderlist (region);
+      bl->isexternal = 1;
     }
-    printf (");\n");
+    bl = newborderlist (region);
+
+    blast = 0;
+    for (jr = 0; jr < dregion->valency; jr++)
+    {
+      int iv, jv;
+
+      iv = dregion->wedgeij[jr] / 4;
+      node = &(emb->nodes[iv]);
+      if (node->valency <= 3) continue;
+      jv = dregion->wedgeij[jr] % 4;
+      jv++; if (jv >= 4) jv -= 4;
+      arcid = 4*(iv - emb->k) + jv + 1;
+      b = newborder (bl);
+      if (blast == 0)
+      {
+        bl->sponda = b;
+      } else {
+        b->next = bl->sponda;
+        blast->next = b;
+      }
+      blast = b;
+      b->orientation = -1;
+
+      for (arc = sketch->arcs; arc; arc = arc->next)
+      {
+        if (arc->tag == arcid)
+        {
+          b->info = arc;
+          break;
+        }
+      }
+    }
+    count++;
   }
-  return (count);
-}
 
-/*
- * then sketch regions corresponding to arcs
- */
-
-int
-print_sketch_ra (int count)
-{
-  int i;
-
+  nodenum = emb->k + emb->n;
   nodemark = (int *) malloc (nodenum*sizeof(int));
-  for (i = 0; i < k+n; i++) nodemark[i] = 0;
+  for (i = 0; i < nodenum; i++) nodemark[i] = 0;
 
   /*
-   * now the elongated regions containint the triple-points
+   * now the elongated regions containing the triple-points
    * (one or two)
    */
-  while (print_sketch_ra3 (1, count, nodemark))
-  {
-    count++;
-  }
 
+  while (print_sketch_ra3 (1, count, emb, sketch, nodemark)) count++;
 
-  while (print_sketch_ra3 (0, count, nodemark))
-  {
-//for (i = 0; i < nodenum; i++) printf ("nodemark[%d] = %d\n", i, nodemark[i]);
-    count++;
-  }
+  while (print_sketch_ra3 (0, count, emb, sketch, nodemark)) count++;
 
   free (nodemark);
 
-  return (count);
+  /*
+   * finally regions corresponding to four-valent nodes
+   */
+
+  for (i = 0; i < emb->n; i++)
+  {
+    region = newregion_tail (sketch);
+    assert (region->border == 0);
+    assert (region->tag == count);
+    region->f = 4;
+    bl = newborderlist (region);
+    blast = 0;
+    count++;
+    for (j = 0; j < 4; j++)
+    {
+      b = newborder (bl);
+      if (blast == 0)
+      {
+        bl->sponda = b;
+      } else {
+        b->next = bl->sponda;
+        blast->next = b;
+      }
+      blast = b;
+      b->orientation = 1;
+
+      arcid = 4*emb->n + 4*i + j + 1;
+      for (arc = sketch->arcs; arc; arc = arc->next)
+      {
+        if (arc->tag == arcid)
+        {
+          b->info = arc;
+          break;
+        }
+      }
+    }
+  }
+
+  if (verbose) printf ("Done converting embedding with: k = %d, n = %d, choice = %d into an apparent contour\n", emb->k, emb->n, emb->choice);
+
+  freedual (dual);
+  return (sketch);
 }
 
+/*
+ * elongated regions containing triple nodes
+ */
+
 int
-print_sketch_ra3 (int only3, int regionnum, int *nodemark)
+print_sketch_ra3 (int only3, int regionnum, struct embedding *emb, struct sketch *s, int *nodemark)
 {
-  int vi, vj, vinext, vjnext, vinextnext;
-  int found, notfirst;
+  int vi, vin, vinn, vj, vjn;
+  int found, val, arcid;
+  struct emb_node *node, *nextnode, *nextnextnode;
+  struct region *region;
+  struct borderlist *bl;
+  struct border *b, *blast;
+  struct arc *arc;
 
   /*
    * now the elongated regions containint the triple-points
    * (one or two)
    */
   found = 0;
-  for (vi = k; vi < k+n; vi++)
+  for (vi = 0; vi < emb->k + emb->n; vi++)
   {
+    node = &(emb->nodes[vi]);
+    if (node->valency != 4) continue;
     for (vj = 0; vj < 4; vj++)
     {
       if ((nodemark[vi] & (1<<vj)) != 0) continue;
-      if (only3 && adjacency[vi][vj] >= k) continue;
+      vin = node->ping[vj];
+      nextnode = &(emb->nodes[vin]);
+      if (only3 && nextnode->valency == 4) continue;
       found++;
       break;
     }
@@ -222,83 +341,88 @@ print_sketch_ra3 (int only3, int regionnum, int *nodemark)
 
   if (! found) return (0);
 
-  printf ("Region %d (f = 2): (", regionnum);
-  notfirst = 0;
+  region = newregion_tail (s);
+  assert (region->border == 0);
+  assert (region->tag == regionnum);
+  region->f = 2;
+  bl = newborderlist (region);
+  blast = 0;
   while ((nodemark[vi] & (1<<vj)) == 0)
   {
     nodemark[vi] |= 1 << vj;
-//printf ("\n=== nodemark[%d] |= 1<<%d\n", vi, vj);
 
-    vinext = adjacency[vi][vj];
-    vjnext = get_back_index (vi, vj);
-    //nodemark[vinext] |= 1 << vjnext;
-    vjnext++; if (vjnext >= adjacencynum[vinext]) vjnext -= adjacencynum[vinext];
-    //printf ("LOOP: vi.vj = %d.%d -> %d.%d\n", vi, vj, vinext, vjnext);
-//    nodemark[vinext] |= 1 << vjnext;
-//printf ("\n=== nodemark[%d] |= 1<<%d\n", vinext, vjnext);
-    while (adjacencynum[vinext] <= 3)
+    vin = node->ping[vj];
+    nextnode = &(emb->nodes[vin]);
+    vjn = node->pong[vj];
+    val = nextnode->valency;
+    vjn = (vjn + 1) % val;
+    while (nextnode->valency <= 3)
     {
-      nodemark[vinext] |= 1 << vjnext;
-//printf ("\n=== nodemark[%d] |= 1<<%d\n", vinext, vjnext);
-      vinextnext = adjacency[vinext][vjnext];
-      vjnext = get_back_index (vinext, vjnext);
-      //nodemark[vinextnext] |= 1 << vjnext;
-      vjnext++; if (vjnext >= adjacencynum[vinextnext]) vjnext -= adjacencynum[vinextnext];
-//      nodemark[vinextnext] |= 1 << vjnext;
-//printf ("=== nodemark[%d] |= 1<<%d\n", vinextnext, vjnext);
-      vinext = vinextnext;
-      //printf ("  -> %d.%d\n", vinext, vjnext);
+      nodemark[vin] |= 1 << vjn;
+      vinn = nextnode->ping[vjn];
+      nextnextnode = &(emb->nodes[vinn]);
+      vjn = nextnode->pong[vjn];  // make a step forward for vjn
+      val = nextnextnode->valency;
+      vjn = (vjn + 1) % val;
+      vin = vinn;                     // make a step forward for vin and nextnode
+      nextnode = nextnextnode;
     }
-    assert (adjacencynum[vinext] == 4);
-    if (notfirst++) printf (" ");
-    printf ("+a%d ", 4*(vi - k) + vj + 1);
-    printf ("-a%d", 4*(vinext - k) + vjnext + 1 + 4*n);
 
-    vjnext--;
-    if (vjnext < 0) vjnext += 4;
-    vi = vinext;
-    vj = vjnext;
+    val = nextnode->valency;
+    assert (val == 4);
+    b = newborder (bl);
+    if (blast == 0)
+    {
+      bl->sponda = b;
+    } else {
+      b->next = bl->sponda;
+      blast->next = b;
+    }
+    blast = b; 
+    b->orientation = 1;
+
+    arcid = 4*(vi - emb->k) + vj + 1;
+    for (arc = s->arcs; arc; arc = arc->next)
+    {
+      if (arc->tag == arcid)
+      {
+        b->info = arc;
+        break;
+      }
+    }
+
+    b = newborder (bl);
+    if (blast == 0)
+    {
+      bl->sponda = b;
+    } else {
+      b->next = bl->sponda;
+      blast->next = b;
+    }
+    blast = b;  
+    b->orientation = -1;
+
+    arcid = 4*(vin - emb->k) + vjn + 1 + 4*emb->n;
+    for (arc = s->arcs; arc; arc = arc->next)
+    {
+      if (arc->tag == arcid)
+      {
+        b->info = arc;
+        break;
+      }
+    }
+
+    vjn = (vjn + 3) % 4;
+    vi = vin;                      // make a step forward for node, vi, vj
+    node = nextnode;
+    vj = vjn;
   }
 
-  printf (");\n");
   return (1);
 }
 
-int
-print_sketch_rv (int count)
-{
-  int i, j;
-
-  /*
-   * finally regions corresponding to four-valent nodes
-   */
-
-  for (i = 0; i < n; i++)
-  {
-
-    printf ("Region %d (f = 4): (", count++);
-    for (j = 0; j < 4; j++)
-    {
-      if (j > 0) printf (" ");
-      printf ("+a%d", 4*n + 4*i + j + 1);
-    }
-    printf (");\n");
-  }
-
-  return (count);
-}
-#endif //IMPORTEDFROMEMBEDDINGANALYZE
 
 
-
-
-
-
-  printf ("NOT YET IMPLEMENTED: k = %d, n = %d, choice = %d\n", emb->k, emb->n, emb->choice);
-
-  freedual (dual);
-  return (0);
-}
 
 /*
  *

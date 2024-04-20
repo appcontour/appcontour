@@ -1,8 +1,18 @@
+echo "embedding:0 { 0: (7, 8, 9), 1: (5, 9, 6), 2: (4, 6, 8), 3: (4, 7, 5), 4: (2, 8, 8, 3), 5: (1, 3, 7, 7), 6: (1, 9, 9, 2), 7: (0, 5, 5, 3), 8: (0, 4, 4, 2), 9: (0, 6, 6, 1) }" | ../contour wirtinger -Q | contour ks_A5
+
+gives "Invalid syntax, tok = 14; rangle expected"
+
+2024.04.20
+Empty relators list not accepted when selected elements are present:
+echo "fpgroup {<a,b,c; ; 1>}" | ./contour fg
+Invalid syntax, tok = 14; rangle expected
+[...]
+
 2024.04.12
 embedding:0xca { 0: (6, 7, 8, 8), 1: (5, 7, 7, 6), 2: (3, 4, 5, 5), 3: (2, 8, 4, 4), 4: (2, 3, 3, 7), 5: (1, 6, 2, 2), 6: (0, 8, 5, 1), 7: (0, 1, 1, 4), 8: (0, 0, 3, 6) }
 results in a region description that in turn leads to a knot group with deficiency 0 (should be 1):
 
-  echo "#170 { 0: (6, 7, 8, 8), 1: (5, 7, 7, 6), 2: (3, 4, 5, 5), 3: (2, 8, 4, 4), 4: (2, 3, 3, 7), 5: (1, 6, 2, 2), 6: (0, 8, 5, 1), 7: (0, 1, 1, 4), 8: (0, 0, 3, 6) }" | ./embeddings_analyze --sketch --choice 0xca | contour --out fg -q
+  echo "embedding:0xca { 0: (6, 7, 8, 8), 1: (5, 7, 7, 6), 2: (3, 4, 5, 5), 3: (2, 8, 4, 4), 4: (2, 3, 3, 7), 5: (1, 6, 2, 2), 6: (0, 8, 5, 1), 7: (0, 1, 1, 4), 8: (0, 0, 3, 6) }" | ./contour print | ./contour --out fg -q
   <a,b,c; aBcAcaCbAcAC, abAcaCbaBcAC, aBcbAcaCbcAC>
 
 using invariants ks_A4 ks_A5 ks_A6 ks_sl2,7 this should correspond to K9_42

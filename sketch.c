@@ -1755,6 +1755,35 @@ newregion (struct sketch *s)
   return (r);
 }
 
+/*
+ * the only difference here is that the new region is appended as last in the list
+ */
+
+struct region *
+newregion_tail (struct sketch *s)
+{
+  struct region *r, *er;
+
+  r = (struct region *) malloc (sizeof (struct region));
+  r->next = 0;
+  r->f = 0;
+  r->strati = 0;
+  r->border = 0;
+  r->tag = s->regioncount++;  /* perche' sono numerate da zero */
+
+  for (er = s->regions; er; er = er->next)
+  {
+    if (er->next == 0)
+    {
+      er->next = r;
+      return (r);
+    }
+  }
+  assert (s->regions == 0);
+  s->regions = r;
+  return (r);
+}
+
 struct borderlist *
 newborderlist (struct region *region)
 {
