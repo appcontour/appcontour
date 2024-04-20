@@ -289,7 +289,7 @@ giove_compare_dfs (struct border *b1, struct border *b2)
  * implies also a recursive canonification of the holes of traversed
  * regions.  Since this can be done once and for all, all subsequent
  * normalizations do not need to do this recursive canonification
- * (giove_renormalize).  Both case are covered by "giove_normalize_common"
+ * (giove_renormalize).  Both cases are covered by "giove_normalize_common"
  */
 
 void
