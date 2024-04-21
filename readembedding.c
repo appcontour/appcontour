@@ -300,6 +300,7 @@ embedding2sketch (struct embedding *emb)
   if (verbose) printf ("Done converting embedding with: k = %d, n = %d, choice = %d into an apparent contour\n", emb->k, emb->n, emb->choice);
 
   freedual (dual);
+  postprocesssketch (sketch);
   return (sketch);
 }
 
