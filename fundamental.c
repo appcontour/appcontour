@@ -1970,6 +1970,14 @@ read_relators_list (FILE *file, char *generator_names, int gennum)
 
   ch = mygetchar (file);
 
+  if (ch == '1')
+  {
+    /*
+     * this is a special case.  Relator 1 is the same as the empty relator
+     */
+    ch = mygetchar (file);
+  }
+
   if (isalpha(ch))
   {
     i = 0;
@@ -2010,10 +2018,24 @@ read_relators_list (FILE *file, char *generator_names, int gennum)
     }
     ungetc (ch, file);
     return (r);
+  } else {
+    r = (struct presentationrule *) malloc (sizeof (struct presentationrule) +
+           1*sizeof(int));
+    r->length = 0;
+    r->next = 0;
+    if (ch == ',')
+    {
+      r->next = read_relators_list (file, generator_names, gennum);
+      return (r);
+    }
+//    ungetc (ch, file);
+//    return (r);
   }
+
+
   ungetc (ch, file);
 
-  return (0);
+  return (r);
 }
 
 void
