@@ -761,7 +761,6 @@ main (int argc, char *argv[])
   {
     case ACTION_PRINTSKETCH:
     if ((sketch = readcontour (infile)) == 0) exit (14);
-    // printsketch (sketch);
     if (docanonify) canonify (sketch);
     printsketch (sketch);
     break;
