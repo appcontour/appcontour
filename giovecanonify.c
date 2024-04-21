@@ -454,6 +454,7 @@ gioveinsertholeinblist (struct borderlist *blhole, struct borderlist *bl)
 struct border *
 crossriver (struct border *b)
 {
+  assert (b->info->regionleft && b->info->regionright);
   if (b->orientation < 0) return (b->info->regionleft);
   assert (b->orientation > 0);
   return (b->info->regionright);
