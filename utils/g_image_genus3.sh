@@ -87,27 +87,51 @@ function parseone ()
     fi
     if [ "$w1" = "Selected" ]
     then
+      selectedpos=${w3:1:1}
+      selectedpos=$[ $selectedpos - 1 ]  # number from 0
+      pairpos=$[ $selectedpos / 2 ]
+      pairwhich=$[ $selectedpos - 2 * $pairpos ]
+      if [ $pairwhich = "0" ]; then mvec[$pairpos]=$sel; fi
+      if [ $pairwhich = "1" ]; then lvec[$pairpos]=$sel; fi
       if [ "$w3" = "#1" ]
       then
         m1=$sel
       fi
       if [ "$w3" = "#2" ]
       then
-        m2=$sel
+        l1=$sel
       fi
       if [ "$w3" = "#3" ]
       then
-        l1=$sel
+        m2=$sel
       fi
       if [ "$w3" = "#4" ]
       then
         l2=$sel
+      fi
+      if [ "$w3" = "#5" ]
+      then
+        m3=$sel
+      fi
+      if [ "$w3" = "#6" ]
+      then
+        l3=$sel
+      fi
+      if [ "$w3" = "#7" ]
+      then
+        m4=$sel
+      fi
+      if [ "$w3" = "#8" ]
+      then
+        l4=$sel
       fi
     else
       line=`echo $line | tr ' ' ','`
       genlist="$genlist,$line"
     fi
   done
+  #echo "mvec: ${mvec[*]}" >&2
+  #echo "lvec: ${lvec[*]}" >&2
 }
 
 function parselist ()
@@ -263,6 +287,12 @@ else
 fi
 
 number=`grep "Homomorphism #" $tmpfile | wc -l`
+numselected=`grep "^Selected" $tmpfile | cut -f1-3 -d' ' | sort -u | wc -l`
+genus=$[ $numselected / 2 ]
+
+echo "There are $numselected selected elements"
+echo "They are assumed to be listed as 'meridian1,longitude1,meridian2,longitude2,...'"
+echo "Handlebody of genus $genus"
 
 if [ -n "$getgenlist" ]
 then
@@ -275,11 +305,14 @@ ontolist=`cat $tmpfile | homoimagelist | describegroup | $gap1 | $gap2 | $gap3 |
 #ontolist=`cat $tmpfile | homoimagelist | ordergroup | $gap1 | $gap2 | $gap3 | cat -n | tr -d ' ' | tr '\t' ':' | grep ":$gorder\$" | cut -f1 -d:`
 properlist=`cat $tmpfile | properparselist | $gap1 | $gap2 | $gap3 | cat -n | tr -d ' ' | tr '\t' ':'  | tr -d '"' | grep -v ":$gorder\$" | cut -f1 -d:`
 numonto=`echo "$ontolist" | wc -l`
-echo "There are $number Homomorphisms of which $numonto are onto."
-echo "They can be listed with the command:"
-echo ""
-echo "  $command"
-echo ""
+
+cat <<EOT >&2
+There are $number Homomorphisms of which $numonto are onto.
+They can be listed with the command:
+ 
+  $command
+
+EOT
 
 
 #for n in $ontolist
