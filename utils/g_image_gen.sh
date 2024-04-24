@@ -47,11 +47,11 @@ function feedgap ()
 
 #  if [ "$genimage" = "$gorder" ]
 #  then
-    subimage=`echo "Order(Group($m1,$m2,$l1,$l2));" | $gap1 | $gap2 | $gap3`
+    subimage=`echo "Order(Group($mlist,$llist));" | $gap1 | $gap2 | $gap3`
 #    if [ "$subimage" -lt "$genimage" ]
 #    then
-      #normalcl=`echo "Order(NormalClosure( Group($m1,$m2,$l1,$l2), Group($m1,$m2)));" | $gap1 | $gap2 | $gap3`
-      gapcmd1="nc:=NormalClosure( Group($m1,$m2,$l1,$l2), Group($m1,$m2))"
+      #normalcl=`echo "Order(NormalClosure( Group($mlist,$llist), Group($mlist)));" | $gap1 | $gap2 | $gap3`
+      gapcmd1="nc:=NormalClosure( Group($mlist,$llist), Group($mlist))"
       gapcmd2="Order(nc)"
       gapcmd3="StructureDescription(nc)"
       gapoutput=`echo "$gapcmd1;$gapcmd2;$gapcmd3;" | $gap1 | $gap2 | $gap3`
@@ -75,6 +75,8 @@ function parseone ()
     sel=`echo $w5 | tr ' ' ','`
     if [ "$w2" = "End" ]
     then
+      mlist=`echo ${mvec[*]} | tr ' ' ','`
+      llist=`echo ${lvec[*]} | tr ' ' ','`
       genlist=`echo "$genlist" | cut -c2-`
       if echo "$ontolist" | grep -q "^$which$"
       then
@@ -93,45 +95,11 @@ function parseone ()
       pairwhich=$[ $selectedpos - 2 * $pairpos ]
       if [ $pairwhich = "0" ]; then mvec[$pairpos]=$sel; fi
       if [ $pairwhich = "1" ]; then lvec[$pairpos]=$sel; fi
-      if [ "$w3" = "#1" ]
-      then
-        m1=$sel
-      fi
-      if [ "$w3" = "#2" ]
-      then
-        l1=$sel
-      fi
-      if [ "$w3" = "#3" ]
-      then
-        m2=$sel
-      fi
-      if [ "$w3" = "#4" ]
-      then
-        l2=$sel
-      fi
-      if [ "$w3" = "#5" ]
-      then
-        m3=$sel
-      fi
-      if [ "$w3" = "#6" ]
-      then
-        l3=$sel
-      fi
-      if [ "$w3" = "#7" ]
-      then
-        m4=$sel
-      fi
-      if [ "$w3" = "#8" ]
-      then
-        l4=$sel
-      fi
     else
       line=`echo $line | tr ' ' ','`
       genlist="$genlist,$line"
     fi
   done
-  #echo "mvec: ${mvec[*]}" >&2
-  #echo "lvec: ${lvec[*]}" >&2
 }
 
 function parselist ()
@@ -195,27 +163,19 @@ function properparseone ()
     sel=`echo $w5 | tr ' ' ','`
     if [ "$w2" = "End" ]
     then
-      echo "Order(Group($m1,$m2,$l1,$l2));"
+      mlist=`echo ${mvec[*]} | tr ' ' ','`
+      llist=`echo ${lvec[*]} | tr ' ' ','`
+      echo "Order(Group($mlist,$llist));"
       break
     fi
     if [ "$w1" = "Selected" ]
     then
-      if [ "$w3" = "#1" ]
-      then
-        m1=$sel
-      fi
-      if [ "$w3" = "#2" ]
-      then
-        m2=$sel
-      fi
-      if [ "$w3" = "#3" ]
-      then
-        l1=$sel
-      fi
-      if [ "$w3" = "#4" ]
-      then
-        l2=$sel
-      fi
+      selectedpos=${w3:1:1}
+      selectedpos=$[ $selectedpos - 1 ]  # number from 0
+      pairpos=$[ $selectedpos / 2 ]
+      pairwhich=$[ $selectedpos - 2 * $pairpos ]
+      if [ $pairwhich = "0" ]; then mvec[$pairpos]=$sel; fi
+      if [ $pairwhich = "1" ]; then lvec[$pairpos]=$sel; fi
     fi
   done
 }
@@ -305,9 +265,10 @@ ontolist=`cat $tmpfile | homoimagelist | describegroup | $gap1 | $gap2 | $gap3 |
 #ontolist=`cat $tmpfile | homoimagelist | ordergroup | $gap1 | $gap2 | $gap3 | cat -n | tr -d ' ' | tr '\t' ':' | grep ":$gorder\$" | cut -f1 -d:`
 properlist=`cat $tmpfile | properparselist | $gap1 | $gap2 | $gap3 | cat -n | tr -d ' ' | tr '\t' ':'  | tr -d '"' | grep -v ":$gorder\$" | cut -f1 -d:`
 numonto=`echo "$ontolist" | wc -l`
+numproper=`echo "$properlist" | wc -l`
 
 cat <<EOT >&2
-There are $number Homomorphisms of which $numonto are onto.
+There are $number Homomorphisms of which $numonto are onto and $numproper are proper.
 They can be listed with the command:
  
   $command
