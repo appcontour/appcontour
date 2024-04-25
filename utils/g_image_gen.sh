@@ -239,6 +239,12 @@ esac
 
 if grep -q "^embedding" $fpgroup
 then
+  components=`contour countcc $fpgroup -q`
+  if [ "$components" -gt 1 ]
+  then
+    echo "Cannot compute g_image invariant for links ($components components)"
+    exit 2
+  fi
   contour wirtinger $fpgroup -Q | contour ks_$group -v 2>/dev/null >$tmpfile
   command="contour wirtinger $fpgroup -Q | contour ks_$group -v"
 else
@@ -249,6 +255,11 @@ fi
 number=`grep "Homomorphism #" $tmpfile | wc -l`
 numselected=`grep "^Selected" $tmpfile | cut -f1-3 -d' ' | sort -u | wc -l`
 genus=$[ $numselected / 2 ]
+if [ "$genus" -lt "1" ]
+then
+  echo "Cannot continue: genus = $genus"
+  exit 2
+fi
 
 echo "There are $numselected selected elements"
 echo "They are assumed to be listed as 'meridian1,longitude1,meridian2,longitude2,...'"
