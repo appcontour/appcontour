@@ -280,8 +280,8 @@ properlist=`cat $tmpfile | properparselist | $gap1 | $gap2 | $gap3 | cat -n | tr
 numonto=`echo "$ontolist" | wc -l`
 numproper=`echo "$properlist" | wc -l`
 
+echo "There are $number Homomorphisms of which $numonto are onto and $numproper are proper."
 cat <<EOT >&2
-There are $number Homomorphisms of which $numonto are onto and $numproper are proper.
 They can be listed with the command:
  
   $command
