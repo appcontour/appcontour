@@ -31,10 +31,12 @@ then
 fi
 #
 #
+# option -x 10000 tells the window size. A large value is set to prevent
+# from splitting output lines! (2024/05/06)
 #
 
 tmpfile=/tmp/g_image.$$.homos
-gap1="gap -r -b -q"
+gap1="gap -r -b -q -x 10000"
 gap2="tr -d '\r'"
 gap3="grep -v '^#I'"
 
