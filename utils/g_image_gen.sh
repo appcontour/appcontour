@@ -2,18 +2,36 @@
 #
 
 getgenlist=""
+onlyinvariant=""
 
-case $1 in
-  -l)
-    getgenlist="yes"
-    shift
-    ;;
-esac
+while [ ${1:0:1} = "-" -a -n "${1:1:1}" ]
+do
+  case $1 in
+    -l)
+      getgenlist="yes"
+      shift
+      ;;
+    -i)
+      onlyinvariant="yes"
+      shift
+      ;;
+    *)
+      echo "Invalid option: $1"
+      exit 2
+      ;;
+  esac
+done
 
 fpgroup=$1
-group=$2
+tmpinput=""
+if [ "$fpgroup" = "-" ]
+then
+  tmpinput="/tmp/g_image_input.$$"
+  cat >$tmpinput
+  fpgroup=$tmpinput
+fi
 
-echo "Numbers correspond to the order of the group"
+group=$2
 
 if [ -z "$2" ]
 then
@@ -29,6 +47,7 @@ then
   igroup=`echo "$igroup" | tr -d ' '`
   echo "Selecting homomorphisms with image $igroup"
 fi
+
 #
 #
 # option -x 10000 tells the window size. A large value is set to prevent
@@ -239,6 +258,13 @@ case $group in
     ;;
 esac
 
+if [ -z "$onlyinvariant" ]
+then
+  echo "Numbers correspond to the order of the group"
+fi
+
+echo -n "Computing homomorphisms (in $tmpfile)..." >&2
+
 if grep -q "^embedding" $fpgroup
 then
   components=`contour countcc $fpgroup -q`
@@ -255,6 +281,14 @@ else
 fi
 
 number=`grep "Homomorphism #" $tmpfile | wc -l`
+echo " $number found" >&2
+cat <<EOT >&2
+They can be listed with the command:
+ 
+  $command
+
+EOT
+
 numselected=`grep "^Selected" $tmpfile | cut -f1-3 -d' ' | sort -u | wc -l`
 genus=$[ $numselected / 2 ]
 if [ "$genus" -lt "1" ]
@@ -263,40 +297,54 @@ then
   exit 2
 fi
 
-echo "There are $numselected selected elements"
-echo "They are assumed to be listed as 'meridian1,longitude1,meridian2,longitude2,...'"
-echo "Handlebody of genus $genus"
+echo "There are $numselected selected elements" >&2
+echo "They are assumed to be listed as 'meridian1,longitude1,meridian2,longitude2,...'" >&2
+echo "Handlebody of genus $genus" >&2
 
 if [ -n "$getgenlist" ]
 then
   cat $tmpfile | homoimagelist | describegroup | $gap1 | $gap2 | $gap3 | sort -u
   rm $tmpfile
+  if [ -f "$tmpinput" ]; then rm $tmpinput; fi
   exit
 fi
 
+echo -n "Computing ontolist..." >&2
 ontolist=`cat $tmpfile | homoimagelist | describegroup | $gap1 | $gap2 | $gap3 | cat -n | tr -d ' ' | tr -d '"' | tr '\t' ':' | tr -d '"' | grep ":$igroup\$" | cut -f1 -d:`
 #ontolist=`cat $tmpfile | homoimagelist | ordergroup | $gap1 | $gap2 | $gap3 | cat -n | tr -d ' ' | tr '\t' ':' | grep ":$gorder\$" | cut -f1 -d:`
-properlist=`cat $tmpfile | properparselist | $gap1 | $gap2 | $gap3 | cat -n | tr -d ' ' | tr '\t' ':'  | tr -d '"' | grep -v ":$gorder\$" | cut -f1 -d:`
 numonto=`echo "$ontolist" | wc -l`
+echo " $numonto found" >&2
+
+echo -n "Computing properlist..." >&2
+properlist=`cat $tmpfile | properparselist | $gap1 | $gap2 | $gap3 | cat -n | tr -d ' ' | tr '\t' ':'  | tr -d '"' | grep -v ":$gorder\$" | cut -f1 -d:`
 numproper=`echo "$properlist" | wc -l`
+echo " $numproper found" >&2
 
-echo "There are $number Homomorphisms of which $numonto are onto and $numproper are proper."
-cat <<EOT >&2
-They can be listed with the command:
- 
-  $command
-
-EOT
-
+if [ -z "$onlyinvariant" ]
+then
+  echo "num:$number onto:$numonto proper:$numproper"
+fi
 
 #for n in $ontolist
 #do
 #  echo "Onto homomorphism number $n"
 #done
 
-cat $tmpfile | parselist
+echo -n "Computing normal closures..." >&2
+
+if [ -n "$onlyinvariant" ]
+then
+  cat $tmpfile | parselist | grep '^Proper ' | sed -e 's/ #[0-9]*: /: /' | sort | md5sum | cut -f1 -d' '
+else
+  echo "A real invariant can be obtained by piping stdout through" >&2
+  echo "   | grep '^Proper ' | sed -e 's/ #[0-9]*: /: /' | sort | md5sum | cut -f1 -d' '" >&2
+  cat $tmpfile | parselist
+fi
+
+echo " done" >&2
 
 #
 # clean up temporary file
 #
 rm $tmpfile
+if [ -f "$tmpinput" ]; then rm $tmpinput; fi
