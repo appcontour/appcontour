@@ -3,6 +3,8 @@
 
 getgenlist=""
 onlyinvariant=""
+onlyhash=""
+full="yes"
 
 while [ ${1:0:1} = "-" -a -n "${1:1:1}" ]
 do
@@ -13,6 +15,12 @@ do
       ;;
     -i)
       onlyinvariant="yes"
+      full=""
+      shift
+      ;;
+    -h)
+      onlyhash="yes"
+      full=""
       shift
       ;;
     *)
@@ -35,8 +43,13 @@ group=$2
 
 if [ -z "$2" ]
 then
-  echo "usage: $0 some_wirtinger_presentation.fpgroup group"
+  echo "usage: [-l][-i][-h] $0 some_wirtinger_presentation.fpgroup group"
   echo "where group can be e.g. A5"
+  echo "use '-' as filename if input comes from stdin"
+  echo "an embedding can be indicated in place of a wirtinger presentation"
+  echo ""
+  echo "  -i  Output canonical text (sorted and without id of homomorphism)"
+  echo "  -h  Output the result of md5sum on the canonical text"
   exit 2
 fi
 
@@ -258,7 +271,7 @@ case $group in
     ;;
 esac
 
-if [ -z "$onlyinvariant" ]
+if [ -z "$onlyhash" ]
 then
   echo "Numbers correspond to the order of the group"
 fi
@@ -320,7 +333,7 @@ properlist=`cat $tmpfile | properparselist | $gap1 | $gap2 | $gap3 | cat -n | tr
 numproper=`echo "$properlist" | wc -l`
 echo " $numproper found" >&2
 
-if [ -z "$onlyinvariant" ]
+if [ -z "$onlyhash" ]
 then
   echo "num:$number onto:$numonto proper:$numproper"
 fi
@@ -332,10 +345,19 @@ fi
 
 echo -n "Computing normal closures..." >&2
 
-if [ -n "$onlyinvariant" ]
+if [ -n "$onlyhash" ]
 then
   cat $tmpfile | parselist | grep '^Proper ' | sed -e 's/ #[0-9]*: /: /' | sort | md5sum | cut -f1 -d' '
-else
+fi
+
+if [ -n "$onlyinvariant" ]
+then
+  echo "===== cut here ===== hash computed on the section below ====="
+  cat $tmpfile | parselist | grep '^Proper ' | sed -e 's/ #[0-9]*: /: /' | sort
+fi
+
+if [ -n "$full" ]
+then
   echo "A real invariant can be obtained by piping stdout through" >&2
   echo "   | grep '^Proper ' | sed -e 's/ #[0-9]*: /: /' | sort | md5sum | cut -f1 -d' '" >&2
   cat $tmpfile | parselist
