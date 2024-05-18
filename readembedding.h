@@ -55,5 +55,6 @@ int emb_meridians_longitudes (struct embedding *emb, struct presentation *p);
 int numunderpasses_on_spanning_tree (int i, int *node_flood, int *underpasses);
 int underpasses_on_arc (int i_and_k, int *var, struct embedding *emb);
 int emb_orient (struct embedding *emb);
+void printembrules (struct embedding *emb, struct dualembedding *dual);
 struct vecofintlist *embeddingtoloiv (struct embedding *emb);
 void freeembedding (struct embedding *emb);

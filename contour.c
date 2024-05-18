@@ -654,6 +654,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"suggest_p_surgery") == 0) action = ACTION_SUGGEST_P_SURGERY;
     if (strcmp(argv[i],"filepath") == 0) action = ACTION_FILEPATH;
     if (strcmp(argv[i],"dualembedding") == 0) action = ACTION_DUALEMBEDDING;
+    if (strcmp(argv[i],"embrules") == 0) action = ACTION_EMBRULES;
     if (strcmp(argv[i],"newfeature") == 0) action = ACTION_NEWFEATURE;
     if (strcmp(argv[i],"evert") == 0)
     {
@@ -1234,6 +1235,26 @@ main (int argc, char *argv[])
     }
     printdual (dual);
     freedual (dual);
+    freeembedding (emb);
+    break;
+
+    case ACTION_EMBRULES:
+    tok = gettoken (infile);
+    if (tok != TOK_EMBEDDING)
+    {
+      printf ("Input must be a planar embedding\n");
+      exit (14);
+    } 
+    emb = readembedding (infile);
+    dual = embedding2dual (emb);
+    if (dual == 0)
+    {
+      printf ("Error in dual computation\n");
+      exit (13);
+    }
+    printembrules (emb, dual);
+
+    freedual (dual); 
     freeembedding (emb);
     break;
 

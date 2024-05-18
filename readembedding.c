@@ -1619,4 +1619,44 @@ freeembedding (struct embedding *emb)
   return;
 }
 
+/*
+ * print simplifying "Reidemeister" rules that simplify embedding
+ */
+
+void
+printembrules (struct embedding *emb, struct dualembedding *dual)
+{
+  struct dual_region *region;
+  struct emb_node *node0, *node1;
+  int val, parity;
+  int inode0, inode1;
+
+  /*
+   * first: search for typeII
+   */
+
+  for (region = dual->regions; region; region = region->next)
+  {
+    //printf ("%d:(", region->id);
+    val = region->valency;
+    assert (val >= 2);
+    if (val != 2) continue;
+    //printf ("region: %d is a bigon\n", region->id);
+    inode0 = region->wedgeij[0]/4;
+    node0 = &(emb->nodes[inode0]);
+
+    inode1 = region->wedgeij[1]/4;
+    node1 = &(emb->nodes[inode1]);
+
+    parity = node0->overpassisodd + node1->overpassisodd
+            + (region->wedgeij[0]%4) + (region->wedgeij[1]%4);
+
+    //printf ("<%d.%d>\n", region->wedgeij[0]/4, region->wedgeij[0]%4);
+    //printf ("<%d.%d>\n", region->wedgeij[1]/4, region->wedgeij[1]%4);
+    //printf ("parity: %d\n", parity);
+    if ( (parity%2) == 1) printf ("typeII\n");
+  }
+
+  return;
+}
 
