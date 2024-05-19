@@ -1627,9 +1627,10 @@ void
 printembrules (struct embedding *emb, struct dualembedding *dual)
 {
   struct dual_region *region;
-  struct emb_node *node0, *node1;
-  int val, parity;
-  int inode0, inode1;
+  struct emb_node *node;
+  int jj, val, parity, countcrossings;
+  int inode;
+  int isbetween, between, otherside;
 
   /*
    * first: search for typeII
@@ -1640,21 +1641,40 @@ printembrules (struct embedding *emb, struct dualembedding *dual)
     //printf ("%d:(", region->id);
     val = region->valency;
     assert (val >= 2);
-    if (val != 2) continue;
-    //printf ("region: %d is a bigon\n", region->id);
-    inode0 = region->wedgeij[0]/4;
-    node0 = &(emb->nodes[inode0]);
-
-    inode1 = region->wedgeij[1]/4;
-    node1 = &(emb->nodes[inode1]);
-
-    parity = node0->overpassisodd + node1->overpassisodd
-            + (region->wedgeij[0]%4) + (region->wedgeij[1]%4);
+    parity = 0;
+    countcrossings = 0;
+    isbetween = between = 0;
+    for (jj = 0; jj < val; jj++)
+    {
+      inode = region->wedgeij[jj]/4;
+      node = &(emb->nodes[inode]);
+      if (node->valency != 4)
+      {
+        assert (node->valency == 3);
+        if (isbetween) between++;
+        continue;
+      }
+      countcrossings++;
+      isbetween = 1 - isbetween;
+      parity += node->overpassisodd + (region->wedgeij[jj]%4);
+    }
 
     //printf ("<%d.%d>\n", region->wedgeij[0]/4, region->wedgeij[0]%4);
     //printf ("<%d.%d>\n", region->wedgeij[1]/4, region->wedgeij[1]%4);
     //printf ("parity: %d\n", parity);
-    if ( (parity%2) == 1) printf ("typeII\n");
+    otherside = val - countcrossings - between;
+    //printf ("region %d: %d = %d + %d + %d (val = crossings + between + otherside)\n", region->id, val, countcrossings, between, otherside);
+    if (countcrossings != 2) continue;
+    assert (otherside >= 0);
+    if (otherside > 0 && between > 0) continue;
+    if ( countcrossings == 2 && (parity%2) == 1) printf ("typeII\n");
+    /*
+     * explanation: a region with exactly 2 crossings that are adjacent is
+     * either a bigon (with the obvious typeII simplifying move for 2 out of 4 choices of the overpasses)
+     * or (possibly after IH moves) that can allow for a "fork" type simplifying move.
+     *
+     * The parity computation allows to pick the overpasses choices that allow the moves
+     */
   }
 
   return;
