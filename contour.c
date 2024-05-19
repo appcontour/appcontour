@@ -465,6 +465,20 @@ main (int argc, char *argv[])
       printf ("    dtcode\n");
       printf ("    rdtcode\n");
       printf ("    gausscode\n");
+
+      printf ("\n Planar embeddings and handlebody knots/links:\n");
+      printf ("  dualembedding: print the structure of the dual of the embedding.\n");
+      printf ("    Correlation with the original embedding is added by using option '-v'\n");
+      printf ("  embrules: print Reidemeister type rules that can simplify the embedding, or\n");
+      printf ("    at least reduce the value of 'choice'\n");
+      printf ("  specific options: --choice <n>\n");
+      printf ("    force the value of <n> in order to select the overpasses at crossings\n");
+      printf ("    <n> is interpreted as a binary number, each digit is associated to a crossing,\n");
+      printf ("    the least significant to the first crossing in the embedding description.\n");
+      printf ("    digit value 0: the overpass connects entry 0 (first) to entry 2 (third) in the\n");
+      printf ("    '(a,b,c,d)' list of connections for the crossing.\n");
+      printf ("    <n> can be indicated as hexadecimal number with the syntax '0x<hex-digits>'\n");
+
       printf ("\n Possible options are:\n");
       printf ("  --help: this help\n");
       printf ("  --version: print program version\n");

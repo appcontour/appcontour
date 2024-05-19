@@ -1623,6 +1623,9 @@ freeembedding (struct embedding *emb)
  * print simplifying "Reidemeister" rules that simplify embedding
  */
 
+int check_for_loop_flip (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
+int check_for_twist (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
+
 void
 printembrules (struct embedding *emb, struct dualembedding *dual)
 {
@@ -1667,7 +1670,11 @@ printembrules (struct embedding *emb, struct dualembedding *dual)
     if (countcrossings != 2) continue;
     assert (otherside >= 0);
     if (otherside > 0 && between > 0) continue;
-    if ( countcrossings == 2 && (parity%2) == 1) printf ("typeII\n");
+    if ( countcrossings == 2 && (parity%2) == 1)
+    {
+      if (val == 2) printf ("typeII\n");
+       else printf ("fork\n");
+    }
     /*
      * explanation: a region with exactly 2 crossings that are adjacent is
      * either a bigon (with the obvious typeII simplifying move for 2 out of 4 choices of the overpasses)
@@ -1675,8 +1682,103 @@ printembrules (struct embedding *emb, struct dualembedding *dual)
      *
      * The parity computation allows to pick the overpasses choices that allow the moves
      */
+    if (check_for_loop_flip (emb, dual, region)) printf ("loop-flip\n");
+    if (check_for_twist (emb, dual, region)) printf ("twist\n");
   }
 
   return;
 }
 
+int
+check_for_loop_flip (struct embedding *emb, struct dualembedding *dual, struct dual_region *r)
+{
+  struct dual_region *r01;
+  struct emb_node *nodekk, *node[2];
+  int inodekk, inode[2];
+  int jj, kk, parity;
+
+  if (r->valency != 2) return (0);
+  for (jj = 0; jj < 2; jj++)
+  {
+    inode[jj] = r->wedgeij[jj]/4;
+    node[jj] = &(emb->nodes[inode[jj]]);
+  }
+  if (inode[0] > inode[1] && (node[0]->overpassisodd == 0)) return (0);
+  if (inode[1] > inode[0] && (node[1]->overpassisodd == 0)) return (0);
+  // value of choice cannot be decreased
+
+  parity =  node[0]->overpassisodd + (r->wedgeij[0]%4);
+  parity += node[1]->overpassisodd + (r->wedgeij[1]%4);
+  if ((parity % 2) == 1) return (0); // typeII not allowed here
+
+  for (jj = 0; jj < 2; jj++)
+  {
+    r01 = r->ping[jj];
+    if (r01->valency == 3)
+    {
+      for (kk = 0; kk < 3; kk++)
+      {
+        inodekk = r01->wedgeij[kk]/4;
+        nodekk = &(emb->nodes[inodekk]);
+        if (nodekk->valency == 3) return (1);
+      }
+    }
+  }
+
+  //printf ("n1: %d, n2: %d\n", r->wedgeij[0]/4, r->wedgeij[1]/4);
+  return (0);
+}
+
+/*
+ * check for a situation like this:
+ *      ___
+ *     |   |
+ *   ----. |
+ *     | | |
+ *   ------'
+ *     | |
+ */
+
+int
+check_for_twist (struct embedding *emb, struct dualembedding *dual, struct dual_region *r)
+{
+  struct dual_region *r01;
+  struct emb_node *nodekk, *node[2];
+  int inodekk, inode[2];
+  int jj, kk, parity, par[3];
+  int totval;
+
+  if (r->valency != 2) return (0);
+  //if (verbose) printf ("Checking for twist on bigon %d\n", r->id);
+  for (jj = 0; jj < 2; jj++)
+  {
+    inode[jj] = r->wedgeij[jj]/4;
+    node[jj] = &(emb->nodes[inode[jj]]);
+  }
+
+  parity =  node[0]->overpassisodd + (r->wedgeij[0]%4);
+  parity += node[1]->overpassisodd + (r->wedgeij[1]%4);
+  if ((parity % 2) == 1) return (0); // typeII not allowed here
+
+  for (jj = 0; jj < 2; jj++)
+  {
+    r01 = r->ping[jj];
+    if (r01->valency == 3)
+    {
+      totval = 0;
+      for (kk = 0; kk < 3; kk++)
+      {
+        inodekk = r01->wedgeij[kk]/4;
+        nodekk = &(emb->nodes[inodekk]);
+        par[kk] = ( nodekk->overpassisodd + (r01->wedgeij[kk]%4) ) % 2;
+        totval += nodekk->valency;
+      }
+      if (totval == 12)
+      {
+        if (par[0] != par[1] || par[1] != par[2]) return (1);
+      }
+    }
+  }
+
+  return (0);
+}
