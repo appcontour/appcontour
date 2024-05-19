@@ -1,3 +1,11 @@
+2024.05.12
+echo "fpgroup { <a,b,c,d; abdAdaDBdAD, cdCD> }" | contour alexander
+Computing second Alexander ideal (--foxd = 2)
+# generic ideal computation...
+double free or corruption (out)
+Aborted (core dumped)
+
+
 2024.04.12
 embedding:0xca { 0: (6, 7, 8, 8), 1: (5, 7, 7, 6), 2: (3, 4, 5, 5), 3: (2, 8, 4, 4), 4: (2, 3, 3, 7), 5: (1, 6, 2, 2), 6: (0, 8, 5, 1), 7: (0, 1, 1, 4), 8: (0, 0, 3, 6) }
 results in a region description that in turn leads to a knot group with deficiency 0 (should be 1):
