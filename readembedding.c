@@ -1671,6 +1671,19 @@ printembrules (struct embedding *emb, struct dualembedding *dual)
   int isbetween, between, otherside;
 
   /*
+   * does reverting all overpasses decrese 'choice'?
+   * It is sufficient to check the overpass of the last node
+   */
+
+  inode = emb->k + emb->n - 1;
+  node = &(emb->nodes[inode]);
+  if (node->overpassisodd)
+  {
+    printf ("mirror\n");
+    return;  // no more checks in this case
+  }
+
+  /*
    * first: search for typeII
    */
 
@@ -1728,9 +1741,10 @@ int
 check_for_loop_flip (struct embedding *emb, struct dualembedding *dual, struct dual_region *r)
 {
   struct dual_region *r01;
-  struct emb_node *nodekk, *node[2];
+  struct emb_node *nodekk, *lastother, *node[2];
   int inodekk, inode[2];
   int jj, kk, parity;
+  int ih, il, ilast, ilastother;
 
   if (r->valency != 2) return (0);
   for (jj = 0; jj < 2; jj++)
@@ -1738,9 +1752,22 @@ check_for_loop_flip (struct embedding *emb, struct dualembedding *dual, struct d
     inode[jj] = r->wedgeij[jj]/4;
     node[jj] = &(emb->nodes[inode[jj]]);
   }
-  if (inode[0] > inode[1] && (node[0]->overpassisodd == 0)) return (0);
-  if (inode[1] > inode[0] && (node[1]->overpassisodd == 0)) return (0);
-  // value of choice cannot be decreased
+
+  ilast = emb->k + emb->n - 1;
+  ih = 0; il = 1;
+  if (inode[ih] < inode[il]) { ih = 1; il = 0; }
+
+  if (emb->n >= 3 && inode[ih] == ilast)
+  {
+    assert (node[ih]->overpassisodd == 0); // otherwise we got "mirror" above
+    ilastother = ilast - 1;
+    if (ilastother == inode[il]) ilastother--;
+    lastother = &(emb->nodes[ilastother]);
+    if (lastother->overpassisodd == 0) return (0);
+  } else {
+    if (node[ih]->overpassisodd == 0) return (0);
+    // value of choice cannot be decreased
+  }
 
   parity =  node[0]->overpassisodd + (r->wedgeij[0]%4);
   parity += node[1]->overpassisodd + (r->wedgeij[1]%4);
