@@ -1621,6 +1621,41 @@ freeembedding (struct embedding *emb)
 
 /*
  * print simplifying "Reidemeister" rules that simplify embedding
+ * the "typeII" move applies as in this diagram
+ *
+ *  |
+ * ----.
+ *  |  |
+ *  `--|--
+ *     |
+ *
+ * fork:
+ *
+ *  |
+ * ----.
+ *  |  |
+ *  *--|--
+ * /   |
+ *
+ * twist:
+ *      ___
+ *     |   |
+ *   ----. |
+ *     | | |
+ *   ------'
+ *     | |
+ *
+ * loop-flip
+ *      ___
+ *     |   |
+ *   ----. |
+ *     | | |
+ *     *---'
+ *    /  |
+ *
+ * NOTE: applying a loop-flip move (change both overpasses) does not change the planar
+ * embedding.  However the value of 'choice' changes.  We say that the move is 'simplifying'
+ * if applying it decreases the 'choice' value.
  */
 
 int check_for_loop_flip (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
