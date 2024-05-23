@@ -1653,6 +1653,14 @@ freeembedding (struct embedding *emb)
  *     *---'
  *    /  |
  *
+ * barrel
+ *
+ *       |
+ *    .--|-.
+ * --*   |  *--
+ *    `----'
+ *       |
+ *
  * NOTE: applying a loop-flip move (change both overpasses) does not change the planar
  * embedding.  However the value of 'choice' changes.  We say that the move is 'simplifying'
  * if applying it decreases the 'choice' value.
@@ -1660,6 +1668,7 @@ freeembedding (struct embedding *emb)
 
 int check_for_loop_flip (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
 int check_for_twist (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
+int check_for_barrel (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
 
 void
 printembrules (struct embedding *emb, struct dualembedding *dual)
@@ -1732,6 +1741,7 @@ printembrules (struct embedding *emb, struct dualembedding *dual)
      */
     if (check_for_loop_flip (emb, dual, region)) printf ("loop-flip\n");
     if (check_for_twist (emb, dual, region)) printf ("twist\n");
+    if (check_for_barrel (emb, dual, region)) printf ("barrel\n");
   }
 
   return;
@@ -1843,4 +1853,87 @@ check_for_twist (struct embedding *emb, struct dualembedding *dual, struct dual_
   }
 
   return (0);
+}
+
+/*
+ * check for a situation like this:
+ *       |
+ *    .--|-.
+ * --*   |  *--
+ *    `----'
+ *       |
+ */
+
+int
+check_for_barrel (struct embedding *emb, struct dualembedding *dual, struct dual_region *r)
+{
+  struct dual_region *radj;
+  struct emb_node *nodekk, *lastother, *node[3];
+  int inodekk, inode[3];
+  int jj, parity, jtri, jtriadj, jj1, jj2;
+  int ih, il, ilast, ilastother;
+
+  if (r->valency != 3) return (0);
+  jtri = -1;
+  for (jj = 0; jj < 3; jj++)
+  {
+    inode[jj] = r->wedgeij[jj]/4;
+    node[jj] = &(emb->nodes[inode[jj]]);
+    if (node[jj]->valency == 3)
+    {
+      if (jtri >= 0) return (0);
+      jtri = jj;
+    }
+  }
+  if (jtri < 0) return (0);
+  //fprintf (stderr, "nodeid: %d\n", node[jtri]->id);
+
+  jj1 = (jtri + 1)%3;
+  jj2 = (jtri + 2)%3;
+  radj = r->ping[jj2];
+  if (radj->valency != 3) return (0);
+  jtriadj = -1;
+  for (jj = 0; jj < 3; jj++)
+  {
+    inodekk = radj->wedgeij[jj]/4;
+    nodekk = &(emb->nodes[inodekk]);
+    if (nodekk->valency == 3)
+    {
+      jtriadj = jj;
+      //fprintf (stderr, "nodeadjid: %d\n", nodekk->id);
+      if (nodekk->id < node[jtri]->id) return (0);  // only one output
+      break;
+    }
+  }
+  if (jtriadj < 0) return (0);
+  parity =  node[jj1]->overpassisodd + (r->wedgeij[jj1]%4);
+  parity += node[jj2]->overpassisodd + (r->wedgeij[jj2]%4);
+  parity = parity % 2;
+  if (parity != 0) return (0);
+
+  /*
+   * we are in a "barrel" situation
+   * now we signal it only if the choice value will decrease
+   */
+
+  //fprintf (stderr, "region: %d, radj: %d, jj1=%d jj2=%d jtri=%d\n", r->id, radj->id, jj1, jj2, jtri);
+  //fprintf (stderr, "parity: %d\n", parity%2);
+
+  ilast = emb->k + emb->n - 1;
+  ih = jj1; il = jj2;
+  if (inode[ih] < inode[il]) { ih = jj2; il = jj1; }
+
+  if (emb->n >= 3 && inode[ih] == ilast)
+  {
+    assert (node[ih]->overpassisodd == 0); // otherwise we got "mirror" above
+    ilastother = ilast - 1;
+    if (ilastother == inode[il]) ilastother--;
+    lastother = &(emb->nodes[ilastother]);
+    if (lastother->overpassisodd == 0) return (0);
+  } else {
+    if (node[ih]->overpassisodd == 0) return (0);
+    // value of choice cannot be decreased
+  }
+
+  return (1);
 }
