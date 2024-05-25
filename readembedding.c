@@ -1661,7 +1661,17 @@ freeembedding (struct embedding *emb)
  *    `----'
  *       |
  *
- * NOTE: applying a loop-flip move (change both overpasses) does not change the planar
+ * twist3
+ *
+ *          /
+ *     ,---*
+ *     |   |
+ *   ----. |
+ *     | | |
+ *   ------'
+ *     | |
+ *
+ * NOTE: applying a loop-flip or barrel move (change both overpasses) does not change the planar
  * embedding.  However the value of 'choice' changes.  We say that the move is 'simplifying'
  * if applying it decreases the 'choice' value.
  */
@@ -1669,6 +1679,8 @@ freeembedding (struct embedding *emb)
 int check_for_loop_flip (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
 int check_for_twist (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
 int check_for_barrel (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
+int check_for_twist3 (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
+int check_for_twist4 (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
 
 void
 printembrules (struct embedding *emb, struct dualembedding *dual)
@@ -1699,6 +1711,8 @@ printembrules (struct embedding *emb, struct dualembedding *dual)
   for (region = dual->regions; region; region = region->next)
   {
     //printf ("%d:(", region->id);
+    if (check_for_twist3 (emb, dual, region)) printf ("twist3\n");
+    if (check_for_twist4 (emb, dual, region)) printf ("twist4\n");
     val = region->valency;
     assert (val >= 2);
     parity = 0;
@@ -1937,3 +1951,125 @@ check_for_barrel (struct embedding *emb, struct dualembedding *dual, struct dual
 
   return (1);
 }
+
+/*
+ * check for a situation like this:
+ *
+ *          /
+ *     ,---*
+ *     |   |
+ *   ----. |
+ *     | | |
+ *   ------'
+ *     | |
+ */
+
+int
+check_for_twist3 (struct embedding *emb, struct dualembedding *dual, struct dual_region *r)
+{
+  struct dual_region *radj;
+  struct emb_node *nodejj, *node[3];
+  int inodejj, inode[3];
+  int jj, jj2, jopp, parity[3];
+  int totparity;
+
+  if (r->valency != 3) return (0);
+  totparity = 0;
+  for (jj = 0; jj < 3; jj++)
+  {
+    inode[jj] = r->wedgeij[jj]/4;
+    node[jj] = &(emb->nodes[inode[jj]]);
+    parity[jj] = (r->wedgeij[jj] + node[jj]->overpassisodd) % 2;
+    if (node[jj]->valency != 4) return (0);
+    totparity += parity[jj];
+  }
+  if (totparity < 1 || totparity > 2) return (0);
+  jopp = -1;
+  for (jj = 0; jj < 3; jj++)
+  {
+    if (((totparity + parity[jj]) % 2) == 0)
+    {
+      assert (jopp < 0);
+      jopp = jj;
+    }
+  }
+  assert (jopp >= 0);
+
+  //jj1 = (jopp + 1)%3;
+  jj2 = (jopp + 2)%3;
+  radj = r->ping[jj2];
+  if (radj->valency != 3) return (0);
+  //fprintf (stderr, "r: %d, radj: %d\n", r->id, radj->id);
+
+  for (jj = 0; jj < 3; jj++)
+  {
+    inodejj = radj->wedgeij[jj]/4;
+    nodejj = &(emb->nodes[inodejj]);
+    if (nodejj->valency == 3) return (1);
+  }
+
+  return (0);
+}
+
+/*
+ * check for a situation like this:
+ *
+ *         |
+ *     ,---|--
+ *     |   |
+ *   ----. |
+ *     | | |
+ *   ------'
+ *     | |
+ */
+
+int
+check_for_twist4 (struct embedding *emb, struct dualembedding *dual, struct dual_region *r)
+{
+  struct dual_region *radj;
+  struct emb_node *nodejj, *node[3];
+  int inodejj, inode[3];
+  int jj, jj2, jopp, parity[3];
+  int totparity;
+
+  if (r->valency != 3) return (0);
+  totparity = 0;
+  for (jj = 0; jj < 3; jj++)
+  {
+    inode[jj] = r->wedgeij[jj]/4;
+    node[jj] = &(emb->nodes[inode[jj]]);
+    parity[jj] = (r->wedgeij[jj] + node[jj]->overpassisodd) % 2;
+    if (node[jj]->valency != 4) return (0);
+    totparity += parity[jj];
+  }
+  if (totparity < 1 || totparity > 2) return (0);
+  jopp = -1;
+  for (jj = 0; jj < 3; jj++)
+  {
+    if (((totparity + parity[jj]) % 2) == 0)
+    {
+      assert (jopp < 0);
+      jopp = jj;
+    }
+  }
+  assert (jopp >= 0);
+
+  //jj1 = (jopp + 1)%3;
+  jj2 = (jopp + 2)%3;
+  radj = r->ping[jj2];
+  if (radj->valency != 3) return (0);
+  //fprintf (stderr, "r: %d, radj: %d\n", r->id, radj->id);
+
+  if ((parity[jopp] % 2) == 1) return (0);
+  //fprintf (stderr, "r: %d, parityopp = %d\n", r->id, parityopp);
+  for (jj = 0; jj < 3; jj++)
+  {
+    inodejj = radj->wedgeij[jj]/4;
+    nodejj = &(emb->nodes[inodejj]);
+    if (nodejj->valency == 3) return (0);
+    if ((( /* parityopp + */ radj->wedgeij[jj] + nodejj->overpassisodd) % 2) == 1) return (1);
+  }
+
+  return (0);
+}
+
