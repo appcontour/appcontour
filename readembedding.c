@@ -1671,6 +1671,15 @@ freeembedding (struct embedding *emb)
  *   ------'
  *     | |
  *
+ * twist4
+ *
+ *         | 
+ *     ,---|--
+ *     |   |
+ *   ----. |
+ *     | | |
+ *   ------'
+ *     | |
  * NOTE: applying a loop-flip or barrel move (change both overpasses) does not change the planar
  * embedding.  However the value of 'choice' changes.  We say that the move is 'simplifying'
  * if applying it decreases the 'choice' value.
