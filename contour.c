@@ -1247,7 +1247,7 @@ main (int argc, char *argv[])
       printf ("Error in dual computation\n");
       exit (13);
     }
-    printdual (dual);
+    printdual (dual, emb);
     freedual (dual);
     freeembedding (emb);
     break;
