@@ -262,6 +262,9 @@ case $group in
   A6)
     gorder=360
     ;;
+  S7)
+    gorder=5040
+    ;;
   A7)
     gorder=2520
     ;;
