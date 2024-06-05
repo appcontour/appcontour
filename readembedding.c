@@ -613,6 +613,8 @@ printdual (struct dualembedding *dual, struct embedding *emb)
   if (verbose) print_dual_type (dual, emb);
 }
 
+#define MAXTRI 1024
+
 void  
 print_dual_type (struct dualembedding *dual, struct embedding *emb)
 {   
@@ -621,25 +623,25 @@ print_dual_type (struct dualembedding *dual, struct embedding *emb)
   struct dual_region *region;
   struct emb_node *node;
   int *vec;
-  int *trivec;
-  int largest, largestj;
+  int counttri, largest, largestj;
 
   printf ("dual_type: ");
 
   numregions = dual->numregions;
   vec = (int *) malloc (dual->numregions * sizeof(int));
-  trivec = (int *) malloc (dual->numregions * sizeof(int));
 
   for (region = dual->regions, i = 0; region; region = region->next, i++)
   {
-    vec[i] = region->valency;
-    trivec[i] = 0;
+    vec[i] = MAXTRI*region->valency;
+    counttri = 0;
     for (in = 0; in < region->valency; in++)
     {
       inode = region->wedgeij[in]/4;
       node = &emb->nodes[inode];
-      if (node->valency == 3) trivec[i]++;
+      if (node->valency == 3) counttri++;
     }
+    assert (counttri < MAXTRI);
+    vec[i] += counttri;
   }
 
   //dosortvec (sortvec, regionsnum);
@@ -656,13 +658,13 @@ print_dual_type (struct dualembedding *dual, struct embedding *emb)
         largestj = j;
       }
     }
-    printf ("%d", largest);
-    for (k = 0; k < trivec[largestj]; k++) printf ("*");
+    counttri = largest % MAXTRI;
+    printf ("%d", (largest-counttri)/MAXTRI);
+    for (k = 0; k < counttri; k++) printf ("*");
     vec[largestj] = -1;
   }
   printf ("\n");
   free (vec);
-  free (trivec);
 }
 
 /*
