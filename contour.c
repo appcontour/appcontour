@@ -537,6 +537,7 @@ main (int argc, char *argv[])
       {
          printf ("%s\n", examplesfilename);
       }
+      continue;
     }
     if (strcmp(argv[i],"applyrule") == 0 || strcmp(argv[i],"rule") == 0)
     {
