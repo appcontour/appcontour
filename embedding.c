@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include "contour.h"
-#include "readembedding.h"
+#include "embedding.h"
 #include "fundamental.h"
 #include "parser.h"
 #include "readdtcode.h"
@@ -299,7 +299,7 @@ embedding2sketch (struct embedding *emb)
 
   if (verbose) printf ("Done converting embedding with: k = %d, n = %d, choice = %d into an apparent contour\n", emb->k, emb->n, emb->choice);
 
-  freedual (dual);
+  freedualembedding (dual);
   postprocesssketch (sketch);
   return (sketch);
 }
@@ -422,15 +422,68 @@ print_sketch_ra3 (int only3, int regionnum, struct embedding *emb, struct sketch
   return (1);
 }
 
+/*
+ *
+ */
 
+void
+printembedding (struct embedding *emb)
+{
+  struct emb_node *node;
+  int i, k, s, ii, kk;
 
+  start_comment ();
+  printf ("Warning: noncanonical\n");
+
+  printf ("embedding:%d {", emb->choice);
+  for (i = 0; i < emb->k + emb->n; i++)
+  {
+    if (i > 0) printf (",");
+    printf (" %d: (", i);
+    node = &emb->nodes[i];
+    for (s = 0; s < node->valency; s++)
+    {
+      if (s > 0) printf (", ");
+      printf ("%d", node->ping[s]);
+    }
+    printf (")");
+  }
+  printf (" }\n");
+
+  if (verbose && emb->k > 0)
+  {
+    if (emb->k == 2)
+    {
+      if (emb->connections[0]/3 +
+          emb->connections[1]/3 +
+          emb->connections[2]/3 == 3)
+        printf ("type: theta-curve\n");
+       else
+        printf ("type: handcuff\n");
+    } else {
+      printf ("Strands connection matrix:\n");
+      for (i = 0; i < emb->k; i++)
+      {
+        for (k = 0; k < 3; k++)
+        {
+          ii = emb->connections[3*i + k]/3;
+          kk = emb->connections[3*i + k] - 3*ii;
+          // printf ("ii = %d kk = %d\n", ii, kk);
+          printf ("%d.%d ", ii, kk);
+        }
+        printf ("\n");
+      }
+    }
+  }
+  return;
+}
 
 /*
  *
  */
 
 void
-freedual (struct dualembedding *dual)
+freedualembedding (struct dualembedding *dual)
 {
   assert (dual->regions);
   free (dual->wedgeij);
@@ -587,7 +640,7 @@ embedding2dual (struct embedding *emb)
 }
 
 void
-printdual (struct dualembedding *dual, struct embedding *emb)
+printdualembedding (struct dualembedding *dual, struct embedding *emb)
 {
   struct dual_region *region, *adjregion;
   int jj;

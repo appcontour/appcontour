@@ -19,7 +19,7 @@
 #include "representations.h"
 #include "giovecanonify.h"
 #include "readdtcode.h"
-#include "readembedding.h"
+#include "embedding.h"
 #include "wirtinger.h"
 
 #ifndef EXAMPLES_DIR
@@ -668,6 +668,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"och") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_EXTERNAL;}
     if (strcmp(argv[i],"suggest_p_surgery") == 0) action = ACTION_SUGGEST_P_SURGERY;
     if (strcmp(argv[i],"filepath") == 0) action = ACTION_FILEPATH;
+    if (strcmp(argv[i],"embedding") == 0) action = ACTION_EMBEDDING;
     if (strcmp(argv[i],"dualembedding") == 0) action = ACTION_DUALEMBEDDING;
     if (strcmp(argv[i],"embrules") == 0) action = ACTION_EMBRULES;
     if (strcmp(argv[i],"newfeature") == 0) action = ACTION_NEWFEATURE;
@@ -1234,6 +1235,18 @@ main (int argc, char *argv[])
     printloiv (loiv);
     break;
 
+    case ACTION_EMBEDDING:
+    tok = gettoken (infile);
+    if (tok != TOK_EMBEDDING)
+    {
+      printf ("Input must be a planar embedding\n");
+      exit (14);
+    }
+    emb = readembedding (infile);
+    printembedding (emb);
+    freeembedding (emb);
+    break;
+
     case ACTION_DUALEMBEDDING:
     tok = gettoken (infile);
     if (tok != TOK_EMBEDDING)
@@ -1248,8 +1261,8 @@ main (int argc, char *argv[])
       printf ("Error in dual computation\n");
       exit (13);
     }
-    printdual (dual, emb);
-    freedual (dual);
+    printdualembedding (dual, emb);
+    freedualembedding (dual);
     freeembedding (emb);
     break;
 
@@ -1269,7 +1282,7 @@ main (int argc, char *argv[])
     }
     printembrules (emb, dual);
 
-    freedual (dual); 
+    freedualembedding (dual); 
     freeembedding (emb);
     break;
 
