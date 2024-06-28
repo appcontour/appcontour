@@ -43,20 +43,20 @@ dt1="dtcode { 4< 6 2 10< 12 8 }"
 # similarly for the square knot:
 dt2="dtcode { 4< 6 2 10> 12 8 }"
 
-# suggested by Fox (thanks to Yi-Shang Wang)
+# suggested by Fox (thanks to Yi-Sheng Wang)
 
-w1=`echo "$dt1" | contour wirtinger -q`
+w1=`echo "$dt1" | ./contour wirtinger -q`
 w1a=`echo "$w1" | cut -f1,2 -d';'`
 long1=`echo "$w1" | cut -f3 -d';' | cut -f2 -d',' | cut -f1 -d'>'`
 aug1="fpgroup {$w1a, $long1>}"
-ks1=`echo "$aug1" | contour ks_A5 -q`
+ks1=`echo "$aug1" | ./contour ks_A5 -q`
 echo "granny: $ks1"
 
-w2=`echo "$dt2" | contour wirtinger -q`
+w2=`echo "$dt2" | ./contour wirtinger -q`
 w2a=`echo "$w2" | cut -f1,2 -d';'`
 long2=`echo "$w2" | cut -f3 -d';' | cut -f2 -d',' | cut -f1 -d'>'`
 aug2="fpgroup {$w2a, $long2>}"
-ks2=`echo "$aug2" | contour ks_A5 -q`
+ks2=`echo "$aug2" | ./contour ks_A5 -q`
 echo "square: $ks2"
 
 if [ "$ks1" != "$ks2" ]
