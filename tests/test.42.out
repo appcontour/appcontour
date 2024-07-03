@@ -7,6 +7,15 @@ gives
 Alexander polynomial (up to t -> 1/t):
 +1;
 ==================
+knots K6_1 and K9_46 (Crowell-Fox page 129) have the same Alexander polynomials
+but different second Alexander ideals
+Computing Alexander polynomial for knot with dtcode: dtcode {[4 8 12 10 2 6]}
+Alexander polynomial (up to t -> 1/t):
+-2+5t-2t^2;
+Computing Alexander polynomial for knot with dtcode: dtcode {[4 10 -14 -12 -16 2 -6 -18 -8]}
+Alexander polynomial (up to t -> 1/t):
+-2+5t-2t^2;
+==================
 Canonifying ideal:
 ideal(t) {
 +4-7t+4t^2;

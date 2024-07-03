@@ -13,6 +13,26 @@ echo "$giove"
 echo "gives"
 echo "$giove" | ./contour alexander
 echo "=================="
+
+#
+# this is the example in Crowell-Fox page 129:
+# same Alexander polynomial and same second Alexander polynomial
+# but the second Alexander ideals are different!
+# (see test 43 for the second ideal)
+#
+k6_1="dtcode {[4 8 12 10 2 6]}"
+k9_46="dtcode {[4 10 -14 -12 -16 2 -6 -18 -8]}"
+
+echo "knots K6_1 and K9_46 (Crowell-Fox page 129) have the same Alexander polynomials"
+echo "but different second Alexander ideals"
+#
+for dtcode in "$k6_1" "$k9_46"
+do
+  echo "Computing Alexander polynomial for knot with dtcode: $dtcode"
+  echo "$dtcode" | ./contour --out alexander --foxd 1 --right
+done
+
+echo "=================="
 #
 # this is the ideal (no simplification) from kanenobu -2 8
 #
