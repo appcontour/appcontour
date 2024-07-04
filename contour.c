@@ -1804,7 +1804,8 @@ open_description_file (char *arg, int argnum)
 {
   FILE *infile;
   char *subdirs[]={".", "immersed", "knots", "links", "handlebody_knots", 0};
-  char *exts[]={"morse", "sketch", "knot", "dtcode", 0};
+  char *exts[]={"morse", "sketch", "embedding", "knot", "dtcode", 0};
+  char *hkexts[]={"embedding", "knot", 0};  // see also readknotscape() in readdtcode.c
   char internalname1[]="shortcut_internal.knotname";
   char internalname2[]="shortcut_internal2.knotname";
   int subdirid, extid, len;
@@ -1869,10 +1870,16 @@ open_description_file (char *arg, int argnum)
           strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
           strncat (examplesfilename, "/handlebody_knots/hk", MAXFILELENGTH);
           strncat (examplesfilename, &arg[2], MAXFILELENGTH);
-          strncat (examplesfilename, ".knot", MAXFILELENGTH);
-          infile = fopen (examplesfilename, "r");
-          if (infile && quiet == 0) fprintf (stderr, "Reading from file %s\n", examplesfilename);
-          if (infile) return (infile);
+          strncat (examplesfilename, ".", MAXFILELENGTH);
+          len = strlen (examplesfilename);
+          for (extid = 0; hkexts[extid]; extid++)
+          {
+            examplesfilename[len] = 0;
+            strncat (examplesfilename, hkexts[extid], MAXFILELENGTH);
+            infile = fopen (examplesfilename, "r");
+            if (infile && quiet == 0) fprintf (stderr, "Reading from file %s\n", examplesfilename);
+            if (infile) return (infile);
+          }
           perror ("Cannot open corresponding handlebody-knot file");
           exit (11);
         case 'h':

@@ -1388,6 +1388,8 @@ readknotscape (FILE *file, struct sketch **sketchpt)
   int *dtcode, *dtpositive;
   FILE *pakfile, *infile;
   struct vecofintlist *loiv;
+  int len, extid;
+  char *hkexts[]={"embedding", "knot", 0};  // see also open_description_file() in contour.c
 
   *sketchpt = 0;
   tok = gettoken (file);
@@ -1419,9 +1421,20 @@ readknotscape (FILE *file, struct sketch **sketchpt)
     strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
     strncat (examplesfilename, "/handlebody_knots/hk", MAXFILELENGTH);
     strncat (examplesfilename, &tokenword[2], MAXFILELENGTH);
-    strncat (examplesfilename, ".knot", MAXFILELENGTH);
-    infile = fopen (examplesfilename, "r");
-    if (infile && quiet == 0) fprintf (stderr, "Reading from file %s\n", examplesfilename);
+    strncat (examplesfilename, ".", MAXFILELENGTH);
+    len = strlen (examplesfilename);
+    for (extid = 0; hkexts[extid]; extid++)
+    {
+      examplesfilename[len] = 0;
+      strncat (examplesfilename, hkexts[extid], MAXFILELENGTH);
+      infile = fopen (examplesfilename, "r");
+      if (infile && quiet == 0)
+      {
+        fprintf (stderr, "Reading from file %s\n", examplesfilename);
+        break;
+      }
+    }
+    if (infile == 0) exit (15);
     *sketchpt = readcontour (infile);
     if (*sketchpt == 0) exit (15);
     return (0);
