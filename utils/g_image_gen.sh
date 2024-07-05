@@ -18,7 +18,7 @@ do
       full=""
       shift
       ;;
-    -h)
+    -h | -H | --hash)
       onlyhash="yes"
       full=""
       shift
@@ -43,7 +43,7 @@ group=$2
 
 if [ -z "$2" ]
 then
-  echo "usage: [-l][-i][-h] $0 some_wirtinger_presentation.fpgroup group"
+  echo "usage: [-l][-i][-H|--hash] $0 some_wirtinger_presentation.fpgroup group"
   echo "where group can be e.g. A5"
   echo "use '-' as filename if input comes from stdin"
   echo "an embedding can be indicated in place of a wirtinger presentation"
@@ -281,7 +281,8 @@ fi
 
 echo -n "Computing homomorphisms (in $tmpfile)..." >&2
 
-if grep -q "^embedding" $fpgroup
+#if grep -q "^embedding" $fpgroup
+if contour wirtinger $fpgroup 2>/dev/null
 then
   components=`contour countcc $fpgroup -q`
   if [ "$components" -gt 1 ]
