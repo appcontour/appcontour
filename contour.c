@@ -1321,7 +1321,7 @@ main (int argc, char *argv[])
     connectedness = embedding_connectedness (dual, emb);
     if (quiet)
     {
-      printf ("Connectedness: %d\n", connectedness);
+      printf ("%d\n", connectedness);
     } else {
       if (connectedness < 4) printf ("Connectedness: %d\n", connectedness);
        else printf ("Connectedness: at least 4\n");
