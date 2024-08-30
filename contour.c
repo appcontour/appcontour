@@ -73,6 +73,7 @@ main (int argc, char *argv[])
   struct embedding *emb;
   struct dualembedding *dual;
   int ccnum;
+  int connectedness;
   struct ccomplexcc *cccc;
 
   ccids[0] = 0;
@@ -671,6 +672,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"embedding") == 0) action = ACTION_EMBEDDING;
     if (strcmp(argv[i],"dualembedding") == 0) action = ACTION_DUALEMBEDDING;
     if (strcmp(argv[i],"embrules") == 0) action = ACTION_EMBRULES;
+    if (strcmp(argv[i],"connectedness") == 0) action = ACTION_CONNECTEDNESS;
     if (strcmp(argv[i],"newfeature") == 0) action = ACTION_NEWFEATURE;
     if (strcmp(argv[i],"evert") == 0)
     {
@@ -1300,6 +1302,32 @@ main (int argc, char *argv[])
       p = wirtingerfromloiv (loiv);
     }
     if (p) print_presentation (p);
+    break;
+
+    case ACTION_CONNECTEDNESS:
+    tok = gettoken (infile);
+    if (tok != TOK_EMBEDDING)
+    {
+      printf ("Input must be a planar embedding\n");
+      exit (14);
+    }
+    emb = readembedding (infile);
+    dual = embedding2dual (emb);
+    if (dual == 0)
+    {
+      printf ("Error in dual computation\n");
+      exit (13);
+    }
+    connectedness = embedding_connectedness (dual, emb);
+    if (quiet)
+    {
+      printf ("Connectedness: %d\n", connectedness);
+    } else {
+      if (connectedness < 4) printf ("Connectedness: %d\n", connectedness);
+       else printf ("Connectedness: at least 4\n");
+    }
+    freedualembedding (dual);
+    freeembedding (emb);
     break;
 
     case ACTION_PRINTMORSE:

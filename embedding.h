@@ -27,7 +27,7 @@ struct dual_region {
   struct dual_region **ping; /* these are the adjacent regions, ordered counterclockwise */
   int *wedgeij;  /* pointer to the vector of wedges */
   struct dual_region *next;
-  int pingpong[];  /* valency is the size of this variable size portion */
+  // int pingpong[];  /* valency is the size of this variable size portion */
 };
 
 struct dualembedding {
@@ -59,3 +59,4 @@ int emb_orient (struct embedding *emb);
 void printembrules (struct embedding *emb, struct dualembedding *dual);
 struct vecofintlist *embeddingtoloiv (struct embedding *emb);
 void freeembedding (struct embedding *emb);
+int embedding_connectedness (struct dualembedding *dual, struct embedding *emb);

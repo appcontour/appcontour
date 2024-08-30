@@ -900,6 +900,122 @@ wirtingerfromembedding (struct embedding *emb)
 }
 
 /*
+ * compute arc-connectedness of the embedding
+ */
+
+int is2connected (struct dualembedding *dual);
+int is3connected (struct dualembedding *dual);
+int pingpong (struct dual_region *r, int ii);
+int dual_left_turn (struct dual_region *r, int ii1, int ii2);
+
+int
+embedding_connectedness (struct dualembedding *dual, struct embedding *emb)
+{
+  if (is2connected (dual)) return (2);
+  if (is3connected (dual)) return (3);
+  
+  return (9999);
+}
+
+int
+is2connected (struct dualembedding *dual)
+{
+  int i, j;
+  struct dual_region *region;
+
+  if (dual == 0) return (0);
+
+  for (region = dual->regions; region; region = region->next)
+  {
+    for (i = 0; i < region->valency; i++)
+    {
+      for (j = i+1; j < region->valency; j++)
+      {
+        if (region->ping[i]->id == region->ping[j]->id) return (region->id + 1);
+      }
+    }
+  }
+  return (0);
+}
+
+int
+is3connected (struct dualembedding *dual)
+{
+  int i, ii, jj, kk, ripp, rjpp, rkpp;
+  struct dual_region *ri, *rj, *rk, *rfinal;
+
+  if (dual == 0) return (0);
+
+  for (i = 0, ri = dual->regions; ri; i++, ri = ri->next)
+  {
+    assert (i == ri->id);
+    for (ii = 0; ii < ri->valency; ii++)
+    {
+      ripp = pingpong (ri, ii);
+      rj = ri->ping[ii];
+      if (rj <= ri) continue;
+
+      for (jj = 0; jj < rj->valency; jj++)
+      {
+        if (jj == ripp) continue; // do not backtrack
+        rjpp = pingpong (rj, jj);
+        rk = rj->ping[jj];
+        if (rk == ri) continue;
+        if (rk <= ri) continue;
+        for (kk = 0; kk < rk->valency; kk++)
+        {
+          if (kk == rjpp) continue; //do not backtrack
+          rkpp = pingpong (rk, kk);
+          rfinal = rk->ping[kk];
+          if (rfinal == ri)
+          {
+            // printf ("found: %d.%d.%d  %d.%d.%d  %d.%d.%d\n", ri->id, ii, pingpong(ri,ii), rj->id, jj, pingpong(rj,jj), rk->id, kk, pingpong(rk,kk));
+            if (dual_left_turn(ri, rkpp, ii) &&
+                dual_left_turn(rj, ripp, jj) &&
+                dual_left_turn(rk, rjpp, kk) ) continue;
+            if (dual_left_turn(ri, ii, rkpp) &&
+                dual_left_turn(rj, jj, ripp) &&
+                dual_left_turn(rk, kk, rjpp) ) continue;
+            return (i + 1);
+          }
+        }
+      }
+    }
+  }
+
+  return (0);
+}
+
+int
+pingpong (struct dual_region *r, int ii)
+{
+  struct dual_region *rnext;
+  int jj;
+
+  assert (ii < r->valency);
+  rnext = r->ping[ii];
+  for (jj = 0; jj < rnext->valency; jj++)
+  {
+    if (rnext->ping[jj] == r) return (jj);
+  }
+  return (9999);
+}
+
+/*
+ * check if i1 is i2+1 mod valency
+ */
+
+int
+dual_left_turn (struct dual_region *r, int i1, int i2)
+{
+  int i2plus;
+
+  i2plus = (i2+1) % r->valency;
+  if (i2plus == i1) return (1);
+  return (0);
+}
+
+/*
  *
  */
 
