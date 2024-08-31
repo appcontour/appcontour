@@ -673,6 +673,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"dualembedding") == 0) action = ACTION_DUALEMBEDDING;
     if (strcmp(argv[i],"embrules") == 0) action = ACTION_EMBRULES;
     if (strcmp(argv[i],"connectedness") == 0) action = ACTION_CONNECTEDNESS;
+    if (strcmp(argv[i],"connectivity") == 0) action = ACTION_CONNECTEDNESS;
     if (strcmp(argv[i],"newfeature") == 0) action = ACTION_NEWFEATURE;
     if (strcmp(argv[i],"evert") == 0)
     {
