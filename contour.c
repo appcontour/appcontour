@@ -90,7 +90,7 @@ main (int argc, char *argv[])
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = 0;
   globals.knotname_fallback = 1;
-  globals.summand1cc = globals.summand2cc = globals.choice = -1;
+  globals.cc1 = globals.cc2 = globals.choice = -1;
   globals.rotation = 0;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     globals.autosurgery++;
@@ -117,12 +117,12 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--summand1cc") == 0)
     {
-      globals.summand1cc = strtol (argv[++i], &endch, 10) - 1;
+      globals.cc1 = strtol (argv[++i], &endch, 10) - 1;
       continue;
     }
     if (strcmp(argv[i],"--summand2cc") == 0)
     {
-      globals.summand2cc = strtol (argv[++i], &endch, 10) - 1;
+      globals.cc2 = strtol (argv[++i], &endch, 10) - 1;
       continue;
     }
     if (strcmp(argv[i],"-r") == 0 || strcmp(argv[i],"--region") == 0)
@@ -675,6 +675,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"connectedness") == 0) action = ACTION_CONNECTEDNESS;
     if (strcmp(argv[i],"connectivity") == 0) action = ACTION_CONNECTEDNESS;
     if (strcmp(argv[i],"newfeature") == 0) action = ACTION_NEWFEATURE;
+    if (strcmp(argv[i],"newfeature2") == 0) action = ACTION_NEWFEATURE2;
     if (strcmp(argv[i],"evert") == 0)
     {
       action = ACTION_EVERT;
@@ -1305,6 +1306,18 @@ main (int argc, char *argv[])
     if (p) print_presentation (p);
     break;
 
+    case ACTION_NEWFEATURE:
+    tok = gettoken (infile);
+    if (tok != TOK_EMBEDDING)
+    {
+      printf ("Input must be a planar embedding\n");
+      exit (14);
+    }
+    emb = readembedding (infile);
+    p = wirtingerccfromembedding (emb,-1,-1);
+    if (p) print_presentation (p);
+    break;
+
     case ACTION_CONNECTEDNESS:
     tok = gettoken (infile);
     if (tok != TOK_EMBEDDING)
@@ -1638,7 +1651,7 @@ main (int argc, char *argv[])
     }
     break;
 
-    case ACTION_NEWFEATURE:
+    case ACTION_NEWFEATURE2:
     //printf ("Sorry, there is no new feature to experiment with...\n");
     //exit (14);
     if ((sketch = readcontour (infile)) == 0) exit (14);

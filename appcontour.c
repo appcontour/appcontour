@@ -103,7 +103,7 @@ sketch_sum (struct sketch *s1, struct sketch *s2)
     if (find_connected_component_parent (i, s1) < 0) count1++;
   }
   assert (count1 >= 1);
-  if (count1 > 1 && globals.summand1cc < 0)
+  if (count1 > 1 && globals.cc1 < 0)
   {
     fprintf (stderr, "First summand has multiple external components:");
     for (i = 0; i < ccount; i++)
@@ -118,7 +118,7 @@ sketch_sum (struct sketch *s1, struct sketch *s2)
     if (find_connected_component_parent (i, s2) < 0) count2++;
   }
   assert (count2 >= 1);
-  if (count2 > 1 && globals.summand2cc < 0)
+  if (count2 > 1 && globals.cc2 < 0)
   {
     fprintf (stderr, "Second summand has multiple external components:");
     for (i = 0; i < ccount; i++)
@@ -129,17 +129,17 @@ sketch_sum (struct sketch *s1, struct sketch *s2)
   }
   if (count1 + count2 > 2)
   {
-    if ((count1 > 1 && globals.summand1cc < 0) ||
-        (count2 > 1 && globals.summand2cc < 0) )
+    if ((count1 > 1 && globals.cc1 < 0) ||
+        (count2 > 1 && globals.cc2 < 0) )
     {
       fprintf (stderr, "Connected sum is not well defined for surfaces with more than one external component.\n");
       return (0);
     }
   }
-  if (count1 == 1) globals.summand1cc = -1;
-  if (count2 == 1) globals.summand2cc = -1;
-  if (globals.summand1cc >= 0) find_appropriate_glue_point (s1, globals.summand1cc);
-  if (globals.summand2cc >= 0) find_appropriate_glue_point (s2, globals.summand2cc);
+  if (count1 == 1) globals.cc1 = -1;
+  if (count2 == 1) globals.cc2 = -1;
+  if (globals.cc1 >= 0) find_appropriate_glue_point (s1, globals.cc1);
+  if (globals.cc2 >= 0) find_appropriate_glue_point (s2, globals.cc2);
   if (sketch_union (s1, s2) == 0) return (0);
 
   assert (s1->extregion->border->sponda == 0);
