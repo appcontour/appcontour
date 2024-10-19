@@ -1314,7 +1314,8 @@ main (int argc, char *argv[])
       exit (14);
     }
     emb = readembedding (infile);
-    p = wirtingerccfromembedding (emb,-1,-1);
+    //p = wirtingerccfromembedding (emb,-1,-1);
+    p = wirtingerfromembedding (emb);
     if (p) print_presentation (p);
     break;
 
