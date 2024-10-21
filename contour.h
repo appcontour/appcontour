@@ -77,11 +77,12 @@
 #define ACTION_DUALEMBEDDING 69
 #define ACTION_EMBRULES 70
 #define ACTION_CONNECTEDNESS 71
+#define ACTION_WIRTINGERCC 72
 
 #define ACTION_NEWFEATURE 999
-#define ACTION_NEWFEATURE2 998
 
 #define MAXKNOTNAMELENGTH 1000
+#define MAXCC 10
 
 struct global_data {
   int dorecomputef;
@@ -109,8 +110,9 @@ struct global_data {
   int q;  // typically a power of a prime
   int n;
   int onlyeven;
-  int cc1; // used in connected sum
-  int cc2; // used in connected sum
+  int cc1[MAXCC]; // used in connected sum
+  int cc2[MAXCC]; // used in connected sum
+  int loopasrule; // add as rule instead of selected element
   int choice;     // choice value with overpasses information used in an 'embedding' description
   int rotation;   // either counterclockwise (+) or clockwise (-) - used in an embedding description
   int outer;  // user wants all "outer" (inner in S_n) conjugacy for A_n

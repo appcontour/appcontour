@@ -743,20 +743,17 @@ print_dual_type (struct dualembedding *dual, struct embedding *emb)
 struct presentation *
 wirtingerfromembedding (struct embedding *emb)
 {
-  int open_arcs, short_arcs;
-  struct emb_node *node;
-  int i, j;
   struct presentation *p;
-  struct presentationrule *rule;
-  int sign, a, b, c, d;
   struct vecofintlist *gaussloiv;
   struct vecofintlist *dtloiv;
 
+/*
   assert ((emb->k % 2) == 0);
   open_arcs = emb->k/2*3;
   short_arcs = open_arcs + emb->n*2;
 
   assert (emb->orientation);
+ */
 
   if (emb->k == 0)
   {
@@ -773,6 +770,332 @@ wirtingerfromembedding (struct embedding *emb)
     return (p);
   }
 
+  p = wirtingerfromembeddingraw (emb);
+
+/* the following became an external function */
+/*
+  p = (struct presentation *) malloc (sizeof (struct presentation));
+  p->gennum = short_arcs;
+  p->elements = 0;
+  p->rules = 0;
+  p->characteristic = 0;
+  p->espected_deficiency = 1;
+
+  for (i = emb->k; i < emb->k + emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    assert (node->valency == 4);
+    rule = (struct presentationrule *) malloc (2*sizeof (int) + sizeof (struct presentationrule));
+    rule->length = 2;
+    rule->next = p->rules;
+    p->rules = rule;
+    sign = 1;  // positive crossing
+    if (node->overpassisodd)
+    {
+      rule->var[0] = node->generator[1] + 1;
+      rule->var[1] = - (node->generator[3] + 1);
+      if (node->direction[1] == NODE_IS_ARRIVAL)
+      {
+        a = node->generator[1];
+        b = node->generator[3];
+      } else {
+        sign *= -1;
+        a = node->generator[3];
+        b = node->generator[1];
+      }
+      if (node->direction[0] == NODE_IS_ARRIVAL)
+      {
+        sign *= -1;
+        c = node->generator[0];
+        d = node->generator[2];
+      } else {
+        c = node->generator[2];
+        d = node->generator[0];
+      }
+    } else {
+      rule->var[0] = node->generator[0] + 1;
+      rule->var[1] = - (node->generator[2] + 1);
+      if (node->direction[0] == NODE_IS_ARRIVAL)
+      {
+        a = node->generator[0];
+        b = node->generator[2];
+      } else {
+        sign *= -1;
+        a = node->generator[2];
+        b = node->generator[0];
+      }
+      if (node->direction[1] == NODE_IS_ARRIVAL)
+      {
+        c = node->generator[1];
+        d = node->generator[3];
+      } else {
+        sign *= -1;
+        c = node->generator[3];
+        d = node->generator[1];
+      }
+    }
+    rule = (struct presentationrule *) malloc (4*sizeof (int) + sizeof (struct presentationrule));
+    rule->length = 4;
+    rule->next = p->rules;
+    p->rules = rule;
+    if (sign > 0)
+    {
+      rule->var[0] = b + 1;
+      rule->var[1] = d + 1;
+      rule->var[2] = -(a + 1);
+      rule->var[3] = -(c + 1);
+    } else {
+      rule->var[0] = d + 1;
+      rule->var[1] = b + 1;
+      rule->var[2] = -(c + 1);
+      rule->var[3] = -(a + 1);
+    }
+  }
+
+  if (verbose) printf ("RELATORS AT NODES:\n");
+  for (i = 0; i < emb->k; i++)
+  {
+    node = &emb->nodes[i];
+    assert (node->valency == 3);
+    rule = (struct presentationrule *) malloc (3*sizeof (int) + sizeof (struct presentationrule));
+    rule->length = 3;
+    rule->next = p->rules;
+    p->rules = rule;
+
+    if (verbose) printf ("NODE RELATOR ");
+    for (j = 0; j < 3; j++)
+    {
+      if (verbose) printf (" %c%d", (node->direction[j]==NODE_IS_ARRIVAL)?'-':'+', node->generator[j]);
+      sign = 1;
+      if (node->direction[j]==NODE_IS_ARRIVAL) sign = -1;
+      rule->var[j] = sign*(node->generator[j]+1);
+    }
+    if (verbose) printf ("\n");
+  }
+ */
+
+  assert (emb->numhcomponents >= 1);
+  if (emb->numhcomponents + emb->numrings == 1)
+  {
+    assert (emb->numrings == 0);
+    emb_meridians_longitudes (emb, p);
+  } else if (!quiet) printf ("Cannot compute meridians and longitudes for links\n");
+
+  if (debug) print_presentation (p);
+  emb_remove_dup_rules (p);
+  if (globals.simplifypresentation) simplify_presentation (p);
+  return (p);
+}
+
+/*
+ * Compute the Wirtinger presentation of a single component (cc1 >= 0) of a nonconnected embedding
+ * (if cc1 < 0 use default: first component)
+ * cc2 should be a "loop" component that is interpreted as an element of the group and returned
+ * as selected element
+ *
+ * cc2 == -1: default is the first "loop" component distinct from cc1
+ * cc2 == -2: do not compute any selected component
+ *
+ * cc1 == cc2: ask info about components (genus of each)
+ */
+
+struct presentation *
+wirtingerccfromembedding (struct embedding *emb, int *cc1pt, int *cc2pt, int cc1n, int cc2n)
+{
+  struct emb_node *node;
+  int i, j, k, starti, startj, inext, jback, jorto;
+  int cc1, cc2;
+  struct presentation *p;
+  struct presentationrule *rule;
+
+  emb_color4 (emb);
+
+  if (emb->numhcomponents+emb->numrings <= 1)
+  {
+    fprintf (stderr, "Connected objects are not allowed\n");
+    return (0);
+  }
+
+  if (cc1n == 0)
+  {
+    cc1n++;
+    *cc1pt = 1;
+  }
+
+  if (cc2n == 0)
+  {
+    cc2n++;
+    *cc2pt = emb->numhcomponents + 1;
+    if (*cc2pt == *cc1pt) (*cc2pt)++;
+  }
+
+  cc1 = *cc1pt;
+  cc2 = *cc2pt;
+  if (cc1 == cc2)
+  {
+    if (quiet)
+    {
+      printf ("%d\n", emb->numhcomponents);
+      printf ("%d\n", emb->numrings);
+    } else {
+      printf ("There are %d components with genus larger than one\n", emb->numhcomponents);
+      printf ("There are %d components of genus one\n", emb->numrings);
+    }
+    return (0);
+  }
+  if (cc1 > emb->numhcomponents + emb->numrings) {fprintf (stderr, "Invalid cc1 = %d \n", cc1); return (0);}
+  if (cc2 <= emb->numhcomponents) {fprintf (stderr, "cc2 is not a loop\n"); return (0);}
+  if (cc2 > emb->numhcomponents + emb->numrings) {fprintf (stderr, "cc2 = %d does not exist\n", cc2); return (0);}
+
+  if (debug)
+  {
+    printf ("numhcomponents: %d, numrings: %d\n", emb->numhcomponents, emb->numrings);
+    printf ("k: %d, n: %d\n", emb->k, emb->n);
+    for (i = 0; i < emb->k + emb->n; i++)
+    {
+      node = &emb->nodes[i];
+      printf ("node %d, valency: %d, color: %d, colorodd: %d\n", i, node->valency, node->color, node->colorodd);
+    }
+  }
+
+  p = wirtingerfromembeddingraw (emb);
+
+  //assert (emb->numhcomponents >= 1);
+  if (emb->numhcomponents + emb->numrings == 1)
+  {
+    printf ("More than one component required\n");
+    return (0);
+  }
+
+  /*
+   * now remove selected components
+   */
+
+  for (i = 0; i < emb->k; i++)
+  {
+    node = &emb->nodes[i];
+    assert (node->valency == 3);
+    if (node->color != cc1)
+    {
+      for (j = 0; j < 3; j++)
+      {
+        rule = (struct presentationrule *) malloc (1*sizeof (int) + sizeof (struct presentationrule));
+        rule->length = 1;
+        rule->next = p->rules;
+        p->rules = rule;
+        rule->var[0] = node->generator[j] + 1;
+      }
+    }
+  }
+
+  for (i = emb->k; i < emb->k + emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    if (node->color == cc2)
+    {
+      rule = (struct presentationrule *) malloc (1*sizeof (int) + sizeof (struct presentationrule));
+      rule->length = 1;
+      rule->next = p->rules;
+      p->rules = rule;
+      rule->var[0] = node->generator[0] + 1;
+    }
+    if (node->colorodd == cc2)
+    {
+      rule = (struct presentationrule *) malloc (1*sizeof (int) + sizeof (struct presentationrule));
+      rule->length = 1;
+      rule->next = p->rules;
+      p->rules = rule;
+      rule->var[0] = node->generator[1] + 1;
+    }
+  }
+
+  /* build selected element(s) */
+  for (i = emb->k; i < emb->k + emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    if (node->color == cc2)
+    {
+      j = 0;
+      break;
+    }
+    if (node->colorodd == cc2)
+    {
+      j = 1;
+      break;
+    }
+  }
+
+  if (node->direction[j] == NODE_IS_ARRIVAL) j += 2;
+  starti = i;
+  startj = j;
+  rule = (struct presentationrule *) malloc (2*emb->n*sizeof (int) + sizeof (struct presentationrule));
+  k = 0;
+  while (1)
+  {
+    if (debug) printf ("Along selected: node %d, direction %d.", i, j);
+    if (((j + node->overpassisodd) % 2) == 1)
+    {
+      if (debug) printf (" Is underpass\n");
+      jorto = (j + 1) % 4;
+      if (node->direction[jorto] == NODE_IS_ARRIVAL)
+      {
+        rule->var[k++] = node->generator[jorto] + 1;
+        if (debug) printf ("generator +%d\n", node->generator[jorto]);
+      } else {
+        rule->var[k++] = -(node->generator[jorto] + 1);
+        if (debug) printf ("generator -%d\n", node->generator[jorto]);
+      }
+    } else {
+      if (debug) printf (" Is overpass\n");
+    }
+
+    inext = node->ping[j];
+    jback = node->pong[j];
+
+    i = inext;
+    node = &emb->nodes[i];
+    j = (jback + 2) % 4;
+
+    if (i == starti && j == startj) break;
+  }
+
+  rule->length = k;
+  if (debug) printf ("Length of selected element: %d\n", k);
+  if (globals.loopasrule)
+  {
+    rule->next = p->rules;
+    p->rules = rule;
+  } else {
+    rule->next = p->elements;
+    p->elements = rule;
+  }
+
+  if (debug) print_presentation (p);
+  emb_remove_dup_rules (p);
+  if (globals.simplifypresentation) simplify_presentation (p);
+  return (p);
+}
+
+/*
+ * compute raw wirtinger presentation (one generator per short arc)
+ */
+
+struct presentation *
+wirtingerfromembeddingraw (struct embedding *emb)
+{
+  int open_arcs, short_arcs;
+  struct emb_node *node;
+  int i, j;
+  struct presentation *p;
+  struct presentationrule *rule;
+  int sign, a, b, c, d;
+
+  assert ((emb->k % 2) == 0);
+  open_arcs = emb->k/2*3;
+  short_arcs = open_arcs + emb->n*2;
+
+  assert (emb->orientation);
+
   p = (struct presentation *) malloc (sizeof (struct presentation));
   p->gennum = short_arcs;
   p->elements = 0;
@@ -788,7 +1111,7 @@ wirtingerfromembedding (struct embedding *emb)
       printf ("generators at node %d: ", i);
       for (j = 0; j < node->valency; j++)
       {
-        printf (" %d", node->generator[j]);
+        printf (" %c%d", (node->direction[j]==NODE_IS_START)?'+':'-', node->generator[j]);
       }
       printf ("\n");
     }
@@ -886,16 +1209,6 @@ wirtingerfromembedding (struct embedding *emb)
     if (verbose) printf ("\n");
   }
 
-  assert (emb->numhcomponents >= 1);
-  if (emb->numhcomponents + emb->numrings == 1)
-  {
-    assert (emb->numrings == 0);
-    emb_meridians_longitudes (emb, p);
-  } else if (!quiet) printf ("Cannot compute meridians and longitudes for links\n");
-
-  if (debug) print_presentation (p);
-  emb_remove_dup_rules (p);
-  if (globals.simplifypresentation) simplify_presentation (p);
   return (p);
 }
 
@@ -1254,6 +1567,144 @@ emb_color (struct embedding *emb)
   }
   assert (colored == emb->k);
   return (color);
+}
+
+/*
+ * color the four-valent nodes
+ */
+
+/* spread coloring function */
+
+int expand_from_4 (struct embedding *emb);
+
+int
+expand_from_4 (struct embedding *emb)
+{
+  int i, jj, jjto;
+  int goon;
+  struct emb_node *node, *nodeto;
+
+  goon = 1;
+  while (goon)
+  {
+    goon = 0;
+    for (i = emb->k; i < emb->k+emb->n; i++)
+    {
+      node = &emb->nodes[i];
+      assert (node->valency == 4);
+      if (node->color)
+      {
+        /* even is colored, try to expand */
+        for (jj = 0; jj < 4; jj += 2)
+        {
+          jjto = node->ping[jj];
+          nodeto = &emb->nodes[jjto];
+          if ((node->pong[jj] % 2) == 0)
+          {
+            if (nodeto->color == 0) goon++;
+             else assert (nodeto->color == node->color);
+            nodeto->color = node->color;
+          } else {
+            if (nodeto->colorodd == 0) goon++;
+             else assert (nodeto->colorodd == node->color);
+            nodeto->colorodd = node->color;
+          }
+        }
+      }
+      if (node->colorodd)
+      {
+        /* odd is colored, try to expand */
+        for (jj = 1; jj < 4; jj += 2)
+        {
+          jjto = node->ping[jj];
+          nodeto = &emb->nodes[jjto];
+          if ((node->pong[jj] % 2) == 0)
+          {
+            if (nodeto->color == 0) goon++;
+             else assert (nodeto->color == node->colorodd);
+            nodeto->color = node->colorodd;
+          } else {
+            if (nodeto->colorodd == 0) goon++;
+             else assert (nodeto->colorodd == node->colorodd);
+            nodeto->colorodd = node->colorodd;
+          }
+        }
+      }
+    }
+  }
+
+  return (1);
+}
+
+int
+emb_color4 (struct embedding *emb)
+{
+  int i, jj, jjto, istart;
+  int iring;
+  struct emb_node *node, *nodeto;
+
+  /* first reset all colors */
+  for (i = emb->k; i < emb->k+emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    node->color = node->colorodd = 0;
+  }
+
+  /* first: expand from trivalent nodes */
+  for (i = 0; i < emb->k; i++)
+  {
+    node = &emb->nodes[i];
+    assert (node->valency == 3);
+    for (jj = 0; jj < 3; jj++)
+    {
+      jjto = node->ping[jj];
+      nodeto = &emb->nodes[jjto];
+      if (nodeto->valency != 4) continue;
+      if ((node->pong[jj] % 2) == 0) nodeto->color = node->color;
+       else nodeto->colorodd = node->color;
+    }
+  }
+
+  /* second: expand from four-valent nodes */
+  expand_from_4 (emb);
+
+  /* now color rings */
+
+  for (iring = 0; iring < emb->numrings; iring++)
+  {
+    /* find an uncolored node */
+    istart = -1;
+    for (i = emb->k; i < emb->k+emb->n; i++)
+    {
+      node = &emb->nodes[i];
+      assert (node->valency == 4);
+      if (node->color == 0)
+      {
+        istart = i;
+        node->color = emb->numhcomponents + iring + 1;
+        break;
+      }
+      if (node->colorodd == 0)
+      {
+        istart = i;
+        node->colorodd = emb->numhcomponents + iring + 1;
+        break;
+      }
+    }
+    assert (istart >= 0);
+    expand_from_4 (emb);
+  }
+
+  /* check everything is colored */
+
+  for (i = emb->k; i < emb->k+emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    assert (node->color);
+    assert (node->colorodd);
+  }
+
+  return (emb->numrings);
 }
 
 int

@@ -103,7 +103,7 @@ sketch_sum (struct sketch *s1, struct sketch *s2)
     if (find_connected_component_parent (i, s1) < 0) count1++;
   }
   assert (count1 >= 1);
-  if (count1 > 1 && globals.cc1 < 0)
+  if (count1 > 1 && globals.cc1[0] < 0)
   {
     fprintf (stderr, "First summand has multiple external components:");
     for (i = 0; i < ccount; i++)
@@ -136,10 +136,10 @@ sketch_sum (struct sketch *s1, struct sketch *s2)
       return (0);
     }
   }
-  if (count1 == 1) globals.cc1 = -1;
-  if (count2 == 1) globals.cc2 = -1;
-  if (globals.cc1 >= 0) find_appropriate_glue_point (s1, globals.cc1);
-  if (globals.cc2 >= 0) find_appropriate_glue_point (s2, globals.cc2);
+  if (count1 == 1) globals.cc1[0] = -1;
+  if (count2 == 1) globals.cc2[0] = -1;
+  if (globals.cc1[0] >= 0) find_appropriate_glue_point (s1, globals.cc1[0]);
+  if (globals.cc2[0] >= 0) find_appropriate_glue_point (s2, globals.cc2[0]);
   if (sketch_union (s1, s2) == 0) return (0);
 
   assert (s1->extregion->border->sponda == 0);

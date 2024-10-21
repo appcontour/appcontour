@@ -7,7 +7,8 @@ struct emb_node {
   int generator[4];
   int pong[4]; /* this is the index where it hits at the arrival node */
   int overpassisodd;
-  int color;
+  short int color;
+  short int colorodd;
 };
 
 struct embedding {
@@ -50,7 +51,10 @@ void freedualembedding (struct dualembedding *dual);
 void freedualregions (struct dual_region *region);
 struct embedding *readembedding (FILE *file);
 struct presentation *wirtingerfromembedding (struct embedding *emb);
+struct presentation *wirtingerccfromembedding (struct embedding *emb, int *cc1pt, int *cc2pt, int cc1num, int cc2num);
+struct presentation *wirtingerfromembeddingraw (struct embedding *emb);
 int emb_color (struct embedding *emb);
+int emb_color4 (struct embedding *emb);
 int emb_remove_dup_rules (struct presentation *p);
 int emb_meridians_longitudes (struct embedding *emb, struct presentation *p);
 int numunderpasses_on_spanning_tree (int i, int *node_flood, int *underpasses);
