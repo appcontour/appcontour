@@ -77,7 +77,7 @@
 #define ACTION_DUALEMBEDDING 69
 #define ACTION_EMBRULES 70
 #define ACTION_CONNECTEDNESS 71
-#define ACTION_WIRTINGERCC 72
+#define ACTION_CCASLOOP 72
 
 #define ACTION_NEWFEATURE 999
 
@@ -110,8 +110,11 @@ struct global_data {
   int q;  // typically a power of a prime
   int n;
   int onlyeven;
-  int cc1[MAXCC]; // used in connected sum
-  int cc2[MAXCC]; // used in connected sum
+  int cc1;        // used in connected sum
+  int cc2;        // used in connected sum
+  int loopcc;     // which component should be treated as loop
+  int exclude[MAXCC]; // add excluded components for action 'ccasloop'
+  int numexcluded;
   int loopasrule; // add as rule instead of selected element
   int choice;     // choice value with overpasses information used in an 'embedding' description
   int rotation;   // either counterclockwise (+) or clockwise (-) - used in an embedding description

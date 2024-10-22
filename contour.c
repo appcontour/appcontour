@@ -72,7 +72,7 @@ main (int argc, char *argv[])
   struct vecofintlist *loiv, *newloiv;
   struct embedding *emb;
   struct dualembedding *dual;
-  int ccnum, cc1k, cc2k;
+  int ccnum;
   int connectedness;
   struct ccomplexcc *cccc;
 
@@ -90,8 +90,9 @@ main (int argc, char *argv[])
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = 0;
   globals.knotname_fallback = 1;
-  cc1k = cc2k = 0;
-  globals.cc1[cc1k] = globals.cc2[cc2k] = globals.choice = -1;
+  globals.loopcc = 0;
+  globals.numexcluded = 0;
+  globals.cc1 = globals.cc2 = globals.choice = -1;
   globals.rotation = 0;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     globals.autosurgery++;
@@ -118,30 +119,23 @@ main (int argc, char *argv[])
     }
     if (strcmp(argv[i],"--summand1cc") == 0)
     {
-      assert (cc1k < MAXCC);
-      globals.cc1[cc1k++] = strtol (argv[++i], &endch, 10) - 1;
-      globals.cc1[cc1k] = -1;
+      globals.cc1 = strtol (argv[++i], &endch, 10) - 1;
       continue;
     }
     if (strcmp(argv[i],"--summand2cc") == 0)
     {
-      assert (cc2k < MAXCC);
-      globals.cc2[cc2k++] = strtol (argv[++i], &endch, 10) - 1;
-      globals.cc2[cc2k] = -1;
+      globals.cc2 = strtol (argv[++i], &endch, 10) - 1;
       continue;
     }
-    if (strcmp(argv[i],"--cc1") == 0)
+    if (strcmp(argv[i],"--loopcc") == 0)
     {
-      assert (cc1k < MAXCC);
-      globals.cc1[cc1k++] = strtol (argv[++i], &endch, 10);
-      globals.cc1[cc1k] = -1;
+      globals.loopcc = strtol (argv[++i], &endch, 10);
       continue;
     }
-    if (strcmp(argv[i],"--cc2") == 0)
+    if (strcmp(argv[i],"--exclude") == 0)
     {
-      assert (cc2k < MAXCC);
-      globals.cc2[cc2k++] = strtol (argv[++i], &endch, 10);
-      globals.cc2[cc2k] = -1;
+      assert (globals.numexcluded < MAXCC);
+      globals.exclude[globals.numexcluded++] = strtol (argv[++i], &endch, 10);
       continue;
     }
     if (strcmp(argv[i],"--loopasrule") == 0)
@@ -658,7 +652,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"rdtcode") == 0) action = ACTION_RDTCODE;
     if (strcmp(argv[i],"gausscode") == 0) action = ACTION_GAUSSCODE;
     if (strcmp(argv[i],"wirtinger") == 0) action = ACTION_WIRTINGER;
-    if (strcmp(argv[i],"wirtingercc") == 0) action = ACTION_WIRTINGERCC;
+    if (strcmp(argv[i],"ccasloop") == 0) action = ACTION_CCASLOOP;
     if (strcmp(argv[i],"any2morse") == 0) action = ACTION_ANY2MORSE;
     if (strcmp(argv[i],"printmorse") == 0) action = ACTION_PRINTMORSE;
     if (strcmp(argv[i],"characteristic") == 0) action = ACTION_CHARACTERISTIC;
@@ -1330,7 +1324,7 @@ main (int argc, char *argv[])
     if (p) print_presentation (p);
     break;
 
-    case ACTION_WIRTINGERCC:
+    case ACTION_CCASLOOP:
     tok = gettoken (infile);
     if (tok != TOK_EMBEDDING)
     {
@@ -1338,8 +1332,7 @@ main (int argc, char *argv[])
       exit (14);
     }
     emb = readembedding (infile);
-    p = wirtingerccfromembedding (emb, globals.cc1, globals.cc2, cc1k, cc2k);
-    //p = wirtingerfromembedding (emb);
+    p = ccasloop (emb);
     if (p) print_presentation (p);
     break;
 

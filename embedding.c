@@ -888,27 +888,30 @@ wirtingerfromembedding (struct embedding *emb)
 }
 
 /*
- * Compute the Wirtinger presentation of a single component (cc1 >= 0) of a nonconnected embedding
- * (if cc1 < 0 use default: first component)
- * cc2 should be a "loop" component that is interpreted as an element of the group and returned
- * as selected element
+ * interpret a 'ring' component as an element of the fundamental group, computed as
+ * a Wirtinger presentation with some components excluded (see excludecc)
  *
- * cc2 == -1: default is the first "loop" component distinct from cc1
- * cc2 == -2: do not compute any selected component
+ * if globals.loopcc is zero use a default value if only one ring is present
  *
- * cc1 == cc2: ask info about components (genus of each)
+ * the element is added as selected element
  */
 
 struct presentation *
-wirtingerccfromembedding (struct embedding *emb, int *cc1pt, int *cc2pt, int cc1n, int cc2n)
+ccasloop (struct embedding *emb)
 {
   struct emb_node *node;
   int i, j, k, starti, startj, inext, jback, jorto;
-  int cc1, cc2;
+  int loop;
   struct presentation *p;
   struct presentationrule *rule;
 
   emb_color4 (emb);
+
+  if (emb->numrings <= 0)
+  {
+    fprintf (stderr, "No loop components present in the embedding\n");
+    return (0);
+  }
 
   if (emb->numhcomponents+emb->numrings <= 1)
   {
@@ -916,22 +919,7 @@ wirtingerccfromembedding (struct embedding *emb, int *cc1pt, int *cc2pt, int cc1
     return (0);
   }
 
-  if (cc1n == 0)
-  {
-    cc1n++;
-    *cc1pt = 1;
-  }
-
-  if (cc2n == 0)
-  {
-    cc2n++;
-    *cc2pt = emb->numhcomponents + 1;
-    if (*cc2pt == *cc1pt) (*cc2pt)++;
-  }
-
-  cc1 = *cc1pt;
-  cc2 = *cc2pt;
-  if (cc1 == cc2)
+  if (globals.loopcc < 0)
   {
     if (quiet)
     {
@@ -943,9 +931,22 @@ wirtingerccfromembedding (struct embedding *emb, int *cc1pt, int *cc2pt, int cc1
     }
     return (0);
   }
-  if (cc1 > emb->numhcomponents + emb->numrings) {fprintf (stderr, "Invalid cc1 = %d \n", cc1); return (0);}
-  if (cc2 <= emb->numhcomponents) {fprintf (stderr, "cc2 is not a loop\n"); return (0);}
-  if (cc2 > emb->numhcomponents + emb->numrings) {fprintf (stderr, "cc2 = %d does not exist\n", cc2); return (0);}
+
+  if (globals.loopcc == 0)
+  {
+    if (emb->numrings > 1)
+    {
+      fprintf (stderr, "More than one loop component is present, you must indicate which one to use with option\n");
+      fprintf (stderr, "   --loopcc <n>\n");
+      fprintf (stderr, "Loop components are numbered after the higher-genus components\n");
+      return (0);
+    }
+    globals.loopcc = emb->numhcomponents + 1;
+  }
+
+  loop = globals.loopcc;
+  if (loop <= emb->numhcomponents) {fprintf (stderr, "indicated component (%d) is not a loop\n", loop); return (0);}
+  if (loop > emb->numhcomponents + emb->numrings) {fprintf (stderr, "indicated component (%d) does not exist\n", loop); return (0);}
 
   if (debug)
   {
@@ -975,7 +976,7 @@ wirtingerccfromembedding (struct embedding *emb, int *cc1pt, int *cc2pt, int cc1
   {
     node = &emb->nodes[i];
     assert (node->valency == 3);
-    if (node->color != cc1)
+    if (isexcluded (node->color, loop))
     {
       for (j = 0; j < 3; j++)
       {
@@ -991,7 +992,7 @@ wirtingerccfromembedding (struct embedding *emb, int *cc1pt, int *cc2pt, int cc1
   for (i = emb->k; i < emb->k + emb->n; i++)
   {
     node = &emb->nodes[i];
-    if (node->color == cc2)
+    if (isexcluded (node->color, loop))
     {
       rule = (struct presentationrule *) malloc (1*sizeof (int) + sizeof (struct presentationrule));
       rule->length = 1;
@@ -999,7 +1000,7 @@ wirtingerccfromembedding (struct embedding *emb, int *cc1pt, int *cc2pt, int cc1
       p->rules = rule;
       rule->var[0] = node->generator[0] + 1;
     }
-    if (node->colorodd == cc2)
+    if (isexcluded (node->colorodd, loop))
     {
       rule = (struct presentationrule *) malloc (1*sizeof (int) + sizeof (struct presentationrule));
       rule->length = 1;
@@ -1013,12 +1014,12 @@ wirtingerccfromembedding (struct embedding *emb, int *cc1pt, int *cc2pt, int cc1
   for (i = emb->k; i < emb->k + emb->n; i++)
   {
     node = &emb->nodes[i];
-    if (node->color == cc2)
+    if (node->color == loop)
     {
       j = 0;
       break;
     }
-    if (node->colorodd == cc2)
+    if (node->colorodd == loop)
     {
       j = 1;
       break;
@@ -1074,6 +1075,23 @@ wirtingerccfromembedding (struct embedding *emb, int *cc1pt, int *cc2pt, int cc1
   emb_remove_dup_rules (p);
   if (globals.simplifypresentation) simplify_presentation (p);
   return (p);
+}
+
+/*
+ * check if component with given color must be excluded
+ */
+
+int
+isexcluded (int color, int loop)
+{
+  int k;
+
+  if (color == loop) return (1);
+  for (k = 0; k < globals.numexcluded; k++)
+  {
+    if (color == globals.exclude[k]) return (1);
+  }
+  return (0);
 }
 
 /*
