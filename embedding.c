@@ -772,108 +772,6 @@ wirtingerfromembedding (struct embedding *emb)
 
   p = wirtingerfromembeddingraw (emb);
 
-/* the following became an external function */
-/*
-  p = (struct presentation *) malloc (sizeof (struct presentation));
-  p->gennum = short_arcs;
-  p->elements = 0;
-  p->rules = 0;
-  p->characteristic = 0;
-  p->espected_deficiency = 1;
-
-  for (i = emb->k; i < emb->k + emb->n; i++)
-  {
-    node = &emb->nodes[i];
-    assert (node->valency == 4);
-    rule = (struct presentationrule *) malloc (2*sizeof (int) + sizeof (struct presentationrule));
-    rule->length = 2;
-    rule->next = p->rules;
-    p->rules = rule;
-    sign = 1;  // positive crossing
-    if (node->overpassisodd)
-    {
-      rule->var[0] = node->generator[1] + 1;
-      rule->var[1] = - (node->generator[3] + 1);
-      if (node->direction[1] == NODE_IS_ARRIVAL)
-      {
-        a = node->generator[1];
-        b = node->generator[3];
-      } else {
-        sign *= -1;
-        a = node->generator[3];
-        b = node->generator[1];
-      }
-      if (node->direction[0] == NODE_IS_ARRIVAL)
-      {
-        sign *= -1;
-        c = node->generator[0];
-        d = node->generator[2];
-      } else {
-        c = node->generator[2];
-        d = node->generator[0];
-      }
-    } else {
-      rule->var[0] = node->generator[0] + 1;
-      rule->var[1] = - (node->generator[2] + 1);
-      if (node->direction[0] == NODE_IS_ARRIVAL)
-      {
-        a = node->generator[0];
-        b = node->generator[2];
-      } else {
-        sign *= -1;
-        a = node->generator[2];
-        b = node->generator[0];
-      }
-      if (node->direction[1] == NODE_IS_ARRIVAL)
-      {
-        c = node->generator[1];
-        d = node->generator[3];
-      } else {
-        sign *= -1;
-        c = node->generator[3];
-        d = node->generator[1];
-      }
-    }
-    rule = (struct presentationrule *) malloc (4*sizeof (int) + sizeof (struct presentationrule));
-    rule->length = 4;
-    rule->next = p->rules;
-    p->rules = rule;
-    if (sign > 0)
-    {
-      rule->var[0] = b + 1;
-      rule->var[1] = d + 1;
-      rule->var[2] = -(a + 1);
-      rule->var[3] = -(c + 1);
-    } else {
-      rule->var[0] = d + 1;
-      rule->var[1] = b + 1;
-      rule->var[2] = -(c + 1);
-      rule->var[3] = -(a + 1);
-    }
-  }
-
-  if (verbose) printf ("RELATORS AT NODES:\n");
-  for (i = 0; i < emb->k; i++)
-  {
-    node = &emb->nodes[i];
-    assert (node->valency == 3);
-    rule = (struct presentationrule *) malloc (3*sizeof (int) + sizeof (struct presentationrule));
-    rule->length = 3;
-    rule->next = p->rules;
-    p->rules = rule;
-
-    if (verbose) printf ("NODE RELATOR ");
-    for (j = 0; j < 3; j++)
-    {
-      if (verbose) printf (" %c%d", (node->direction[j]==NODE_IS_ARRIVAL)?'-':'+', node->generator[j]);
-      sign = 1;
-      if (node->direction[j]==NODE_IS_ARRIVAL) sign = -1;
-      rule->var[j] = sign*(node->generator[j]+1);
-    }
-    if (verbose) printf ("\n");
-  }
- */
-
   assert (emb->numhcomponents >= 1);
   if (emb->numhcomponents + emb->numrings == 1)
   {
@@ -883,6 +781,7 @@ wirtingerfromembedding (struct embedding *emb)
 
   if (debug) print_presentation (p);
   emb_remove_dup_rules (p);
+
   if (globals.simplifypresentation) simplify_presentation (p);
   return (p);
 }
@@ -1062,17 +961,18 @@ ccasloop (struct embedding *emb)
 
   rule->length = k;
   if (debug) printf ("Length of selected element: %d\n", k);
-  if (globals.loopasrule)
-  {
-    rule->next = p->rules;
-    p->rules = rule;
-  } else {
-    rule->next = p->elements;
-    p->elements = rule;
-  }
+  rule->next = p->elements;
+  p->elements = rule;
 
   if (debug) print_presentation (p);
   emb_remove_dup_rules (p);
+  if (globals.loopasrule)
+  {
+    rule = p->elements;
+    p->elements = rule->next;
+    rule->next = p->rules;
+    p->rules = rule;
+  }
   if (globals.simplifypresentation) simplify_presentation (p);
   return (p);
 }
