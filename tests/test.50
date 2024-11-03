@@ -1,0 +1,8 @@
+#testname:embeddings
+#
+
+#these are embeddings with increasing connectedness
+./contour -q connectedness examples/handlebody_knots/hk7_69.embedding
+./contour -q connectedness examples/handlebody_knots/hk7_61.embedding
+./contour -q connectedness examples/handlebody_knots/hk7_40.embedding
+./contour -q connectedness examples/handlebody_knots/hk7_39.embedding
