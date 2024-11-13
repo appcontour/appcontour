@@ -92,7 +92,7 @@ main (int argc, char *argv[])
   globals.knotname_fallback = 1;
   globals.loopcc = 0;
   globals.numexcluded = 0;
-  globals.cc1 = globals.cc2 = globals.choice = -1;
+  globals.ccemb = globals.cc1 = globals.cc2 = globals.choice = -1;
   globals.rotation = 0;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     globals.autosurgery++;
@@ -115,6 +115,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--choice") == 0)
     {
       globals.choice = strtol (argv[++i], &endch, 0);
+      continue;
+    }
+    if (strcmp(argv[i],"--ccemb") == 0)
+    {
+      globals.ccemb = strtol (argv[++i], &endch, 10);
       continue;
     }
     if (strcmp(argv[i],"--summand1cc") == 0)

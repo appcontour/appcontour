@@ -110,6 +110,7 @@ struct global_data {
   int q;  // typically a power of a prime
   int n;
   int onlyeven;
+  int ccemb;      // to indicate a connected component of an embedding
   int cc1;        // used in connected sum
   int cc2;        // used in connected sum
   int loopcc;     // which component should be treated as loop

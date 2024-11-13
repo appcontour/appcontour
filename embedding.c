@@ -776,8 +776,12 @@ wirtingerfromembedding (struct embedding *emb)
   if (emb->numhcomponents + emb->numrings == 1)
   {
     assert (emb->numrings == 0);
-    emb_meridians_longitudes (emb, p);
-  } else if (!quiet) printf ("Cannot compute meridians and longitudes for links\n");
+    emb_meridians_longitudes (emb, p, -1);
+  } else {
+    if (globals.ccemb < 0 && ! quiet)
+      printf ("Cannot compute meridians and longitudes for links, consider using option --ccemb\n");
+    emb_meridians_longitudes (emb, p, globals.ccemb);
+  }
 
   if (debug) print_presentation (p);
   emb_remove_dup_rules (p);
@@ -1626,7 +1630,7 @@ emb_color4 (struct embedding *emb)
 }
 
 int
-emb_meridians_longitudes (struct embedding *emb, struct presentation *p)
+emb_meridians_longitudes (struct embedding *emb, struct presentation *p, int ccemb)
 {
   int i, ii, iii, kk, iinext, kknext;
   int ikparent;
@@ -1636,6 +1640,20 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p)
   struct presentationrule *rule;
   int llength, llengthpre, llengthpost;
   int u, count;
+
+  if (ccemb >= 0)
+  {
+    assert (ccemb > 0);
+    if (ccemb > emb->numhcomponents)
+    {
+      fprintf (stderr, "Cannot use torus-like components at present\n");
+      exit (11);
+    }
+    /*
+     * TODO: allow for the case of ccemb not containing node 0
+     */
+    assert (emb->nodes[0].color == ccemb);
+  }
 
   /*
    * step 1. construct a spanning tree for the spatial graph
@@ -1735,10 +1753,11 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p)
 
   for (i = 0; i < emb->k; i++)
   {
+    node = &emb->nodes[i];
+    if (node->color != ccemb) continue; // do not consider unwanted components
     for (k = 0; k < 3; k++)
     {
       if (arcs[3*i + k] != 0) continue;
-      node = &emb->nodes[i];
       if (node->direction[k] == NODE_IS_ARRIVAL) continue;
 
       ii = emb->connections[3*i + k]/3;
@@ -1808,6 +1827,9 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p)
       p->elements = rule;
     }
   }
+
+  if (ccemb >= 0)
+    if (verbose) printf ("Computing meridians and longitudes for a component of a link\n");
 
   free (node_flood);
   free (arcs);

@@ -23,6 +23,11 @@ do
       full=""
       shift
       ;;
+    --ccemb)
+      ccemb=$2
+      echo "Not implemented: required ccemb is $ccemb" >&2
+      shift 2
+      ;;
     *)
       echo "Invalid option: $1"
       exit 2
@@ -282,16 +287,22 @@ fi
 echo -n "Computing homomorphisms (in $tmpfile)..." >&2
 
 #if grep -q "^embedding" $fpgroup
-if contour wirtinger $fpgroup 2>/dev/null
+if contour wirtinger $fpgroup --ccemb 1 2>/dev/null
 then
   components=`contour countcc $fpgroup -q`
+  command="contour wirtinger $fpgroup -Q | contour ks_$group -v"
   if [ "$components" -gt 1 ]
   then
-    echo "Cannot compute g_image invariant for links ($components components)"
-    exit 2
+    if [ -z "$ccemb" ]
+    then
+      echo "Cannot compute g_image invariant for links ($components components). Use option --ccemb <component>"
+      exit 2
+    fi
+    command="contour wirtinger $fpgroup --ccemb $ccemb -Q | contour ks_$group -v"
+    contour wirtinger $fpgroup --ccemb $ccemb -Q | contour ks_$group -v 2>/dev/null >$tmpfile
+  else
+    contour wirtinger $fpgroup -Q | contour ks_$group -v 2>/dev/null >$tmpfile
   fi
-  contour wirtinger $fpgroup -Q | contour ks_$group -v 2>/dev/null >$tmpfile
-  command="contour wirtinger $fpgroup -Q | contour ks_$group -v"
 else
   contour ks_$group $fpgroup -v 2>/dev/null >$tmpfile
   command="contour ks_$group $fpgroup -v"
