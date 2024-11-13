@@ -1751,6 +1751,7 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p, int cce
    * now build meridian and longitude for all non-spanning arcs
    */
 
+  if (ccemb <= 0) ccemb = 1;
   for (i = 0; i < emb->k; i++)
   {
     node = &emb->nodes[i];
