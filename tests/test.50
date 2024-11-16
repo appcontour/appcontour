@@ -1,8 +1,19 @@
 #testname:embeddings
 #
 
+#
+# computing connectedness of an embedding
+#
 #these are embeddings with increasing connectedness
 ./contour -q connectedness examples/handlebody_knots/hk7_69.embedding
 ./contour -q connectedness examples/handlebody_knots/hk7_61.embedding
 ./contour -q connectedness examples/handlebody_knots/hk7_40.embedding
 ./contour -q connectedness examples/handlebody_knots/hk7_39.embedding
+
+# computing the wirtinger presentation (no meridians/longitudes, mer-long for first and second component
+
+./contour -q wirtinger examples/embeddings/twohandcuffsringed.embedding
+./contour -q wirtinger examples/embeddings/twohandcuffsringed.embedding --ccemb 1
+./contour -q wirtinger examples/embeddings/twohandcuffsringed.embedding --ccemb 2
+
+

@@ -773,14 +773,16 @@ wirtingerfromembedding (struct embedding *emb)
   p = wirtingerfromembeddingraw (emb);
 
   assert (emb->numhcomponents >= 1);
+  assert (globals.ccemb != 0);
   if (emb->numhcomponents + emb->numrings == 1)
   {
     assert (emb->numrings == 0);
     emb_meridians_longitudes (emb, p, -1);
   } else {
-    if (globals.ccemb < 0 && ! quiet)
-      printf ("Cannot compute meridians and longitudes for links, consider using option --ccemb\n");
-    emb_meridians_longitudes (emb, p, globals.ccemb);
+    if (globals.ccemb > 0)
+    {
+      emb_meridians_longitudes (emb, p, globals.ccemb);
+    } else if (!quiet) printf ("Cannot compute meridians and longitudes for links, consider using option --ccemb\n");
   }
 
   if (debug) print_presentation (p);
@@ -1649,15 +1651,11 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p, int cce
       fprintf (stderr, "Cannot use torus-like components at present\n");
       exit (11);
     }
-    /*
-     * TODO: allow for the case of ccemb not containing node 0
-     */
-    assert (emb->nodes[0].color == ccemb);
   }
 
   /*
    * step 1. construct a spanning tree for the spatial graph
-   * rooted at node 0
+   * rooted at the first node with the ccemb color (or 1 if ccemb < 0)
    */
 
   assert (emb->k > 0);
@@ -1672,12 +1670,32 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p, int cce
     for (k = 0; k < 3; k++) arcs[3*i+k] = 0;  // mark as NOT spanning
   }
 
-  node_flood[0] = 0;
+  if (ccemb > 0)
+  {
+    /*
+     * TODO: allow for the case of ccemb not containing node 0
+     */
+    for (i = 0; i < emb->k; i++)
+    {
+      node = &emb->nodes[i];
+      if (node->color == ccemb)
+      {
+        node_flood[i] = 0;
+        //node_flood[i] = emb->connections[3*i + 0];
+        break;
+      }
+    }
+    //assert (emb->nodes[0].color == ccemb);
+  } else {
+    node_flood[0] = 0;
+  }
+
   goon = 1;
   while (goon)
   {
     goon = 0;
-    for (i = 1; i < emb->k; i++)
+    //for (i = 1; i < emb->k; i++)
+    for (i = 0; i < emb->k; i++)
     {
       if (node_flood[i] >= 0) continue;
       for (k = 0; k < 3; k++)
