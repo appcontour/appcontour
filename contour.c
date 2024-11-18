@@ -85,7 +85,7 @@ main (int argc, char *argv[])
   globals.mendesge = HGE_TEXT;
   globals.foxd = FOXD_UNDEF;
   globals.rulenames = RULENAMES_NEW;
-  globals.shuffle = globals.autosurgery = globals.loopasrule = 0;
+  globals.shuffle = globals.autosurgery = globals.loopasrelator = globals.longitudeasrelator = globals.meridianasrelator = 0;
   globals.onlyeven = globals.dontidentify = globals.insist = globals.outer = 0;
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = 0;
@@ -143,9 +143,19 @@ main (int argc, char *argv[])
       globals.exclude[globals.numexcluded++] = strtol (argv[++i], &endch, 10);
       continue;
     }
-    if (strcmp(argv[i],"--loopasrule") == 0)
+    if (strcmp(argv[i],"--loopasrelator") == 0)
     {
-      globals.loopasrule++;
+      globals.loopasrelator++;
+      continue;
+    }
+    if (strcmp(argv[i],"--longitudeasrelator") == 0)
+    {
+      globals.longitudeasrelator++;
+      continue;
+    }
+    if (strcmp(argv[i],"--meridianasrelator") == 0)
+    {
+      globals.meridianasrelator++;
       continue;
     }
     if (strcmp(argv[i],"-r") == 0 || strcmp(argv[i],"--region") == 0)

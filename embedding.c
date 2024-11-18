@@ -967,18 +967,19 @@ ccasloop (struct embedding *emb)
 
   rule->length = k;
   if (debug) printf ("Length of selected element: %d\n", k);
-  rule->next = p->elements;
-  p->elements = rule;
-
-  if (debug) print_presentation (p);
-  emb_remove_dup_rules (p);
-  if (globals.loopasrule)
+  if (!globals.loopasrelator)
   {
-    rule = p->elements;
-    p->elements = rule->next;
+    rule->next = p->elements;
+    p->elements = rule;
+  }
+  if (globals.loopasrelator)
+  {
     rule->next = p->rules;
     p->rules = rule;
   }
+
+  if (debug) print_presentation (p);
+  emb_remove_dup_rules (p);
   if (globals.simplifypresentation) simplify_presentation (p);
   return (p);
 }
@@ -1003,6 +1004,14 @@ isexcluded (int color, int loop)
 /*
  * compute raw wirtinger presentation (one generator per short arc)
  */
+
+char
+lgen (int gen)
+{
+  if (gen > 0) return ('a' + gen - 1);
+  if (gen < 0) return ('A' - gen - 1);
+  return ('?');
+}
 
 struct presentation *
 wirtingerfromembeddingraw (struct embedding *emb)
@@ -1035,7 +1044,7 @@ wirtingerfromembeddingraw (struct embedding *emb)
       printf ("generators at node %d: ", i);
       for (j = 0; j < node->valency; j++)
       {
-        printf (" %c%d", (node->direction[j]==NODE_IS_START)?'+':'-', node->generator[j]);
+        printf (" %c", (node->direction[j]==NODE_IS_START)?lgen(node->generator[j]+1):lgen(-node->generator[j]-1));
       }
       printf ("\n");
     }
@@ -1648,8 +1657,7 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p, int cce
     assert (ccemb > 0);
     if (ccemb > emb->numhcomponents)
     {
-      fprintf (stderr, "Cannot use torus-like components at present\n");
-      exit (11);
+      return (emb_meridians_longitudes_torus (emb, p, ccemb));
     }
   }
 
@@ -1672,9 +1680,6 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p, int cce
 
   if (ccemb > 0)
   {
-    /*
-     * TODO: allow for the case of ccemb not containing node 0
-     */
     for (i = 0; i < emb->k; i++)
     {
       node = &emb->nodes[i];
@@ -1685,7 +1690,6 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p, int cce
         break;
       }
     }
-    //assert (emb->nodes[0].color == ccemb);
   } else {
     node_flood[0] = 0;
   }
@@ -1694,7 +1698,6 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p, int cce
   while (goon)
   {
     goon = 0;
-    //for (i = 1; i < emb->k; i++)
     for (i = 0; i < emb->k; i++)
     {
       if (node_flood[i] >= 0) continue;
@@ -1856,6 +1859,110 @@ emb_meridians_longitudes (struct embedding *emb, struct presentation *p, int cce
   return (emb->k/2 + 1);
 }
 
+int
+emb_meridians_longitudes_torus (struct embedding *emb, struct presentation *p, int ccemb)
+{
+  struct emb_node *node;
+  int i, istart, idir, dir, dirplus, newdir;
+  int generator, u, sign, rulenpsize, linkingnumber;
+  struct presentationrule *rulenp, *rule, *rulemer;
+
+  if (verbose) printf ("Computing meridian and longitude for a torus-like component of a link\n");
+
+  assert (ccemb >= emb->k);
+  emb_color4 (emb);
+
+  istart = -1;
+  for (i = emb->k; i < emb->k + emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    if (node->color == ccemb)
+    {
+      istart = i;
+      if (node->direction[0] == NODE_IS_ARRIVAL) idir = 2; else idir = 0;
+      break;
+    }
+    if (node->colorodd == ccemb)
+    {
+      istart = i;
+      if (node->direction[1] == NODE_IS_ARRIVAL) idir = 3; else idir = 1;
+      break;
+    }
+  }
+
+  i = istart;
+  node = &emb->nodes[i];
+  dir = idir;
+  rulenpsize = emb->n + 1;
+  rulenp = (struct presentationrule *) malloc (rulenpsize*sizeof (int) + sizeof (struct presentationrule));
+  rulemer = (struct presentationrule *) malloc (2*sizeof (int) + sizeof (struct presentationrule));
+  rulemer->length = 1;
+  generator = node->generator[(dir+2)%4];
+  rulemer->var[0] = generator + 1;
+
+  u = 0;
+  linkingnumber = 0;
+  while (1)
+  {
+    sign = 1;
+    if ((node->overpassisodd + dir) % 2 == 1)  // this is an underpass
+    {
+      dirplus = (dir + 1) % 4;
+      if (node->direction[dirplus] == NODE_IS_START) sign = -1;
+      assert (u < rulenpsize);
+      rulenp->var[u++] = sign*(node->generator[dirplus] + 1);
+      if (node->color == node->colorodd)
+      {
+        linkingnumber += sign;
+      }
+    }
+    newdir = (node->pong[dir] + 2) % 4;
+    i = node->ping[dir];
+    node = &emb->nodes[i];
+    dir = newdir;
+    
+    if ((i == istart) && (dir == idir)) break;
+  }
+  rulenp->length = u;
+  assert (istart >= emb->k);
+
+  linkingnumber = -linkingnumber;  // we have to "undo" the effect of the linkingnumber
+  sign = 1;
+  if (linkingnumber < 0)
+  {
+    sign = -1;
+    linkingnumber = -linkingnumber;
+  }
+  rule = (struct presentationrule *) malloc ((rulenp->length+linkingnumber)*sizeof (int) + sizeof (struct presentationrule));
+  for (i = 0; i < rulenp->length; i++) rule->var[i] = rulenp->var[i];
+  for (i = rulenp->length; i < rulenp->length + linkingnumber; i++) rule->var[i] = sign*(generator + 1);  //XXX CHECK, perhaps negated
+  rule->length = rulenp->length + linkingnumber;
+  free (rulenp);
+
+  if (globals.longitudeasrelator)
+  {
+    rule->next = p->rules;
+    p->rules = rule;
+  }
+  if (globals.meridianasrelator)
+  {
+    rulemer->next = p->rules;
+    p->rules = rulemer;
+  }
+
+  if (! globals.longitudeasrelator)
+  { 
+    rule->next = p->elements;
+    p->elements = rule;
+  }
+  if (! globals.meridianasrelator)
+  {
+    rulemer->next = p->elements;
+    p->elements = rulemer;
+  }
+  return (1);
+}
+
 /*
  *
  */
@@ -1923,7 +2030,8 @@ emb_remove_dup_rules (struct presentation *p)
     if (r->length != 2) continue;
     g1 = r->var[0];
     g2 = -r->var[1];
-    assert (g1 > 0 && g2 > 0);
+    if (g1 < 0 || g2 < 0) continue;
+    //assert (g1 > 0 && g2 > 0);
     r->length = 0;
     if (g1 == g2) continue;
     /* now substitute g2 -> g1 in all rules and selected elements */

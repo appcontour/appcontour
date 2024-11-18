@@ -116,7 +116,9 @@ struct global_data {
   int loopcc;     // which component should be treated as loop
   int exclude[MAXCC]; // add excluded components for action 'ccasloop'
   int numexcluded;
-  int loopasrule; // add as rule instead of selected element
+  int loopasrelator; // add as relator instead of selected element
+  int longitudeasrelator; // add as relator instead of selected element
+  int meridianasrelator; // add as relator instead of selected element
   int choice;     // choice value with overpasses information used in an 'embedding' description
   int rotation;   // either counterclockwise (+) or clockwise (-) - used in an embedding description
   int outer;  // user wants all "outer" (inner in S_n) conjugacy for A_n

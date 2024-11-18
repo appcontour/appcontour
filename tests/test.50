@@ -5,6 +5,7 @@
 # computing connectedness of an embedding
 #
 #these are embeddings with increasing connectedness
+
 ./contour -q connectedness examples/handlebody_knots/hk7_69.embedding
 ./contour -q connectedness examples/handlebody_knots/hk7_61.embedding
 ./contour -q connectedness examples/handlebody_knots/hk7_40.embedding
@@ -16,4 +17,18 @@
 ./contour -q wirtinger examples/embeddings/twohandcuffsringed.embedding --ccemb 1
 ./contour -q wirtinger examples/embeddings/twohandcuffsringed.embedding --ccemb 2
 
+# the following computes an invariant on the link group with a preferred longitude of the
+# torus component added as a relator
+# computation is performed on hl6_1 and on en equivalent diagram where the torus component has
+# a selfcrossing (this has implication in the computation of the *preferred* longitude
+
+./contour wirtinger examples/handlebody_knots/hl6_1.embedding --ccemb 2 -Q --longitudeasrelator | contour ks_A5 -q
+./contour wirtinger examples/handlebody_knots/hl6_1twisted.embedding --ccemb 2 -Q --longitudeasrelator | contour ks_A5 -q
+
+# action ccasloop computes the fund. group (using the wirtinger presentation) but treats the component indicated
+# by option "--ccemb <n>" as a loop in the fundamental group (added as selected element) and is excluded in the wirtinger presentation
+# adding option "--loopasrelator" adds the loop as an additional relator instead
+
+./contour ccasloop examples/handlebody_knots/hl6_4.embedding --ccemb 1 -Q | contour ks_A5 -q
+./contour ccasloop examples/handlebody_knots/hl6_4.embedding --ccemb 1 -Q --loopasrelator | contour ks_A5 -q
 
