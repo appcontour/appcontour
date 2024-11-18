@@ -29,6 +29,6 @@
 # by option "--ccemb <n>" as a loop in the fundamental group (added as selected element) and is excluded in the wirtinger presentation
 # adding option "--loopasrelator" adds the loop as an additional relator instead
 
-./contour ccasloop examples/handlebody_knots/hl6_4.embedding --ccemb 1 -Q | contour ks_A5 -q
-./contour ccasloop examples/handlebody_knots/hl6_4.embedding --ccemb 1 -Q --loopasrelator | contour ks_A5 -q
+./contour ccasloop examples/handlebody_knots/hl6_4.embedding --loopcc 2 -Q | contour ks_A5 -q
+./contour ccasloop examples/handlebody_knots/hl6_4.embedding --loopcc 2 -Q --loopasrelator | contour ks_A5 -q
 
