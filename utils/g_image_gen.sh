@@ -25,7 +25,7 @@ do
       ;;
     --ccemb)
       ccemb=$2
-      echo "Not implemented: required ccemb is $ccemb" >&2
+      echo "Required ccemb is $ccemb" >&2
       shift 2
       ;;
     *)
@@ -53,8 +53,8 @@ then
   echo "use '-' as filename if input comes from stdin"
   echo "an embedding can be indicated in place of a wirtinger presentation"
   echo ""
-  echo "  -i  Output canonical text (sorted and without id of homomorphism)"
-  echo "  -h  Output the result of md5sum on the canonical text"
+  echo "  -i      Output canonical text (sorted and without id of homomorphism)"
+  echo "  --hash  Output the result of md5sum on the canonical text"
   exit 2
 fi
 
@@ -287,7 +287,9 @@ fi
 echo -n "Computing homomorphisms (in $tmpfile)..." >&2
 
 #if grep -q "^embedding" $fpgroup
-if contour wirtinger $fpgroup --ccemb 1 2>/dev/null
+ccembdef=1
+if [ -n "$ccemb" ]; then ccembdef=$ccemb; fi
+if contour wirtinger $fpgroup --ccemb $ccembdef 2>/dev/null
 then
   components=`contour countcc $fpgroup -q`
   command="contour wirtinger $fpgroup -Q | contour ks_$group -v"
