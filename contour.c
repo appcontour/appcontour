@@ -1370,8 +1370,8 @@ main (int argc, char *argv[])
     {
       printf ("%d\n", connectedness);
     } else {
-      if (connectedness < 4) printf ("Connectedness: %d\n", connectedness);
-       else printf ("Connectedness: at least 4\n");
+      if (connectedness < 4) printf ("Connectivity: %d\n", connectedness);
+       else printf ("Connectivity: at least 4\n");
     }
     freedualembedding (dual);
     freeembedding (emb);
