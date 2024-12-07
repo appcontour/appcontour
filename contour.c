@@ -555,6 +555,8 @@ main (int argc, char *argv[])
       printf ("  --choice <int>: give information about overpasses at crossings when input is a planar embedding\n");
       printf ("  --clockwise|--cclockwise: give information about orientation of an embedding\n");
       printf ("\n If 'file' is not given, description is taken from standard input\n");
+
+      printf ("\n TODO add new options for embeddings: --ccemb --longitudeasrelator --twists\n");
       exit (0);
     }
     if (*argv[i] == '-')
@@ -815,6 +817,11 @@ main (int argc, char *argv[])
     fprintf (stderr, "Too many arguments\n");
     exit (1);
   }
+
+  /* some sanity checks */
+  if (globals.twists != 0) assert (globals.longitudeasrelator != 0);
+  if (globals.longitudeasrelator != 0) assert (globals.ccemb != -1);
+  if (globals.ccemb != -1) assert (action == ACTION_WIRTINGER);
 
   srandom (rndseed);
   switch (action)
