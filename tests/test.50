@@ -32,3 +32,15 @@
 ./contour ccasloop examples/handlebody_knots/hl6_4.embedding --loopcc 2 -Q | contour ks_A5 -q
 ./contour ccasloop examples/handlebody_knots/hl6_4.embedding --loopcc 2 -Q --loopasrelator | contour ks_A5 -q
 
+#
+# This example can be used to distinguish between HL7_9 and HL7_10
+#
+
+echo "value 901: trivial handlebody link"
+echo "value 1231: HK6_5"
+echo "value 1228: HK6_6"
+
+./contour wirtinger --ccemb 2 examples/handlebody_knots/hl7_9.embedding --longitudeasrelator --twists 1 -Q | ./contour ks_S6
+./contour wirtinger --ccemb 2 examples/handlebody_knots/hl7_9.embedding --longitudeasrelator --twists -1 -Q | ./contour ks_S6
+./contour wirtinger --ccemb 2 examples/handlebody_knots/hl7_10.embedding --longitudeasrelator --twists 1 -Q | ./contour ks_S6
+./contour wirtinger --ccemb 2 examples/handlebody_knots/hl7_10.embedding --longitudeasrelator --twists -1 -Q | ./contour ks_S6

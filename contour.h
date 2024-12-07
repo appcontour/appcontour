@@ -109,6 +109,7 @@ struct global_data {
   int p;  // typically a prime
   int q;  // typically a power of a prime
   int n;
+  int twists;  // used for embeddings with wirtinger --ccemb <toruscomp> --longitudeasrelator
   int onlyeven;
   int ccemb;      // to indicate a connected component of an embedding
   int cc1;        // used in connected sum

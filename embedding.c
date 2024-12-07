@@ -1863,9 +1863,9 @@ int
 emb_meridians_longitudes_torus (struct embedding *emb, struct presentation *p, int ccemb)
 {
   struct emb_node *node;
-  int i, istart, idir, dir, dirplus, newdir;
-  int generator, u, sign, rulenpsize, linkingnumber;
-  struct presentationrule *rulenp, *rule, *rulemer;
+  int i, ii, k, istart, idir, dir, dirplus, newdir;
+  int generator, u, sign, rulenpsize, linkingnumber, rulewtsize;
+  struct presentationrule *rulenp, *rule, *rulemer, *rulewt;
 
   if (verbose) printf ("Computing meridian and longitude for a torus-like component of a link\n");
 
@@ -1941,8 +1941,38 @@ emb_meridians_longitudes_torus (struct embedding *emb, struct presentation *p, i
 
   if (globals.longitudeasrelator)
   {
-    rule->next = p->rules;
-    p->rules = rule;
+    if (globals.twists == 0)
+    {
+      rule->next = p->rules;
+      p->rules = rule;
+    } else {
+      rule->next = p->elements;
+      p->elements = rule;
+      rulewtsize = rule->length + rulemer->length*abs(globals.twists);
+      rulewt = (struct presentationrule *) malloc (rulewtsize*sizeof (int) + sizeof (struct presentationrule));
+      ii = 0;
+      for (k = 0; k < abs(globals.twists); k++)
+      {
+        for (i = 0; i < rulemer->length; i++)
+        {
+          if (globals.twists > 0)
+          {
+            rulewt->var[ii++] = rulemer->var[i];
+          } else {
+            rulewt->var[ii++] = -rulemer->var[rulemer->length - i - 1];
+          }
+        }
+      }
+      for (i = 0; i < rule->length; i++)
+      {
+        rulewt->var[ii++] = rule->var[i];
+      }
+      assert (ii == rulewtsize);
+      rulewt->length = rulewtsize;
+      rulewt->next = p->rules;
+      p->rules = rulewt;
+      //assert (globals.twists == 0);
+    }
   }
   if (globals.meridianasrelator)
   {

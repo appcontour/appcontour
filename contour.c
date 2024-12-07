@@ -93,6 +93,7 @@ main (int argc, char *argv[])
   globals.loopcc = 0;
   globals.numexcluded = 0;
   globals.ccemb = globals.cc1 = globals.cc2 = globals.choice = -1;
+  globals.twists = 0;
   globals.rotation = 0;
   if ((envvar = getenv ("APPCONTOUR_AUTOSURGERY")) && *envvar) 
     globals.autosurgery++;
@@ -120,6 +121,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--ccemb") == 0)
     {
       globals.ccemb = strtol (argv[++i], &endch, 10);
+      continue;
+    }
+    if (strcmp(argv[i],"--twists") == 0)
+    {
+      globals.twists = strtol (argv[++i], &endch, 10);
       continue;
     }
     if (strcmp(argv[i],"--summand1cc") == 0)
