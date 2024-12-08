@@ -1948,24 +1948,24 @@ emb_meridians_longitudes_torus (struct embedding *emb, struct presentation *p, i
     } else {
       rule->next = p->elements;
       p->elements = rule;
-      rulewtsize = rule->length + rulemer->length*abs(globals.twists);
+      rulewtsize = rulemer->length + rule->length*abs(globals.twists);
       rulewt = (struct presentationrule *) malloc (rulewtsize*sizeof (int) + sizeof (struct presentationrule));
       ii = 0;
+      for (i = 0; i < rulemer->length; i++)
+      {
+        rulewt->var[ii++] = rulemer->var[i];
+      }
       for (k = 0; k < abs(globals.twists); k++)
       {
-        for (i = 0; i < rulemer->length; i++)
+        for (i = 0; i < rule->length; i++)
         {
           if (globals.twists > 0)
           {
-            rulewt->var[ii++] = rulemer->var[i];
+            rulewt->var[ii++] = rule->var[i];
           } else {
-            rulewt->var[ii++] = -rulemer->var[rulemer->length - i - 1];
+            rulewt->var[ii++] = -rule->var[rule->length - i - 1];
           }
         }
-      }
-      for (i = 0; i < rule->length; i++)
-      {
-        rulewt->var[ii++] = rule->var[i];
       }
       assert (ii == rulewtsize);
       rulewt->length = rulewtsize;
