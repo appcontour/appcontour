@@ -1,15 +1,15 @@
-#testname:embeddings (takes almost two minutes)
+#testname:embeddings
 #
 
 #
 # computing connectedness of an embedding
 #
-#these are embeddings with increasing connectedness
+#these are embeddings with increasing connectivity
 
-./contour -q connectedness examples/handlebody_knots/hk7_69.embedding
-./contour -q connectedness examples/handlebody_knots/hk7_61.embedding
-./contour -q connectedness examples/handlebody_knots/hk7_40.embedding
-./contour -q connectedness examples/handlebody_knots/hk7_39.embedding
+./contour -q connectivity examples/handlebody_knots/hk7_69.embedding
+./contour -q connectivity examples/handlebody_knots/hk7_61.embedding
+./contour -q connectivity examples/handlebody_knots/hk7_40.embedding
+./contour -q connectivity examples/handlebody_knots/hk7_39.embedding
 
 # computing the wirtinger presentation (no meridians/longitudes, mer-long for first and second component
 
@@ -26,21 +26,15 @@
 ./contour wirtinger examples/handlebody_knots/hl6_1twisted.embedding --ccemb 2 -Q --longitudeasrelator | contour ks_A5 -q
 
 # action ccasloop computes the fund. group (using the wirtinger presentation) but treats the component indicated
-# by option "--ccemb <n>" as a loop in the fundamental group (added as selected element) and is excluded in the wirtinger presentation
+# by option "--ccemb <n>" as a loop in the fundamental group (added as selected element) and is excluded
+# in the wirtinger presentation
 # adding option "--loopasrelator" adds the loop as an additional relator instead
 
 ./contour ccasloop examples/handlebody_knots/hl6_4.embedding --loopcc 2 -Q | contour ks_A5 -q
 ./contour ccasloop examples/handlebody_knots/hl6_4.embedding --loopcc 2 -Q --loopasrelator | contour ks_A5 -q
 
 #
-# This example can be used to distinguish between HL7_9 and HL7_10
+# ask about selfcrossing and mutual crossings between different components
 #
 
-echo "value 901: trivial handlebody link"
-echo "value 1231: HK6_5"
-echo "value 1228: HK6_6"
-
-./contour wirtinger --ccemb 2 examples/handlebody_knots/hl7_9.embedding --longitudeasrelator --twists 1 -Q | ./contour ks_S6
-./contour wirtinger --ccemb 2 examples/handlebody_knots/hl7_9.embedding --longitudeasrelator --twists -1 -Q | ./contour ks_S6
-./contour wirtinger --ccemb 2 examples/handlebody_knots/hl7_10.embedding --longitudeasrelator --twists 1 -Q | ./contour ks_S6
-./contour wirtinger --ccemb 2 examples/handlebody_knots/hl7_10.embedding --longitudeasrelator --twists -1 -Q | ./contour ks_S6
+./contour crossings examples/handlebody_knots/hl6_1.embedding -q

@@ -1,0 +1,16 @@
+#testname:twists option (takes almost two minutes)
+#
+
+#
+# This example can be used to distinguish between HL7_9 and HL7_10
+#
+
+echo "value 901: trivial handlebody link"
+echo "value 1231: HK6_5"
+echo "value 1228: HK6_6"
+
+p=examples/handlebody_knots
+./contour wirtinger --ccemb 2 $p/hl7_9.embedding --longitudeasrelator --twists 1 -Q | ./contour ks_S6 -q
+./contour wirtinger --ccemb 2 $p/hl7_9.embedding --longitudeasrelator --twists -1 -Q | ./contour ks_S6 -q
+./contour wirtinger --ccemb 2 $p/hl7_10.embedding --longitudeasrelator --twists 1 -Q | ./contour ks_S6 -q
+./contour wirtinger --ccemb 2 $p/hl7_10.embedding --longitudeasrelator --twists -1 -Q | ./contour ks_S6 -q
