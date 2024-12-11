@@ -747,14 +747,6 @@ wirtingerfromembedding (struct embedding *emb)
   struct vecofintlist *gaussloiv;
   struct vecofintlist *dtloiv;
 
-/*
-  assert ((emb->k % 2) == 0);
-  open_arcs = emb->k/2*3;
-  short_arcs = open_arcs + emb->n*2;
-
-  assert (emb->orientation);
- */
-
   if (emb->k == 0)
   {
     if (debug) printf ("This is a standard knot/link, converting to gausscode\n");
@@ -1143,6 +1135,55 @@ wirtingerfromembeddingraw (struct embedding *emb)
   }
 
   return (p);
+}
+
+/*
+ * count crossings by color type
+ */
+
+void
+printcrossingcolors (struct embedding *emb)
+{
+  int ccnum;
+  int i, j, rowcol, colrow;
+  int *matrix;
+  struct emb_node *node;
+
+  emb_color (emb);
+  emb_color4 (emb);
+
+  ccnum = emb->numhcomponents + emb->numrings;
+  matrix = (int *) malloc (ccnum*ccnum*sizeof(int));
+  for (i = 0; i < ccnum*ccnum; i++) matrix[i] = 0;
+
+  for (i = emb->k; i < emb->k+emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    assert (node->valency == 4);
+
+    rowcol = ccnum*(node->color-1) + node->colorodd - 1;
+    assert (rowcol >= 0 && rowcol < ccnum*ccnum);
+
+    matrix[rowcol]++;
+  }
+
+  for (i = 0; i < ccnum; i++)
+  {
+    rowcol = i*ccnum + i;
+    if (quiet) printf ("%d-%d: %d\n", i+1, i+1, matrix[rowcol]);
+     else printf ("number of selfcrossings of component %d: %d\n", i+1, matrix[rowcol]);
+  }
+
+  for (i = 0; i < ccnum; i++)
+  {
+    for (j = i+1; j < ccnum; j++)
+    {
+      rowcol = i*ccnum + j;
+      colrow = j*ccnum + i;
+      if (quiet) printf ("%d-%d: %d\n", i+1, j+1, matrix[rowcol]+matrix[colrow]);
+       else printf ("number of mutual crossings between components %d and %d: %d\n", i+1, j+1, matrix[rowcol]+matrix[colrow]);
+    }
+  }
 }
 
 /*

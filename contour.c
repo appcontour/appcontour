@@ -676,6 +676,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"gausscode") == 0) action = ACTION_GAUSSCODE;
     if (strcmp(argv[i],"wirtinger") == 0) action = ACTION_WIRTINGER;
     if (strcmp(argv[i],"ccasloop") == 0) action = ACTION_CCASLOOP;
+    if (strcmp(argv[i],"crossings") == 0) action = ACTION_CROSSINGS;
     if (strcmp(argv[i],"any2morse") == 0) action = ACTION_ANY2MORSE;
     if (strcmp(argv[i],"printmorse") == 0) action = ACTION_PRINTMORSE;
     if (strcmp(argv[i],"characteristic") == 0) action = ACTION_CHARACTERISTIC;
@@ -1387,6 +1388,27 @@ main (int argc, char *argv[])
        else printf ("Connectivity: at least 4\n");
     }
     freedualembedding (dual);
+    freeembedding (emb);
+    break;
+
+    case ACTION_CROSSINGS:
+    tok = gettoken (infile);
+    if (tok != TOK_EMBEDDING)
+    {
+      printf ("Input must be a planar embedding\n");
+      exit (14);
+    }
+    emb = readembedding (infile);
+    /*
+    dual = embedding2dual (emb);
+    if (dual == 0)
+    {
+      printf ("Error in dual computation\n");
+      exit (13);
+    }
+     */
+    printcrossingcolors (emb);
+    // freedualembedding (dual);
     freeembedding (emb);
     break;
 
