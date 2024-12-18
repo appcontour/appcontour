@@ -2854,3 +2854,318 @@ check_for_twist4 (struct embedding *emb, struct dualembedding *dual, struct dual
   return (0);
 }
 
+/*
+ * a region description of a ``thin'' apparent contour can be converted to an embedding!
+ */
+
+/*
+ * local functions
+ */
+
+void ls2e_adjust_cyclic_list (struct embedding *emb);
+struct embedding *ls2e_sanity_check (struct sketch *s);
+int ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, struct border *transbp);
+
+static struct region **n2r = 0;
+static int *r2n = 0;
+
+/* main function */
+
+struct embedding *
+trysketch2embedding (struct sketch *s)
+{
+  struct embedding *emb;
+  struct emb_node *node;
+  int i, j, k, kcount;
+  struct region *r;
+  struct borderlist *border;
+  struct border *bp, *transbp;
+
+  emb = ls2e_sanity_check (s);
+  if (emb == 0) return (0);
+
+  if (verbose) printf ("number of 3-vertices: %d\n", emb->k);
+  if (verbose) printf ("number of crossings: %d\n", emb->n);
+
+  n2r = (struct region **) malloc ((emb->k + emb->n)*sizeof(struct region *));
+  r2n = (int *) malloc (s->regioncount*sizeof(int));
+
+  i = kcount = 0;
+  for (r = s->regions; r; r = r->next)
+  {
+    if (r->f == 4)
+    {
+      n2r[i+emb->k] = r;
+      r2n[r->tag] = i;
+      i++;
+    }
+    if (r->f == 2)
+    {
+      r2n[r->tag] = 0;
+      bp = r->border->sponda;
+      do {
+        r2n[r->tag]++;
+        bp = bp->next;
+        bp = bp->next;
+      } while (bp != r->border->sponda);
+      if (r2n[r->tag] > 2)
+      {
+        for (k = 0; k < r2n[r->tag] - 2; k++)
+        {
+          n2r[kcount] = r;
+          kcount++;
+        }
+      }
+    }
+  }
+  assert (kcount == emb->k);
+
+  /* set adj of 3-nodes to an invalid value */
+
+  for (i = 0; i < emb->k; i++)
+  {
+    node = &(emb->nodes[i]);
+    assert (node->valency == 3);
+    for (j = 0; j < 3; j++) node->ping[j] = i;
+  }
+
+  for (i = 0; i < emb->n; i++)
+  {
+    node = &(emb->nodes[i + emb->k]);
+    border = n2r[i+emb->k]->border;
+    bp = border->sponda;
+    if (bp->info->depths[0] == 0)
+    {
+      node->overpassisodd = 1;
+      emb->choice += (1 << i);
+    }
+    for (j = 0; j < 4; j++)
+    {
+      transbp = gettransborder (bp);
+      if (r2n[transbp->border->region->tag] > 2)
+      {
+        node->ping[j] = ls2e_getadj3node (emb, i, node, j, transbp);
+      } else {
+        transbp = gettransborder(transbp->next->next);
+        assert (transbp->border->region->f == 4);
+        node->ping[j] = r2n[transbp->border->region->tag] + emb->k;
+      }
+      bp = bp->next;
+    }
+  }
+
+  ls2e_adjust_cyclic_list (emb);
+
+  //printembedding (emb);
+  free (n2r);
+  free (r2n);
+  return (emb);
+}
+
+/*
+ * crossing i is adjacent through j to a 3-valent node
+ * return the id of such 3-valent node
+ */
+
+int
+ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, struct border *transbp)
+{
+  int ik, rtag;
+
+  rtag = transbp->border->region->tag;
+  assert (r2n[rtag] > 2);
+
+  /* find id of (first) 3-node */
+  for (ik = 0; ik < emb->k; ik++)
+  {
+    if (n2r[ik] == transbp->border->region) break;
+  }
+  assert (ik < emb->k);
+
+printf ("i = %d, j = %d, r2n[%d] = %d - ik = %d\n", i, j, rtag, r2n[rtag], ik);
+  printf ("FUNCTION NOT IMPLEMENTED\n");
+  return (0);
+}
+
+/*
+ * move here all sanity checks
+ * return a pointer to an embedding if they pass
+ */
+
+struct embedding *
+ls2e_sanity_check (struct sketch *s)
+{
+  struct embedding *emb;
+  struct emb_node *node;
+  int i;
+  int count, xcount = 0, kcount = 0, acount = 0, rcount = 0;
+  int euler;
+  struct region *r;
+  struct borderlist *border;
+  struct border *bp, *bpstart, *transbp;
+  struct arc *arc;
+
+  for (r = s->regions; r; r = r->next)
+  {
+    border = r->border;
+    switch (r->f)
+    {
+      case 0:
+        rcount++;
+        break;
+
+      case 2:
+        if (border->next != 0)
+        {
+          if (verbose) printf ("Invalid non-simply-connected arc region\n");
+          return (0);
+        }
+        bpstart = border->sponda;
+        transbp = gettransborder (bpstart);
+        if (transbp->border->region->f != 4) bpstart = bpstart->next;
+        bp = bpstart;
+        count = 0;
+        do {
+          count++;
+          transbp = gettransborder (bp);
+          if (transbp->border->region->f != 4)
+          {
+            if (verbose) printf ("Invalid f = %d while walking around an 'arc' region\n", transbp->border->region->f);
+            return (0);
+          }
+          bp = bp->next;
+          assert (bp != bpstart);
+          transbp = gettransborder (bp);
+          if (transbp->border->region->f != 0)
+          {
+            if (verbose) printf ("Invalid f = %d while walking around an 'arc' region\n", transbp->border->region->f);
+            return (0);
+          }
+          bp = bp->next;
+        } while (bp != bpstart);
+        assert (count >= 2);
+        acount++;
+        kcount += (count - 2);
+        acount += 2*(count-2);
+        break;
+
+      case 4:
+        xcount++;
+        if (border->next != 0)
+        {
+          if (verbose) printf ("Invalid non-simply-connected vertex region\n");
+          return (0);
+        }
+        bp = border->sponda;
+        count = 0;
+        do {
+          count++;
+          assert (bp->border->region == r);
+          if (bp->orientation != 1)
+          {
+            if (verbose) printf ("Orientation must be 1\n");
+            return (0);
+          }
+          bp = bp->next;
+        } while (bp != border->sponda);
+        if (count != 4)
+        {
+          if (verbose) printf ("a 'vertex' region must have 4 sides.  There are %d instead\n", count);
+          return (0);
+        }
+        break;
+
+      default:
+        if (verbose) printf ("Invalid apparent contour with a region with f=%d\n", r->f);
+        return (0);
+    }
+  }
+
+  /*
+   * sanity check of arcs: no cusps allowed
+   */
+
+  for (arc = s->arcs; arc; arc = arc->next)
+  {
+    if (arc->cusps != 0)
+    {
+      if (verbose) printf ("No cusps allowed in region description, arc %d has %d cusps\n", arc->tag, arc->cusps);
+      return (0);
+    }
+    assert (arc->endpoints == 1 || arc->endpoints == 2);
+    if (arc->endpoints == 1)
+    {
+      printf ("Found a loop! This is not allowed in an embedding description\n");
+      return (0);
+    }
+  }
+
+  euler = xcount + kcount + rcount - acount;
+  if (euler != 2)
+  {
+    if (verbose) printf ("Euler characteristic is %d instead of 2.  Perhaps this is a split diagram\n", euler);
+    return (0);
+  }
+
+  /*
+   * all sanity checks passed!
+   */
+
+  emb = (struct embedding *) malloc (sizeof (struct embedding));
+  emb->k = kcount;
+  emb->n = xcount;
+  emb->choice = 0;
+  emb->orientation = 1;
+  emb->connections = 0;
+  emb->nodes = (struct emb_node *) malloc ((emb->k+emb->n)*sizeof (struct emb_node));
+
+  for (i = 0; i < emb->k + emb->n; i++)
+  {
+    node = &(emb->nodes[i]);
+    node->next = 0;
+    if (i+1 < emb->k+emb->n) node->next = &(emb->nodes[i+1]);
+    node->id = i;
+    node->valency = 4;
+    if (i < emb->k) node->valency = 3;
+  }
+
+  if (verbose) printf ("number of arcs: %d\n", acount);
+  if (verbose) printf ("number of regions: %d\n", rcount);
+
+  return (emb);
+}
+
+void
+ls2e_adjust_cyclic_list (struct embedding *emb)
+{
+  int i, j, minval, maxval, jrot;
+  int pingsave[4];
+  struct emb_node *node;
+
+  for (i = 0; i < emb->n; i++)
+  {
+    node = &(emb->nodes[i]);
+    minval = 9999;
+    maxval = -1;
+    for (j = 0; j < 4; j++)
+    {
+      if (node->ping[j] < minval) minval = node->ping[j];
+      if (node->ping[j] > maxval) maxval = node->ping[j];
+      pingsave[j] = node->ping[j];
+    }
+    if (minval == maxval) continue;
+    for (j = 0; j < 4; j++)
+    {
+      if (node->ping[j] == minval && node->ping[(j+3)%4] != minval) {jrot = j; break;}
+    }
+    for (j = 0; j < 4; j++)
+    {
+      node->ping[j] = pingsave[(j + jrot) % 4];
+    }
+    if ((jrot % 2) == 1)
+    {
+      node->overpassisodd = !(node->overpassisodd);
+      emb->choice ^= (1<<i);
+    }
+  }
+}

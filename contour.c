@@ -1290,10 +1290,23 @@ main (int argc, char *argv[])
     tok = gettoken (infile);
     if (tok != TOK_EMBEDDING)
     {
-      printf ("Input must be a planar embedding\n");
-      exit (14);
+      ungettoken (tok);
+      if ((sketch = readcontour (infile)) == 0)
+      {
+        printf ("Input must be a planar embedding or a convertible apparent contour\n");
+        exit (14);
+      }
+
+      if (docanonify) canonify (sketch);
+      emb = trysketch2embedding (sketch);
+      if (emb == 0)
+      {
+        printf ("Cannot convert sketch to embedding, add option '-v' to get the reason for that\n");
+        exit (14);
+      }
+    } else {
+      emb = readembedding (infile);
     }
-    emb = readembedding (infile);
     printembedding (emb);
     freeembedding (emb);
     break;
