@@ -2862,9 +2862,10 @@ check_for_twist4 (struct embedding *emb, struct dualembedding *dual, struct dual
  * local functions
  */
 
-void ls2e_adjust_cyclic_list (struct embedding *emb);
+void ls2e_adjust_cyclic_lists (struct embedding *emb);
 struct embedding *ls2e_sanity_check (struct sketch *s);
 int ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, struct border *transbp);
+int ls2e_build3nodenet (struct embedding *emb, int ik);
 
 static struct region **n2r = 0;
 static int *r2n = 0;
@@ -2929,6 +2930,11 @@ trysketch2embedding (struct sketch *s)
     for (j = 0; j < 3; j++) node->ping[j] = i;
   }
 
+  for (k = 0; k < emb->k; k++)
+  {
+    ls2e_build3nodenet (emb, k);
+  }
+
   for (i = 0; i < emb->n; i++)
   {
     node = &(emb->nodes[i + emb->k]);
@@ -2954,12 +2960,60 @@ trysketch2embedding (struct sketch *s)
     }
   }
 
-  ls2e_adjust_cyclic_list (emb);
+  ls2e_adjust_cyclic_lists (emb);
 
   //printembedding (emb);
   free (n2r);
   free (r2n);
   return (emb);
+}
+
+/*
+ * build 3-node net
+ */
+
+int
+ls2e_build3nodenet (struct embedding *emb, int ik)
+{
+  int j, rtag, crossing;
+  struct region *r;
+  struct border *bn, *bntrans;
+  struct emb_node *node;
+
+  node = &(emb->nodes[ik]);
+  r = n2r[ik];
+  rtag = r->tag;
+
+  if (node->ping[0] != ik) return(0);  // work already done for this 3-node
+
+  assert (r2n[rtag] >= 3);
+
+  bn = r->border->sponda;
+  bntrans = gettransborder (bn);
+  if (bntrans->border->region->f != 4) bn = bn->next;
+  assert (gettransborder(bn)->border->region->f == 4);
+  bntrans = gettransborder (bn);
+  crossing = r2n[bntrans->border->region->tag];
+  node->ping[0] = crossing + emb->k;
+  bn = bn->next->next;
+
+  for (j = 0; j < r2n[rtag] - 2; j++)
+  {
+    bntrans = gettransborder (bn);
+    crossing = r2n[bntrans->border->region->tag];
+    node = &(emb->nodes[ik+j]);
+    assert (n2r[ik] == n2r[ik+j]);
+    if (j > 0) node->ping[0] = ik + j - 1;
+    if (j < r2n[rtag] - 3) node->ping[2] = ik + j + 1;
+    node->ping[1] = crossing + emb->k;
+    bn = bn->next->next;
+  }
+
+  bntrans = gettransborder (bn);
+  crossing = r2n[bntrans->border->region->tag];
+  node->ping[2] = crossing + emb->k;
+
+  return (1);
 }
 
 /*
@@ -2970,8 +3024,10 @@ trysketch2embedding (struct sketch *s)
 int
 ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, struct border *transbp)
 {
-  int ik, rtag;
+  int ik, iik, rtag;
+  struct emb_node *knode;
 
+  assert (node == &(emb->nodes[i+emb->k]));
   rtag = transbp->border->region->tag;
   assert (r2n[rtag] > 2);
 
@@ -2982,8 +3038,20 @@ ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, st
   }
   assert (ik < emb->k);
 
-printf ("i = %d, j = %d, r2n[%d] = %d - ik = %d\n", i, j, rtag, r2n[rtag], ik);
-  printf ("FUNCTION NOT IMPLEMENTED\n");
+  if (r2n[rtag] == 3) return (ik);
+
+  for (iik = ik; iik < ik + r2n[rtag] - 2; iik++)
+  {
+    assert (n2r[ik] == n2r[iik]);
+    knode = &(emb->nodes[iik]);
+    for (j = 0; j < 3; j++)
+    {
+      if (knode->ping[j] == i + emb->k) return (iik);
+    }
+  }
+
+  fprintf (stderr, "Something went wrong: i = %d, j = %d, r2n[%d] = %d - ik = %d\n", i+emb->k, j, rtag, r2n[rtag], ik);
+  fprintf (stderr, "case of network with multiple 3-nodes (there are %d) not implemented\n", r2n[rtag] - 2);
   return (0);
 }
 
@@ -3136,13 +3204,13 @@ ls2e_sanity_check (struct sketch *s)
 }
 
 void
-ls2e_adjust_cyclic_list (struct embedding *emb)
+ls2e_adjust_cyclic_lists (struct embedding *emb)
 {
   int i, j, minval, maxval, jrot;
   int pingsave[4];
   struct emb_node *node;
 
-  for (i = 0; i < emb->n; i++)
+  for (i = emb->k; i < emb->k + emb->n; i++)
   {
     node = &(emb->nodes[i]);
     minval = 9999;
@@ -3165,7 +3233,7 @@ ls2e_adjust_cyclic_list (struct embedding *emb)
     if ((jrot % 2) == 1)
     {
       node->overpassisodd = !(node->overpassisodd);
-      emb->choice ^= (1<<i);
+      emb->choice ^= (1<<(i-emb->k));
     }
   }
 }
