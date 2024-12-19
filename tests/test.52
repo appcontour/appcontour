@@ -1,0 +1,22 @@
+#testname:thinsketch to embedding
+#
+
+#
+# A region description of an apparent contour (sketch) can be converted
+# into a corresponding embedding description if it is 'thin' (apparent contour
+# of a thin tubular neighborhood of a spatial graph)
+#
+
+./contour embedding examples/knots/knot_3_1.knot | ./contour --out alexander --foxd 1 -q
+./contour embedding examples/handlebody_knots/hk4_1.knot | ./contour --out ks_A5 -q
+./contour embedding examples/handlebody_knots/hl4_1.knot | ./contour --out ks_A5 -q
+./contour embedding examples/handlebody_knots/hl6_9.knot | ./contour --out ks_A5 -q
+./contour embedding examples/handlebody_knots/spinner5.knot | ./contour --out ks_A4 -q
+./contour embedding examples/handlebody_knots/spinner5fake.knot | ./contour --out ks_A4 -q
+
+./contour --out alexander -q examples/knots/knot_3_1.knot
+./contour --out ks_A5 -q examples/handlebody_knots/hk4_1.knot
+./contour --out ks_A5 -q examples/handlebody_knots/hl4_1.knot
+./contour --out ks_A5 -q examples/handlebody_knots/hl6_9.knot
+./contour --out ks_A4 -q examples/handlebody_knots/spinner5.knot
+./contour --out ks_A4 -q examples/handlebody_knots/spinner5fake.knot
