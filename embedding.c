@@ -1337,13 +1337,14 @@ dual_left_turn (struct dual_region *r, int i1, int i2)
  * it is assumed that trivalent nodes are numbered first
  */
 
+void readembeddingpp (struct embedding *emb);
+
 struct embedding *
 readembedding (FILE *file)
 {
   struct embedding *emb;
-  struct emb_node *node, *nodeend, *prevnode, *nodesvec;
-  int i, j, tok, count, choice;
-  int iend, iendprev, jend;
+  struct emb_node *node, *prevnode, *nodesvec;
+  int i, tok, count;
 
   //int node_id, node_id2, tnode_id, tnode_pt;
 
@@ -1444,10 +1445,24 @@ readembedding (FILE *file)
     free (node->next);
     node->next = 0;
   }
+  emb->nodes = nodesvec;
 
   /* postprocess: add information such as "pong" and overpasses */
   /* sanity check: we require id of crossings to be >= emb->k */
+  readembeddingpp (emb);
+  return (emb);
+}
 
+/* postprocess: add information such as "pong" and overpasses */
+/* sanity check: we require id of crossings to be >= emb->k */
+
+void
+readembeddingpp (struct embedding *emb)
+{
+  int i, j, iend, iendprev, jend, choice;
+  struct emb_node *node, *nodeend, *nodesvec;
+
+  nodesvec = emb->nodes;
   choice = emb->choice;
   for (i = 0; i < emb->k + emb->n; i++)
   {
@@ -1480,11 +1495,9 @@ readembedding (FILE *file)
       choice /= 2;
     }
   }
-  emb->nodes = nodesvec;
 
   emb_orient (emb);
-
-  return (emb);
+  return;
 }
 
 /*
@@ -2965,6 +2978,7 @@ trysketch2embedding (struct sketch *s)
   //printembedding (emb);
   free (n2r);
   free (r2n);
+  readembeddingpp (emb);
   return (emb);
 }
 
