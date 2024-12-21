@@ -1,0 +1,47 @@
+#testname:convert knot/morse/dtcode/thinsketch to embedding
+#
+
+#
+# computing connectedness of an embedding
+#
+#these are embeddings with increasing connectivity
+
+./contour -q connectivity examples/handlebody_knots/hk6_14.knot
+./contour -q connectivity examples/handlebody_knots/hk6_15.knot
+./contour -q connectivity examples/handlebody_knots/hk7_30.knot
+./contour -q connectivity examples/handlebody_knots/hk6_1.knot
+./contour -q connectivity examples/handlebody_knots/hk6_3.knot
+
+# computing the wirtinger presentation (no meridians/longitudes, mer-long for first, second, third component
+
+./contour -q wirtinger examples/handlebody_knots/hl6_15.knot
+./contour -q wirtinger examples/handlebody_knots/hl6_15.knot --ccemb 1
+./contour -q wirtinger examples/handlebody_knots/hl6_15.knot --ccemb 2
+./contour -q wirtinger examples/handlebody_knots/hl6_15.knot --ccemb 3
+
+# the following computes an invariant on the link group with a preferred longitude of the
+# torus component added as a relator
+# computation is performed on hl6_1 and on en equivalent diagram where the torus component has
+# a selfcrossing (this has implication in the computation of the *preferred* longitude
+
+./contour wirtinger examples/handlebody_knots/hl6_1.embedding --ccemb 2 -Q --longitudeasrelator | contour ks_A5 -q
+./contour wirtinger examples/handlebody_knots/hl6_1.knot --ccemb 2 -Q --longitudeasrelator | contour ks_A5 -q
+./contour wirtinger examples/handlebody_knots/hl6_4.embedding --ccemb 2 -Q --longitudeasrelator | contour ks_A5 -q
+./contour wirtinger examples/handlebody_knots/hl6_4.knot --ccemb 2 -Q --longitudeasrelator | contour ks_A5 -q
+
+# action ccasloop computes the fund. group (using the wirtinger presentation) but treats the component indicated
+# by option "--ccemb <n>" as a loop in the fundamental group (added as selected element) and is excluded
+# in the wirtinger presentation
+# adding option "--loopasrelator" adds the loop as an additional relator instead
+
+./contour ccasloop examples/handlebody_knots/hl6_4.knot --loopcc 2 -Q | contour ks_A5 -q
+./contour ccasloop examples/handlebody_knots/hl6_4.embedding --loopcc 2 -Q | contour ks_A5 -q
+./contour ccasloop examples/handlebody_knots/hl6_4.knot --loopcc 2 -Q --loopasrelator | contour ks_A5 -q
+./contour ccasloop examples/handlebody_knots/hl6_4.embedding --loopcc 2 -Q --loopasrelator | contour ks_A5 -q
+
+#
+# ask about selfcrossing and mutual crossings between different components
+#
+
+./contour crossings examples/handlebody_knots/hl6_1.knot -q
+./contour crossings examples/handlebody_knots/hl6_15.knot -q
