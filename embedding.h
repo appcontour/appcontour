@@ -68,3 +68,4 @@ struct vecofintlist *embeddingtoloiv (struct embedding *emb);
 void freeembedding (struct embedding *emb);
 int embedding_connectedness (struct dualembedding *dual, struct embedding *emb);
 struct embedding *trysketch2embedding (struct sketch *s);
+struct embedding *getembedding (FILE *infile, int docanonify);

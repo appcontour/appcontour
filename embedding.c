@@ -537,7 +537,7 @@ embedding2dual (struct embedding *emb)
     node = &emb->nodes[i];
     for (j = 0; j < node->valency; j++)
     {
-      wedgemark[4*i+j] = 0;  /* will be >0 for wedges of build regions */
+      wedgemark[4*i+j] = 0;  /* will be >0 for wedges of built regions */
     }
   }
 
@@ -1518,7 +1518,7 @@ emb_color (struct embedding *emb)
   for (i = 0; i < emb->k; i++)
   {
     node = &emb->nodes[i];
-    node->color = 0;
+    node->color = node->colorodd = 0; // also reset colorodd, although it will not be used
   }
 
   color = 0;
@@ -1586,6 +1586,7 @@ expand_from_4 (struct embedding *emb)
         {
           jjto = node->ping[jj];
           nodeto = &emb->nodes[jjto];
+          if (nodeto->valency == 3) continue;
           if ((node->pong[jj] % 2) == 0)
           {
             if (nodeto->color == 0) goon++;
@@ -1605,6 +1606,7 @@ expand_from_4 (struct embedding *emb)
         {
           jjto = node->ping[jj];
           nodeto = &emb->nodes[jjto];
+          if (nodeto->valency == 3) continue;
           if ((node->pong[jj] % 2) == 0)
           {
             if (nodeto->color == 0) goon++;
@@ -3250,4 +3252,43 @@ ls2e_adjust_cyclic_lists (struct embedding *emb)
       emb->choice ^= (1<<(i-emb->k));
     }
   }
+}
+
+/*
+ * An embedding from stdin is required, either read an embedding description or
+ * try to convert an apparent contour from region description
+ */
+
+struct embedding *
+getembedding (FILE *infile, int docanonify)
+{
+  int tok;
+  struct embedding *emb;
+  struct sketch *sketch;
+
+  tok = gettoken (infile);
+  if (tok != TOK_EMBEDDING)
+  {
+    ungettoken (tok);
+    fprintf (stderr, "Trying to convert a (thin) apparent contour to an embedding description...");
+    if ((sketch = readcontour (infile)) == 0)
+    {
+      fprintf (stderr, " (FAILED)\n");
+      fprintf (stderr, "Input must be a planar embedding or a convertible apparent contour\n");
+      exit (14);
+    }
+
+    if (docanonify) canonify (sketch);
+    emb = trysketch2embedding (sketch);
+    if (emb == 0)
+    {
+      fprintf (stderr, " (FAILED)\n");
+      fprintf (stderr, "Cannot convert sketch to embedding, add option '-v' to get the reason for that\n");
+      exit (14);
+    }
+    fprintf (stderr, " (ok)\n");
+  } else {
+    emb = readembedding (infile);
+  }
+  return (emb);
 }
