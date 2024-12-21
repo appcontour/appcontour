@@ -1287,38 +1287,13 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_EMBEDDING:
-    tok = gettoken (infile);
-    if (tok != TOK_EMBEDDING)
-    {
-      ungettoken (tok);
-      if ((sketch = readcontour (infile)) == 0)
-      {
-        printf ("Input must be a planar embedding or a convertible apparent contour\n");
-        exit (14);
-      }
-
-      if (docanonify) canonify (sketch);
-      emb = trysketch2embedding (sketch);
-      if (emb == 0)
-      {
-        printf ("Cannot convert sketch to embedding, add option '-v' to get the reason for that\n");
-        exit (14);
-      }
-    } else {
-      emb = readembedding (infile);
-    }
+    emb = getembedding (infile, docanonify);
     printembedding (emb);
     freeembedding (emb);
     break;
 
     case ACTION_DUALEMBEDDING:
-    tok = gettoken (infile);
-    if (tok != TOK_EMBEDDING)
-    {
-      printf ("Input must be a planar embedding\n");
-      exit (14);
-    }
-    emb = readembedding (infile);
+    emb = getembedding (infile, docanonify);
     dual = embedding2dual (emb);
     if (dual == 0)
     {
@@ -1331,13 +1306,7 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_EMBRULES:
-    tok = gettoken (infile);
-    if (tok != TOK_EMBEDDING)
-    {
-      printf ("Input must be a planar embedding\n");
-      exit (14);
-    } 
-    emb = readembedding (infile);
+    emb = getembedding (infile, docanonify);
     dual = embedding2dual (emb);
     if (dual == 0)
     {
@@ -1350,42 +1319,42 @@ main (int argc, char *argv[])
     freeembedding (emb);
     break;
 
-    case ACTION_WIRTINGER:
+    case ACTION_WIRTINGER:  //TODO: try to use getembedding
     tok = gettoken (infile);
-    if (tok == TOK_EMBEDDING)
+    switch (tok)
     {
-      emb = readembedding (infile);
-      p = wirtingerfromembedding (emb);
-    } else {
-      ungettoken (tok);
-      loiv = dtorgausscodefromfile (infile);
-      if (loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
-      assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
-      p = wirtingerfromloiv (loiv);
+      case TOK_EMBEDDING:
+        emb = readembedding (infile);
+        p = wirtingerfromembedding (emb);
+      break;
+
+      case TOK_DTCODE:
+      case TOK_GAUSSCODE:
+      case TOK_KNOTSCAPE:
+        ungettoken (tok);
+        loiv = dtorgausscodefromfile (infile);
+        if (loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
+        assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
+        p = wirtingerfromloiv (loiv);
+      break;
+
+      default:
+        ungettoken (tok);
+        emb = getembedding (infile, docanonify);
+        p = wirtingerfromembedding (emb);
+      break;
     }
     if (p) print_presentation (p);
     break;
 
     case ACTION_CCASLOOP:
-    tok = gettoken (infile);
-    if (tok != TOK_EMBEDDING)
-    {
-      printf ("Input must be a planar embedding\n");
-      exit (14);
-    }
-    emb = readembedding (infile);
+    emb = getembedding (infile, docanonify);
     p = ccasloop (emb);
     if (p) print_presentation (p);
     break;
 
     case ACTION_CONNECTEDNESS:
-    tok = gettoken (infile);
-    if (tok != TOK_EMBEDDING)
-    {
-      printf ("Input must be a planar embedding\n");
-      exit (14);
-    }
-    emb = readembedding (infile);
+    emb = getembedding (infile, docanonify);
     dual = embedding2dual (emb);
     if (dual == 0)
     {
@@ -1405,21 +1374,7 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_CROSSINGS:
-    tok = gettoken (infile);
-    if (tok != TOK_EMBEDDING)
-    {
-      printf ("Input must be a planar embedding\n");
-      exit (14);
-    }
-    emb = readembedding (infile);
-    /*
-    dual = embedding2dual (emb);
-    if (dual == 0)
-    {
-      printf ("Error in dual computation\n");
-      exit (13);
-    }
-     */
+    emb = getembedding (infile, docanonify);
     printcrossingcolors (emb);
     // freedualembedding (dual);
     freeembedding (emb);
