@@ -1,3 +1,7 @@
-#testname:compute euler characteristic
+#testname:compute euler characteristic and genus
 #
-./contour characteristic examples/genus_2.morse
+./contour -q characteristic examples/genus_2.morse
+./contour -q genus examples/genus_2.morse
+./contour -q genus examples/handlebody_knots/hk6_10.knot
+./contour -q genus examples/handlebody_knots/hl6_1.knot
+./contour -q genus examples/handlebody_knots/hl6_10.knot

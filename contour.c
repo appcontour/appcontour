@@ -72,7 +72,7 @@ main (int argc, char *argv[])
   struct vecofintlist *loiv, *newloiv;
   struct embedding *emb;
   struct dualembedding *dual;
-  int ccnum;
+  int ccnum, genus;
   int connectedness;
   struct ccomplexcc *cccc;
 
@@ -704,6 +704,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"foxjacobian") == 0) action = ACTION_FOXJACOBIAN;
     if (strcmp(argv[i],"alexander") == 0) action = ACTION_ALEXANDER;
     if (strcmp(argv[i],"linkingnumber") == 0) action = ACTION_LINKINGNUMBER;
+    if (strcmp(argv[i],"genus") == 0) {action = ACTION_GENUS; globals.viacc = 0;}
     if (strcmp(argv[i],"scharacteristic") == 0) {action = ACTION_CHARACTERISTIC; globals.viacc = 1;}
     if (strcmp(argv[i],"sch") == 0) action = ACTION_CHARACTERISTIC;
     if (strcmp(argv[i],"icharacteristic") == 0) {action = ACTION_CHARACTERISTIC; fg_type=FG_INTERNAL;}
@@ -1402,6 +1403,20 @@ main (int argc, char *argv[])
       exit (13);
     }
 
+    break;
+
+    case ACTION_GENUS:
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    assert (fg_type == FG_SURFACE && globals.viacc == 0);
+    canonify (sketch);
+    count = count_connected_components (sketch);
+    genus = euler_characteristic (sketch);
+    assert ((genus % 2) == 0);
+    genus /= 2;
+    genus = count - genus;
+    if (verbose && count > 1) printf ("Genus is the sum of the genera of all connected component of the surface\n");
+    if (quiet) printf ("%d\n", genus);
+      else printf ("Genus: %d\n", genus);
     break;
 
     case ACTION_CHARACTERISTIC:
