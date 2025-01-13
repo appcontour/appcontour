@@ -718,6 +718,10 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"embrules") == 0) action = ACTION_EMBRULES;
     if (strcmp(argv[i],"connectedness") == 0) action = ACTION_CONNECTEDNESS;
     if (strcmp(argv[i],"connectivity") == 0) action = ACTION_CONNECTEDNESS;
+    if (strcmp(argv[i],"htype") == 0) action = ACTION_HTYPE;
+    if (strcmp(argv[i],"handlebodytype") == 0) action = ACTION_HTYPE;
+    if (strcmp(argv[i],"gtype") == 0) action = ACTION_GTYPE;
+    if (strcmp(argv[i],"graphtype") == 0) action = ACTION_GTYPE;
     if (strcmp(argv[i],"newfeature") == 0) action = ACTION_NEWFEATURE;
     if (strcmp(argv[i],"evert") == 0)
     {
@@ -1378,6 +1382,18 @@ main (int argc, char *argv[])
     emb = getembedding (infile, docanonify);
     printcrossingcolors (emb);
     // freedualembedding (dual);
+    freeembedding (emb);
+    break;
+
+    case ACTION_HTYPE:
+    emb = getembedding (infile, docanonify);
+    printhtype (emb);
+    freeembedding (emb);
+    break;
+
+    case ACTION_GTYPE:
+    emb = getembedding (infile, docanonify);
+    printgtype (emb);
     freeembedding (emb);
     break;
 

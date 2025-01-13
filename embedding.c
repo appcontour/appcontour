@@ -1187,6 +1187,138 @@ printcrossingcolors (struct embedding *emb)
 }
 
 /*
+ * compute mapping from genus to components
+ */
+
+void
+printhtype (struct embedding *emb)
+{
+  int ccnum, count;
+  int i, k, maxkappa;
+  int *kappa;
+  struct emb_node *node;
+
+  emb_color (emb);
+  emb_color4 (emb);
+
+  /* count only components with genus > 1 */
+  ccnum = emb->numhcomponents;
+  kappa = (int *) malloc (ccnum * sizeof (int));
+
+  for (i = 0; i < ccnum; i++) kappa[i] = 0;
+  for (i = 0; i < emb->k; i++)
+  {
+    node = &emb->nodes[i];
+    assert (node->color > 0 && node->color <= ccnum);
+    kappa[node->color - 1]++;
+  }
+
+  maxkappa = 0;
+  for (i = 0; i < ccnum; i++)
+  {
+    assert ((kappa[i] % 2) == 0);
+    if (kappa[i] > maxkappa) maxkappa = kappa[i];
+  }
+
+  printf ("[%d", emb->numrings);
+
+  for (k = 2; k <= maxkappa; k += 2)
+  {
+    count = 0;
+    for (i = 0; i < ccnum; i++)
+    {
+      if (kappa[i] == k) count++;
+    }
+    printf (",%d", count);
+  }
+
+  printf ("]\n");
+
+  free (kappa);
+}
+
+/*
+ * find the type of graph for each connected component
+ * e.g. for genus=2 we can have "handcuff" or "theta"
+ */
+
+void
+printgtype (struct embedding *emb)
+{
+  int ccnum, loops, bigons;
+  int c, i, j, jplus;
+  int *kappa;
+  struct emb_node *node;
+
+  emb_color (emb);
+  emb_color4 (emb);
+
+  /* count only components with genus > 1 */
+  ccnum = emb->numhcomponents;
+  kappa = (int *) malloc (ccnum * sizeof (int));
+
+  for (i = 0; i < ccnum; i++) kappa[i] = 0;
+  for (i = 0; i < emb->k; i++)
+  {
+    node = &emb->nodes[i];
+    assert (node->color > 0 && node->color <= ccnum);
+    kappa[node->color - 1]++;
+  }
+
+  for (c = 0; c < ccnum; c++)
+  {
+    assert ((kappa[c] % 2) == 0);
+    assert (kappa[c] > 0);
+    if (quiet) printf ("%d ", kappa[c]/2 + 1);
+     else printf ("H-component %d, genus = %d: ", c+1, kappa[c]/2 + 1);
+    loops = 0;
+    bigons = 0;
+    for (i = 0; i < emb->k; i++)
+    {
+      for (j = 0; j < 3; j++)
+      {
+        jplus = (j+1) % 3;
+        if (emb->connections[3*i + j]/3 == i) loops++;
+         else {
+          if (emb->connections[3*i + j]/3 == emb->connections[3*i + jplus]/3) bigons++;
+        }
+      }
+    }
+    assert ((loops % 2) == 0);
+    assert ((bigons % 2) == 0);
+    loops /= 2;
+    bigons /= 2;
+    switch (kappa[c]/2)
+    {
+      case 1:
+        if (loops > 0) printf ("handcuff");
+         else printf ("theta");
+        break;
+      case 2:
+        switch (loops)
+        {
+          case 0:
+            if (bigons == 0) printf ("tetrahedron");
+             else printf ("cylinder");
+            break;
+          case 1: printf ("ponpon"); break;
+          case 2: printf ("triplehandcuff"); break;
+          case 3: printf ("spinner"); break;
+          default: printf ("???"); break;
+        }
+        break;
+      default:
+        printf ("%d loops - ", loops);
+        printf ("unable to detect type if genus = %d", kappa[c]/2 + 1);
+        break;
+    }
+    printf ("\n");
+  }
+
+  free (kappa);
+}
+
+/*
  * compute arc-connectedness of the embedding
  */
 
