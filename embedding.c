@@ -1245,7 +1245,7 @@ printhtype (struct embedding *emb)
 void
 printgtype (struct embedding *emb)
 {
-  int ccnum, loops, bigons, stars, thetas, isstar, istheta;
+  int ccnum, loops, bigons, stars, isstar;
   int c, i, j, jplus;
   int *kappa;
   struct emb_node *node;
@@ -1271,15 +1271,13 @@ printgtype (struct embedding *emb)
     assert (kappa[c] > 0);
     if (quiet) printf ("%d ", kappa[c]/2 + 1);
      else printf ("H-component %d, genus = %d: ", c+1, kappa[c]/2 + 1);
-    loops = bigons = stars = thetas = 0;
+    loops = bigons = stars = 0;
     for (i = 0; i < emb->k; i++)
     {
       isstar = 1;
-      istheta = 1;
       for (j = 0; j < 3; j++)
       {
         jplus = (j+1) % 3;
-        if (emb->connections[3*i + j]/3 != emb->connections[3*i + jplus]/3) istheta = 0;
         if (emb->connections[3*i + j]/3 == emb->connections[3*i + jplus]/3) isstar = 0;
         if (emb->connections[3*i + j]/3 == i) loops++;
          else {
@@ -1287,7 +1285,6 @@ printgtype (struct embedding *emb)
         }
       }
       stars += isstar;
-      thetas += istheta;
     }
     assert ((loops % 2) == 0);
     assert ((bigons % 2) == 0);
@@ -1313,7 +1310,7 @@ printgtype (struct embedding *emb)
         }
         break;
       default:
-        printf ("%d loops, %d bigons, %d stars, %d thetas - ", loops, bigons, stars, thetas);
+        printf ("%d loops, %d bigons, %d stars - ", loops, bigons, stars);
         printf ("unable to detect type if genus = %d", kappa[c]/2 + 1);
         break;
     }
