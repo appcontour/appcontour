@@ -1301,11 +1301,53 @@ printgtype (struct embedding *emb)
         {
           case 0:
             if (bigons == 0) printf ("tetrahedron");
+/*
+      *
+    / | \
+   /  *  \
+   | / \ |
+    *---*
+
+ */
              else printf ("cylinder");
+/*
+    ___
+  *<___>*
+  | ___ |
+  *<___>*
+
+ */
             break;
           case 1: printf ("pompomhat"); break;
+/*
+   O
+   *
+   |
+   *
+  / \
+ /   \
+| ___ |
+*<___>*
+
+ */
           case 2: printf ("pillory"); break;
+/*
+      _
+ O*-*<_>*-*O
+    
+ */
           case 3: printf ("spinner"); break;
+/*
+
+    O
+    *
+    |
+    *
+   / \
+  *   *
+ O     O
+
+ */
           default: printf ("???"); break;
         }
         break;
