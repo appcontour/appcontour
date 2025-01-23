@@ -1191,7 +1191,7 @@ printcrossingcolors (struct embedding *emb)
  */
 
 void
-printhtype (struct embedding *emb)
+printhtypefromemb (struct embedding *emb)
 {
   int ccnum, count;
   int i, k, maxkappa;

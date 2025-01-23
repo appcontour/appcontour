@@ -1386,9 +1386,17 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_HTYPE:
-    emb = getembedding (infile, docanonify);
-    printhtype (emb);
-    freeembedding (emb);
+    tok = gettoken (infile);
+    if (tok == TOK_EMBEDDING)
+    {
+      emb = readembedding (infile);
+      printhtypefromemb (emb);
+      freeembedding (emb);
+      break;
+    }
+    ungettoken (tok);
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+    printhtype (sketch);
     break;
 
     case ACTION_GTYPE:

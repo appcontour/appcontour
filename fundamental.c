@@ -3897,3 +3897,54 @@ complex_characteristic (struct ccomplex *cc)
   return (cc->nodenum - cc->arcnum + cc->facenum);
 }
 
+/*
+ * compute and print the "htype" of sketch (assumed to be a handlebody knot/link
+ */
+
+void
+printhtype (struct sketch *s)
+{
+  int characteristic, mincharacteristic;
+  int genus, maxgenus;
+  int *genera;
+  int i;
+  struct ccomplex *cc;
+  struct ccomplexcc *cccc;
+  struct presentation *p;
+
+  cc = compute_cellcomplex (s, FG_SURFACE);
+
+  mincharacteristic = 2;
+  for (cccc = cc->cc; cccc; cccc = cccc->next)
+  {
+    p = compute_fundamental_single (cc, cccc);
+    cccc->p = p;
+    if (p->characteristic < mincharacteristic) mincharacteristic = p->characteristic;
+
+  }
+  assert ((mincharacteristic % 2) == 0);
+  maxgenus = 1 - mincharacteristic/2;
+
+  genera = (int *) malloc ((maxgenus+1) * sizeof (int));
+  for (i = 0; i <= maxgenus; i++) genera[i] = 0;
+
+  for (cccc = cc->cc; cccc; cccc = cccc->next)
+  {
+    characteristic = (cccc->p)->characteristic;
+    assert ((characteristic % 2) == 0);
+    genus = 1 - characteristic/2;
+    assert (genus >= 0 && genus <= maxgenus);
+    genera[genus]++;
+  }
+  if (genera[0] > 0) fprintf (stderr, "Warning: unexpected presence of a ball component (there are %d)\n", genera[0]);
+
+  printf ("[");
+  for (i = 1; i <= maxgenus; i++)
+  {
+    if (i > 1) printf (",");
+    printf ("%d", genera[i]);
+  }
+  printf ("]\n");
+
+  free (genera);
+}

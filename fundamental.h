@@ -176,3 +176,4 @@ int onarc2narc (int);
 int cellcomplex_checkconsistency (struct ccomplex *cc);
 
 int read_generators_list (FILE *file, char *gennames, int maxgennum);
+void printhtype (struct sketch *s);
