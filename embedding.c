@@ -566,13 +566,17 @@ embedding2dual (struct embedding *emb)
       thisnode = node;
       thisnodej = j;
       r_wedgeij[count] = 4*i + j;
-      while ((nextnodei = thisnode->ping[thisnodej]) != i)
+      // didn't work when we have a 'hinge' node
+      //while ((nextnodei = thisnode->ping[thisnodej]) != i)
+      while (1)
       {
-        count++;
+        nextnodei = thisnode->ping[thisnodej];
         nextnode = &emb->nodes[nextnodei];
         val = nextnode->valency;
         nextnodej = thisnode->pong[thisnodej];
         nextnodej = (nextnodej + val - 1) % val;
+        if (nextnodei == i && nextnodej == j) break;
+        count++;
 
         wedgemark[4*nextnodei + nextnodej] = 1;
         r_wedgeij[count] = 4*nextnodei + nextnodej;
