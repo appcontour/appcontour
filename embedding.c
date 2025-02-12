@@ -1269,6 +1269,20 @@ printgtype (struct embedding *emb)
     kappa[node->color - 1]++;
   }
 
+  if (verbose)
+  {
+    printf ("3-valent nodes connections:\n");
+    for (i = 0; i < emb->k; i++)
+    {
+      printf ("Node %d:", i);
+      for (j = 0; j < 3; j++)
+      {
+        printf (" %d.%d", emb->connections[3*i + j]/3, emb->connections[3*i + j] % 3);
+      }
+      printf ("\n");
+    }
+  }
+
   for (c = 0; c < ccnum; c++)
   {
     assert ((kappa[c] % 2) == 0);
