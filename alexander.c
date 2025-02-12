@@ -1595,7 +1595,7 @@ compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcol
       for (s = 0; s < minordim; s++) vecj[s] = s;
       do
       {
-        for (s = 0; s < minordim; s++) veci[s] = s;
+        for (ss = 0; ss < minordim; ss++) veci[ss] = ss;
         do
         {
           for (s = 0; s < minordim; s++)
@@ -1623,12 +1623,13 @@ compute_invariant_factor (struct laurentpoly ***columns, int numrows, int numcol
 int
 next_subset (int *vec, int k, int n)
 {
+  if (k == 0) return (0);
   if (vec[k-1] < n - 1)
   {
     vec[k-1]++;
     return (1);
   }
-  if (k == 0) return (0);
+  //if (k == 0) return (0);
 
   if (next_subset (vec, k-1, n-1))
   {

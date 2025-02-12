@@ -1,16 +1,10 @@
-2024.10.12
-echo "embedding:21 {0:(1,5,4),1:(0,7,6),2:(4,5,8),3:(6,7,9),4:(0,5,5,2),5:(0,2,4,4),6:(1,7,7,3),7:(1,3,6,6),8:(2,9,9,9),9:(3,8,8,8)}" | contour --out alexander
-Computing third Alexander ideal (--foxd = 3)
-# generic ideal computation...
-double free or corruption (out)
-Aborted (core dumped)
-
-
 2024.05.12
-echo "fpgroup { <a,b,c,d; abdAdaDBdAD, cdCD> }" | contour alexander
+echo "fpgroup { <a,b,c,d; abdAdaDBdAD, cdCD> }" | ./contour alexander
 Computing second Alexander ideal (--foxd = 2)
 # generic ideal computation...
-double free or corruption (out)
+# *** Warning: result can be noncanonical ***
+Alexander polynomial:
+contour: alexander.c:669: printout_ideal: Assertion `ai->l2num == 1' failed.
 Aborted (core dumped)
 
 
