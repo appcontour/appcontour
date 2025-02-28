@@ -129,6 +129,7 @@ struct global_data {
   int outer;  // user wants all "outer" (inner in S_n) conjugacy for A_n
   int dontidentify;  // used in representation.c
   int insist;  // used in representation.c
+  int dolist;  // used in representation.c
   int dtcode_realize;
   char knotname1[MAXKNOTNAMELENGTH];
   char knotname2[MAXKNOTNAMELENGTH];

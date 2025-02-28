@@ -118,7 +118,7 @@ count_sl2zp_cclasses (struct presentationlist *pstlist, int p, int *results)
       if (sl2_checkrelators(sl2vec, sl2vecinv, pstl->p, p))
       {
         results[k]++;
-        if (verbose)
+        if (verbose || globals.dolist)
         {
           if (k == 0) printf ("====== Homomorphism #%d defined by the matrices:\n", results[k]);
            else printf ("====== Homomorphism #%d for group #%d defined by the matrices:\n", results[k], k);
@@ -589,7 +589,7 @@ count_psl2q_cclasses (struct presentationlist *pstlist, int q, int *results)
       if (psl2_checkrelators(sl2vec, sl2vecinv, pstl->p, q))
       {
         results[k]++;
-        if (verbose)
+        if (verbose || globals.dolist)
         {
           if (k == 0) printf ("====== Homomorphism #%d defined by the matrices:\n", results[k]);
            else printf ("====== Homomorphism #%d for group #%d defined by the matrices:\n", results[k], k);
@@ -898,7 +898,7 @@ count_sn_cclasses (struct presentationlist *pstlist, int n, int *results)
       if (sn_checkrelators(snvec, snvecinv, pstl->p, n))
       {
         results[k]++;
-        if (verbose)
+        if (verbose || globals.dolist)
         {
           if (k == 0) printf ("====== Homomorphism #%d defined by the permutations:\n", results[k]);
            else printf ("====== Homomorphism #%d for group #%d defined by the permutations:\n", results[k], k);

@@ -6,7 +6,7 @@ onlyinvariant=""
 onlyhash=""
 full="yes"
 
-while [ ${1:0:1} = "-" -a -n "${1:1:1}" ]
+while [ "${1:0:1}" = "-" -a -n "${1:1:1}" ]
 do
   case $1 in
     -l)
@@ -48,7 +48,7 @@ group=$2
 
 if [ -z "$2" ]
 then
-  echo "usage: [-l][-i][-H|--hash] $0 some_wirtinger_presentation.fpgroup group"
+  echo "usage: $0 [-l][-i][-H|--hash] some_wirtinger_presentation.fpgroup group"
   echo "where group can be e.g. A5"
   echo "use '-' as filename if input comes from stdin"
   echo "an embedding can be indicated in place of a wirtinger presentation"
@@ -292,7 +292,7 @@ if [ -n "$ccemb" ]; then ccembdef=$ccemb; fi
 if contour wirtinger $fpgroup --ccemb $ccembdef 2>/dev/null
 then
   components=`contour countcc $fpgroup -q`
-  command="contour wirtinger $fpgroup -Q | contour ks_$group -v"
+  command="contour wirtinger $fpgroup -Q | contour ks_$group --list"
   if [ "$components" -gt 1 ]
   then
     if [ -z "$ccemb" ]
@@ -300,14 +300,14 @@ then
       echo "Cannot compute g_image invariant for links ($components components). Use option --ccemb <component>"
       exit 2
     fi
-    command="contour wirtinger $fpgroup --ccemb $ccemb -Q | contour ks_$group -v"
-    contour wirtinger $fpgroup --ccemb $ccemb -Q | contour ks_$group -v 2>/dev/null >$tmpfile
+    command="contour wirtinger $fpgroup --ccemb $ccemb -Q | contour ks_$group --list"
+    contour wirtinger $fpgroup --ccemb $ccemb -Q | contour ks_$group --list 2>/dev/null >$tmpfile
   else
-    contour wirtinger $fpgroup -Q | contour ks_$group -v 2>/dev/null >$tmpfile
+    contour wirtinger $fpgroup -Q | contour ks_$group --list 2>/dev/null >$tmpfile
   fi
 else
-  contour ks_$group $fpgroup -v 2>/dev/null >$tmpfile
-  command="contour ks_$group $fpgroup -v"
+  contour ks_$group $fpgroup --list 2>/dev/null >$tmpfile
+  command="contour ks_$group $fpgroup --list"
 fi
 
 number=`grep "Homomorphism #" $tmpfile | wc -l`
