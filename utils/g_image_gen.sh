@@ -289,7 +289,11 @@ echo -n "Computing homomorphisms (in $tmpfile)..." >&2
 #if grep -q "^embedding" $fpgroup
 ccembdef=1
 if [ -n "$ccemb" ]; then ccembdef=$ccemb; fi
-if contour wirtinger $fpgroup --ccemb $ccembdef 2>/dev/null
+#
+# I don't know the reason for option '-ccemb $ccembdef' below
+# possibly we can remove it
+#
+if contour wirtinger $fpgroup --ccemb $ccembdef >/dev/null 2>/dev/null
 then
   components=`contour countcc $fpgroup -q`
   command="contour wirtinger $fpgroup -Q | contour ks_$group --list"
