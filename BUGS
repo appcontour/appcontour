@@ -1,3 +1,17 @@
+2025.03.09
+contour wirtinger examples/square.knot
+
+hangs
+
+contour wirtinger examples/square.knot -v
+
+gives a segfault
+
+contour embedding examples/square.knot | contour wirtinger
+
+works fine
+
+
 2024.05.12
 echo "fpgroup { <a,b,c,d; abdAdaDBdAD, cdCD> }" | ./contour alexander
 Computing second Alexander ideal (--foxd = 2)
