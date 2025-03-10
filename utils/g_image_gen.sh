@@ -80,26 +80,18 @@ gap3="grep -v '^#I'"
 function feedgap ()
 {
 #  echo -n "Testing: $which"
-  genimage=`echo "Order(Group($genlist));" | $gap1 | $gap2 | $gap3`
-
 #  printf "\r"
 
-#  if [ "$genimage" = "$gorder" ]
-#  then
-    subimage=`echo "Order(Group($mlist,$llist));" | $gap1 | $gap2 | $gap3`
-#    if [ "$subimage" -lt "$genimage" ]
-#    then
-      #normalcl=`echo "Order(NormalClosure( Group($mlist,$llist), Group($mlist)));" | $gap1 | $gap2 | $gap3`
-      gapcmd1="nc:=NormalClosure( Group($mlist,$llist), Group($mlist))"
-      gapcmd2="Order(nc)"
-      gapcmd3="StructureDescription(nc)"
-      gapoutput=`echo "$gapcmd1;$gapcmd2;$gapcmd3;" | $gap1 | $gap2 | $gap3`
-      normalclosureorder=`echo "$gapoutput" | head -n 2 | tail -n 1`
-      normalclosure=`echo "$gapoutput" | head -n 3 | tail -n 1`
-      echo -n "Proper homomorphism #$which: surface group: $subimage - normal closure: $normalclosureorder"
-      echo " ($normalclosure)"
-#    fi
-#  fi
+  gapcmd1="nc:=NormalClosure( Group($mlist,$llist), Group($mlist))"
+  gapcmd2="Order(nc)"
+  gapcmd3="StructureDescription(nc)"
+  gapcmd4="Order(Group($mlist,$llist))"
+  gapoutput=`echo "$gapcmd1;$gapcmd2;$gapcmd3;$gapcmd4;" | $gap1 | $gap2 | $gap3`
+  normalclosureorder=`echo "$gapoutput" | head -n 2 | tail -n 1`
+  normalclosure=`echo "$gapoutput" | head -n 3 | tail -n 1`
+  subimage=`echo "$gapoutput" | head -n 4 | tail -n 1`
+  echo -n "Proper homomorphism #$which: surface group: $subimage - normal closure: $normalclosureorder"
+  echo " ($normalclosure)"
 }
 
 function parseone ()
@@ -152,6 +144,26 @@ function parselist ()
       parseone
     fi
   done
+}
+
+function parselistcount ()
+{
+  countboth="0"
+  while read dum hom which rest
+  do
+    if [ "$hom" = "Homomorphism" ]
+    then
+      which=`echo "$which" | cut -c2-`
+      if echo "$ontolist" | grep -q "^$which$"
+      then
+        if echo "$properlist" | grep -q "^$which$"
+        then
+          countboth=$[ $countboth + 1 ]
+        fi
+      fi
+    fi
+  done
+  echo "$countboth"
 }
 
 function homoimageone ()
@@ -354,17 +366,15 @@ properlist=`cat $tmpfile | properparselist | $gap1 | $gap2 | $gap3 | cat -n | tr
 numproper=`echo "$properlist" | wc -l`
 echo " $numproper found" >&2
 
+countboth=`cat $tmpfile | parselistcount`
+echo "both: $countboth" >&2
+
 if [ -z "$onlyhash" ]
 then
-  echo "num:$number onto:$numonto proper:$numproper"
+  echo "num:$number onto:$numonto proper:$numproper both:$countboth"
 fi
 
-#for n in $ontolist
-#do
-#  echo "Onto homomorphism number $n"
-#done
-
-echo -n "Computing normal closures..." >&2
+echo "Computing normal closures..." >&2
 
 if [ -n "$onlyhash" ]
 then
@@ -383,8 +393,6 @@ then
   echo "   | grep '^Proper ' | sed -e 's/ #[0-9]*: /: /' | sort | md5sum | cut -f1 -d' '" >&2
   cat $tmpfile | parselist
 fi
-
-echo " done" >&2
 
 #
 # clean up temporary file
