@@ -366,12 +366,16 @@ properlist=`cat $tmpfile | properparselist | $gap1 | $gap2 | $gap3 | cat -n | tr
 numproper=`echo "$properlist" | wc -l`
 echo " $numproper found" >&2
 
-countboth=`cat $tmpfile | parselistcount`
-echo "both: $countboth" >&2
+#
+# this takes too long
+#
+#countboth=`cat $tmpfile | parselistcount`
+#echo "both: $countboth" >&2
 
 if [ -z "$onlyhash" ]
 then
-  echo "num:$number onto:$numonto proper:$numproper both:$countboth"
+  # echo "num:$number onto:$numonto proper:$numproper both:$countboth"
+  echo "num:$number onto:$numonto proper:$numproper"
 fi
 
 echo "Computing normal closures..." >&2
