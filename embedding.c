@@ -2671,6 +2671,7 @@ int check_for_twist (struct embedding *emb, struct dualembedding *dual, struct d
 int check_for_barrel (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
 int check_for_twist3 (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
 int check_for_twist4 (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
+int check_for_comb (struct embedding *emb, struct dualembedding *dual, struct dual_region *r);
 
 void
 printembrules (struct embedding *emb, struct dualembedding *dual)
@@ -2746,6 +2747,7 @@ printembrules (struct embedding *emb, struct dualembedding *dual)
     if (check_for_loop_flip (emb, dual, region)) printf ("loop-flip\n");
     if (check_for_twist (emb, dual, region)) printf ("twist\n");
     if (check_for_barrel (emb, dual, region)) printf ("barrel\n");
+    if (globals.comb) check_for_comb (emb, dual, region);
   }
 
   return;
@@ -2938,6 +2940,86 @@ check_for_barrel (struct embedding *emb, struct dualembedding *dual, struct dual
     if (node[ih]->overpassisodd == 0) return (0);
     // value of choice cannot be decreased
   }
+
+  return (1);
+}
+
+/*
+ * check for a situation like this:
+ *
+ *        |
+ *   -----+--
+ *  '     |
+ * |   .--+-.
+ *  `-*   |  *--
+ *     `--+-'
+ *        |
+ *
+ * or
+ *
+ *        |
+ *   -----+--
+ *  '     |
+ * |   .--+-.
+ *  `-*   |  |
+ *     `--+-'
+ *        |
+ *
+ * where the upper crossing can also by a trivalent node
+ * all crossings can be reverted
+ */
+
+int
+check_for_comb (struct embedding *emb, struct dualembedding *dual, struct dual_region *r)
+{
+  struct dual_region *radj;
+  struct emb_node *nodekk, *node[3];
+  int inodekk, inode[3];
+  int jj, jtri, jtriadj, jj1, jj2;
+
+  if (r->valency != 3) return (0);
+  jtri = -1;
+  for (jj = 0; jj < 3; jj++)
+  {
+    inode[jj] = r->wedgeij[jj]/4;
+    node[jj] = &(emb->nodes[inode[jj]]);
+    if (node[jj]->valency == 3)
+    {
+      if (jtri >= 0) return (0);
+      jtri = jj;
+    }
+  }
+  if (jtri < 0) return (0);
+
+  jj1 = (jtri + 1)%3;
+  jj2 = (jtri + 2)%3;
+  if (r->ping[jj1]->valency != 3 && r->ping[jtri]->valency != 3) return (0);
+  /* this is a comb */
+  radj = r->ping[jj2];
+  if (radj->valency == 2)
+  {
+    printf ("comb-loop\n");
+    if (verbose) fprintf (stderr, "***comb-loop*** region: %d, radj: %d, jj1=%d jj2=%d jtri=%d\n", r->id, radj->id, jj1, jj2, jtri);
+    return (1);
+  }
+  if (radj->valency != 3) return (0);
+  jtriadj = -1;
+  for (jj = 0; jj < 3; jj++)
+  {
+    inodekk = radj->wedgeij[jj]/4;
+    nodekk = &(emb->nodes[inodekk]);
+    if (nodekk->valency == 3)
+    {
+      jtriadj = jj;
+      break;
+    }
+  }
+  if (jtriadj < 0) return (0);
+
+  /* this is a barrel */
+
+  printf ("comb-barrel\n");
+  if (verbose) fprintf (stderr, "***comb-barrel*** region: %d, radj: %d, jj1=%d jj2=%d jtri=%d\n", r->id, radj->id, jj1, jj2, jtri);
 
   return (1);
 }

@@ -131,6 +131,7 @@ struct global_data {
   int insist;  // used in representation.c
   int dolist;  // used in representation.c
   int dtcode_realize;
+  int comb;    // used in embedding.c with action embrules
   char knotname1[MAXKNOTNAMELENGTH];
   char knotname2[MAXKNOTNAMELENGTH];
 };

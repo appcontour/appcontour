@@ -78,7 +78,7 @@ main (int argc, char *argv[])
 
   ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
-  globals.dtcode_realize = 0;
+  globals.dtcode_realize = globals.comb = 0;
   globals.dorecomputef = globals.doretagregions = globals.simplifypresentation = 1;
   globals.simplifycomplex = globals.simplifyideal = 1;
   globals.finfinity = globals.preabelian = globals.nobasecanonify = globals.viacc = 0;
@@ -152,6 +152,11 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--loopasrelator") == 0)
     {
       globals.loopasrelator++;
+      continue;
+    }
+    if (strcmp(argv[i],"--comb") == 0)
+    {
+      globals.comb++;
       continue;
     }
     if (strcmp(argv[i],"--longitudeasrelator") == 0)
