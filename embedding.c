@@ -2119,7 +2119,8 @@ emb_meridians_longitudes_torus (struct embedding *emb, struct presentation *p, i
 
   if (verbose) printf ("Computing meridian and longitude for a torus-like component of a link\n");
 
-  assert (ccemb >= emb->k);
+  assert (ccemb > emb->numhcomponents);
+  assert (ccemb <= emb->numhcomponents + emb->numrings);
   emb_color4 (emb);
 
   istart = -1;
