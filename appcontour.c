@@ -132,8 +132,13 @@ sketch_sum (struct sketch *s1, struct sketch *s2)
     if ((count1 > 1 && globals.cc1 < 0) ||
         (count2 > 1 && globals.cc2 < 0) )
     {
-      fprintf (stderr, "Connected sum is not well defined for surfaces with more than one external component.\n");
-      return (0);
+      fprintf (stderr, "Connected sum is not well defined for surfaces with more than one external component,\n");
+      fprintf (stderr, "  using a default value of 1.\n");
+      if (count1 > 1 && globals.cc1 < 0) globals.cc1 = 0;
+      if (count2 > 1 && globals.cc2 < 0) globals.cc2 = 0;
+      /* 2026_01_11: it seems that in the case of multiple components and no choice of user things go wrong */
+      /*    thus commented out the return below */
+      //return (0);
     }
   }
   if (count1 == 1) globals.cc1 = -1;

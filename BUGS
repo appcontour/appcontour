@@ -1,4 +1,4 @@
-2026.01.11
+2026.01.11 (SOLVED)
 When constructing the sum between two multiconnected objects, options --summand1cc and
 --summand2cc are used to specify which (external) connected component should be used when
 performing the "sum".

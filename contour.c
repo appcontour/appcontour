@@ -131,11 +131,13 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"--summand1cc") == 0)
     {
       globals.cc1 = strtol (argv[++i], &endch, 10) - 1;
+      assert (globals.cc1 >= 0);
       continue;
     }
     if (strcmp(argv[i],"--summand2cc") == 0)
     {
       globals.cc2 = strtol (argv[++i], &endch, 10) - 1;
+      assert (globals.cc2 >= 0);
       continue;
     }
     if (strcmp(argv[i],"--loopcc") == 0)
