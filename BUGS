@@ -1,19 +1,17 @@
 2026.01.11
-When constructing the sum between two multiconnected objects, option --summand2cc is used to
-inform "contour" as to which connected component it should use.  Omitting that option correctly
-gives a warning, but yet the resulting contour should coincide to one of the various possibilities
-but this is not the case when constructing L2--L2--L2 (one-connected sum of three Hopf links)
+When constructing the sum between two multiconnected objects, options --summand1cc and
+--summand2cc are used to specify which (external) connected component should be used when
+performing the "sum".
+If one is missing, or is defined to be 0 (invalid value) the result is diffent than what we
+obtain with any possible choice.
+In this example all three 'sum's should have three connected components, which is not the
+case
 --------------------------------
 L2a1=`contour gausscode L2a1 -Q | sed -e 's/\([0-9]\) /\1> /'`
-factor=`echo "$L2a1" | contour print -Q 2>/dev/null`
-sketch00=`(echo "$factor"; echo "$factor") | contour sum --summand1cc 1 --summand2cc 1 -Q 2>/dev/null`
-sketchok=`(echo "$sketch00"; echo "$factor") | contour sum --summand1cc 1 --summand2cc 1 -Q 2>/dev/null`
-sketchwrong=`(echo "$sketch00"; echo "$factor") | contour sum --summand1cc 1 -Q 2>/dev/null`
-
-echo "$sketchok" | contour countcc
-echo "$sketchwrong" | contour countcc
+(echo "$L2a1"; echo "$L2a1") | contour sum --summand1cc 1 --summand2cc 1 | contour countcc
+(echo "$L2a1"; echo "$L2a1") | contour sum --summand1cc 0 --summand2cc 1 | contour countcc
+(echo "$L2a1"; echo "$L2a1") | contour sum --summand1cc 0 | contour countcc
 --------------------------------
-
 
 
 2025.03.09
