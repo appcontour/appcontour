@@ -1,0 +1,4 @@
+#
+# Result of applying an IH move to hG2_2
+#
+embedding { 0:(1,2,2), 1:(0,3,3), 2:(0,0,3,3), 3:(1,1,2,2)}
