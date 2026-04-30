@@ -3229,8 +3229,10 @@ trysketch2embedding (struct sketch *s)
 
   for (i = 0; i < emb->n; i++)
   {
+//printf ("node: %d\n", i + emb->k);
     node = &(emb->nodes[i + emb->k]);
     border = n2r[i+emb->k]->border;
+//printf ("regiontag: %d\n", border->region->tag);
     bp = border->sponda;
     if (bp->info->depths[0] == 0)
     {
@@ -3240,9 +3242,11 @@ trysketch2embedding (struct sketch *s)
     for (j = 0; j < 4; j++)
     {
       transbp = gettransborder (bp);
+//printf ("j: %d, rtag = %d\n", j, transbp->border->region->tag);
       if (r2n[transbp->border->region->tag] > 2)
       {
         node->ping[j] = ls2e_getadj3node (emb, i, node, j, transbp);
+//printf ("node->ping[%d] = %d\n", j, node->ping[j]);
       } else {
         transbp = gettransborder(transbp->next->next);
         assert (transbp->border->region->f == 4);
@@ -3254,9 +3258,10 @@ trysketch2embedding (struct sketch *s)
 
   ls2e_adjust_cyclic_lists (emb);
 
-  //printembedding (emb);
+//printembedding (emb);
   free (n2r);
   free (r2n);
+//printf ("Calling readembeddingpp from trysketch2embedding\n");
   readembeddingpp (emb);
   return (emb);
 }
@@ -3318,6 +3323,7 @@ int
 ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, struct border *transbp)
 {
   int ik, iik, rtag;
+  //int jj, count;
   struct emb_node *knode;
 
   assert (node == &(emb->nodes[i+emb->k]));
@@ -3333,14 +3339,15 @@ ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, st
 
   if (r2n[rtag] == 3) return (ik);
 
+  /* TODO: Does not work even in the "hG2" case */
   for (iik = ik; iik < ik + r2n[rtag] - 2; iik++)
-  {
+  { 
     assert (n2r[ik] == n2r[iik]);
     knode = &(emb->nodes[iik]);
     for (j = 0; j < 3; j++)
     {
       if (knode->ping[j] == i + emb->k) return (iik);
-    }
+    } 
   }
 
   fprintf (stderr, "Something went wrong: i = %d, j = %d, r2n[%d] = %d - ik = %d\n", i+emb->k, j, rtag, r2n[rtag], ik);
@@ -3456,8 +3463,36 @@ ls2e_sanity_check (struct sketch *s)
     assert (arc->endpoints == 1 || arc->endpoints == 2);
     if (arc->endpoints == 1)
     {
-      printf ("Found a loop! This is not allowed in an embedding description\n");
-      return (0);
+      border = arc->regionleft->border;
+      if (border->region->f == 0) border = arc->regionright->border;
+      assert (border->region->f == 2);
+
+      bpstart = border->sponda;
+      transbp = gettransborder (bpstart);
+      if (transbp->border->region->f != 4) bpstart = bpstart->next;
+      bp = bpstart;
+      count = 0;
+      do {
+        count++;
+        transbp = gettransborder (bp);
+        assert (transbp->border->region->f == 4);
+        bp = bp->next;
+        assert (bp != bpstart);
+        transbp = gettransborder (bp);
+        assert (transbp->border->region->f == 0);
+        bp = bp->next;
+      } while (bp != bpstart);
+      assert (count >= 2);
+      /*
+       * in case of an arc that loops at some node, the "arc" region
+       * must involve at least one trivalent node of the embedding
+       * The number of trivalent nodes is "count - 2"
+       */
+      if (count == 2)
+      {
+        printf ("Found a loop! This is not allowed in an embedding description\n");
+        return (0);
+      }
     }
   }
 

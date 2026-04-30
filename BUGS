@@ -1,3 +1,13 @@
+2026.04.30
+Fix tests 50 and 52
+
+2026.04.30
+Cannot convert hG2
+contour embedding /usr/local/share/appcontour/examples/graphs/hG2_1.knot
+
+
+
+
 2026.01.11 (SOLVED)
 When constructing the sum between two multiconnected objects, options --summand1cc and
 --summand2cc are used to specify which (external) connected component should be used when
