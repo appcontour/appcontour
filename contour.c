@@ -519,6 +519,9 @@ main (int argc, char *argv[])
       printf ("    gausscode\n");
 
       printf ("\n Planar embeddings and handlebody knots/links:\n");
+      printf ("  embedding: convert a \"thin\" apparent contour to embedding syntax.\n");
+      printf ("    \"thin\" means that it is recognizable as the apparent contour of a\n");
+      printf ("    thickened knot or handlebody knot.\n");
       printf ("  dualembedding: print the structure of the dual of the embedding.\n");
       printf ("    Correlation with the original embedding is added by using option '-v'\n");
       printf ("  embrules: print Reidemeister type rules that can simplify the embedding, or\n");
