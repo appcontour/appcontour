@@ -72,9 +72,8 @@ main (int argc, char *argv[])
   struct vecofintlist *loiv, *newloiv;
   struct embedding *emb;
   struct dualembedding *dual;
-  int ccnum, genus;
+  int genus;
   int connectedness;
-  struct ccomplexcc *cccc;
 
   ccids[0] = 0;
   user_data.mrnum = user_data.manum = 0;
@@ -1745,22 +1744,25 @@ main (int argc, char *argv[])
     //printf ("Sorry, there is no new feature to experiment with...\n");
     //exit (14);
     if ((sketch = readcontour (infile)) == 0) exit (14);
-    if (docanonify) canonify (sketch);
+    canonify (sketch);
     if (sketch->isempty)
     {
-      fprintf (stderr, "Cannot compute fundamental group of EMPTY contour\n");
+      fprintf (stderr, "Cannot compute embedding associated to EMPTY contour\n");
       exit (13);
     }
-    assert (fg_type == FG_SURFACE);
-    verbose++;
-    debug++;
-    ccomplex = compute_cellcomplex (sketch, fg_type);
-    //compute_fundamental (ccomplex, action);
-    ccnum = find_spanning_tree (ccomplex);
-    assert (ccnum == 1);
-    cccc = ccomplex->cc;
-    cccc->p = compute_fundamental_single (ccomplex, cccc);
-    fundamental_group (cccc->p);
+    //verbose++;
+    //debug++;
+
+    emb = trysketch2embedding (sketch);
+    if (emb == 0)
+    {
+      fprintf (stderr, " (FAILED)\n");
+      fprintf (stderr, "Cannot convert sketch to embedding, add option '-v' to get the reason for that\n");
+      exit (14);
+    }
+
+    printembedding (emb);
+    freeembedding (emb);
 
     break;
 
