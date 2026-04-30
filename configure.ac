@@ -2,13 +2,18 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.71])
-AC_INIT([appcontour],[2.6.3],[paolini@dmf.unicatt.it])
+AC_INIT([appcontour],[2.6.4],[maurizio.paolini@unicatt.it])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([contour.c])
 AC_CONFIG_HEADERS([config.h])
 
 #glut="yes"
 #gtk="yes"
+
+#
+# temporarily disable gtkcontour
+#
+with_gtk="no"
 
 AC_ARG_WITH([glut],
   AS_HELP_STRING([--without-glut],[no glut engine for showcontour]),
