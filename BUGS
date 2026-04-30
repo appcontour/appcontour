@@ -1,9 +1,6 @@
 2026.04.30
-Fix tests 50 and 52
-
-2026.04.30
 Cannot convert hG2
-contour embedding /usr/local/share/appcontour/examples/graphs/hG2_1.knot
+./contour embedding examples/graphs/hG2_1.knot
 
 
 
