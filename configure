@@ -3358,6 +3358,10 @@ ac_config_headers="$ac_config_headers config.h"
 
 #glut="yes"
 #gtk="yes"
+
+#
+# temporarily disable gtkcontour
+#
 with_gtk="no"
 
 
