@@ -3158,6 +3158,7 @@ void ls2e_adjust_cyclic_lists (struct embedding *emb);
 struct embedding *ls2e_sanity_check (struct sketch *s);
 int ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, struct border *transbp);
 int ls2e_build3nodenet (struct embedding *emb, int ik);
+int ls2e_around3network (struct embedding *emb, int ik, int ikdir, int *iknpt, int *ikndirpt, int direction);
 
 static struct region **n2r = 0;
 static int *r2n = 0;
@@ -3169,8 +3170,8 @@ trysketch2embedding (struct sketch *s)
 {
   struct embedding *emb;
   struct emb_node *node;
-  int i, j, k, kcount;
-  struct region *r;
+  int i, j, k, kcount, second;
+  struct region *r, *prevr;
   struct borderlist *border;
   struct border *bp, *transbp;
 
@@ -3234,24 +3235,47 @@ trysketch2embedding (struct sketch *s)
     border = n2r[i+emb->k]->border;
 //printf ("regiontag: %d\n", border->region->tag);
     bp = border->sponda;
+    bp = bp->next->next->next;
+    transbp = gettransborder (bp);
+    /*
+     * find a change in the neighbouring regions of the node
+     */
+    prevr = transbp->border->region;
+    for (j = 0; j < 4; j++)
+    {
+      bp = bp->next;
+      transbp = gettransborder (bp);
+      if (prevr != transbp->border->region) break;
+      prevr = transbp->border->region;
+    }
+    if (gettransborder(bp)->border->region == gettransborder(bp->next)->border->region &&
+        gettransborder(bp)->border->region == gettransborder(bp->next->next)->border->region)
+    {
+      if (verbose) printf ("Cannot deal with crossings connected more than twice with the same 3network\n");
+      return (0);
+    }
     if (bp->info->depths[0] == 0)
     {
       node->overpassisodd = 1;
       emb->choice += (1 << i);
     }
+    prevr = 0;
     for (j = 0; j < 4; j++)
     {
       transbp = gettransborder (bp);
 //printf ("j: %d, rtag = %d\n", j, transbp->border->region->tag);
       if (r2n[transbp->border->region->tag] > 2)
       {
-        node->ping[j] = ls2e_getadj3node (emb, i, node, j, transbp);
+        second = 0;
+        if (prevr == transbp->border->region) second = 1;  // should allow for "second = 2" to mean "third"
+        node->ping[j] = ls2e_getadj3node (emb, i, node, second, transbp);
 //printf ("node->ping[%d] = %d\n", j, node->ping[j]);
       } else {
         transbp = gettransborder(transbp->next->next);
         assert (transbp->border->region->f == 4);
         node->ping[j] = r2n[transbp->border->region->tag] + emb->k;
       }
+      prevr = transbp->border->region;
       bp = bp->next;
     }
   }
@@ -3315,15 +3339,19 @@ ls2e_build3nodenet (struct embedding *emb, int ik)
 }
 
 /*
- * crossing i is adjacent through j to a 3-valent node
- * return the id of such 3-valent node
+ * crossing i is adjacent to a 3-valent node, if "second = 1" then
+ * this is the second occurrence (counterclockwise from the point of
+ * view of the crossing) of adjacency with the same 3network.
+ * Return the id of such 3-valent node
  */
 
 int
-ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, struct border *transbp)
+ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int second, struct border *transbp)
 {
   int ik, iik, rtag;
-  //int jj, count;
+  int jj;
+  int iikn, jjn;
+  //int count;
   struct emb_node *knode;
 
   assert (node == &(emb->nodes[i+emb->k]));
@@ -3337,22 +3365,83 @@ ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, st
   }
   assert (ik < emb->k);
 
-  if (r2n[rtag] == 3) return (ik);
+  if (r2n[rtag] == 3) return (ik);  // only one 3node in the network
 
   /* TODO: Does not work even in the "hG2" case */
   for (iik = ik; iik < ik + r2n[rtag] - 2; iik++)
   { 
     assert (n2r[ik] == n2r[iik]);
     knode = &(emb->nodes[iik]);
-    for (j = 0; j < 3; j++)
+    for (jj = 0; jj < 3; jj++)
     {
-      if (knode->ping[j] == i + emb->k) return (iik);
+      if (knode->ping[jj] == i + emb->k) break;
+      //if (knode->ping[jj] == i + emb->k) return (iik);
     } 
+    if (knode->ping[jj] == i + emb->k) break;
   }
+  assert (knode->ping[jj] == i + emb->k);
+  ls2e_around3network (emb, iik, jj, &iikn, &jjn, 1);
+  while ((&emb->nodes[iikn])->ping[jjn] == i + emb->k)
+  {
+    iik = iikn;
+    jj = jjn;
+    ls2e_around3network (emb, iik, jj, &iikn, &jjn, 1);
+  }
+  if (second == 0) return (iik);
+  //printf ("ls2e_getadj3node called with node = %d, second = %d\n", i+emb->k, second);
+  ls2e_around3network (emb, iik, jj, &iikn, &jjn, -1);
+  assert ((&emb->nodes[iikn])->ping[jjn] == i + emb->k);
+  iik = iikn;
+  jj = jjn;
+  if (second == 1) return (iik);
+  ls2e_around3network (emb, iik, jj, &iikn, &jjn, -1);
+  assert ((&emb->nodes[iikn])->ping[jjn] == i + emb->k);
+  iik = iikn;
+  jj = jjn;
+  if (second == 2) return (iik);
 
-  fprintf (stderr, "Something went wrong: i = %d, j = %d, r2n[%d] = %d - ik = %d\n", i+emb->k, j, rtag, r2n[rtag], ik);
+  fprintf (stderr, "Something went wrong: i = %d, second = %d, r2n[%d] = %d - ik = %d\n", i+emb->k, second, rtag, r2n[rtag], ik);
   fprintf (stderr, "case of network with multiple 3-nodes (there are %d) not implemented\n", r2n[rtag] - 2);
   return (0);
+}
+
+/*
+ * walk around a whole network of 3-valent nodes
+ * direction = 1 => counterclockwise
+ */
+
+int
+ls2e_around3network (struct embedding *emb, int ik, int ikdir, int *iknpt, int *ikndirpt, int direction)
+{
+  struct emb_node *knode, *knodenew;
+  int ikn, ikndir;
+
+  assert (direction == 1 || direction == -1);
+  if (direction == -1) direction += 3;
+
+  knode = &emb->nodes[ik];
+  assert (knode->ping[ikdir] >= emb->k);
+
+  ikndir = (ikdir + direction) % 3;
+  ikn = ik;
+  while (knode->ping[ikndir] < emb->k)
+  {
+    ikn = knode->ping[ikndir];
+    knodenew = &emb->nodes[ikn];
+    for (ikndir = 0; ikndir < 3; ikndir++)
+    {
+      if (knodenew->ping[ikndir] == ik) break;
+    }
+    assert (knodenew->ping[ikndir] == ik);
+    ikndir = (ikndir + direction) % 3;
+    knode = knodenew;
+    ik = ikn;
+  }
+
+  *iknpt = ikn;
+  *ikndirpt = ikndir;
+
+  return (1);
 }
 
 /*
