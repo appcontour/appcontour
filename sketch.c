@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "contour.h"
 #include "giovecanonify.h"
+#include "string.h"
 
 extern int debug;
 extern int useoldcanonify;
@@ -376,6 +377,70 @@ reorderbytags (struct arc *a)
  * end of cycle on permutations functions
  */
 
+/*
+ * duplicate sketch and other objects
+ */
+
+struct sketch *
+dupsketch (struct sketch *s)
+{
+  struct sketch *news;
+  struct arc *a, **tag2arc;
+  struct region *r;
+  struct borderlist *bl;
+  struct border *bp;
+
+  news = (struct sketch *) malloc (sizeof (struct sketch));
+  memcpy (news, s, sizeof (struct sketch));
+  news->regions = 0;
+  news->arcs = 0;
+  news->cc_characteristics = 0;
+  news->arcs = duparc (s->arcs);
+
+  tag2arc = (struct arc **) malloc ((s->arccount + 1)*sizeof (struct arc *));
+  for (a = news->arcs; a; a = a->next)
+  {
+    assert (a->tag > 0 && a->tag <= s->arccount);
+    tag2arc[a->tag] = a;
+  }
+  news->regions = dupregions (s->regions);
+
+  for (r = news->regions; r; r = r->next)
+  {
+    for (bl = r->border; bl; bl = bl->next)
+    {
+      if (bl->sponda == 0) {bl->isexternal = 1; continue;}
+      bp = bl->sponda;
+      do {
+        a = tag2arc[bp->info->tag];
+        bp->info = a;
+        if (bp->orientation > 0) a->regionleft = bp;
+          else a->regionright = bp;
+
+        bp = bp->next;
+      } while (bp != bl->sponda);
+    }
+  }
+  free (tag2arc);
+  return (news);
+}
+
+struct arc *
+duparc (struct arc *a)
+{
+  struct arc *newa;
+
+  if (a == 0) return (0);
+
+  newa = (struct arc *) malloc (sizeof (struct arc));
+  memcpy (newa, a, sizeof (struct arc));
+  newa->regionleft = newa->regionright = 0;
+  newa->depths = (int *) malloc (a->depthsdim*sizeof (int));
+  memcpy (newa->depths, a->depths, a->depthsdim*sizeof (int));
+  newa->next = duparc (a->next);
+  return (newa);
+}
+
 struct region *
 dupregions (struct region *r)
 {
@@ -548,6 +613,93 @@ compat_canonify (struct sketch *sketch)
   /* rinumero gli archi */
   tag = 1;
   for (arc = sketch->arcs; arc; arc = arc->next) arc->tag = tag++;
+}
+
+/*
+ * canonify also up to everting with respect to regions with f=0
+ */
+
+struct sketch *
+canonify_uptoevert (struct sketch *sketch)
+{
+  extern struct global_data globals;
+  struct sketch *champion, *candidate;
+  struct region *r;
+  struct borderlist *border;
+  struct border *bp;
+  int blistcount, bpcount;
+  int blistcountmax = -1;
+  int bpcountmax = -1;
+
+  if (sketch->isempty) return (sketch);
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    if (r->f > 0) continue;
+    blistcount = 0;
+    bpcount = 0;
+    for (border = r->border; border; border = border->next)
+    {
+      if (border->sponda == 0) continue;
+      blistcount++;
+      bp = border->sponda;
+      do {
+        bp = bp->next;
+        bpcount++;
+      } while (bp != border->sponda);
+    }
+    if (blistcount > blistcountmax)
+    {
+      blistcountmax = blistcount;
+      bpcountmax = -1;
+    }
+    if (blistcount < blistcountmax) continue;
+    if (bpcount > bpcountmax) bpcountmax = bpcount;
+  }
+
+  champion = 0;
+  assert (sketch->cc_characteristics == 0);
+
+  for (r = sketch->regions; r; r = r->next)
+  {
+    if (r->f > 0) continue;
+    blistcount = bpcount = 0;
+    for (border = r->border; border; border = border->next)
+    {
+      if (border->sponda == 0) continue;
+      blistcount++;
+      bp = border->sponda;
+      do {
+        bp = bp->next;
+        bpcount++;
+      } while (bp != border->sponda);
+    }
+    if (blistcount < blistcountmax) continue;
+    if (bpcount < bpcountmax) continue;
+
+    assert (r->strati == 0);
+    candidate = dupsketch (sketch);
+    changeextregion (candidate, r->tag);
+    postprocesssketch (candidate);
+    canonify (candidate);
+    if (champion == 0) champion = candidate;
+     else {
+      if (sketchcmp (champion, candidate) > 0)
+      {
+        freesketch (champion);
+        champion = candidate;
+        candidate = 0;
+      } else {
+        freesketch (candidate);
+        candidate = 0;
+      }
+    }
+  }
+
+  freesketch (sketch);
+  computefvalue (champion, champion->regions, globals.finfinity);
+
+  return (champion);
 }
 
 /*

@@ -89,7 +89,7 @@ main (int argc, char *argv[])
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = 0;
   globals.knotname_fallback = 1;
-  globals.loopcc = 0;
+  globals.loopcc = globals.uptoevert = 0;
   globals.numexcluded = 0;
   globals.ccemb = globals.cc1 = globals.cc2 = globals.choice = -1;
   globals.twists = 0;
@@ -102,6 +102,11 @@ main (int argc, char *argv[])
     globals.knotname_fallback = 0;
   for (i = 1; i < argc; i++)
   {
+    if (strcmp(argv[i],"--uptoevert") == 0)
+    {
+      globals.uptoevert++;
+      continue;
+    }
     if (strcmp(argv[i],"--newnames") == 0)
     {
       globals.rulenames = RULENAMES_NEW;
@@ -1227,7 +1232,8 @@ main (int argc, char *argv[])
 
     case ACTION_CANONIFY:
     if ((sketch = readcontour (infile)) == 0) exit (14);
-    canonify (sketch);
+    if (globals.uptoevert == 0) canonify (sketch);
+     else sketch = canonify_uptoevert (sketch);
     printsketch (sketch);
     break;
 

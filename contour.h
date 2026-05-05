@@ -89,6 +89,7 @@
 #define MAXCC 10
 
 struct global_data {
+  int uptoevert;
   int dorecomputef;
   int doretagregions;
   int simplifypresentation;
@@ -371,6 +372,8 @@ int sketch_union (struct sketch *s1, struct sketch *s2);
 int sketch_sum (struct sketch *s1, struct sketch *s2);
 int sketch_knotsum (struct sketch *s1, struct sketch *s2);
 
+struct sketch *dupsketch (struct sketch *s);
+struct arc *duparc (struct arc *arc);
 struct region *dupregions (struct region *r);
 struct borderlist *dupborderlist (struct borderlist *bl, struct region *r);
 struct border *dupborder (struct border *b, struct borderlist *bl);
@@ -379,6 +382,7 @@ void remregions (struct region *r);
 struct arc *reorderbytags (struct arc *r);
 
 void canonify (struct sketch *s);
+struct sketch *canonify_uptoevert (struct sketch *s);
 void oldcanonify (struct sketch *s);
 void compat_canonify (struct sketch *s);
 void canonifyarc (struct arc *arc);
