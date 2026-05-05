@@ -546,6 +546,7 @@ main (int argc, char *argv[])
       printf ("  -Q: use appcontour input syntax for fundamental groups and Alexander polynomials\n");
       printf ("  --M2: use Macaulay2 input syntax for Alexander polynomials/ideals\n");
       printf ("  --nocanonify: do not canonify region description before printing\n");
+      printf ("  --uptoevert: canonify app. contour up to the choice of external region (with \"canonify\" command\n");
       printf ("  --oldcanonify: use the old (version <= 1.3.0) canonification procedure\n");
       printf ("  --dontrenumber: do not renumber regions and arcs after giovecanonify\n");
       printf ("  --transfer_islands|--ti <int_coded_flags>: information on island\n");
@@ -1750,7 +1751,7 @@ main (int argc, char *argv[])
     //printf ("Sorry, there is no new feature to experiment with...\n");
     //exit (14);
     if ((sketch = readcontour (infile)) == 0) exit (14);
-    canonify (sketch);
+    sketch = canonify_uptoevert (sketch);
     if (sketch->isempty)
     {
       fprintf (stderr, "Cannot compute embedding associated to EMPTY contour\n");
