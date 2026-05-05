@@ -338,7 +338,7 @@ count_hidden_arcs (struct sketch *s)
 
 
 
-/* XXXXXXXXXXXXXXXXXXX */
+/* =================== */
 
 
 struct arc *
