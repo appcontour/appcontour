@@ -1,0 +1,13 @@
+#testname:canonify an embedding up to IH moves
+#
+
+#
+# computing connectedness of an embedding
+#
+#these are embeddings with increasing connectivity
+
+./contour canonifyuptoih examples/graphs/hG2_1.knot
+./contour frontback examples/graphs/hG2_1_then_IH.embedding | ./contour canonifyuptoih
+
+./contour canonifyuptoih examples/graphs/tG7_21.knot
+./contour frontback examples/graphs/hG7_60.knot | ./contour canonifyuptoih

@@ -1,0 +1,15 @@
+#
+# theta-graph 7_21 from Moriuchi's table
+#
+knot {
+    ^   ;
+   h   |;
+ | ^ | |;
+  x x  |;
+  x x  |;
+ | X | |;
+  x x  |;
+ | U | |;
+   y   |;
+     U  ;
+}

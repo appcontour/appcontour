@@ -530,6 +530,8 @@ main (int argc, char *argv[])
       printf ("    Correlation with the original embedding is added by using option '-v'\n");
       printf ("  embrules: print Reidemeister type rules that can simplify the embedding, or\n");
       printf ("    at least reduce the value of 'choice'\n");
+      printf ("  canonifyuptoih: convert to embedding and canonify it up to possible IH moves\n");
+      printf ("    this is done using canonification of apparent contours up to choice of external region\n");
       printf ("  specific options: --choice <n>\n");
       printf ("    force the value of <n> in order to select the overpasses at crossings\n");
       printf ("    <n> is interpreted as a binary number, each digit is associated to a crossing,\n");
@@ -688,6 +690,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"iscontour") == 0) action = ACTION_ISCONTOUR;
     if (strcmp(argv[i],"compare") == 0) {action = ACTION_COMPARE; infiles = 2;}
     if (strcmp(argv[i],"canonify") == 0) action = ACTION_CANONIFY;
+    if (strcmp(argv[i],"canonifyuptoih") == 0) action = ACTION_CANONIFYUPTOIH;
     if (strcmp(argv[i],"giovecanonify") == 0) action = ACTION_GIOVECANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
     if (strcmp(argv[i],"code") == 0) action = ACTION_CODE;
@@ -1314,7 +1317,7 @@ main (int argc, char *argv[])
 
     case ACTION_EMBEDDING:
     emb = getembedding (infile, docanonify);
-    printembedding (emb);
+    printembedding_noncanon (emb);
     freeembedding (emb);
     break;
 
@@ -1747,9 +1750,7 @@ main (int argc, char *argv[])
     }
     break;
 
-    case ACTION_NEWFEATURE:
-    //printf ("Sorry, there is no new feature to experiment with...\n");
-    //exit (14);
+    case ACTION_CANONIFYUPTOIH:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     sketch = canonify_uptoevert (sketch);
     if (sketch->isempty)
@@ -1757,8 +1758,6 @@ main (int argc, char *argv[])
       fprintf (stderr, "Cannot compute embedding associated to EMPTY contour\n");
       exit (13);
     }
-    //verbose++;
-    //debug++;
 
     emb = trysketch2embedding (sketch);
     if (emb == 0)
@@ -1768,9 +1767,13 @@ main (int argc, char *argv[])
       exit (14);
     }
 
-    printembedding (emb);
+    printembedding_canon (emb);
     freeembedding (emb);
+    break;
 
+    case ACTION_NEWFEATURE:
+    printf ("Sorry, there is no new feature to experiment with...\n");
+    exit (14);
     break;
 
     default:

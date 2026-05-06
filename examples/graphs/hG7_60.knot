@@ -1,0 +1,12 @@
+#
+# handcuff graph 7_60 from Moriuchi's table
+#
+knot {
+  ^   ^  ;
+ |  x  | ;
+| | ^ | |;
+|  x x  |;
+ X h h X ;
+| x U x |;
+ U  U  U ;
+}

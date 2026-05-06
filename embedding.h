@@ -45,7 +45,9 @@ struct dualembedding {
 struct sketch *embedding2sketch (struct embedding *emb);
 struct dualembedding *embedding2dual (struct embedding *emb);
 void printdualembedding (struct dualembedding *dual, struct embedding *emb);
-void printembedding (struct embedding *emb);
+void printembedding (struct embedding *emb, int iscanon);
+void printembedding_noncanon (struct embedding *emb);
+void printembedding_canon (struct embedding *emb);
 void print_dual_type (struct dualembedding *dual, struct embedding *emb);
 void freedualembedding (struct dualembedding *dual);
 void freedualregions (struct dual_region *region);

@@ -427,13 +427,36 @@ print_sketch_ra3 (int only3, int regionnum, struct embedding *emb, struct sketch
  */
 
 void
-printembedding (struct embedding *emb)
+printembedding_noncanon (struct embedding *emb)
+{
+  printembedding (emb, 0);
+}
+
+/*
+ *
+ */
+
+void
+printembedding_canon (struct embedding *emb)
+{
+  printembedding (emb, 1);
+}
+
+/*
+ *
+ */
+
+void
+printembedding (struct embedding *emb, int iscanon)
 {
   struct emb_node *node;
   int i, k, s, ii, kk;
 
-  start_comment ();
-  printf ("Warning: noncanonical\n");
+  if (iscanon == 0)
+  {
+    start_comment ();
+    printf ("Warning: noncanonical\n");
+  }
 
   printf ("embedding:%d {", emb->choice);
   for (i = 0; i < emb->k + emb->n; i++)
