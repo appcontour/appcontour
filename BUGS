@@ -1,8 +1,8 @@
-2026.04.30
-Cannot convert hG2
-./contour embedding examples/graphs/hG2_1.knot
+2026.05.07
+command canonifyuptoih with option '--frontback' should give the same (canonical) result
+for both examples/graphs/hG2_1* appcontour descriptions
 
-
+when solved UPDATE test.54
 
 
 2026.01.11 (SOLVED)

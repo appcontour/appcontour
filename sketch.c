@@ -616,6 +616,68 @@ compat_canonify (struct sketch *sketch)
 }
 
 /*
+ * canonify up to left-right, to front-back and to evert
+ */
+
+struct sketch *
+canonify_uptoleftright (struct sketch *sketch)
+{
+  extern struct global_data globals;
+  struct sketch *champion, *candidate;
+
+  if (sketch->isempty) return (sketch);
+
+  candidate = dupsketch (sketch);
+  leftright (candidate);
+  postprocesssketch (candidate);
+  computefvalue (candidate, candidate->regions, globals.finfinity);
+  champion = canonify_uptofrontback (sketch);
+  candidate = canonify_uptofrontback (candidate);
+  if (sketchcmp (champion, candidate) > 0)
+  {
+    freesketch (champion);
+    champion = candidate;
+    candidate = 0;
+  } else {
+    freesketch (candidate);
+    candidate = 0;
+  }
+
+  return (champion);
+}
+
+/*
+ * canonify up to front-back and to evert
+ */
+
+struct sketch *
+canonify_uptofrontback (struct sketch *sketch)
+{
+  extern struct global_data globals;
+  struct sketch *champion, *candidate;
+
+  if (sketch->isempty) return (sketch);
+
+  candidate = dupsketch (sketch);
+  frontback (candidate);
+  postprocesssketch (candidate);
+  computefvalue (candidate, candidate->regions, globals.finfinity);
+  champion = canonify_uptoevert (sketch);
+  candidate = canonify_uptoevert (candidate);
+  if (sketchcmp (champion, candidate) > 0)
+  {
+    freesketch (champion);
+    champion = candidate;
+    candidate = 0;
+  } else {
+    freesketch (candidate);
+    candidate = 0;
+  }
+
+  return (champion);
+}
+
+/*
  * canonify also up to everting with respect to regions with f=0
  */
 

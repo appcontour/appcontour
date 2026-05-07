@@ -89,7 +89,7 @@ main (int argc, char *argv[])
   globals.focus_on_fundamental = globals.principal = globals.factorideal = globals.internalcheck = 0;
   globals.abelianize = globals.experimental = 0;
   globals.knotname_fallback = 1;
-  globals.loopcc = globals.uptoevert = 0;
+  globals.loopcc = globals.uptoevert = globals.uptofrontback = globals.uptoleftright = 0;
   globals.numexcluded = 0;
   globals.ccemb = globals.cc1 = globals.cc2 = globals.choice = -1;
   globals.twists = 0;
@@ -102,8 +102,16 @@ main (int argc, char *argv[])
     globals.knotname_fallback = 0;
   for (i = 1; i < argc; i++)
   {
-    if (strcmp(argv[i],"--uptoevert") == 0)
+    if (strcmp(argv[i],"--uptofrontback") == 0)
     {
+      globals.uptofrontback++;
+      globals.uptoevert++;
+      continue;
+    }
+    if (strcmp(argv[i],"--uptoleftright") == 0)
+    {
+      globals.uptoleftright++;
+      globals.uptofrontback++;
       globals.uptoevert++;
       continue;
     }
@@ -532,6 +540,8 @@ main (int argc, char *argv[])
       printf ("    at least reduce the value of 'choice'\n");
       printf ("  canonifyuptoih: convert to embedding and canonify it up to possible IH moves\n");
       printf ("    this is done using canonification of apparent contours up to choice of external region\n");
+      printf ("    with option '--uptofrontback' canonify also with respect to front-back simmetry\n");
+      printf ("    with option '--uptoleftright' canonify also with respect to front-back and left-right simmetries\n");
       printf ("  specific options: --choice <n>\n");
       printf ("    force the value of <n> in order to select the overpasses at crossings\n");
       printf ("    <n> is interpreted as a binary number, each digit is associated to a crossing,\n");
@@ -549,6 +559,8 @@ main (int argc, char *argv[])
       printf ("  --M2: use Macaulay2 input syntax for Alexander polynomials/ideals\n");
       printf ("  --nocanonify: do not canonify region description before printing\n");
       printf ("  --uptoevert: canonify app. contour up to the choice of external region (with \"canonify\" command\n");
+      printf ("  --uptofrontback: as above but also with respect to front-back simmetry\n");
+      printf ("  --uptoleftright: as above but also with respect to front-back and left-right simmetry\n");
       printf ("  --oldcanonify: use the old (version <= 1.3.0) canonification procedure\n");
       printf ("  --dontrenumber: do not renumber regions and arcs after giovecanonify\n");
       printf ("  --transfer_islands|--ti <int_coded_flags>: information on island\n");
@@ -1237,7 +1249,9 @@ main (int argc, char *argv[])
     case ACTION_CANONIFY:
     if ((sketch = readcontour (infile)) == 0) exit (14);
     if (globals.uptoevert == 0) canonify (sketch);
-     else sketch = canonify_uptoevert (sketch);
+      else if (globals.uptofrontback == 0) sketch = canonify_uptoevert (sketch);
+      else if (globals.uptoleftright == 0) sketch = canonify_uptoleftright (sketch); // implies also uptoevert
+      else sketch = canonify_uptoleftright (sketch);  // implies uptofrontback and uptoevert
     printsketch (sketch);
     break;
 
@@ -1752,7 +1766,11 @@ main (int argc, char *argv[])
 
     case ACTION_CANONIFYUPTOIH:
     if ((sketch = readcontour (infile)) == 0) exit (14);
-    sketch = canonify_uptoevert (sketch);
+
+    if (globals.uptoleftright) sketch = canonify_uptoleftright (sketch);
+    else if (globals.uptofrontback) sketch = canonify_uptofrontback (sketch);
+    else sketch = canonify_uptoevert (sketch);
+
     if (sketch->isempty)
     {
       fprintf (stderr, "Cannot compute embedding associated to EMPTY contour\n");

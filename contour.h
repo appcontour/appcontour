@@ -91,6 +91,8 @@
 
 struct global_data {
   int uptoevert;
+  int uptofrontback;
+  int uptoleftright;
   int dorecomputef;
   int doretagregions;
   int simplifypresentation;
@@ -384,6 +386,8 @@ struct arc *reorderbytags (struct arc *r);
 
 void canonify (struct sketch *s);
 struct sketch *canonify_uptoevert (struct sketch *s);
+struct sketch *canonify_uptofrontback (struct sketch *s);
+struct sketch *canonify_uptoleftright (struct sketch *s);
 void oldcanonify (struct sketch *s);
 void compat_canonify (struct sketch *s);
 void canonifyarc (struct arc *arc);
