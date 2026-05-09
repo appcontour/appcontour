@@ -743,6 +743,7 @@ canonify_uptoevert (struct sketch *sketch)
     candidate = dupsketch (sketch);
     changeextregion (candidate, r->tag);
     postprocesssketch (candidate);
+    computefvalue (candidate, candidate->regions, globals.finfinity);
     canonify (candidate);
     if (champion == 0) champion = candidate;
      else {
@@ -759,7 +760,6 @@ canonify_uptoevert (struct sketch *sketch)
   }
 
   freesketch (sketch);
-  computefvalue (champion, champion->regions, globals.finfinity);
 
   return (champion);
 }

@@ -102,6 +102,11 @@ main (int argc, char *argv[])
     globals.knotname_fallback = 0;
   for (i = 1; i < argc; i++)
   {
+    if (strcmp(argv[i],"--uptoevert") == 0)
+    {
+      globals.uptoevert++;
+      continue;
+    }
     if (strcmp(argv[i],"--uptofrontback") == 0)
     {
       globals.uptofrontback++;
@@ -1250,7 +1255,7 @@ main (int argc, char *argv[])
     if ((sketch = readcontour (infile)) == 0) exit (14);
     if (globals.uptoevert == 0) canonify (sketch);
       else if (globals.uptofrontback == 0) sketch = canonify_uptoevert (sketch);
-      else if (globals.uptoleftright == 0) sketch = canonify_uptoleftright (sketch); // implies also uptoevert
+      else if (globals.uptoleftright == 0) sketch = canonify_uptofrontback (sketch); // implies also uptoevert
       else sketch = canonify_uptoleftright (sketch);  // implies uptofrontback and uptoevert
     printsketch (sketch);
     break;

@@ -1,9 +1,3 @@
-2026.05.07
-command canonifyuptoih with option '--frontback' should give the same (canonical) result
-for both examples/graphs/hG2_1* appcontour descriptions
-
-when solved UPDATE test.54
-
 
 2026.01.11 (SOLVED)
 When constructing the sum between two multiconnected objects, options --summand1cc and
