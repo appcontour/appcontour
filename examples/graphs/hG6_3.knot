@@ -1,6 +1,6 @@
 #
 # entry 6_3 of handcuffs table of Moriuchi
-# this canonifies (contour canonifyuptoih --leftright) to the
+# this canonifies (contour canonifyuptoih --uptoleftright) to the
 # same result as 6+17_8.embedding in the "bigtable"
 knot {
   ^ ^  ;

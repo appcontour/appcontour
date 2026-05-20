@@ -1,0 +1,29 @@
+#testname:some graphs from Moriuchi
+#
+
+#
+# embedding 6+65_12.embedding
+#
+emb="embedding:12 { 0: (5, 6, 7), 1: (3, 7, 4), 2: (4, 4, 6, 6), 3: (1, 4, 5, 7), 4: (1, 2, 2, 3), 5: (0, 7, 3, 6), 6: (0, 5, 2, 2), 7: (0, 1, 3, 5) }"
+./contour canonifyuptoih --uptoleftright examples/graphs/hG6_2.knot
+echo "$emb" | ./contour canonifyuptoih --uptoleftright
+
+#
+# embedding 6+17_8.embedding
+#
+emb="embedding:8 { 0: (5, 6, 7), 1: (4, 7, 6), 2: (3, 3, 7, 7), 3: (2, 2, 4, 5), 4: (1, 6, 5, 3), 5: (0, 3, 4, 6), 6: (0, 5, 4, 1), 7: (0, 1, 2, 2) }"
+./contour canonifyuptoih --uptoleftright examples/graphs/hG6_3.knot
+echo "$emb" | ./contour canonifyuptoih --uptoleftright
+
+#
+# embedding 6+57_19
+#
+emb="embedding:19 { 0: (5, 6, 7), 1: (3, 7, 4), 2: (4, 6, 6, 5), 3: (1, 4, 5, 5), 4: (1, 7, 2, 3), 5: (0, 3, 3, 2), 6: (0, 2, 2, 7), 7: (0, 6, 4, 1) }"
+./contour canonifyuptoih --uptoleftright examples/graphs/hG6_4.knot
+echo "$emb" | ./contour canonifyuptoih --uptoleftright
+
+#embedding 6+150_23.embedding
+emb="embedding:23 { 0: (1, 6, 7), 1: (0, 4, 5), 2: (6, 6, 7, 7), 3: (4, 4, 5, 5), 4: (1, 7, 3, 3), 5: (1, 3, 3, 6), 6: (0, 5, 2, 2), 7: (0, 2, 2, 4) }"
+./contour canonifyuptoih --uptoleftright examples/graphs/hG6_6.knot
+echo "$emb" | ./contour canonifyuptoih --uptoleftright
+
