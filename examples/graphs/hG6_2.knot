@@ -1,5 +1,7 @@
 #
 # entry 6_2 of handcuffs table of Moriuchi
+# this canonifies (contour canonifyuptoih --leftright) to the
+# same result as 6+65_12.embedding in the "bigtable"
 #
 knot {
  ^ ^ ^ ^ ;
