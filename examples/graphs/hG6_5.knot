@@ -1,0 +1,14 @@
+#
+# entry 6_5 in Moriuchi's table of handcuff graphs
+#
+knot {
+ ^ ^ ;
+| x |;
+| x |;
+| x |;
+| x |;
+| x |;
+| x |;
+ y y ;
+  U  ;
+}

@@ -1,0 +1,12 @@
+#
+# entry 6_2 of handcuffs table of Moriuchi
+#
+knot {
+ ^ ^ ^ ^ ;
+| X X X |;
+|| U U |h;
+| |   x |;
+|   X  ||;
+ y    x |;
+   U   U ;
+}
