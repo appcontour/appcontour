@@ -1,0 +1,12 @@
+#
+# entry 4_1 of theta-graph table of Moriuchi
+#
+knot {
+  ^  ;
+|  h ;
+| h |;
+ X X ;
+| x |;
+| x |;
+ U U ;
+}
