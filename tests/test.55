@@ -31,3 +31,9 @@ emb="embedding:25 { 0: (1, 6, 7), 1: (0, 5, 4), 2: (3, 7, 7, 6), 3: (2, 4, 5, 5)
 ./contour canonifyuptoih --uptoleftright examples/graphs/hG6_9.knot
 echo "$emb" | ./contour canonifyuptoih --uptoleftright
 
+#embedding 7+20_20.embedding
+#
+emb="embedding:20 { 0: (6, 7, 8), 1: (5, 8, 7), 2: (4, 6, 8, 8), 3: (4, 5, 7, 6), 4: (2, 5, 3, 6), 5: (1, 7, 3, 4), 6: (0, 2, 4, 3), 7: (0, 3, 5, 1), 8: (0, 1, 2, 2) }"
+./contour canonifyuptoih --uptoleftright examples/graphs/hG7_1.knot
+echo "$emb" | ./contour canonifyuptoih --uptoleftright
+
