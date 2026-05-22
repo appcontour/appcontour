@@ -1,0 +1,14 @@
+#
+# entry 6_8 of handcuffs table of Moriuchi
+# XXX this canonifies (contour canonifyuptoih --uptoleftright) to the
+# XXX same result as 6+150_23.embedding in the "bigtable"
+knot {
+ ^ ^ ^ ^ ;
+| x x x |;
+|| U| x |;
+||   U ||;
+|   x   |;
+|   x   |;
+ y     y ;
+    U    ;
+}

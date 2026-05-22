@@ -1,0 +1,9 @@
+#
+# the trivial "theta-curve"
+#
+knot {
+  ^  ;
+|  h ;
+ y | ;
+  U  ;
+}

@@ -1,0 +1,9 @@
+#
+# trivial handcuff graph
+#
+knot {
+ ^ ;
+ y ;
+ h ;
+ U ;
+}
