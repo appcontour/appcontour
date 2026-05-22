@@ -1,0 +1,12 @@
+#
+# entry 5_2 of theta-curves table of Moriuchi
+# this canonifies (contour canonifyuptoih --uptoleftright) to the
+# same result as 5+13_10.embedding in the "bigtable"
+knot {
+ ^ ^ ^ ;
+| y X |;
+|  x x ;
+  X X |;
+ | U y ;
+   U   ;
+}
