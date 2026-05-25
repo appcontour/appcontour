@@ -16,9 +16,9 @@
 
 	"upto" canonification of apparent contours: it is now possible to canonify an apparent
 	contour up to:
-	(1) changing the "external" region among those with f=0 (uptoevert)
-	(2) front-back symmetry of the apparent contour (uptofrontback)
-	(3) left-right symmetry of the apparent contour (uptoleftright)
+	(1) changing the "external" region among those with f=0 (option --uptoevert)
+	(2) front-back symmetry of the apparent contour (--uptofrontback)
+	(3) left-right symmetry of the apparent contour (--uptoleftright)
 	Note that choice (3) implies choice (2) which in turn implies choice (1).
 
 	Canonification of embeddings up to IH moves.  This is done by using the canonification
