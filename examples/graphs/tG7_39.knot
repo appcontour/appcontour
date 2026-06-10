@@ -1,0 +1,12 @@
+#
+# entry 7_39 of theta-curves table of Moriuchi
+# equivalent to either HK5_2 or HK6_13 as a handlebody
+knot {
+ ^ ^ ^ ;
+| X X |;
+|| |h||;
+ x x|x ;
+||| y||;
+| X X |;
+ U U U ;
+}

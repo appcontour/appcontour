@@ -1,0 +1,10 @@
+#
+# entry 7_38 of theta-curves table of Moriuchi
+# equivalent to the trivial handlebody as a handlebody
+knot {
+ ^ ^ ^  ;
+| X X h ;
+ x x x |;
+| X X y ;
+ U U U  ;
+}
