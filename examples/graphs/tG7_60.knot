@@ -3,10 +3,10 @@
 #
 knot {
   ^   ^  ;
- |  x  | ;
+ |  X  | ;
 | | ^ | |;
-|  x x  |;
- X h h X ;
-| x U x |;
+|  X X  |;
+ x h h x ;
+| X U X |;
  U  U  U ;
 }
