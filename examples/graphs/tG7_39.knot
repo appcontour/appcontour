@@ -2,7 +2,10 @@
 # entry 7_39 of theta-curves table of Moriuchi
 # equivalent to either HK5_2 or HK6_13 as a handlebody
 # after an IH followed by Reidemeister V we obtain
-# embedding 6+150_23 in the bigtree
+# embedding 6+150_23 in the bigtree. This in turn
+# is nonminimal after an IH followed by moving a strand
+# from a triple node and finally a fork move.
+# Hence it is equivalent to HK5_2
 #
 knot {
  ^ ^ ^ ;
