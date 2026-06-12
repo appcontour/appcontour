@@ -1,0 +1,14 @@
+#
+# entry 7_24 of handcuffs table of Moriuchi
+# this is equivalent to HK4_1 as a handlebody knot
+knot {
+       ^    ;
+    h      |;
+| ^ ^ ^  | |;
+ X X X | | |;
+ X| U | X  |;
+ X  X  | | |;
+| U  U   | |;
+     y     |;
+        U   ;
+}
