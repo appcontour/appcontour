@@ -1,0 +1,15 @@
+#
+# entry 7_23 of handcuffs table of Moriuchi
+# this is equivalent to the trivial K0--K0 handlebody knot
+knot {
+         ^   ;
+       h     |;
+| ^  ^      ||;
+ X  X | ^ ^ ||;
+ X | | X X X |;
+| U  || U U ||;
+  X   |     ||;
+|   U       ||;
+      y      |;
+         U    ;
+}
