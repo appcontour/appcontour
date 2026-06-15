@@ -2060,6 +2060,17 @@ open_description_file (char *arg, int argnum)
           if (infile) return (infile);
           perror ("Cannot open corresponding handlebody-link file");
           exit (11);
+        case 'G':  // spatial graph: either tG<n>_<m> or hG<n>_<m>
+          strncpy (examplesfilename, EXAMPLES_DIR, MAXFILELENGTH);
+          strncat (examplesfilename, "/graphs/", MAXFILELENGTH);
+          strncat (examplesfilename, &arg[0], MAXFILELENGTH);
+          strncat (examplesfilename, ".knot", MAXFILELENGTH);
+          infile = fopen (examplesfilename, "r");
+          if (infile && quiet == 0) fprintf (stderr, "Reading from file %s\n", examplesfilename);
+          if (infile) return (infile);
+          perror ("Cannot open corresponding spatial graph file");
+          fprintf (stderr, "File: %s\n", examplesfilename);
+          exit (11);
       }
     }
   }
@@ -2140,6 +2151,16 @@ check_basic_knotname (char *arg)
           return (0);
 
         default:
+          return (0);
+      }
+      return (0);
+
+    case 't':
+    case 'h':
+      switch (arg[1])
+      {
+        case 'G':
+          if (isdigit (arg[2])) return ('G');
           return (0);
       }
       return (0);
