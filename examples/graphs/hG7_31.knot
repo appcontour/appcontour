@@ -1,0 +1,15 @@
+#
+# entry 7_31 of handcuffs table of Moriuchi
+# this is equivalent to HG6_12 as handlebody knot
+knot {
+        ^    ;
+     h      |;
+| ^  ^  ^ | |;
+ X X   X X  |;
+| U | | U | |;
+|    x    | |;
+  X     X   |;
+ |   U   |  |;
+      y     |;
+         U   ;
+}
