@@ -1,0 +1,16 @@
+#
+# entry 7_49 of theta-curves table of Moriuchi
+# equivalent to K0--K0 as a handlebody
+#
+knot {
+  ^  ;
+| ^ |;
+ X X ;
+| x |;
+| x |;
+|| h|;
+ X|X ;
+|y ||;
+| x |;
+ U U ;
+}
