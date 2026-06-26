@@ -1,0 +1,14 @@
+#this is 7_48 from Moriuchi's theta graph table
+
+knot {
+^^;
+|x|;
+||X;
+||h|;
+|x||;
+|x||;
+Xy|;
+||X;
+|x|;
+UU;
+}

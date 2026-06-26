@@ -1,0 +1,10 @@
+#this is 7_41 from Moriuchi's theta graph table
+
+knot {
+^^^;
+|XX|;
+xxx;
+|XX|;
+yUy;
+U;
+}
