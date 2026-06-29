@@ -83,6 +83,7 @@
 #define ACTION_HTYPE 75
 #define ACTION_GTYPE 76
 #define ACTION_CANONIFYUPTOIH 77
+#define ACTION_KNOT2FG 78
 
 #define ACTION_NEWFEATURE 999
 
@@ -476,6 +477,7 @@ char check_basic_knotname (char *param);
 /* knot2morse */
 int knot2morse (FILE *file);
 int any2morse (FILE *file);
+struct presentation *knot2fg (FILE *file);
 
 /* printmorse */
 void printmorse (struct sketch *sketch);

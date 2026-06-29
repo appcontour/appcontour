@@ -711,6 +711,7 @@ main (int argc, char *argv[])
     if (strcmp(argv[i],"canonifyuptoih") == 0) action = ACTION_CANONIFYUPTOIH;
     if (strcmp(argv[i],"giovecanonify") == 0) action = ACTION_GIOVECANONIFY;
     if (strcmp(argv[i],"knot2morse") == 0) action = ACTION_KNOT2MORSE;
+    if (strcmp(argv[i],"knot2fg") == 0) action = ACTION_KNOT2FG;
     if (strcmp(argv[i],"code") == 0) action = ACTION_CODE;
     if (strcmp(argv[i],"dtcode") == 0) action = ACTION_DTCODE;
     if (strcmp(argv[i],"rdtcode") == 0) action = ACTION_RDTCODE;
@@ -1793,6 +1794,13 @@ main (int argc, char *argv[])
 
     printembedding_canon (emb);
     freeembedding (emb);
+    break;
+
+    case ACTION_KNOT2FG:
+    p = knot2fg (infile);
+    if (globals.simplifypresentation) simplify_presentation (p);
+    print_presentation (p);
+    if (verbose) print_exponent_matrix (p);
     break;
 
     case ACTION_NEWFEATURE:
