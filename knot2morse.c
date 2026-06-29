@@ -593,9 +593,18 @@ knot_update_presentation (struct presentation *p, int k_event, int pos_event)
     break;
 
     case KNOT_COMMA:
+    elem = (struct presentationrule *) malloc (sizeof (struct presentationrule) + sizeof (int));
+    elem->length = 0;
+    elem->next = tail;
+    tail = elem;
+    break;
+
     case KNOT_QUOTE:
-printf ("evento %d non gestito\n", k_event);
-assert (false);
+    assert (tail);
+    elem = tail;
+    tail = tail->next;
+    elem->next = p->rules;
+    p->rules = elem;
     break;
 
     default:
