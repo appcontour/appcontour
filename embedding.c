@@ -3209,6 +3209,7 @@ struct embedding *ls2e_sanity_check (struct sketch *s);
 int ls2e_getadj3node (struct embedding *emb, int i, struct emb_node *node, int j, struct border *transbp);
 int ls2e_build3nodenet (struct embedding *emb, int ik);
 int ls2e_around3network (struct embedding *emb, int ik, int ikdir, int *iknpt, int *ikndirpt, int direction);
+int ls2e_fix_hopf (struct embedding *emb);
 
 static struct region **n2r = 0;
 static int *r2n = 0;
@@ -3365,9 +3366,61 @@ trysketch2embedding (struct sketch *s)
 //printembedding (emb);
 //printf ("Calling readembeddingpp from trysketch2embedding\n");
   readembeddingpp (emb);
+  ls2e_fix_hopf (emb);
   free (n2r);
   free (r2n);
   return (emb);
+}
+
+/*
+ * in case of a hopf link component or fake-hopf link component
+ * (fake-hopf: Reidemeister 2 move *allowed*)
+ * the readembeddingpp postprocess cannot reliably decide the overcrossing values
+ * we fix them here
+ */
+
+int
+ls2e_fix_hopf (struct embedding *emb)
+{
+  struct emb_node *node, *node2;
+  struct border *bp, *transbp, *bpacross;
+  int i, i2, depth;
+
+  for (i = emb->k; i < emb->k + emb->n; i++)
+  {
+    node = &(emb->nodes[i]);
+    assert (node->valency == 4);
+    i2 = node->ping[0];
+    if (i2 != node->ping[1]) continue;
+    if (i2 != node->ping[2]) continue;
+    if (i2 != node->ping[3]) continue;
+    if (i2 <= i) continue;  // This is a "figure eight" (==) or has already been considered
+    fprintf (stderr, "HOPF uncertainty detected, nodes: %d - %d, fixing!\n", i, i2);
+    bp = n2r[i]->border->sponda;
+    depth = bp->info->depths[0];
+
+    // enter the 'arc' region
+    transbp = gettransborder (bp);
+    assert (bp->info == transbp->info);
+    bpacross = transbp->next->next;
+    node2 = &(emb->nodes[i2]);
+    // set overcross at node2 to 'even' (bit = 0)
+    node2->overpassisodd = 0;
+    // clear corresponding bit of choice value
+    emb->choice &= ~(1<<(i2-emb->k));
+
+    if (depth != bpacross->info->depths[0])
+    {
+      node->overpassisodd = 0;
+      emb->choice &= ~(1<<(i-emb->k));
+      if (debug) printf ("This is a REAL Hopf\n");
+    } else {
+      node->overpassisodd = 1;
+      emb->choice |= (1<<(i-emb->k));
+      if (debug) printf ("This is a FAKE Hopf\n");
+    }
+  }
+  return (1);
 }
 
 /*
@@ -3725,7 +3778,8 @@ ls2e_adjust_cyclic_lists (struct embedding *emb)
     }
     if (minval == maxval)
     {
-      fprintf (stderr, "WARNING WARNING: Hopf or fake-Hopf link component, choice value can be wrong!\n");
+      // We take care of this in ls2e_fix_hopf!
+      //fprintf (stderr, "WARNING WARNING: Hopf or fake-Hopf link component, choice value can be wrong!\n");
       continue;
     }
     for (j = 0; j < 4; j++)

@@ -1,4 +1,5 @@
-2926.07.26 (embedding description of the Hopf link)
+2926.07.26 FIXED
+(embedding description of the Hopf link)
 The embedding description of the Hopf link is not rich enough to allow for
 an unambiguous indication of the overcrossings via the 'choice' value.
 The 'flattened' embedding (no overcrossing indication) is:
@@ -19,21 +20,21 @@ Free group of rank 2
 This seems ok, but if we ask for the embedding description of the modified we
 still get a choice value of 3 (there is a conversion to an apparent contour in between)
 
-$ contour embedding L2a1 -Q | contour --choice 2 -Q | contour embedding
+$ ./contour embedding L2a1 -Q | ./contour --choice 2 -Q | ./contour embedding
 embedding:3 { 0: (1, 1, 1, 1), 1: (0, 0, 0, 0) }
 
 The effect of this is that we lose the (conventional) distinction between the two
 values of 'choice' when converting from a (thin) apparent contour to an embedding,
 as an example the following leads to the wrong result:
 
-$ contour embedding L2a1 -Q | contour --choice 2 -Q | contour embedding | contour --out fg
+$ ./contour embedding L2a1 -Q | ./contour --choice 2 -Q | ./contour embedding | ./contour --out fg
 Finitely presented group with 2 generators
 <a,b; abAB>
 
 Placed a "WARNING WARNING" message for now in order to alert the user.
 
 
-2026.01.11 (SOLVED)
+2026.01.11 (FIXED)
 When constructing the sum between two multiconnected objects, options --summand1cc and
 --summand2cc are used to specify which (external) connected component should be used when
 performing the "sum".
