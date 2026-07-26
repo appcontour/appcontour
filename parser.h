@@ -52,6 +52,8 @@
 #define TOK_GAUSSCODE 50
 #define TOK_FPGROUPLIST 51
 #define TOK_EMBEDDING 52
+#define TOK_EVEN 53
+#define TOK_ODD 54
 
 #define TOK_ERROR  9999
 #define TOK_EOF    9990

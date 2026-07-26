@@ -471,6 +471,14 @@ printembedding (struct embedding *emb, int iscanon)
       printf ("%d", node->ping[s]);
     }
     printf (")");
+
+    if (debug)
+    {
+      for (s = 0; s < node->valency; s++)
+      {
+        printf ("\nn: %d pong[%d] = %d\n", i, s, node->pong[s]);
+      }
+    }
   }
   printf (" }\n");
 
@@ -1627,6 +1635,19 @@ readembedding (FILE *file)
     node->next = 0;
     tok = gettoken (file);
     assert (tok == TOK_COLON);
+
+    /*
+     * allow for the future possibility of having overpass indication
+     * given here before the left parenthesis
+     */
+
+    tok = gettoken (file);
+    if (tok == ISNUMBER || tok == TOK_EVEN || tok == TOK_ODD)
+    {
+      printf ("Local indication of overpass arc is not allowed yet!\n");
+      exit (13);
+    } else ungettoken (tok);
+
     assert (gettoken (file) == TOK_LPAREN);
 
     for (i = 0; i < 4; i++)
@@ -1709,6 +1730,10 @@ readembeddingpp (struct embedding *emb)
     }
     if (node->valency == 4)
     {
+      /*
+       * we would like to allow for a (fake) Hopf link component
+       */
+      // assert (node->ping[0] != node->ping[3]);
       node->overpassisodd = 0;
       if ((choice & 1) != 0) node->overpassisodd = 1;
       choice /= 2;
@@ -3209,6 +3234,7 @@ trysketch2embedding (struct sketch *s)
   n2r = (struct region **) malloc ((emb->k + emb->n)*sizeof(struct region *));
   r2n = (int *) malloc (s->regioncount*sizeof(int));
 
+  for (i = 0; i < s->regioncount; i++) r2n[i] = 0;
   i = kcount = 0;
   for (r = s->regions; r; r = r->next)
   {
@@ -3236,6 +3262,35 @@ trysketch2embedding (struct sketch *s)
         }
       }
     }
+    /*
+     * for regions corresponding to embedding regions we record
+     * the number of sides.
+     * if this is 2 then we have a bigon
+     * this info is not used at present, but it could be useful
+     * when trying to deal with the HOPF LINK overcrossing problem
+     */
+    if (r->f == 0)
+    {
+      border = r->border;
+      if (border->sponda == 0) border = border->next;
+      bp = border->sponda;
+      do {
+        r2n[r->tag]++;
+        bp = bp->next;
+      } while (bp != border->sponda);
+      assert (r2n[r->tag] >= 1);
+    }
+  }
+  if (debug)
+  {
+    for (r = s->regions; r; r = r->next)
+    {
+      printf ("r2n[%d] = %d (f=%d)\n", r->tag, r2n[r->tag],r->f);
+    }
+    for (i = 0; i < emb->k + emb->n; i++)
+    {
+      printf ("n2r[%d] = %d\n", i, n2r[i]->tag);
+    }
   }
   assert (kcount == emb->k);
 
@@ -3255,10 +3310,8 @@ trysketch2embedding (struct sketch *s)
 
   for (i = 0; i < emb->n; i++)
   {
-//printf ("node: %d\n", i + emb->k);
     node = &(emb->nodes[i + emb->k]);
     border = n2r[i+emb->k]->border;
-//printf ("regiontag: %d\n", border->region->tag);
     bp = border->sponda;
     bp = bp->next->next->next;
     transbp = gettransborder (bp);
@@ -3273,10 +3326,12 @@ trysketch2embedding (struct sketch *s)
       if (prevr != transbp->border->region) break;
       prevr = transbp->border->region;
     }
-    if (gettransborder(bp)->border->region == gettransborder(bp->next)->border->region &&
-        gettransborder(bp)->border->region == gettransborder(bp->next->next)->border->region)
+    if (j >= 4)
+    //if (gettransborder(bp)->border->region == gettransborder(bp->next)->border->region &&
+    //    gettransborder(bp)->border->region == gettransborder(bp->next->next)->border->region &&
+    //    gettransborder(bp)->border->region == gettransborder(bp->next->next->next)->border->region)
     {
-      if (verbose) printf ("Cannot deal with crossings connected more than twice with the same 3network\n");
+      if (verbose) printf ("Cannot deal with crossings connected four times with the same 3network\n");
       return (0);
     }
     if (bp->info->depths[0] == 0)
@@ -3308,10 +3363,10 @@ trysketch2embedding (struct sketch *s)
   ls2e_adjust_cyclic_lists (emb);
 
 //printembedding (emb);
-  free (n2r);
-  free (r2n);
 //printf ("Calling readembeddingpp from trysketch2embedding\n");
   readembeddingpp (emb);
+  free (n2r);
+  free (r2n);
   return (emb);
 }
 
@@ -3479,7 +3534,7 @@ ls2e_sanity_check (struct sketch *s)
 {
   struct embedding *emb;
   struct emb_node *node;
-  int i;
+  int i, j;
   int count, xcount = 0, kcount = 0, acount = 0, rcount = 0;
   int euler;
   struct region *r;
@@ -3638,6 +3693,10 @@ ls2e_sanity_check (struct sketch *s)
     node->id = i;
     node->valency = 4;
     if (i < emb->k) node->valency = 3;
+    for (j = 0; j < node->valency; j++)
+    {
+      node->ping[j] = node->pong[j] = -1;
+    }
   }
 
   if (verbose) printf ("number of arcs: %d\n", acount);
@@ -3664,7 +3723,11 @@ ls2e_adjust_cyclic_lists (struct embedding *emb)
       if (node->ping[j] > maxval) maxval = node->ping[j];
       pingsave[j] = node->ping[j];
     }
-    if (minval == maxval) continue;
+    if (minval == maxval)
+    {
+      fprintf (stderr, "WARNING WARNING: Hopf or fake-Hopf link component, choice value can be wrong!\n");
+      continue;
+    }
     for (j = 0; j < 4; j++)
     {
       if (node->ping[j] == minval && node->ping[(j+3)%4] != minval) {jrot = j; break;}
