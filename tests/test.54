@@ -7,6 +7,8 @@
 ./contour canonifyuptoih examples/graphs/hG2_1_then_IH.embedding --uptofrontback
 
 ./contour canonifyuptoih examples/graphs/tG7_21.knot
-./contour frontback examples/graphs/hG7_60.knot | ./contour canonifyuptoih
-./contour canonifyuptoih examples/graphs/tG7_21.knot --uptofrontback
-./contour canonifyuptoih examples/graphs/hG7_60.knot --uptofrontback
+./contour canonifyuptoih examples/graphs/tG7_60.knot
+./contour frontback examples/graphs/tG7_21.knot | ./contour canonifyuptoih
+./contour frontback examples/graphs/tG7_60.knot | ./contour canonifyuptoih
+./contour frontback examples/graphs/tG7_21.knot | ./contour canonifyuptoih --uptofrontback
+./contour frontback examples/graphs/tG7_60.knot | ./contour canonifyuptoih --uptofrontback

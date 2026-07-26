@@ -14,6 +14,7 @@ struct emb_node {
 struct embedding {
   int k;  /* number of trivalent nodes */
   int n;  /* number of crossings (four-valent nodes) */
+  int loops;  /* number of S^1 components of the embedding */
   int choice;
   int numhcomponents;  /* number of connected components that contain trivalent nodes */
   int numrings;

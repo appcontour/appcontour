@@ -452,6 +452,7 @@ printembedding (struct embedding *emb, int iscanon)
   struct emb_node *node;
   int i, k, s, ii, kk;
 
+  assert (emb->loops == 0);
   if (iscanon == 0)
   {
     start_comment ();
@@ -1568,6 +1569,7 @@ readembedding (FILE *file)
   emb = (struct embedding *) malloc (sizeof (struct embedding));
   emb->k = emb->n = 0;
   emb->choice = -1;
+  emb->loops = 0;
   emb->orientation = 0; //this is controlled by a sign or by commandline argument
   emb->connections = 0;
   emb->nodes = 0;
@@ -3622,6 +3624,7 @@ ls2e_sanity_check (struct sketch *s)
   emb = (struct embedding *) malloc (sizeof (struct embedding));
   emb->k = kcount;
   emb->n = xcount;
+  emb->loops = 0;
   emb->choice = 0;
   emb->orientation = 1;
   emb->connections = 0;
