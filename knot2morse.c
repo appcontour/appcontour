@@ -418,6 +418,7 @@ knot2fg (FILE *file)
 struct presentation *
 knot_update_presentation (struct presentation *p, int k_event, int pos_event)
 {
+  extern int debug;
   int num_head = 0;
   int num_tail = 0;
   int k, kk;
@@ -445,7 +446,8 @@ knot_update_presentation (struct presentation *p, int k_event, int pos_event)
   }
   for (word = tail; word; word = word->next) num_tail++;
 
-  //printf ("In update presentation, event: %d, pos: %d, words before: %d, after: %d\n", k_event, pos_event, num_head, num_tail);
+  if (debug >= 2) printf ("In update presentation, event: %d, pos: %d, words before: %d, after: %d\n",
+                          k_event, pos_event, num_head, num_tail);
 
   switch (k_event)
   {
