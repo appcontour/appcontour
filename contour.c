@@ -1400,6 +1400,12 @@ main (int argc, char *argv[])
           }
         }
 
+        if (loiv->next != 0)
+        {
+          printf ("Cannot compute Wirtinger presentation for links\n");
+          exit (14);
+        }
+        assert (loiv->next == 0);
         if (loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
         assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
         p = wirtingerfromloiv (loiv);

@@ -1,9 +1,6 @@
-2026.07.27 various conversion problems regarding embeddings
+2026.07.27 Cannot convert figure-eight embedding to thin apparent contour
 f8="embedding:0 {0: (0,0,0,0)}"
-./contour wirtinger L4a1
-./contour embedding L4a1 | ./contour wirtinger
-echo "$f8" | ./contour wirtinger
-./contour wirtinger L2a1
+echo "$f8" | ./contour info
 
 
 

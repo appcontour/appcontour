@@ -788,6 +788,12 @@ wirtingerfromembedding (struct embedding *emb)
     if (debug) printf ("This is a standard knot/link, converting to gausscode\n");
     gaussloiv = embeddingtoloiv (emb);
     if (debug) printloiv (gaussloiv);
+    if (gaussloiv->next != 0)
+    {
+      printf ("Cannot compute Wirtinger presentation of links (embedding case)\n");
+      freeloiv (gaussloiv);
+      return (0);
+    }
     freeembedding (emb);
     dtloiv = gausscode2dtcode (gaussloiv);
     if (debug) printloiv (dtloiv);
