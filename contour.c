@@ -1383,6 +1383,23 @@ main (int argc, char *argv[])
       case TOK_KNOTSCAPE:
         ungettoken (tok);
         loiv = dtorgausscodefromfile (infile);
+
+/*
+ * added 2026.07.27 to allow for description via gausscode.
+ * However it seems that Wirtinger only works for knots, so
+ * a check should be done here
+ */
+
+        if (loiv->type == LOIV_ISGAUSSCODE || loiv->type == LOIV_ISRGAUSSCODE)
+        {
+          newloiv = gausscode2dtcode (loiv);
+          if (newloiv)
+          {
+            freeloiv (loiv);
+            loiv = newloiv;
+          }
+        }
+
         if (loiv->type == LOIV_ISDTCODE) realize_loiv (loiv);
         assert (loiv->type == LOIV_ISDTCODE || loiv->type == LOIV_ISRDTCODE);
         p = wirtingerfromloiv (loiv);
