@@ -165,6 +165,9 @@ readgausscodeloiv (struct vecofintlist *loiv)
   assert (loiv->next == 0);  /* we do not do links for the moment */
 
   gauss2dt_knot (loiv, loiv->vec, loiv->handedness);
+  /*
+   * the result is actually a dtcode with a double-length vector giving the involution
+   */
 
   sketch = realize_dtcode (loiv->len/2, loiv->vec, loiv->handedness);
   freeloiv (loiv);
@@ -805,7 +808,7 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
   numlabels = 2*numnodes;
   numregions = 2 + numlabels - numnodes;
 
-  assert (numnodes >= 2);
+  //assert (numnodes >= 2);
 
   dt_involution = (int *) malloc (numlabels*(sizeof (int)));
   dt_realization = (int *) malloc (numlabels*(sizeof (int)));

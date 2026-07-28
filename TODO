@@ -1,3 +1,14 @@
+12. Allow for 'tight loops' when converting from embedding:
+f8="embedding:0 {0: (0,0,0,0)}"
+echo "$f8" | ./contour info
+
+
+11. Allow for special gauss codes:
+- empty diagram: gausscode {}
+- unknot: gausscode {{}}
+- split links, e.g. gausscode {{}{}}
+
+
 10. Add orientation info in embedding input syntax; add overpass info (even or odd)
 in input syntax per each node (e.g. a minus sign like "-1: (<a>, <b>, <c>, <d>),"
 

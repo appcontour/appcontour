@@ -35,6 +35,8 @@ embedding2sketch (struct embedding *emb)
   int *nodemark;
   int arcid, nodenum;
 
+  assert (emb->loops == 0);
+
   if (emb->k == 0)
   {
     if (debug) printf ("This is a standard knot/link, converting to gausscode\n");
@@ -60,6 +62,7 @@ embedding2sketch (struct embedding *emb)
    * closed arcs (homeomorphic to an S^1), this can happen when there is a region
    * in the region description that is bounded solely by tri-valent vertices.
    *
+   * A limit example is the one-sum with an S^1
    */
     
   found = 0;
@@ -452,7 +455,6 @@ printembedding (struct embedding *emb, int iscanon)
   struct emb_node *node;
   int i, k, s, ii, kk;
 
-  assert (emb->loops == 0);
   if (iscanon == 0)
   {
     start_comment ();
@@ -480,6 +482,7 @@ printembedding (struct embedding *emb, int iscanon)
       }
     }
   }
+  if (emb->loops != 0) printf (" +%d", emb->loops);
   printf (" }\n");
 
   if (verbose && emb->k > 0)
@@ -554,6 +557,7 @@ embedding2dual (struct embedding *emb)
   struct dualembedding *dual;
   struct dual_region *region, *prevregion, *adjregion;
 
+  assert (emb->loops == 0);
   dual = (struct dualembedding *) malloc (sizeof (struct dualembedding));
 
   assert (emb->k % 2 == 0);
@@ -1690,6 +1694,15 @@ readembedding (FILE *file)
       else emb->nodes = node;
 
     tok = gettoken (file);
+
+    if (tok == TOK_PLUS)
+    {
+      tok = gettoken (file);
+      assert (tok == ISNUMBER);
+      emb->loops += gettokennumber ();
+      tok = gettoken (file);
+    }
+
     if (tok == TOK_RBRACE) break;
     assert (tok == TOK_COMMA);
   }
@@ -1711,6 +1724,7 @@ readembedding (FILE *file)
   if (emb->choice < 0 && choice_colon >= 0) emb->choice = choice_colon;
   if (emb->choice < 0 && choice_each >= 0) emb->choice = choice_each;
 
+  if (emb->k + emb->n == 0) ismodern++;
   if (emb->choice < 0)
   {
     if ((ismodern == 0) && !quiet) printf ("'choice' value not given, assuming zero\n");
@@ -3315,6 +3329,7 @@ trysketch2embedding (struct sketch *s)
      * if this is 2 then we have a bigon
      * this info is not used at present, but it could be useful
      * when trying to deal with the HOPF LINK overcrossing problem
+     * [UPDATE: actually we do that as a final postprocess]
      */
     if (r->f == 0)
     {
