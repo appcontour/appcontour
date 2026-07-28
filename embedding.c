@@ -1576,7 +1576,11 @@ readembedding (FILE *file)
 {
   struct embedding *emb;
   struct emb_node *node, *prevnode, *nodesvec;
-  int i, tok, count;
+  int i, tok, count, bit;
+  int choice_colon = -1;
+  int choice_each = 0;
+  int ismodern = 0;
+  int bitpos = 0;
 
   //int node_id, node_id2, tnode_id, tnode_pt;
 
@@ -1593,20 +1597,9 @@ readembedding (FILE *file)
   {
     tok = gettoken (file);
     assert (tok == ISNUMBER);
-    emb->choice = gettokennumber ();
+    choice_colon = gettokennumber ();
+    //emb->choice = gettokennumber ();
   } else ungettoken (tok);
-
-  if (emb->choice >= 0 && globals.choice >= 0 && !quiet)
-  {
-    printf ("Value of 'choice' given via '--choice 0x%x' option takes precedence on the value 0x%x indicated in", globals.choice, emb->choice);
-    printf (" the embedding:0x%x description\n", emb->choice);
-  }
-  if (globals.choice >= 0) emb->choice = globals.choice;
-  if (emb->choice < 0)
-  {
-    if (!quiet) printf ("'choice' value not given, assuming zero\n");
-    emb->choice = 0;
-  }
 
   tok = gettoken (file);
   if (tok == TOK_MINUS || tok == TOK_PLUS)
@@ -1648,10 +1641,28 @@ readembedding (FILE *file)
      */
 
     tok = gettoken (file);
+    bit = 0;
     if (tok == ISNUMBER || tok == TOK_EVEN || tok == TOK_ODD)
     {
-      printf ("Local indication of overpass arc is not allowed yet!\n");
-      exit (13);
+      ismodern++;
+      switch (tok)
+      {
+        case TOK_EVEN:
+          bit = 0;
+          break;
+
+        case TOK_ODD:
+          bit = 1;
+          break;
+
+        case ISNUMBER:
+          bit = gettokennumber ();
+          if (bit < 0) bit = -bit;
+          bit = bit % 2;
+          break;
+      }
+      assert (bit == 0 || bit == 1);
+
     } else ungettoken (tok);
 
     assert (gettoken (file) == TOK_LPAREN);
@@ -1663,18 +1674,47 @@ readembedding (FILE *file)
       node->valency++;
       tok = gettoken (file);
       if (tok == TOK_RPAREN) break;
-      assert (tok == TOK_COMMA);
+      if (tok != TOK_COMMA) {ungettoken (tok); ismodern++;}
+      //assert (tok == TOK_COMMA);
     }
 
     assert (node->valency == 3 || node->valency == 4);
     if (node->valency == 3) emb->k++;
-    if (node->valency == 4) emb->n++;
+    if (node->valency == 4)
+    {
+      emb->n++;
+      choice_each |= (bit << bitpos);
+      bitpos++;
+    }
     if (prevnode) prevnode->next = node;
       else emb->nodes = node;
 
     tok = gettoken (file);
     if (tok == TOK_RBRACE) break;
     assert (tok == TOK_COMMA);
+  }
+
+  if (ismodern == 0) choice_each = -1;
+  if (globals.choice >= 0 && (choice_colon >= 0 || choice_each >= 0) && !quiet)
+  {
+    printf ("Value of 'choice' given via '--choice 0x%x' option takes precedence over ", globals.choice);
+    if (choice_colon >= 0) printf ("the value 0x%x indicated via 'embedding:0x%x'", choice_colon, choice_colon);
+    if (choice_colon >= 0 && choice_each >= 0) printf (" and ");
+    if (choice_each >= 0) printf ("the value 0x%x given locally at each crossing\n", choice_each);
+  }
+  if (globals.choice < 0 && choice_colon >= 0 && choice_each >= 0 && !quiet)
+  {
+    printf ("Value of 'choice' indicated via 'embedding:0x%x' takes precedence over ", choice_colon);
+    if (choice_each >= 0) printf ("the value 0x%x given locally at each crossing\n", choice_each);
+  }
+  if (globals.choice >= 0) emb->choice = globals.choice;
+  if (emb->choice < 0 && choice_colon >= 0) emb->choice = choice_colon;
+  if (emb->choice < 0 && choice_each >= 0) emb->choice = choice_each;
+
+  if (emb->choice < 0)
+  {
+    if ((ismodern == 0) && !quiet) printf ("'choice' value not given, assuming zero\n");
+    emb->choice = 0;
   }
 
   /* move each node data into a single vector for easier referencing */
