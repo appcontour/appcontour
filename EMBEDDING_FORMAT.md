@@ -103,3 +103,30 @@ involves the second and fourth entry in the cyclic list or globally using the `c
 The commas in the cyclic lists can be omitted.
 
 The `choice` value can be overridden with the `appcontour` option `--choice <value>`
+
+## The Hopf link conundrum
+
+There is a situation where the overpass indication at each crossing is ambiguous.  This is exemplified in the following
+example (the Hopf link)
+
+```text
+embedding {0 : (1 1 1 1), 1: (0 0 0 0)}
+```
+
+Here there is no way to establish which half-arc starts the cyclic list, resulting in uncertainty regarding the
+overpass choice at the two vertices. Upon analysis one realizes that there are exactly two possible interpretations
+(up to exchange of the two vertices): one gives the Hopf link description, the other is a situation where
+a direct Reidemeister II move can be performed leading to a split link.
+
+Conventionally we use a value of 0 or 3 for the choice value (both vertices are even or both are odd) to indicate
+the case of the Hopf link whereas the values 1 or 2 correspond to the `fake` Hopf choice of overcrossings.
+
+Note that this situation can appear inside a more complex embedding description when a split component of the
+embedding involving two vertices link to each other.
+
+## Presence of one or more `split` closed loops
+
+A `split` closed loop is a close S1 with no vertices. The number of such trivial components can be added to an
+embedding description via an additional `+<n>` before the closing brace, where <n> is the number of such trivial
+components.
+[Not implemented yet]
