@@ -418,6 +418,8 @@ int getarcinfo (int key, FILE *file,
 int adjustarcinfo (struct arc *narc, struct arc *upperarc, int incr, int oriup);
 int *concatenate_depths (struct arc *arcleft, struct arc *arcright);
 
+struct sketch *empty_sketch (void);
+struct sketch *unknot_sketch (void);
 int arcmult (struct arc *arc);
 int cc_arcmult (struct arc *arc, int ccid);
 void postprocesssketch (struct sketch *s);

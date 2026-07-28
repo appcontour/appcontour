@@ -4,8 +4,8 @@ echo "$f8" | ./contour info
 
 
 11. Allow for special gauss codes:
-- empty diagram: gausscode {}
-- unknot: gausscode {{}}
+- empty diagram: gausscode {} [DONE]
+- unknot: gausscode {{}} [DONE]
 - split links, e.g. gausscode {{}{}}
 
 

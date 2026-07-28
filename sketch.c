@@ -6,6 +6,100 @@
 extern int debug;
 extern int useoldcanonify;
 
+struct sketch *
+empty_sketch ()
+{
+  struct sketch *s;
+  struct region *extregion;
+
+  s = newsketch ();
+  extregion = newregion(s);
+  extregion->border = newborderlist (extregion);
+  s->regions = extregion;
+  s->isempty = 1;
+  s->huffman_labelling = 1;
+
+  assert (s->regions->next == 0);  //empty sketch
+
+  return (s);
+}
+
+struct sketch *
+unknot_sketch ()
+{
+  struct sketch *sketch;
+  struct region *r0, *r1, *r2;;
+  struct arc *arc1, *arc2;
+  struct borderlist *bl;
+  struct border *b;
+
+  sketch = newsketch ();
+  sketch->huffman_labelling = 1;
+
+  arc1 = newarc (sketch);
+  arc1->tag = 1;
+  arc1->depths = (int *) malloc (1 * sizeof (int));
+  arc1->depths[0] = 0;
+  arc1->depthsdim = 1;
+  arc1->cusps = 0;
+  arc1->endpoints = 0;
+
+  arc2 = newarc (sketch);
+  arc2->tag = 2;
+  arc2->depths = (int *) malloc (1 * sizeof (int));
+  arc2->depths[0] = 0;
+  arc2->depthsdim = 1;
+  arc2->cusps = 0;
+  arc2->endpoints = 0;
+
+  sketch->arcs = arc1;
+  arc1->next = arc2;
+  arc2->next = 0;
+
+  r0 = newregion (sketch);
+  r0->tag = 0;
+  r0->border = newborderlist (r0);
+  bl = newborderlist_tail (r0);
+  b = newborder (bl);
+  bl->sponda = b;
+  b->next = b;
+  b->orientation = -1;
+  b->info = arc1;
+
+  r1 = newregion (sketch);
+  r1->tag = 1;
+  bl = newborderlist_tail (r1);
+  b = newborder (bl);
+  bl->sponda = b;
+  b->next = b;
+  b->orientation = -1;
+  b->info = arc2;
+
+  r2 = newregion (sketch);
+  r2->tag = 2;
+  bl = newborderlist (r2);
+  b = newborder (bl);
+  bl->sponda = b;
+  b->next = b;
+  b->orientation = 1;
+  b->info = arc1;
+  bl = newborderlist_tail (r2);
+  b = newborder (bl);
+  bl->sponda = b;
+  b->next = b;
+  b->orientation = 1;
+  b->info = arc2;
+
+  sketch->regions = r0;
+  r0->next = r1;
+  r1->next = r2;
+  r2->next = 0;
+
+  postprocesssketch (sketch);
+
+  return (sketch);
+}
+
 int
 arcmult (struct arc *arc)
 {

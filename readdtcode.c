@@ -116,6 +116,8 @@ readgausscodeloiv (struct vecofintlist *loiv)
    * read gauss code
    */
 
+  if (loiv == 0) return empty_sketch ();
+
   assert (loiv->type == LOIV_ISGAUSSCODE);
   if (loiv->next)
   {
@@ -344,6 +346,14 @@ readvecofintlist (FILE *file, int type)
     return (0);
   }
   tok2 = gettoken (file);
+  //if (tok == TOK_LBRACE && tok2 == TOK_VOID && type == LOIV_ISGAUSSCODE)
+  if (tok == TOK_LBRACE && tok2 == TOK_VOID)
+  {
+    tok2 = gettoken (file);
+    if (tok2 != TOK_RBRACE) fprintf (stderr, "Error: right brace expected\n");
+    return (0);
+  }
+
   if (tok2 != TOK_LBRACE && tok2 != TOK_LBRACKET) dressed = 0;
   ungettoken (tok2);
 
@@ -1099,6 +1109,8 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
   int i;
   int sign, label;
   int freegregionsign = 0;
+
+  if (lnumnodes == 0) return (unknot_sketch ());
 
   if (gregionsign == 0)
   {
