@@ -856,11 +856,13 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
       printf ("This is not an involution\n");
       exit (7);
     }
+/* Detection of tight loop postponed!
     if (abs(i - dt_involution[i]) <= 1)
     {
       printf ("No tight loop allowed: %d %d\n", i + 1, dt_involution[i] + 1);
       exit (8);
     }
+ */
   }
 
   /* this function wants a zero-based vector */
@@ -907,6 +909,7 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
     start_comment (); printf ("the intersecting path is oriented right-to-left\n");
     start_comment (); printf ("you can force this, and avoid this warning, with the option --right\n");
     start_comment (); printf ("or reverse the orientation with the option --left\n");
+    start_comment (); printf ("Alternatively you can force the orientation on a node by using the '>' or '<' suffix\n");
   }
   if (agree == 0)
   {
@@ -1123,7 +1126,9 @@ realize_dtcode (int lnumnodes, int *vecofint, int *gregionsign)
 
   numnodes = lnumnodes;
   numlabels = 2*numnodes;
+/* In hope of being able to cope with the single-node case
   assert (numnodes >= 2);
+ */
 
   dt_involution = (int *) malloc (numlabels*(sizeof (int)));
   dtsign = (int *) malloc (numlabels*(sizeof (int)));
@@ -2361,8 +2366,13 @@ inherit (int startlabel)
    */
 
   endlabel = dt_involution[startlabel];
-  assert (nextlabel(startlabel) != dt_involution[startlabel]);  /* no tight loops allowed */
-  assert (nextlabel(endlabel) != dt_involution[endlabel]);  /* no tight loops allowed */
+  if (nextlabel(startlabel) == dt_involution[startlabel] || nextlabel(endlabel) == dt_involution[endlabel])
+  {
+    printf ("FATAL: no tight loop allowed: label %d or %d\n", startlabel + 1, endlabel + 1);
+    exit (55);
+  }
+  //assert (nextlabel(startlabel) != dt_involution[startlabel]);  /* no tight loops allowed */
+  //assert (nextlabel(endlabel) != dt_involution[endlabel]);  /* no tight loops allowed */
 
   /* now find where the path continuing from dt_involution[startlabel] + 1
    * first intersects the loop
