@@ -420,6 +420,7 @@ int *concatenate_depths (struct arc *arcleft, struct arc *arcright);
 
 struct sketch *empty_sketch (void);
 struct sketch *unknot_sketch (void);
+struct sketch *unknots_sketch (int n);
 int arcmult (struct arc *arc);
 int cc_arcmult (struct arc *arc, int ccid);
 void postprocesssketch (struct sketch *s);

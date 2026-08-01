@@ -1828,8 +1828,14 @@ main (int argc, char *argv[])
     break;
 
     case ACTION_NEWFEATURE:
-    printf ("Sorry, there is no new feature to experiment with...\n");
-    exit (14);
+    //printf ("Sorry, there is no new feature to experiment with...\n");
+    if ((sketch = readcontour (infile)) == 0) exit (14);
+
+    s2 = unknots_sketch(3);
+    res = sketch_union (sketch, s2);
+    assert (res == 1);
+    printsketch (sketch);
+    //exit (14);
     break;
 
     default:
@@ -1864,7 +1870,8 @@ readcontour (FILE *file)
   {
     emb = readembedding (file);
     if (emb == 0) return (0);
-    return (embedding2sketch (emb));
+    s = embedding2sketch (emb);
+    return (s);
   }
   if (tok == TOK_KNOTSCAPE)
   {

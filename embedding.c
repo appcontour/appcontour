@@ -20,9 +20,9 @@ int print_sketch_ra3 (int only3, int count, struct embedding *emb, struct sketch
 struct sketch *
 embedding2sketch (struct embedding *emb)
 {
-  int i, j, found;
+  int i, j, found, res, nloops;
   struct emb_node *node;
-  struct sketch *sketch;
+  struct sketch *sketch, *s_loops;
   struct arc *arc;
   struct region *region;
   struct borderlist *bl;
@@ -35,16 +35,24 @@ embedding2sketch (struct embedding *emb)
   int *nodemark;
   int arcid, nodenum;
 
-  assert (emb->loops == 0);
-
+  nloops = emb->loops;
   if (emb->k == 0)
   {
+    assert (nloops >= 0);
     if (debug) printf ("This is a standard knot/link, converting to gausscode\n");
     loiv = embeddingtoloiv (emb);
     if (debug) printloiv (loiv);
-    freeembedding (emb);
+    freeembedding (emb); emb = 0;
     sketch = readgausscodeloiv (loiv);
     // freeloiv (loiv); // loiv is freed by readgausscodeloiv!
+
+    if (nloops > 0)
+    {
+      s_loops = unknots_sketch (nloops);
+      res = sketch_union (sketch, s_loops);
+      assert (res == 1);
+      postprocesssketch (sketch);
+    }
     return (sketch);
   }
 
@@ -304,6 +312,17 @@ embedding2sketch (struct embedding *emb)
 
   freedualembedding (dual);
   postprocesssketch (sketch);
+
+  assert (emb->loops >= 0);
+
+  if (nloops > 0)
+  {
+    s_loops = unknots_sketch (nloops);
+    res = sketch_union (sketch, s_loops);
+    assert (res == 1);
+    postprocesssketch (sketch);
+  }
+
   return (sketch);
 }
 
@@ -1628,7 +1647,7 @@ readembedding (FILE *file)
   while (1)
   {
     tok = gettoken (file);
-    if (tok == TOK_RBRACE) break;
+    if (tok == TOK_RBRACE || tok == TOK_PLUS) break;
     assert (tok == ISNUMBER);
     prevnode = node;
     node = (struct emb_node *) malloc (sizeof (struct emb_node));
@@ -1695,17 +1714,18 @@ readembedding (FILE *file)
 
     tok = gettoken (file);
 
-    if (tok == TOK_PLUS)
-    {
-      tok = gettoken (file);
-      assert (tok == ISNUMBER);
-      emb->loops += gettokennumber ();
-      tok = gettoken (file);
-    }
-
-    if (tok == TOK_RBRACE) break;
+    if (tok == TOK_RBRACE || tok == TOK_PLUS) break;
     assert (tok == TOK_COMMA);
   }
+
+  if (tok == TOK_PLUS)
+  {
+    tok = gettoken (file);
+    assert (tok == ISNUMBER);
+    emb->loops += gettokennumber ();
+    tok = gettoken (file);
+  }
+  assert (tok == TOK_RBRACE);
 
   if (ismodern == 0) choice_each = -1;
   if (globals.choice >= 0 && (choice_colon >= 0 || choice_each >= 0) && !quiet)

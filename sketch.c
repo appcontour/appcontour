@@ -18,6 +18,7 @@ empty_sketch ()
   s->regions = extregion;
   s->isempty = 1;
   s->huffman_labelling = 1;
+  s->extregion = extregion;
 
   assert (s->regions->next == 0);  //empty sketch
 
@@ -98,6 +99,23 @@ unknot_sketch ()
   postprocesssketch (sketch);
 
   return (sketch);
+}
+
+struct sketch *
+unknots_sketch (int n)
+{
+  int res;
+  struct sketch *s1, *s2;
+
+  assert (n >= 0);
+  if (n == 0) return (empty_sketch ());
+  if (n == 1) return (unknot_sketch ());
+  s1 = unknots_sketch (n/2);
+  s2 = unknots_sketch (n - n/2);
+
+  res = sketch_union (s1, s2);
+  assert (res == 1);
+  return (s1);
 }
 
 int

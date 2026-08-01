@@ -34,6 +34,8 @@ sketch_union (struct sketch *s1, struct sketch *s2)
     fprintf (stderr, "Both or none contours must have Huffan labelling\n");
     return (0);
   }
+  assert (s1->extregion);
+  assert (s1->extregion->border);
   assert (s1->extregion->border->sponda == 0);
   assert (s2->extregion->border->sponda == 0);
   if (s2->regions != s2->extregion)
@@ -62,14 +64,18 @@ sketch_union (struct sketch *s1, struct sketch *s2)
     bl->region = s1->extregion;
   }
   r2->border->next = 0;
-  for (a = s1->arcs; a; a = a->next)
+  if (s1->arcs)
   {
-    if (a->next == 0)
+    for (a = s1->arcs; a; a = a->next)
     {
-      a->next = s2->arcs;
-      break;
+      if (a->next == 0)
+      {
+        a->next = s2->arcs;
+        break;
+      }
     }
-  }
+  } else s1->arcs = s2->arcs;
+  if (s1->arcs) s1->isempty = 0;
   s2->arcs = 0;
   for (a = s1->arcs, tag = 1; a; a = a->next) a->tag = tag++;
   for (r1 = s1->regions; r1; r1 = r1->next)
