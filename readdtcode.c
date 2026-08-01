@@ -810,9 +810,17 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
   extern struct global_data globals;
   int i, numconsistent;
   int dt_incomplete;
-  int agree, agreeneg;
+  int agree, agreeneg, already;
   char ch;
   int sign, label;
+
+  already = 1;
+  for (i = 0; i < lnumnodes; i++)
+  {
+    if (gregionsign[i] == 0) already = 0;
+  }
+  if (already && verbose) printf ("Complete realization already given!\n");
+  if (already) return;
 
   numnodes = lnumnodes;
   numlabels = 2*numnodes;
@@ -863,6 +871,20 @@ realize_loiv_split (int lnumnodes, int *vecofint, int *gregionsign)
       exit (8);
     }
  */
+  }
+  if (verbose)
+  {
+    printf ("gregionsign values:\n");
+    for (i = 0; i < numnodes; i++)
+    {
+      ch = '?';
+      if (gregionsign[i] > 0) ch = '>';
+      if (gregionsign[i] < 0) ch = '<';
+      sign = 1;
+      if (vecofint[i] < 0) sign = -1;
+      printf ("%d%c ", sign*i, ch);
+    }
+    printf ("\n");
   }
 
   /* this function wants a zero-based vector */
@@ -1076,7 +1098,7 @@ maximal_expansion ()
     for (i = 0; i < numlabels; i++)
     {
       for (j = 0; j < numlabels; j++) tagged[j] = 0;
-      /* follow cicle */
+      /* follow cycle */
       node = i;
       while (1)
       {
@@ -2358,6 +2380,7 @@ inherit (int startlabel)
   int isinside;
   int endlabel, label;
   int expansions = 0;
+  //int i;
 
   // printf ("searching inheritance for cycle starting at %d\n", startlabel + 1);
 
@@ -2368,6 +2391,8 @@ inherit (int startlabel)
   endlabel = dt_involution[startlabel];
   if (nextlabel(startlabel) == dt_involution[startlabel] || nextlabel(endlabel) == dt_involution[endlabel])
   {
+    //printf ("numnodes: %d\n", numnodes);
+    //for (i = 0; i < 2*numnodes; i++) printf ("dt_realization[%d] = %d\n", i, dt_realization[i]);
     printf ("FATAL: no tight loop allowed: label %d or %d\n", startlabel + 1, endlabel + 1);
     exit (55);
   }
