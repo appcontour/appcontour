@@ -1,0 +1,47 @@
+#testname:a bunch of very basic embeddings (using new syntax)
+#
+
+empty="embedding {}"
+echo "empty scene:"
+echo "$empty" | ./contour print -Q
+
+figure8="embedding {0:(0 0 0 0)}"
+echo "figure-8 unknot:"
+echo "$figure8" | ./contour --out fg -Q
+
+hopf="embedding {0:(1 1 1 1),1:(0 0 0 0)}"
+echo "Hopf link:"
+echo -n "Components: "
+echo "$hopf" | ./contour countcc -Q
+echo -n "Linking number: "
+echo "$hopf" | ./contour --out linkingnumber -Q
+
+fakehopf="embedding {0:o(1 1 1 1),1:(0 0 0 0)}"
+echo "Fake Hopf link:"
+echo -n "Components: "
+echo "$fakehopf" | ./contour countcc -Q
+echo -n "Linking number: "
+echo "$fakehopf" | ./contour --out linkingnumber -Q
+
+unknot="embedding {+1}"
+echo "unknot:"
+echo -n "Components: "
+echo "$unknot" | ./contour countcc -Q
+echo -n "Knot group:"
+echo "$unknot" | ./contour --out fg
+
+split2="embedding {+2}"
+echo "2 split unknots:"
+echo -n "Components: "
+echo "$split2" | ./contour countcc -Q
+echo -n "Linking number: "
+echo "$split2" | ./contour --out linkingnumber -Q
+
+figure8unknot="embedding {0:(0 0 0 0) +1}"
+echo "Split figure-8 and unknot:"
+echo -n "Components: "
+echo "$figure8unknot" | ./contour countcc -Q
+echo -n "Linking number: "
+echo "$figure8unknot" | ./contour --out linkingnumber -Q
+
+

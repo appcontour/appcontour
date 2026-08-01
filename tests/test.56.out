@@ -1,0 +1,24 @@
+empty scene:
+sketch {
+Region 0 (f = 0): ();
+}
+figure-8 unknot:
+fpgroup {
+<a; >
+}
+Hopf link:
+Components: 2
+Linking number: 1
+Fake Hopf link:
+Components: 2
+Linking number: 0
+unknot:
+Components: 1
+Knot group:Free group of rank 1
+<a; >
+2 split unknots:
+Components: 2
+Linking number: 0
+Split figure-8 and unknot:
+Components: 2
+Linking number: 0
