@@ -219,6 +219,13 @@ gausscode_link_to_knot (struct vecofintlist *loiv)
   if (commonnode < 0)
   {
     printf ("Cannot find common crossing between the first components and the others\n");
+    if (debug)
+    {
+      for (lv = loiv; lv; lv = lv->next)
+      {
+        printf ("lv->len = %d, ->type = %d\n", lv->len, lv->type);
+      }
+    }
     freeloiv (loiv);
     return (0);
   }

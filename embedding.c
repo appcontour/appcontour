@@ -2672,9 +2672,9 @@ embeddingtoloiv (struct embedding *emb)
     node = &emb->nodes[in];
     for (id = 0; id < 4; id++)
     {
-      //if (debug) printf ("Starting from node %d direction %d\n", in, id);
       if (node->direction[id] != NODE_IS_START) continue;
       if (visited[2*in + (id % 2)]) break;
+      if (debug) printf ("Starting from node %d direction %d\n", in, id);
       assert (lv);
       //
       // now follow the arc untill we are back at the starting node
@@ -2707,8 +2707,9 @@ embeddingtoloiv (struct embedding *emb)
       lv->len = il;
       lv = lv->next;
       il = 0;
+      if (visited[2*in + (id % 2)]) break;
     }
-    if (visited[2*in + (id % 2)]) break;
+    //if (visited[2*in + (id % 2)]) break;
   }
 
   free (visited);
