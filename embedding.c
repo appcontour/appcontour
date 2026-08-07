@@ -41,7 +41,11 @@ embedding2sketch (struct embedding *emb)
     assert (nloops >= 0);
     if (debug) printf ("This is a standard knot/link, converting to gausscode\n");
     loiv = embeddingtoloiv (emb);
-    if (debug) printloiv (loiv);
+    if (debug)
+    {
+      if (loiv) printloiv (loiv);
+       else printf ("Empty gauss code\n");
+    }
     freeembedding (emb); emb = 0;
     sketch = readgausscodeloiv (loiv);
     // freeloiv (loiv); // loiv is freed by readgausscodeloiv!

@@ -1,25 +1,3 @@
-2026.08.04
-$ echo "gausscode {{1< -1}{2< -2}}" | ./contour countcc
-Cannot find common crossing between the first components and the others
-
-
-
-2026.01.11 (FIXED)
-When constructing the sum between two multiconnected objects, options --summand1cc and
---summand2cc are used to specify which (external) connected component should be used when
-performing the "sum".
-If one is missing, or is defined to be 0 (invalid value) the result is diffent than what we
-obtain with any possible choice.
-In this example all three 'sum's should have three connected components, which is not the
-case
---------------------------------
-L2a1=`contour gausscode L2a1 -Q | sed -e 's/\([0-9]\) /\1> /'`
-(echo "$L2a1"; echo "$L2a1") | contour sum --summand1cc 1 --summand2cc 1 | contour countcc
-(echo "$L2a1"; echo "$L2a1") | contour sum --summand1cc 0 --summand2cc 1 | contour countcc
-(echo "$L2a1"; echo "$L2a1") | contour sum --summand1cc 0 | contour countcc
---------------------------------
-
-
 2025.03.09
 contour wirtinger examples/square.knot
 

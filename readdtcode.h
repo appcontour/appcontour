@@ -24,6 +24,7 @@ struct vecofintlist *readnakedvecofintlist (FILE *file, int type);
 struct vecofintlist *readvecofintlist (FILE *file, int type);
 void freeloiv (struct vecofintlist *loiv);
 struct sketch *readgausscodeloiv (struct vecofintlist *loiv);
+struct sketch *readgausscodeloiv_ns (struct vecofintlist *loiv);
 struct vecofintlist *readlinkfromtable (char *linkname);
 void chg_underpass (struct vecofintlist *loiv, int nodenum);
 struct vecofintlist *read_gausscode_from_string (char *gc);

@@ -104,8 +104,196 @@ chg_underpass (struct vecofintlist *loiv, int nodenum)
   assert (found == 2);
 }
 
+/*
+ * This is a possibly-split gauss code. I.e. it represents
+ * a link with a nonconnected diagram
+ */
+
+/* local prototype */
+void renumber_gausscode (struct vecofintlist *loiv);
+
 struct sketch *
 readgausscodeloiv (struct vecofintlist *loiv)
+{
+  int numlabels = 0;
+  int numnodes, involved;
+  int i, j, jj, nodelabel, res;
+  struct vecofintlist *lv, *lvn, *loiv1, *loiv2;
+  struct sketch *sketch1, *sketch2;
+  int *infonod;
+  int addloiv;
+
+  if (loiv == 0 || loiv->next == 0) return (readgausscodeloiv_ns (loiv));
+
+  // Count number of labels
+  for (lv = loiv; lv; lv = lv->next)
+  {
+    numlabels += lv->len;
+  }
+  assert ((numlabels % 2) == 0);
+
+  // Find connected component of the diagram
+
+  numnodes = numlabels/2;
+  if (debug) printf ("Link with %d labels and %d nodes\n", numlabels, numnodes);
+
+  infonod = (int *) malloc (numnodes * sizeof(int));
+  for (i = 0; i < numnodes; i++) infonod[i] = 0;
+
+  for (j = 0; j < loiv->len; j++)
+  {
+    nodelabel = abs(loiv->vec[j]);
+    nodelabel--;
+    assert (nodelabel >= 0 && nodelabel < numnodes);
+    infonod[nodelabel]++;
+  }
+
+  for (lv = loiv->next; lv; lv = lv->next)
+  {
+    addloiv = 1;
+    for (j = 0; j < lv->len; j++)
+    {
+      nodelabel = abs(lv->vec[j]);
+      nodelabel--;
+      assert (nodelabel >= 0 && nodelabel < numnodes);
+      if (infonod[nodelabel] > 0)  // FOUND common node
+      {
+        addloiv++;
+        for (jj = 0; jj < lv->len; jj++)
+        {
+          nodelabel = abs(lv->vec[jj]);
+          nodelabel--;
+          assert (nodelabel >= 0 && nodelabel < numnodes);
+          infonod[nodelabel]++;
+        }
+        break;
+      }
+    }
+  }
+
+  /* check flood result */
+  involved = 0;
+  for (i = 0; i < numnodes; i++)
+  {
+    if (infonod[i] > 0) involved++;
+  }
+  assert (involved > 0 && involved <= numnodes);
+
+  if (involved == numnodes)
+  {
+    free (infonod);
+    return (readgausscodeloiv_ns (loiv));
+  }
+
+  /*
+   * We have a split diagram!
+   *
+   * Construct two 'loiv' vectors, the first contains the
+   * found split component, the second with the rest (used in a recursive call)
+   */
+
+  if (debug) printf ("split component with %d link components\n", addloiv);
+
+  loiv1 = loiv2 = 0;
+  for (lv = loiv; lv; lv = lv->next)
+  {
+    lvn = (struct vecofintlist *) malloc (sizeof (struct vecofintlist) + lv->len*sizeof(int));
+    lvn->len = lvn->dim = lv->len;
+    lvn->type = lv->type;
+    lvn->handedness = lv->handedness;   /* NOTE: this info is NOT duplicated! */
+    for (j = 0; j < lv->len; j++) lvn->vec[j] = lv->vec[j];
+    nodelabel = abs(lv->vec[0]);
+    nodelabel--;
+    if (infonod[nodelabel] > 0)
+    {
+      lvn->next = loiv1;
+      loiv1 = lvn;
+    } else {
+      lvn->next = loiv2;
+      loiv2 = lvn;
+    }
+  }
+
+  renumber_gausscode (loiv1);
+  renumber_gausscode (loiv2);
+
+  for (lv = loiv; lv; lv = lv->next) lv->handedness = 0;
+  freeloiv (loiv);
+
+  sketch1 = readgausscodeloiv_ns (loiv1);
+  sketch2 = readgausscodeloiv (loiv2);
+
+  res = sketch_union (sketch1, sketch2);
+  assert (res == 1);
+
+  return (sketch1);
+}
+
+/*
+ * gausscode with node numbering that can be nonconsecutive
+ * renumber the nodes
+ */
+
+void
+renumber_gausscode (struct vecofintlist *loiv)
+{
+  struct vecofintlist *lv;
+  int i, j, jj;
+  int *oldname;
+  int sign, nextnewname, newname, oname;;
+  int numnodes = 0;
+
+  assert (loiv && (loiv->type == LOIV_ISGAUSSCODE || loiv->type == LOIV_ISRGAUSSCODE));
+
+  for (lv = loiv; lv; lv = lv->next)
+  {
+    numnodes += lv->len;
+  }
+  assert (numnodes % 2 == 0);
+  numnodes /= 2;
+
+  oldname = (int *) malloc (numnodes * sizeof(int));
+  for (i = 0; i < numnodes; i++) oldname[i] = -1;
+
+  nextnewname = 1;
+
+  for (lv = loiv; lv; lv = lv->next)
+  {
+    for (j = 0; j < lv->len; j++)
+    {
+      oname = lv->vec[j];
+      assert (oname != 0);
+      sign = 1;
+      if (oname < 0) {sign = -1; oname = -oname;}
+      newname = -1;
+      for (jj = 0; jj < nextnewname; jj++)
+      {
+        if (oldname[jj] == oname)
+        {
+          newname = jj+1;
+          break;
+        }
+      }
+      if (newname < 0)
+      {
+        newname = nextnewname;
+        oldname[nextnewname - 1] = oname;
+        nextnewname++;
+      }
+      lv->vec[j] = sign*newname;
+    }
+  }
+
+  free (oldname);
+}
+
+/*
+ * This works only for links with a connected diagram
+ * (non-split gauss code)
+ */
+
+struct sketch *
+readgausscodeloiv_ns (struct vecofintlist *loiv)
 {
   struct sketch *sketch;
   struct vecofintlist *lv, *newloiv;
@@ -138,7 +326,7 @@ readgausscodeloiv (struct vecofintlist *loiv)
 
     /*
      * at this point dt_realization[i] contains the handedness
-     * of newloin->vec[i]
+     * of newloiv->vec[i]
      */
 
     inherit_gauss2gauss (newloiv, loiv, dt_realization);
@@ -176,9 +364,11 @@ readgausscodeloiv (struct vecofintlist *loiv)
   return (sketch);
 }
 
+
+
 /*
  * add a few new nodes and make surgeries in order to transform a k-components link
- * into a single knot
+ * with connected diagram into a single knot
  */
 
 struct vecofintlist *
