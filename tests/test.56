@@ -44,4 +44,10 @@ echo "$figure8unknot" | ./contour countcc -Q
 echo -n "Linking number: "
 echo "$figure8unknot" | ./contour --out linkingnumber -Q
 
+discon="embedding {0:(0 0 0 0), 1:(1 1 1 1)}"
+echo "Two separated figure-8s"
+echo -n "Components: "
+echo "$discon" | ./contour countcc -Q
+echo -n "Linking number: "
+echo "$discon" | ./contour --out linkingnumber -Q
 

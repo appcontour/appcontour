@@ -25,6 +25,12 @@
 	uptoevert introduced above.  Here it is possible to also require canonification
 	"uptofrontback" or "uptoleftright"
 
+
+???	Added the possibility to personalize default values (e.g. --autosurgery)
+	using environment variables or via rc file.
+	Use of environment variable is already there for APPCONTOUR_OLDNAMES, e.g.
+	(see main() in "contour.c".
+
 2023-03-13: (approx) The project was moved from sourceforge.net to github.com
 
 2018-07-02: Representation of finitely presented groups.  New actions:

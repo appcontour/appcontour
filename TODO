@@ -1,43 +1,38 @@
-12. Allow for 'tight loops' when converting from embedding:
-f8="embedding:0 {0: (0,0,0,0)}"
-echo "$f8" | ./contour info
+11. Simple embeddings with two triple nodes:
+embedding {0:(0 0 1), 1:(0 1 1)}
 
 
-11. Allow for special gauss codes:
-- empty diagram: gausscode {} [DONE]
-- unknot: gausscode {{}} [DONE]
+10. Allow for special gauss codes:
+- empty diagram: gausscode {} [DONE, but should be entered as "gausscode {void}"
 - split links, e.g. gausscode {{}{}}
 
 
-10. Add orientation info in embedding input syntax; add overpass info (even or odd)
+9. Add orientation info in embedding input syntax; add overpass info (even or odd)
 in input syntax per each node (e.g. a minus sign like "-1: (<a>, <b>, <c>, <d>),"
 
-9. Ben Burton extended the knot tables up to 19 crossings, it would be nice to have support for
+
+8. Ben Burton extended the knot tables up to 19 crossings, it would be nice to have support for
 its data: https://regina-normal.github.io/data.html
 
-8. [DONE] The syntax <[generators]; [relators]> for a finitely presented group now allows
+
+7. [DONE] The syntax <[generators]; [relators]> for a finitely presented group now allows
 for the addition of selected elements: <[generators]; [relators]; [elements]> .
 This is presently only used in printout of the representations and only for
 the representations ks_S<n> ks_A<n> .
 
-7. Make "countsl2zp" more efficient
+6. Make "countsl2zp" more efficient
 
-6. Make --principal work for polynomials in more then one indet (assuming it makes sense)
+5. Make --principal work for polynomials in more then one indet (assuming it makes sense)
 
-5.
+4.
 Example of a complex alexander ideal for genus2 surfaces:
 echo "knotname{16a_1}" | ./contour punchhole -r 45 -s 1 | ./contour --out alexander
 
-4. Update man page.  It is now incredibly outdated
+3. Update man page.  It is now incredibly outdated
 
-3. Il processo di canonizzazione (se funziona) di un ideale non principale dovrebbe
+2. Il processo di canonizzazione (se funziona) di un ideale non principale dovrebbe
 anche considerare la possibilita' dell'inversione t -> 1/t (simultanea per tutti
 i polinomi.  La questione puo' forse essere evitata semplicemente facendo un controllo
 preliminare se tutti i polinomi sono invarianti rispetto a t->1/t
-
-2. [DONE] Add the possibility to personalize default values (e.g. --autosurgery)
-using environment variables or via rc file.
-Use of environment variable is already there for APPCONTOUR_OLDNAMES, e.g.
-(see main() in "contour.c".
 
 1. Improve graphic presentation of Hacon graph
