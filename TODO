@@ -1,4 +1,5 @@
 11. Simple embeddings with two triple nodes:
+embedding {0:(1 1 1), 1:(0 0 0)}
 embedding {0:(0 0 1), 1:(0 1 1)}
 
 

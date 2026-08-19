@@ -43,7 +43,9 @@ struct dualembedding {
 
 /* prototypes */
 
+struct embedding *splitembedding (struct embedding *emb);
 struct sketch *embedding2sketch (struct embedding *emb);
+struct sketch *embedding2sketch_nonsplit (struct embedding *emb);
 struct dualembedding *embedding2dual (struct embedding *emb);
 void printdualembedding (struct dualembedding *dual, struct embedding *emb);
 void printembedding (struct embedding *emb, int iscanon);

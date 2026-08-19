@@ -6,10 +6,12 @@ echo "empty scene:"
 echo "$empty" | ./contour print -Q
 
 figure8="embedding {0:(0 0 0 0)}"
+echo ""
 echo "figure-8 unknot:"
 echo "$figure8" | ./contour --out fg -Q
 
 hopf="embedding {0:(1 1 1 1),1:(0 0 0 0)}"
+echo ""
 echo "Hopf link:"
 echo -n "Components: "
 echo "$hopf" | ./contour countcc -Q
@@ -17,6 +19,7 @@ echo -n "Linking number: "
 echo "$hopf" | ./contour --out linkingnumber -Q
 
 fakehopf="embedding {0:o(1 1 1 1),1:(0 0 0 0)}"
+echo ""
 echo "Fake Hopf link:"
 echo -n "Components: "
 echo "$fakehopf" | ./contour countcc -Q
@@ -24,6 +27,7 @@ echo -n "Linking number: "
 echo "$fakehopf" | ./contour --out linkingnumber -Q
 
 unknot="embedding {+1}"
+echo ""
 echo "unknot:"
 echo -n "Components: "
 echo "$unknot" | ./contour countcc -Q
@@ -31,6 +35,7 @@ echo -n "Knot group:"
 echo "$unknot" | ./contour --out fg
 
 split2="embedding {+2}"
+echo ""
 echo "2 split unknots:"
 echo -n "Components: "
 echo "$split2" | ./contour countcc -Q
@@ -38,6 +43,7 @@ echo -n "Linking number: "
 echo "$split2" | ./contour --out linkingnumber -Q
 
 figure8unknot="embedding {0:(0 0 0 0) +1}"
+echo ""
 echo "Split figure-8 and unknot:"
 echo -n "Components: "
 echo "$figure8unknot" | ./contour countcc -Q
@@ -45,9 +51,18 @@ echo -n "Linking number: "
 echo "$figure8unknot" | ./contour --out linkingnumber -Q
 
 discon="embedding {0:(0 0 0 0), 1:(1 1 1 1)}"
+echo ""
 echo "Two separated figure-8s"
 echo -n "Components: "
 echo "$discon" | ./contour countcc -Q
 echo -n "Linking number: "
 echo "$discon" | ./contour --out linkingnumber -Q
+
+split="embedding {0:(1 3 3), 1:(0 3 3), 2:(2 2 2 2), 3:o(0 0 1 1), 4:(4 4 4 4) +2}"
+echo ""
+echo "Split embedding with 1 handlebody, 2 figure-eight, 2 loops"
+echo -n "Components: "
+echo "$split" | ./contour countcc -Q
+echo -n "Outside fg:"
+echo "$split" | ./contour --out fg -Q
 

@@ -70,7 +70,7 @@ main (int argc, char *argv[])
   struct presentation *p;
   struct alexanderideal *ai;
   struct vecofintlist *loiv, *newloiv;
-  struct embedding *emb;
+  struct embedding *emb, *emb2;
   struct dualembedding *dual;
   int genus;
   int connectedness;
@@ -1829,13 +1829,13 @@ main (int argc, char *argv[])
 
     case ACTION_NEWFEATURE:
     //printf ("Sorry, there is no new feature to experiment with...\n");
-    if ((sketch = readcontour (infile)) == 0) exit (14);
-
-    s2 = unknots_sketch(3);
-    res = sketch_union (sketch, s2);
-    assert (res == 1);
-    printsketch (sketch);
-    //exit (14);
+    emb = getembedding (infile, docanonify);
+    emb2 = splitembedding (emb);
+    printembedding_noncanon (emb);
+    if (emb2) printembedding_noncanon (emb2);
+     else printf ("# NO SPLIT COMPONENT\n");
+    freeembedding (emb);
+    if (emb2) freeembedding (emb2);
     break;
 
     default:

@@ -15,10 +15,203 @@ extern int debug;
 extern int verbose;
 extern int quiet;
 
+/* local prototype */
+
+int splitemb_expandflood (struct embedding *emb);
+void readembeddingpp (struct embedding *emb);
+
+struct embedding *
+splitembedding (struct embedding *emb)
+{
+  int i, j, id, newid, split, nextnum1, nextnum2, bit;
+  int *newnum;
+  struct emb_node *node, *splitnode, *nodeorig, *splitnodesvec;
+  struct embedding *splitemb;
+
+  if (emb->k + emb->n == 0) return (0);
+
+  /* using the 'color' field to color the first split component */
+
+  /* first reset all colors */
+  for (i = 0; i < emb->k + emb->n; i++)
+  { 
+    node = &emb->nodes[i];
+    node->color = 0;
+  } 
+
+  node = &emb->nodes[0];
+  node->color++;
+  while (splitemb_expandflood (emb));
+
+  /*
+   * check if nonsplit
+   */
+
+  split = 0;
+  for (i = 0; i < emb->k + emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    if (node->color == 0) split++;
+  }
+
+  if (split == 0) return (0);
+
+  /*
+   * renumbering of nodes
+   */
+  newnum = (int *) malloc ( (emb->k + emb->n) * sizeof (int) );
+
+  nextnum1 = nextnum2 = 0;
+  for (i = 0; i < emb->k + emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    if (node->color)
+    {
+      newnum[i] = nextnum1++;
+    } else {
+      newnum[i] = - nextnum2++ - 1;
+    }
+  }
+
+  if (debug) for (i = 0; i < emb->k + emb->n; i++) printf ("Node %d renumbered to %d\n", i, newnum[i]);
+
+  assert (nextnum1 > 0);
+  assert (nextnum2 > 0);
+  assert (nextnum1 + nextnum2 == emb->k + emb->n);
+
+  /*
+   * WARNING: We do not free and re-malloc the vector with the original nodes
+   * so that the last portion of it will remain unused
+   * the corresponding memory will be freed anyway whenever the emb structure is freed
+   */
+
+  splitemb = (struct embedding *) malloc (sizeof (struct embedding));
+  splitemb->k = splitemb->n = 0;
+  splitemb->choice = 0;
+  splitemb->loops = 0; 
+  splitemb->orientation = emb->orientation;
+  splitemb->connections = 0;
+  splitnodesvec = (struct emb_node *) malloc (nextnum2*sizeof (struct emb_node));
+  splitemb->nodes = splitnodesvec;
+  for (i = 0; i < nextnum2; i++)
+  {
+    splitnode = &splitemb->nodes[i];
+    splitnode->id = i;
+    splitnode->next = 0;
+    if (i + 1 < nextnum2) splitnode->next = &splitemb->nodes[i+1];
+  }
+
+  emb->k = emb->n = 0;
+  emb->choice = 0;
+  for (i = 0; i < nextnum1 + nextnum2; i++)
+  {
+    nodeorig = &emb->nodes[i];
+    if (nodeorig->color)
+    {
+      id = newnum[i];
+      assert (id >= 0);
+      assert (id < nextnum1);
+      assert (id <= i);
+      node = &emb->nodes[id];
+      if (id < i) memcpy (node, nodeorig, sizeof (struct emb_node));
+      for (j = 0; j < node->valency; j++)
+      {
+        node->ping[j] = newnum[node->ping[j]];
+        node->pong[j] = -1;
+      }
+      if (node->valency == 3) emb->k++;
+      if (node->valency == 4)
+      {
+        bit = node->overpassisodd;
+        assert (bit == 0 || bit == 1);
+        emb->choice |= (bit << emb->n);
+        emb->n++;
+      }
+    } else {
+      id = - newnum[i] - 1;
+      assert (id >= 0);
+      assert (id < nextnum2);
+      splitnode = &splitemb->nodes[id];
+      assert (id < i);
+      memcpy (splitnode, nodeorig, sizeof (struct emb_node));
+      for (j = 0; j < splitnode->valency; j++)
+      {
+        newid = - newnum[splitnode->ping[j]] - 1;
+        assert (newid >= 0);
+        assert (newid < nextnum2);
+        splitnode->ping[j] = newid;
+        node->pong[j] = -1;
+      }
+      if (splitnode->valency == 3) splitemb->k++;
+      if (splitnode->valency == 4)
+      {
+        bit = splitnode->overpassisodd;
+        assert (bit == 0 || bit == 1);
+        splitemb->choice |= (bit << splitemb->n);
+        splitemb->n++;
+      }
+    }
+  }
+
+  readembeddingpp (emb);
+  readembeddingpp (splitemb);
+
+  free (newnum);
+  return (splitemb);
+}
+
+int
+splitemb_expandflood (struct embedding *emb)
+{
+  int i, j;
+  int count = 0;
+  struct emb_node *node, *adjnode;
+
+  for (i = 0; i < emb->k + emb->n; i++)
+  {
+    node = &emb->nodes[i];
+    if (node->color == 0) continue;
+    assert (node->color == 1);
+    for (j = 0; j < node->valency; j++)
+    {
+      adjnode = &(emb->nodes[node->ping[j]]);
+      if (adjnode->color == 0)
+      {
+        adjnode->color++;
+        count++;
+      }
+    }
+  }
+
+  return (count);
+}
+
 int print_sketch_ra3 (int only3, int count, struct embedding *emb, struct sketch *s, int *nodemark);
 
 struct sketch *
 embedding2sketch (struct embedding *emb)
+{
+  int res;
+  struct embedding *splitemb;
+  struct sketch *s1, *s2;
+
+  splitemb = splitembedding (emb);
+  if (splitemb == 0) return embedding2sketch_nonsplit (emb);
+
+  if (debug) printf ("This is a split embedding, converting each component\n");
+
+  s1 = embedding2sketch_nonsplit (emb);
+  s2 = embedding2sketch (splitemb);
+
+  res = sketch_union (s1, s2);
+  assert (res == 1);
+  postprocesssketch (s1);
+
+  return (s1);
+}
+
+struct sketch *
+embedding2sketch_nonsplit (struct embedding *emb)
 {
   int i, j, found, res, nloops;
   struct emb_node *node;
@@ -60,6 +253,7 @@ embedding2sketch (struct embedding *emb)
     return (sketch);
   }
 
+  emb->loops = 0;  // for now!
   for (i = 0; i < emb->k + emb->n; i++)
   {
     node = &emb->nodes[i];
@@ -317,6 +511,7 @@ embedding2sketch (struct embedding *emb)
   freedualembedding (dual);
   postprocesssketch (sketch);
 
+  emb->loops = nloops;
   assert (emb->loops >= 0);
 
   if (nloops > 0)
@@ -1596,8 +1791,6 @@ dual_left_turn (struct dual_region *r, int i1, int i2)
  * it is assumed that trivalent nodes are numbered first
  */
 
-void readembeddingpp (struct embedding *emb);
-
 struct embedding *
 readembedding (FILE *file)
 {
@@ -2651,7 +2844,9 @@ embeddingtoloiv (struct embedding *emb)
     exit (1001);
   }
 
-  loiv = 0;
+  if (emb->n == 0) return (0);
+
+  loiv = lv = 0;
   for (ic = 0; ic < emb->numrings; ic++)
   {
     lv = (struct vecofintlist *) malloc ( SIZEOFLOIV (2*emb->n) );
@@ -2661,7 +2856,7 @@ embeddingtoloiv (struct embedding *emb)
     lv->next = loiv;
     loiv = lv;
   }
-  loiv = lv;
+  //loiv = lv;
 
   visited = (int *) malloc (2*emb->n * sizeof(int));
   for (iv = 0; iv < 2*emb->n; iv++) visited[iv] = 0;
