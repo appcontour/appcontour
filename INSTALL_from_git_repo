@@ -6,4 +6,4 @@ the automake machinery when performing the "Make" (and after the
 
 A way out is to set a correct time ordering with:
 
-touch aclocal.m4 Makefile.in configure config.h.in
+touch aclocal.m4; sleep 1; touch Makefile.in; sleep 1; touch configure; sleep 1; touch config.h.in
