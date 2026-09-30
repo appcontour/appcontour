@@ -611,7 +611,7 @@ knot_update_presentation (struct presentation *p, int k_event, int pos_event)
 
     default:
     printf ("Unhandled event %d\n", k_event);
-    assert (false);
+    assert (0);
     break;
   }
 
