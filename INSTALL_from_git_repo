@@ -1,0 +1,9 @@
+Sometimes one wants to avoid the "automake/autoconf" machinery
+and just use the available "./configure".
+A problem with the Git timestamps has the effect to (try to) rerun
+the automake machinery when performing the "Make" (and after the
+./configure step).
+
+A way out is to set a correct time ordering with:
+
+touch aclocal.m4 Makefile.in configure config.h.in
